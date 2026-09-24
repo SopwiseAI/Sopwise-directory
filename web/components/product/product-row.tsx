@@ -20,7 +20,7 @@ export function ProductRow({ product, last = false }: { product: Product; last?:
       data-history-category={product.categoryId}
       data-history-pricing={product.pricing ?? ""}
       className={cn(
-        "group flex items-center gap-3 px-4 py-3 transition-all hover:bg-brand/[0.02] card-shadow-hover outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+        "group flex items-center gap-3 px-4 py-3 transition-all hover:bg-brand/[0.02] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
         !last && "border-b border-border"
       )}
     >

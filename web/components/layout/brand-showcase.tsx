@@ -17,7 +17,7 @@ export function BrandShowcase() {
   ]
 
   return (
-    <section className="rounded-xl border border-brand/15 bg-gradient-to-br from-brand/[0.04] to-brand/[0.01] dark:from-brand/[0.08] dark:to-brand/[0.03] px-6 py-8 sm:px-8 card-shadow">
+    <section className="rounded-xl border border-brand/15 bg-gradient-to-br from-brand/[0.04] to-brand/[0.01] dark:from-brand/[0.08] dark:to-brand/[0.03] px-6 py-8 sm:px-8">
       <div className="space-y-6">
         <div className="space-y-3">
           <p className="font-data uppercase tracking-[0.2em] text-muted-foreground">AI Discovery Engine</p>

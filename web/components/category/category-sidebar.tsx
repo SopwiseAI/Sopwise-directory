@@ -137,7 +137,7 @@ export function CategorySidebar() {
       className={cn(
         "hidden shrink-0 flex-col border-r bg-sidebar md:flex",
         collapsed ? "w-14" : "w-[280px]",
-        "transition-[width] shadow-sm duration-200"
+        "transition-[width] duration-200"
       )}
     >
       {/* 品牌区：折叠控制恒在品牌行（DSH 式）。

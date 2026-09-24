@@ -27,7 +27,7 @@ export function ProductCard({ product }: ProductCardProps) {
       data-history-url={product.url}
       data-history-category={product.categoryId}
       data-history-pricing={product.pricing ?? ""}
-      className="group flex flex-col gap-3.5 rounded-lg border bg-card p-4 outline-none transition-all card-shadow card-shadow-hover hover:bg-brand/[0.02] hover:border-foreground/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className="group flex flex-col gap-3.5 rounded-lg border bg-card p-4 outline-none transition-all hover:bg-brand/[0.02] hover:border-foreground/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <div className="flex items-start justify-between gap-3">
         <ProductIcon
