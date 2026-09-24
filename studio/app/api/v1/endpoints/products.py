@@ -101,14 +101,15 @@ async def create_product(data: ProductCreate, db: AsyncSession = Depends(get_db)
 
     if data.tag_ids:
         tag_result = await db.execute(select(Tag).where(Tag.id.in_(data.tag_ids)))
-        valid_tags = {t.id for t in tag_result.scalars().all()}
+        tags = tag_result.scalars().all()
+        valid_tags = {t.id for t in tags}
         invalid_ids = set(data.tag_ids) - valid_tags
         if invalid_ids:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Tag IDs not found: {list(invalid_ids)}",
             )
-        for tag in (await db.execute(select(Tag).where(Tag.id.in_(data.tag_ids)))).scalars().all():
+        for tag in tags:
             product.tags.append(tag)
 
     if data.category_id is not None:

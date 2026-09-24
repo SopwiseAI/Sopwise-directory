@@ -7,6 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 RUN_DIR="$PROJECT_ROOT/scripts/run"
+mkdir -p "$RUN_DIR"
 
 # 固定端口
 WEB_PORT=3000

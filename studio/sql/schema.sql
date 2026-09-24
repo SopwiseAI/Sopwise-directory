@@ -20,7 +20,7 @@
 --   4. 审计字段: created_at / updated_at / published_at
 --   5. 分类产品数不冗余存储，用查询实时统计
 --   6. 链接唯一性通过 url_hash 保证，归一化规则见 sd_product_link 注释
---   7. is_primary（每个产品至多一个主链接）由应用层保证，MySQL 不支持条件唯一索引
+--   7. is_primary（每个产品至多一个主链接）由数据库生成列 + 唯一索引保证
 --   8. 引擎 InnoDB, 字符集 utf8mb4
 -- ============================================================================
 
@@ -70,7 +70,9 @@ CREATE TABLE IF NOT EXISTS sd_product (
   KEY idx_status_sort (status, sort_order),
   KEY idx_featured (featured),
   KEY idx_published_at (published_at),
-  CONSTRAINT fk_product_category FOREIGN KEY (category_id) REFERENCES sd_category (id) ON DELETE SET NULL
+  CONSTRAINT fk_product_category FOREIGN KEY (category_id) REFERENCES sd_category (id) ON DELETE SET NULL,
+  CONSTRAINT chk_pricing CHECK (pricing IN ('free', 'freemium', 'paid', 'opensource')),
+  CONSTRAINT chk_status CHECK (status BETWEEN 0 AND 3)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品主表';
 
 
@@ -87,7 +89,7 @@ CREATE TABLE IF NOT EXISTS sd_product (
 --   示例: http://www.Example.com:443/foo/#top → https://example.com/foo
 --
 -- url 列存原始 URL（用户输入的完整地址），url_hash 存归一化后 SHA-256
--- is_primary 唯一性由应用层保证（每个产品至多一个 is_primary=1 的链接）
+-- is_primary 唯一性由生成列 + 唯一索引在数据库层保证（每个产品至多一个 is_primary=1）
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS sd_product_link (
   id          BIGINT       NOT NULL AUTO_INCREMENT,
@@ -95,12 +97,14 @@ CREATE TABLE IF NOT EXISTS sd_product_link (
   url         VARCHAR(2048) NOT NULL             COMMENT '链接地址（原始 URL，完整保留）',
   url_hash    CHAR(64)     NOT NULL              COMMENT 'SHA-256(归一化URL)，用于全局唯一约束',
   label       VARCHAR(32)  DEFAULT NULL          COMMENT '链接标签（主站/API/文档/GitHub 等）',
-  is_primary  TINYINT(1)   NOT NULL DEFAULT 0    COMMENT '是否主链接（每个产品至多一个，应用层保证）',
+  is_primary  TINYINT(1)   NOT NULL DEFAULT 0    COMMENT '是否主链接（每个产品至多一个，DB 层保证）',
   sort_order  INT          NOT NULL DEFAULT 0    COMMENT '排序权重',
   created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  primary_marker BIGINT GENERATED ALWAYS AS (IF(is_primary = 1, product_id, NULL)) STORED,
   PRIMARY KEY (id),
   UNIQUE KEY uk_url_hash (url_hash),
+  UNIQUE KEY uk_product_primary (primary_marker),
   KEY idx_product (product_id),
   KEY idx_product_primary (product_id, is_primary),
   CONSTRAINT fk_link_product FOREIGN KEY (product_id) REFERENCES sd_product (id) ON DELETE CASCADE

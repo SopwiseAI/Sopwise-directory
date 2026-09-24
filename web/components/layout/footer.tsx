@@ -2,9 +2,11 @@ import Link from "next/link"
 import { getAllCategories, getAllProducts } from "@/lib/data"
 import { BrandMark } from "@/components/layout/brand-mark"
 import { formatCount } from "@/lib/format"
+import pkg from "@/package.json"
 
 const categories = getAllCategories()
 const totalProducts = getAllProducts().length
+const appVersion = pkg.version
 
 export default function Footer() {
   return (
@@ -35,7 +37,9 @@ export default function Footer() {
         </div>
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t pt-4">
-          <p className="font-data text-muted-foreground">&copy; {new Date().getFullYear()} Sopwise · v0.1.0</p>
+          <p className="font-data text-muted-foreground">
+            &copy; {new Date().getFullYear()} Sopwise · v{appVersion}
+          </p>
           <p className="font-data text-muted-foreground">
             {formatCount(totalProducts)} 个产品 · {formatCount(categories.length)} 个分类
           </p>

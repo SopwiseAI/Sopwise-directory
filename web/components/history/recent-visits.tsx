@@ -3,25 +3,23 @@
 import { useMemo, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { Clock } from "lucide-react"
-import { getHistorySnapshot, subscribeHistory } from "@/lib/history"
+import { getHistorySnapshot, subscribeHistory, type HistoryItem } from "@/lib/history"
 import { getAllProducts } from "@/lib/data"
 import { ProductIcon } from "@/components/product/product-icon"
 import { getDomain } from "@/lib/product-icon"
 
 const allProducts = getAllProducts()
-const productById = new Map(allProducts.map((p) => [p.id, p]))
+const productById = new Map(allProducts.map(p => [p.id, p]))
 
 /** 首页「最近访问」：本地历史的快速回归入口（仅展示有对应产品的条目） */
 export function RecentVisits({ limit = 4 }: { limit?: number }) {
   const raw = useSyncExternalStore(subscribeHistory, getHistorySnapshot, () => "[]")
 
-  const items = useMemo(() => {
+  const items = useMemo<HistoryItem[]>(() => {
     try {
-      const list = JSON.parse(raw)
+      const list = JSON.parse(raw) as HistoryItem[]
       if (!Array.isArray(list)) return []
-      return list
-        .filter((i) => productById.has(i.id))
-        .slice(0, limit)
+      return list.filter(i => productById.has(i.id)).slice(0, limit)
     } catch {
       return []
     }
@@ -34,7 +32,10 @@ export function RecentVisits({ limit = 4 }: { limit?: number }) {
       <div className="flex items-baseline gap-2.5">
         <span className="font-data text-muted-foreground">·</span>
         <h2 className="text-base font-semibold tracking-tight">最近访问</h2>
-        <Link href="/history" className="font-data text-muted-foreground transition-colors hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm">
+        <Link
+          href="/history"
+          className="font-data text-muted-foreground transition-colors hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+        >
           查看全部 →
         </Link>
       </div>
@@ -66,9 +67,7 @@ export function RecentVisits({ limit = 4 }: { limit?: number }) {
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{product.name}</p>
-                <p className="truncate font-data text-muted-foreground">
-                  {getDomain(product.url)}
-                </p>
+                <p className="truncate font-data text-muted-foreground">{getDomain(product.url)}</p>
               </div>
               <Clock className="size-3.5 shrink-0 text-muted-foreground/50" />
             </a>

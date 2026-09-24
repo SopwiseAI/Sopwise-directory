@@ -27,7 +27,9 @@ import urllib.error
 import urllib.request
 
 STUDIO_URL = os.environ.get("STUDIO_URL", "http://localhost:8000")
-API_KEY = os.environ.get("STUDIO_API_KEY", "dev-secret-key")
+API_KEY = os.environ.get("API_KEY") or os.environ.get(
+    "STUDIO_API_KEY", "dev-secret-key"
+)
 
 STATUS_NAMES = {0: "草稿", 1: "待审核", 2: "已发布", 3: "已下架"}
 

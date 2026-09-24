@@ -8,6 +8,7 @@ import { CommandSearchBar } from "@/components/layout/command-search-bar"
 import { HistoryTracker } from "@/components/layout/history-tracker"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import Footer from "@/components/layout/footer"
+import { FAVICON_BASE_URL } from "@/lib/product-icon"
 import "./globals.css"
 
 const geistSans = Geist({
@@ -35,10 +36,10 @@ export const metadata: Metadata = {
 }
 
 /** 首屏前执行：主题 class + 浏览器主题色。避免闪烁，同步 dark 状态。 */
-const themeScript = `(function(){try{var t=localStorage.getItem("theme")||"system";var m=window.matchMedia("(prefers-color-scheme:dark)");var dark=t==="dark"||(t==="system"&&m.matches);document.documentElement.classList.toggle("dark",dark);var meta=document.querySelector('meta[name="theme-color"]');if(meta){meta.setAttribute("content",dark?"#0f1114":"#fafafb")}}catch(e){}})()`
+const themeScript = `(function(){try{const t=localStorage.getItem("theme")||"system";const m=window.matchMedia("(prefers-color-scheme:dark)");const dark=t==="dark"||(t==="system"&&m.matches);document.documentElement.classList.toggle("dark",dark);const meta=document.querySelector('meta[name="theme-color"]');if(meta){meta.setAttribute("content",dark?"#0f1114":"#fafafb")}}catch(e){}})()`
 
 /** 首帧前读取侧栏折叠偏好写入 <html data-sidebar>，CSS 据此先行渲染折叠态（SB-01，避免展开→折叠闪烁）。 */
-const sidebarScript = `(function(){try{var c=localStorage.getItem("sopwise:sidebar-collapsed")==="true";document.documentElement.setAttribute("data-sidebar",c?"collapsed":"expanded")}catch(e){document.documentElement.setAttribute("data-sidebar","expanded")}})()`
+const sidebarScript = `(function(){try{const c=localStorage.getItem("sopwise:sidebar-collapsed")==="true";document.documentElement.setAttribute("data-sidebar",c?"collapsed":"expanded")}catch(e){document.documentElement.setAttribute("data-sidebar","expanded")}})()`
 
 export default function RootLayout({
   children
@@ -54,7 +55,7 @@ export default function RootLayout({
       <head>
         <meta name="theme-color" content="#fafafb" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <link rel="preconnect" href="https://icon.horse" crossOrigin="anonymous" />
+        <link rel="preconnect" href={FAVICON_BASE_URL} crossOrigin="anonymous" />
       </head>
       <body className="min-h-full flex flex-col md:h-[100dvh] md:overflow-hidden">
         <HistoryTracker />

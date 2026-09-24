@@ -40,14 +40,16 @@ function parseUrlSnapshot(snap: string): { view: ViewMode | null; filter: Filter
   const qIndex = snap.indexOf("?")
   if (qIndex === -1) return { view: null, filter: null }
   const qs = new URLSearchParams(snap.slice(qIndex + 1))
-  const view =
-    qs.get("view") === "list" ? ("list" as ViewMode) : qs.get("view") === "grid" ? ("grid" as ViewMode) : null
-  const filter =
-    qs.get("filter") === "latest"
-      ? ("latest" as FilterMode)
-      : qs.get("filter") === "featured"
-        ? ("featured" as FilterMode)
-        : null
+
+  const viewMap: Record<string, ViewMode> = { list: "list", grid: "grid" }
+  const filterMap: Record<string, FilterMode> = { latest: "latest", featured: "featured" }
+
+  const viewParam = qs.get("view")
+  const filterParam = qs.get("filter")
+
+  const view = viewParam && viewParam in viewMap ? viewMap[viewParam] : null
+  const filter = filterParam && filterParam in filterMap ? filterMap[filterParam] : null
+
   return { view, filter }
 }
 

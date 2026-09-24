@@ -10,7 +10,7 @@ cleanup_pid "$STUDIO_PID_FILE"
 
 cd "$PROJECT_ROOT/studio"
 nohup env APP_ENV=dev uv run uvicorn app.main:app --reload \
-    --host 0.0.0.0 --port "$STUDIO_PORT" > "$STUDIO_LOG_FILE" 2>&1 &
+    --host 127.0.0.1 --port "$STUDIO_PORT" > "$STUDIO_LOG_FILE" 2>&1 &
 STUDIO_PID=$!
 echo "$STUDIO_PID" > "$STUDIO_PID_FILE"
 

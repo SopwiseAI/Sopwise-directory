@@ -13,7 +13,10 @@ stop_web() {
         pid=$(cat "$WEB_PID_FILE")
         warn "停止 web (PID: $pid)..."
         kill "$pid" 2>/dev/null || true
-        sleep 1
+        for i in $(seq 1 10); do
+            sleep 0.5
+            kill -0 "$pid" 2>/dev/null || break
+        done
         kill -9 "$pid" 2>/dev/null || true
         info "web 已停止"
     else
@@ -29,7 +32,10 @@ stop_studio() {
         pid=$(cat "$STUDIO_PID_FILE")
         warn "停止 studio (PID: $pid)..."
         kill "$pid" 2>/dev/null || true
-        sleep 1
+        for i in $(seq 1 10); do
+            sleep 0.5
+            kill -0 "$pid" 2>/dev/null || break
+        done
         kill -9 "$pid" 2>/dev/null || true
         info "studio 已停止"
     else

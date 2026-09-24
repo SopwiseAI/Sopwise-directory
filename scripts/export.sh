@@ -6,12 +6,12 @@
 set -euo pipefail
 source "$(dirname "$0")/lib.sh"
 
-API_KEY="${STUDIO_API_KEY:-dev-secret-key}"
+API_KEY="${API_KEY:-${STUDIO_API_KEY:-dev-secret-key}}"
 
 if [[ "${1:-}" == "--cli" ]]; then
     info "CLI 导出 (直接执行)..."
     cd "$PROJECT_ROOT/studio"
-    APP_ENV=dev uv run python -m app.exporters
+    APP_ENV="${APP_ENV:-dev}" uv run python -m app.exporters
 else
     info "API 导出 → http://localhost:$STUDIO_PORT/api/v1/export"
 
@@ -23,6 +23,7 @@ else
     response=$(curl -sf -X POST "http://localhost:$STUDIO_PORT/api/v1/export" \
         -H "X-API-Key: $API_KEY" 2>&1) || {
         error "导出请求失败，请检查 studio 是否正常运行"
+        error "响应: $response"
         exit 1
     }
 
