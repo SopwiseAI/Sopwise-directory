@@ -36,6 +36,18 @@ function getSnapshot() {
   return window.location.pathname + window.location.search
 }
 
+function subscribeDefaultView(callback: () => void) {
+  window.addEventListener("storage", callback)
+  return () => window.removeEventListener("storage", callback)
+}
+
+function getDefaultViewSnapshot(): ViewMode {
+  if (typeof window === "undefined") return "grid"
+  const saved = localStorage.getItem("xigee:default-view") as ViewMode | null
+  if (saved === "list" || saved === "grid") return saved
+  return "grid"
+}
+
 function parseUrlSnapshot(snap: string): { view: ViewMode | null; filter: FilterMode | null } {
   const qIndex = snap.indexOf("?")
   if (qIndex === -1) return { view: null, filter: null }
@@ -71,17 +83,11 @@ function writeUrl(view: ViewMode, filter: FilterMode, defaultView: ViewMode) {
   window.dispatchEvent(new Event(NAV_EVENT))
 }
 
-export function ProductBrowser({ products, emptyTitle, emptyDescription, defaultView }: ProductBrowserProps) {
+export function ProductBrowser({ products, emptyTitle, emptyDescription, defaultView = "grid" }: ProductBrowserProps) {
   const [sort, setSort] = useState<SortMode>("latest")
   const snap = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
   const { view: urlView, filter: urlFilter } = parseUrlSnapshot(snap)
-
-  const [initialView] = useState<ViewMode>(() => {
-    if (typeof window === "undefined") return defaultView ?? "grid"
-    const saved = localStorage.getItem("xigee:default-view") as ViewMode | null
-    if (saved === "list" || saved === "grid") return saved
-    return defaultView ?? "grid"
-  })
+  const initialView = useSyncExternalStore(subscribeDefaultView, getDefaultViewSnapshot, () => defaultView)
 
   useEffect(() => {
     if (urlView || urlFilter) return
