@@ -42,7 +42,7 @@ export function ProductToolbar({ count, view, filter, onViewChange, onFilterChan
           aria-pressed={filter === "latest"}
           className={segItem(filter === "latest")}
         >
-          全部（最新）
+          全部
         </button>
       </div>
 
