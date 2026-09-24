@@ -16,7 +16,8 @@ export interface Product {
   icon?: string;
   pricing?: Pricing;
   featured?: boolean;
-  createdAt: string;
+  publishedAt?: string;
+  createdAt?: string;
 }
 
 export interface SiteData {

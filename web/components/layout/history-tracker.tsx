@@ -26,7 +26,7 @@ export function HistoryTracker() {
         url: link.dataset.historyUrl ?? "",
         categoryId: link.dataset.historyCategory ?? "",
         description: "",
-        createdAt: "",
+        publishedAt: "",
         pricing: (link.dataset.historyPricing as Product["pricing"]) || undefined,
       }
       addToHistory(product)

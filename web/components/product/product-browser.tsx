@@ -2,9 +2,10 @@
 
 import { useMemo, useSyncExternalStore } from "react"
 import type { Product } from "@/lib/types"
+import { getProductDate } from "@/lib/data"
 import { ProductRow } from "@/components/product/product-row"
 import { ProductCard } from "@/components/product/product-card"
-import { ProductToolbar, type SortMode, type ViewMode } from "@/components/product/product-toolbar"
+import { ProductToolbar, type FilterMode, type ViewMode } from "@/components/product/product-toolbar"
 import { PackageOpen } from "lucide-react"
 import Link from "next/link"
 
@@ -15,7 +16,6 @@ interface ProductBrowserProps {
   defaultView?: ViewMode
 }
 
-/** URL 作为视图/排序的唯一状态源；replaceState 后派发事件通知订阅者重渲染 */
 const NAV_EVENT = "ailulu:nav"
 
 function subscribe(callback: () => void) {
@@ -27,36 +27,33 @@ function subscribe(callback: () => void) {
   }
 }
 
-/** 服务端/首帧快照：始终返回默认值，保证 hydration 与服务端 HTML 一致 */
 function getServerSnapshot() {
   return ""
 }
 
-/** 客户端快照：实际 URL */
 function getSnapshot() {
   if (typeof window === "undefined") return ""
   return window.location.pathname + window.location.search
 }
 
-/** 从快照字符串解析状态（不直接读 window，hydration 安全） */
-function parseUrlSnapshot(snap: string): { view: ViewMode | null; sort: SortMode | null } {
+function parseUrlSnapshot(snap: string): { view: ViewMode | null; filter: FilterMode | null } {
   const qIndex = snap.indexOf("?")
-  if (qIndex === -1) return { view: null, sort: null }
+  if (qIndex === -1) return { view: null, filter: null }
   const qs = new URLSearchParams(snap.slice(qIndex + 1))
   const view = qs.get("view") === "list" ? ("list" as ViewMode) : qs.get("view") === "grid" ? ("grid" as ViewMode) : null
-  const sort = qs.get("sort") === "latest" ? ("latest" as SortMode) : qs.get("sort") === "recommended" ? ("recommended" as SortMode) : null
-  return { view, sort }
+  const filter = qs.get("filter") === "latest" ? ("latest" as FilterMode) : qs.get("filter") === "featured" ? ("featured" as FilterMode) : null
+  return { view, filter }
 }
 
-function writeUrl(view: ViewMode, sort: SortMode, defaultView: ViewMode) {
+function writeUrl(view: ViewMode, filter: FilterMode, defaultView: ViewMode) {
   const params = new URLSearchParams(window.location.search)
-  const changed = view !== defaultView || sort !== "recommended"
+  const changed = view !== defaultView || filter !== "latest"
   if (changed) {
     params.set("view", view)
-    params.set("sort", sort)
+    params.set("filter", filter)
   } else {
     params.delete("view")
-    params.delete("sort")
+    params.delete("filter")
   }
   const qs = params.toString()
   const next = qs ? `${window.location.pathname}?${qs}` : window.location.pathname
@@ -65,11 +62,6 @@ function writeUrl(view: ViewMode, sort: SortMode, defaultView: ViewMode) {
   window.dispatchEvent(new Event(NAV_EVENT))
 }
 
-/**
- * 产品浏览区：视图/排序状态存于 URL（可刷新保留、可分享、后退/前进跟随）。
- * useSyncExternalStore：服务端与客户端首帧都用 server snapshot（默认 grid），
- * hydration 后 store 差异触发重渲染读取真实 URL —— 无 hydration mismatch。
- */
 export function ProductBrowser({
   products,
   emptyTitle,
@@ -77,24 +69,21 @@ export function ProductBrowser({
   defaultView = "grid",
 }: ProductBrowserProps) {
   const snap = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
-  const { view: urlView, sort: urlSort } = parseUrlSnapshot(snap)
+  const { view: urlView, filter: urlFilter } = parseUrlSnapshot(snap)
   const view: ViewMode = urlView ?? defaultView
-  const sort: SortMode = urlSort ?? "recommended"
+  const filter: FilterMode = urlFilter ?? "latest"
 
-  const setView = (v: ViewMode) => writeUrl(v, sort, defaultView)
-  const setSort = (s: SortMode) => writeUrl(view, s, defaultView)
+  const setView = (v: ViewMode) => writeUrl(v, filter, defaultView)
+  const setFilter = (f: FilterMode) => writeUrl(view, f, defaultView)
 
-  const sorted = useMemo(() => {
-    const list = [...products]
-    if (sort === "latest") {
-      list.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))
-    } else {
-      list.sort((a, b) => Number(b.featured ?? false) - Number(a.featured ?? false))
+  const filtered = useMemo(() => {
+    if (filter === "featured") {
+      return products.filter((p) => p.featured)
     }
-    return list
-  }, [products, sort])
+    return [...products].sort((a, b) => getProductDate(b).localeCompare(getProductDate(a)))
+  }, [products, filter])
 
-  if (products.length === 0) {
+  if (filtered.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 py-12 text-center">
         <PackageOpen className="size-10 text-muted-foreground/60" />
@@ -116,23 +105,23 @@ export function ProductBrowser({
   return (
     <div className="space-y-3">
       <ProductToolbar
-        count={products.length}
+        count={filtered.length}
         view={view}
-        sort={sort}
+        filter={filter}
         onViewChange={setView}
-        onSortChange={setSort}
+        onFilterChange={setFilter}
       />
 
       {view === "grid" ? (
         <div className="product-card-grid">
-          {sorted.map((product) => (
+          {filtered.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
       ) : (
         <div className="rounded-lg border bg-card">
-          {sorted.map((product, i) => (
-            <ProductRow key={product.id} product={product} last={i === sorted.length - 1} />
+          {filtered.map((product, i) => (
+            <ProductRow key={product.id} product={product} last={i === filtered.length - 1} />
           ))}
         </div>
       )}

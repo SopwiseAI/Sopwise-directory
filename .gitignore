@@ -16,8 +16,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files
-.env*
+# env files (保留 .env.example 可提交)
+.env
+.env.*
+!.env.example
 
 # vercel
 .vercel
@@ -34,9 +36,13 @@ __pycache__/
 dist/
 .venv/
 venv/
+.ruff_cache/
 
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
+
+# scripts runtime
+scripts/run/

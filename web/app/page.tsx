@@ -1,4 +1,4 @@
-import { getAllProducts, getAllCategories, getProductsByCategory } from "@/lib/data"
+import { getAllProducts, getAllCategories, getProductsByCategory, getProductDate } from "@/lib/data"
 import { ProductBrowser } from "@/components/product/product-browser"
 import { ProductCard } from "@/components/product/product-card"
 import { ProductRow } from "@/components/product/product-row"
@@ -13,7 +13,7 @@ const categories = getAllCategories()
 
 function getLatest(limit: number) {
   return [...products]
-    .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))
+    .sort((a, b) => getProductDate(b).localeCompare(getProductDate(a)))
     .slice(0, limit)
 }
 

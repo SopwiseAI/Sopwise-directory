@@ -6,21 +6,19 @@ import { formatCount } from "@/lib/format"
 
 export type ViewMode = "list" | "grid"
 
-export type SortMode = "recommended" | "latest"
+export type FilterMode = "featured" | "latest"
 
 interface ProductToolbarProps {
   count: number
   view: ViewMode
-  sort: SortMode
+  filter: FilterMode
   onViewChange: (view: ViewMode) => void
-  onSortChange: (sort: SortMode) => void
+  onFilterChange: (filter: FilterMode) => void
 }
 
-/** 工具栏：视图切换（列表/卡片）+ 排序（推荐/最新）+ mono 计数 */
-export function ProductToolbar({ count, view, sort, onViewChange, onSortChange }: ProductToolbarProps) {
+export function ProductToolbar({ count, view, filter, onViewChange, onFilterChange }: ProductToolbarProps) {
   const segItem = (active: boolean) =>
     cn(
-      // h-9 (36px)：触控目标达标（PG-07）
       "flex h-9 items-center justify-center gap-1.5 rounded-md px-3 text-xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
       active
         ? "bg-accent font-medium text-accent-foreground"
@@ -29,22 +27,22 @@ export function ProductToolbar({ count, view, sort, onViewChange, onSortChange }
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
-      <div className="inline-flex items-center rounded-md border bg-card p-0.5" role="group" aria-label="排序">
+      <div className="inline-flex items-center rounded-md border bg-card p-0.5" role="group" aria-label="筛选">
         <button
           type="button"
-          onClick={() => onSortChange("recommended")}
-          aria-pressed={sort === "recommended"}
-          className={segItem(sort === "recommended")}
+          onClick={() => onFilterChange("featured")}
+          aria-pressed={filter === "featured"}
+          className={segItem(filter === "featured")}
         >
-          推荐
+          精选
         </button>
         <button
           type="button"
-          onClick={() => onSortChange("latest")}
-          aria-pressed={sort === "latest"}
-          className={segItem(sort === "latest")}
+          onClick={() => onFilterChange("latest")}
+          aria-pressed={filter === "latest"}
+          className={segItem(filter === "latest")}
         >
-          最新
+          全部（最新）
         </button>
       </div>
 

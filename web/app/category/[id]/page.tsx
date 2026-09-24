@@ -1,6 +1,6 @@
 import { type Metadata } from "next"
 import { notFound } from "next/navigation"
-import { getAllCategories, getCategoryById, getProductsByCategory } from "@/lib/data"
+import { getAllCategories, getCategoryById, getProductsByCategory, getProductDate } from "@/lib/data"
 import { categoryIconNode } from "@/lib/category-icon-node"
 import { formatCount } from "@/lib/format"
 import { ProductBrowser } from "@/components/product/product-browser"
@@ -33,8 +33,9 @@ export default async function CategoryPage({ params }: Props) {
 
   const products = getProductsByCategory(id)
   const latestDate = products.reduce<string | null>((max, p) => {
-    if (!p.createdAt) return max
-    return max === null || p.createdAt > max ? p.createdAt : max
+    const date = getProductDate(p)
+    if (!date) return max
+    return max === null || date > max ? date : max
   }, null)
 
   return (
