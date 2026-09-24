@@ -70,9 +70,9 @@ export default function RootLayout({
           <SubNav className="md:hidden" />
           <div className="flex flex-1 md:overflow-hidden">
             <CategorySidebar />
-            <div className="min-w-0 flex-1 md:overflow-y-auto">
+            <div className="min-w-0 flex-1 md:overflow-y-auto flex flex-col">
               <CommandSearchBar className="hidden md:block" />
-              <main id="main" className="mx-auto w-full max-w-7xl scroll-mt-16 px-4 py-6 sm:px-6">
+              <main id="main" className="mx-auto w-full max-w-7xl scroll-mt-16 px-4 py-6 sm:px-6 flex-1">
                 {children}
               </main>
               <Footer />

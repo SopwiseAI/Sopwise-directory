@@ -1,9 +1,10 @@
 "use client"
 
 import { Suspense, useEffect, useRef, useState } from "react"
-import { Search } from "lucide-react"
+import { Search, Settings } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
 
 /**
  * 统一命令搜索条：
@@ -90,8 +91,18 @@ function CommandSearchBarInner({ className }: { className?: string }) {
         className
       )}
     >
-      <div className="mx-auto w-full max-w-6xl px-4 py-2.5 sm:px-6">
-        <CommandSearchInput key={urlQuery} defaultValue={urlQuery} />
+      <div className="mx-auto w-full max-w-6xl px-4 py-2.5 sm:px-6 flex items-center gap-2">
+        <div className="flex-1">
+          <CommandSearchInput key={urlQuery} defaultValue={urlQuery} />
+        </div>
+        <Link
+          href="/settings"
+          className="flex shrink-0 items-center justify-center rounded-md border border-border bg-card p-2 text-muted-foreground transition-colors hover:text-foreground hover:border-foreground/20 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label="设置"
+          title="设置"
+        >
+          <Settings className="size-4" />
+        </Link>
       </div>
     </div>
   )

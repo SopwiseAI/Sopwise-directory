@@ -3,7 +3,7 @@
 import { useSyncExternalStore, useEffect, useRef, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutGrid, History, Settings } from "lucide-react"
+import { LayoutGrid, History } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { BrandMark } from "@/components/layout/brand-mark"
@@ -162,7 +162,7 @@ export function CategorySidebar() {
       </div>
 
       {/* 主导航区：占满剩余空间，可滚动 */}
-      <div className="relative min-h-0 flex-1">
+      <div className="relative flex-1 min-h-0">
         <nav
           ref={navRef}
           className={cn(
@@ -214,17 +214,6 @@ export function CategorySidebar() {
         {scrollable && (
           <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-sidebar to-transparent" />
         )}
-      </div>
-
-      {/* 底部工具区：固定收拢，仅设置入口 */}
-      <div className="flex shrink-0 flex-col border-t border-border p-2.5 pt-2.5">
-        <SidebarLink
-          href="/settings"
-          active={pathname === "/settings"}
-          collapsed={collapsed}
-          label="设置"
-          icon={<Settings className="size-4 shrink-0" />}
-        />
       </div>
     </aside>
   )
