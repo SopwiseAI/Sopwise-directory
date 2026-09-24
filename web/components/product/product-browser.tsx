@@ -1,11 +1,11 @@
 "use client"
 
-import { useMemo, useSyncExternalStore } from "react"
+import { useMemo, useState, useEffect, useSyncExternalStore } from "react"
 import type { Product } from "@/lib/types"
 import { getProductDate } from "@/lib/data"
 import { ProductRow } from "@/components/product/product-row"
 import { ProductCard } from "@/components/product/product-card"
-import { ProductToolbar, type FilterMode, type ViewMode } from "@/components/product/product-toolbar"
+import { ProductToolbar, type FilterMode, type SortMode, type ViewMode } from "@/components/product/product-toolbar"
 import { PackageOpen } from "lucide-react"
 import Link from "next/link"
 
@@ -54,6 +54,7 @@ function parseUrlSnapshot(snap: string): { view: ViewMode | null; filter: Filter
 }
 
 function writeUrl(view: ViewMode, filter: FilterMode, defaultView: ViewMode) {
+  sessionStorage.setItem("xigee:product-browser-state", JSON.stringify({ view, filter }))
   const params = new URLSearchParams(window.location.search)
   const changed = view !== defaultView || filter !== "latest"
   if (changed) {
@@ -70,21 +71,63 @@ function writeUrl(view: ViewMode, filter: FilterMode, defaultView: ViewMode) {
   window.dispatchEvent(new Event(NAV_EVENT))
 }
 
-export function ProductBrowser({ products, emptyTitle, emptyDescription, defaultView = "grid" }: ProductBrowserProps) {
+export function ProductBrowser({ products, emptyTitle, emptyDescription, defaultView }: ProductBrowserProps) {
+  const [sort, setSort] = useState<SortMode>("latest")
   const snap = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
   const { view: urlView, filter: urlFilter } = parseUrlSnapshot(snap)
-  const view: ViewMode = urlView ?? defaultView
+
+  const [initialView] = useState<ViewMode>(() => {
+    if (typeof window === "undefined") return defaultView ?? "grid"
+    const saved = localStorage.getItem("xigee:default-view") as ViewMode | null
+    if (saved === "list" || saved === "grid") return saved
+    return defaultView ?? "grid"
+  })
+
+  useEffect(() => {
+    if (urlView || urlFilter) return
+    const saved = sessionStorage.getItem("xigee:product-browser-state")
+    if (!saved) return
+    try {
+      const parsed = JSON.parse(saved)
+      if (parsed.view || parsed.filter) {
+        const params = new URLSearchParams(window.location.search)
+        if (parsed.view && !params.has("view")) params.set("view", parsed.view)
+        if (parsed.filter && !params.has("filter")) params.set("filter", parsed.filter)
+        const qs = params.toString()
+        const next = qs ? `${window.location.pathname}?${qs}` : window.location.pathname
+        window.history.replaceState(null, "", next)
+        window.dispatchEvent(new Event(NAV_EVENT))
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [urlView, urlFilter])
+
+  const resolvedView = urlView ?? initialView
+  const view = resolvedView as ViewMode
   const filter: FilterMode = urlFilter ?? "latest"
 
-  const setView = (v: ViewMode) => writeUrl(v, filter, defaultView)
-  const setFilter = (f: FilterMode) => writeUrl(view, f, defaultView)
+  const setView = (v: ViewMode) => {
+    localStorage.setItem("xigee:default-view", v)
+    writeUrl(v, filter, defaultView ?? "grid")
+  }
+  const setFilter = (f: FilterMode) => writeUrl(view, f, defaultView ?? "grid")
 
   const filtered = useMemo(() => {
-    if (filter === "featured") {
-      return products.filter(p => p.featured)
+    const list = filter === "featured" ? products.filter(p => p.featured) : [...products]
+    switch (sort) {
+      case "name-asc":
+        list.sort((a, b) => a.name.localeCompare(b.name))
+        break
+      case "name-desc":
+        list.sort((a, b) => b.name.localeCompare(a.name))
+        break
+      case "latest":
+        list.sort((a, b) => getProductDate(b).localeCompare(getProductDate(a)))
+        break
     }
-    return [...products].sort((a, b) => getProductDate(b).localeCompare(getProductDate(a)))
-  }, [products, filter])
+    return list
+  }, [products, filter, sort])
 
   if (filtered.length === 0) {
     return (
@@ -110,8 +153,10 @@ export function ProductBrowser({ products, emptyTitle, emptyDescription, default
         count={filtered.length}
         view={view}
         filter={filter}
+        sort={sort}
         onViewChange={setView}
         onFilterChange={setFilter}
+        onSortChange={setSort}
       />
 
       {view === "grid" ? (

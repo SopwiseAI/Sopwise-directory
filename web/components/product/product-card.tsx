@@ -1,4 +1,7 @@
-import { ArrowUpRight } from "lucide-react"
+"use client"
+
+import { useState } from "react"
+import { ArrowUpRight, ChevronDown } from "lucide-react"
 import type { Product } from "@/lib/types"
 import { getDomain } from "@/lib/product-icon"
 import { Badge } from "@/components/ui/badge"
@@ -12,6 +15,7 @@ interface ProductCardProps {
 /** 卡片模式 —— 安静克制的产品卡片：细边框、无浮起、hover 仅加深边框 */
 export function ProductCard({ product }: ProductCardProps) {
   const domain = getDomain(product.url)
+  const [expanded, setExpanded] = useState(false)
 
   return (
     <a
@@ -37,17 +41,33 @@ export function ProductCard({ product }: ProductCardProps) {
       </div>
 
       <div className="space-y-1">
-        <h3 className="truncate text-sm font-medium tracking-tight text-foreground">
-          {product.name}
-        </h3>
-        <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+        <h3 className="truncate text-sm font-medium tracking-tight text-foreground">{product.name}</h3>
+        <p
+          className={`text-xs leading-relaxed text-muted-foreground ${expanded ? "" : "line-clamp-3"} cursor-pointer`}
+          onClick={e => {
+            e.preventDefault()
+            setExpanded(!expanded)
+          }}
+          role="button"
+          tabIndex={0}
+          onKeyDown={e => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault()
+              setExpanded(!expanded)
+            }
+          }}
+        >
           {product.description}
+          <span className="ml-1 inline-flex items-center text-[10px] font-medium text-muted-foreground/60">
+            {expanded ? "收起" : "展开"}
+            <ChevronDown className={`ml-0.5 size-3 transition-transform ${expanded ? "rotate-180" : ""}`} />
+          </span>
         </p>
       </div>
 
       {product.tags && product.tags.length > 0 && (
         <div className="flex flex-wrap items-center gap-1">
-          {product.tags.slice(0, 3).map((tag) => (
+          {product.tags.slice(0, 3).map(tag => (
             <Badge key={tag} variant="secondary" className="px-1.5 py-0 text-[11px] font-normal">
               {tag}
             </Badge>

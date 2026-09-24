@@ -30,7 +30,7 @@ export function RecentVisits({ limit = 4 }: { limit?: number }) {
   return (
     <section className="space-y-3">
       <div className="flex items-baseline gap-2.5">
-        <span className="font-data text-muted-foreground">·</span>
+        <span className="font-data text-muted-foreground">05</span>
         <h2 className="text-base font-semibold tracking-tight">最近访问</h2>
         <Link
           href="/history"

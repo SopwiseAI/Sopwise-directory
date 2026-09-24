@@ -25,24 +25,24 @@ export default function Home() {
       <BrandShowcase />
       <RecentVisits />
 
-      {featured.length > 0 && (
-        <section id="featured" className="space-y-3 scroll-mt-16">
-          <SectionTitle
-            index="01"
-            title="精选推荐"
-            hint={
-              featured.length > FEATURED_LIMIT
+      <section id="featured" className="space-y-3 scroll-mt-16">
+        <SectionTitle
+          index="01"
+          title="精选推荐"
+          hint={
+            featured.length > 0
+              ? featured.length > FEATURED_LIMIT
                 ? `展示 ${formatCount(featured.length)} 个精选中的前 ${FEATURED_LIMIT} 个`
                 : `${formatCount(featured.length)} 个精选产品`
-            }
-          />
-          <div className="product-card-grid">
-            {featured.slice(0, FEATURED_LIMIT).map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
-      )}
+              : "暂无精选产品，展示最新收录"
+          }
+        />
+        <div className="product-card-grid">
+          {(featured.length > 0 ? featured : latest).slice(0, FEATURED_LIMIT).map(product => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      </section>
 
       <section className="space-y-3">
         <SectionTitle index="02" title="最新收录" hint="按产品成立时间排序" />

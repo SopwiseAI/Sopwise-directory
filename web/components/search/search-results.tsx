@@ -1,27 +1,30 @@
-"use client";
+"use client"
 
-import { useMemo } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { SearchX } from "lucide-react";
-import { getAllProducts, getFeaturedProducts } from "@/lib/data";
-import { createSearchIndex } from "@/lib/search";
+import { useMemo, useState, useTransition } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
+import { SearchX } from "lucide-react"
+import { getAllProducts, getFeaturedProducts } from "@/lib/data"
+import { createSearchIndex } from "@/lib/search"
 import { ProductRow } from "@/components/product/product-row"
-import { formatCount } from "@/lib/format";
+import { formatCount } from "@/lib/format"
 
-const allProducts = getAllProducts();
-const searchIndex = createSearchIndex(allProducts);
-const featured = getFeaturedProducts();
-const suggestions = featured.slice(0, 5).map((p) => p.name);
+const allProducts = getAllProducts()
+const searchIndex = createSearchIndex(allProducts)
+const featured = getFeaturedProducts()
+const suggestions = featured.slice(0, 5).map(p => p.name)
 
 export function SearchResults() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const query = searchParams.get("q") || "";
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const query = searchParams.get("q") || ""
 
   const results = useMemo(() => {
-    if (!query.trim()) return [];
-    return searchIndex.search(query).map((r) => r.item);
-  }, [query]);
+    if (!query.trim()) return []
+    return searchIndex.search(query).map(r => r.item)
+  }, [query])
+
+  const [isPending, startTransition] = useTransition()
+  const [pendingQuery, setPendingQuery] = useState<string | null>(null)
 
   if (!query.trim()) {
     return (
@@ -31,10 +34,13 @@ export function SearchResults() {
         </div>
         <p className="text-sm text-muted-foreground">
           输入关键词开始搜索，或使用顶栏命令搜索框（按{" "}
-          <span className="kbd" aria-hidden>/</span> 聚焦）
+          <span className="kbd" aria-hidden>
+            /
+          </span>{" "}
+          聚焦）
         </p>
       </div>
-    );
+    )
   }
 
   if (results.length === 0) {
@@ -49,14 +55,23 @@ export function SearchResults() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
             <span className="text-xs text-muted-foreground">试试搜索：</span>
-            {suggestions.map((s) => (
+            {suggestions.map(s => (
               <button
                 key={s}
                 type="button"
-                onClick={() => router.push(`/search?q=${encodeURIComponent(s)}`)}
-                className="rounded-md px-2 py-0.5 text-xs text-primary hover:bg-primary/10 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => {
+                  setPendingQuery(s)
+                  startTransition(() => {
+                    router.push(`/search?q=${encodeURIComponent(s)}`)
+                  })
+                }}
+                className={
+                  "rounded-md px-2 py-0.5 text-xs text-primary hover:bg-primary/10 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring" +
+                  (isPending && pendingQuery === s ? " opacity-70" : "")
+                }
+                disabled={isPending && pendingQuery === s}
               >
-                {s}
+                {isPending && pendingQuery === s ? "搜索中..." : s}
               </button>
             ))}
           </div>
@@ -76,14 +91,13 @@ export function SearchResults() {
           </div>
         )}
       </div>
-    );
+    )
   }
 
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        找到{" "}
-        <span className="font-mono font-medium tabular-nums text-foreground">{formatCount(results.length)}</span>{" "}
+        找到 <span className="font-mono font-medium tabular-nums text-foreground">{formatCount(results.length)}</span>{" "}
         个与 <span className="font-medium text-foreground">「{query}」</span> 相关的结果
       </p>
       <div className="rounded-lg border bg-card">
@@ -92,5 +106,5 @@ export function SearchResults() {
         ))}
       </div>
     </div>
-  );
+  )
 }

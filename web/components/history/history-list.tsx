@@ -3,17 +3,12 @@
 import { useEffect, useMemo, useReducer, useState, useSyncExternalStore, useRef } from "react"
 import Link from "next/link"
 import { Clock, Search, Trash2 } from "lucide-react"
-import {
-  clearHistory,
-  getHistorySnapshot,
-  removeFromHistory,
-  subscribeHistory,
-  type HistoryItem,
-} from "@/lib/history"
+import { clearHistory, getHistorySnapshot, removeFromHistory, subscribeHistory, type HistoryItem } from "@/lib/history"
 import { getAllCategories } from "@/lib/data"
 import { ProductIcon } from "@/components/product/product-icon"
 import { formatCount } from "@/lib/format"
 import { PricingBadge } from "@/components/product/pricing-badge"
+import { Button } from "@/components/ui/button"
 
 const categories = getAllCategories()
 /** 分页步长：初始渲染 + 每次触底加载的条数（避免 200 条一次性渲染） */
@@ -46,9 +41,10 @@ export function HistoryList() {
   const raw = useSyncExternalStore(subscribeHistory, getHistorySnapshot, () => "[]")
   const [query, setQuery] = useState("")
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
 
   // 分类名查找：需在使用（filtered）之前定义（TDZ 防护）
-  const categoryName = (id: string) => categories.find((c) => c.id === id)?.name ?? ""
+  const categoryName = (id: string) => categories.find(c => c.id === id)?.name ?? ""
 
   const items = useMemo(() => {
     try {
@@ -62,7 +58,7 @@ export function HistoryList() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return items
-    return items.filter((it) => {
+    return items.filter(it => {
       const name = (it.name ?? "").toLowerCase()
       const domain = (it.domain ?? "").toLowerCase()
       const cat = categoryName(it.categoryId).toLowerCase()
@@ -76,9 +72,9 @@ export function HistoryList() {
     const el = sentinelRef.current
     if (!el) return
     const observer = new IntersectionObserver(
-      (entries) => {
+      entries => {
         if (entries[0].isIntersecting) {
-          setVisibleCount((n) => Math.min(n + PAGE_SIZE, filtered.length))
+          setVisibleCount(n => Math.min(n + PAGE_SIZE, filtered.length))
         }
       },
       { rootMargin: "200px" }
@@ -96,9 +92,7 @@ export function HistoryList() {
       <div className="flex flex-col items-center gap-3 rounded-lg border bg-card py-14 text-center">
         <Clock className="size-8 text-muted-foreground/60" />
         <p className="text-sm text-muted-foreground">暂无访问记录</p>
-        <p className="text-xs text-muted-foreground">
-          浏览产品时自动记录，方便下次快速回到这里
-        </p>
+        <p className="text-xs text-muted-foreground">浏览产品时自动记录，方便下次快速回到这里</p>
         <Link
           href="/"
           className="mt-1 rounded-md border px-3 py-1.5 text-sm transition-colors hover:bg-secondary outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -114,7 +108,10 @@ export function HistoryList() {
       {/* 工具条：搜索 + 计数 + 清空 */}
       <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
         <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" aria-hidden />
+          <Search
+            className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60"
+            aria-hidden
+          />
           <input
             type="search"
             enterKeyHint="search"
@@ -122,7 +119,7 @@ export function HistoryList() {
             autoComplete="off"
             placeholder="搜索历史记录…"
             value={query}
-            onChange={(e) => {
+            onChange={e => {
               setQuery(e.target.value)
               setVisibleCount(PAGE_SIZE)
             }}
@@ -134,16 +131,41 @@ export function HistoryList() {
         </span>
         <button
           type="button"
-          onClick={() => {
-            if (window.confirm(`确定清空全部 ${items.length} 条历史记录？此操作不可恢复。`)) {
-              clearHistory()
-            }
-          }}
+          onClick={() => setShowClearConfirm(true)}
           className="rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
         >
           清空全部
         </button>
       </div>
+
+      {showClearConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setShowClearConfirm(false)}
+          onKeyDown={e => e.key === "Escape" && setShowClearConfirm(false)}
+          tabIndex={0}
+          ref={el => el?.focus()}
+        >
+          <div className="rounded-lg border bg-card p-6 shadow-lg max-w-sm mx-auto" onClick={e => e.stopPropagation()}>
+            <h3 className="text-base font-semibold">确认清空所有历史记录？</h3>
+            <p className="mt-2 text-sm text-muted-foreground">此操作不可恢复，共 {items.length} 条记录</p>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowClearConfirm(false)}>
+                取消
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  clearHistory()
+                  setShowClearConfirm(false)
+                }}
+              >
+                确定清空
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 搜索无结果 */}
       {query && filtered.length === 0 ? (
@@ -162,8 +184,18 @@ export function HistoryList() {
                   (i !== visible.length - 1 ? " border-b border-border" : "")
                 }
               >
-                <a href={item.url} target="_blank" rel="noopener noreferrer" className="flex min-w-0 flex-1 items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset">
-                  <ProductIcon name={item.name} url={item.url} className="h-8 w-8 rounded-md border" imgClassName="h-8 w-8" />
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex min-w-0 flex-1 items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                >
+                  <ProductIcon
+                    name={item.name}
+                    url={item.url}
+                    className="h-8 w-8 rounded-md border"
+                    imgClassName="h-8 w-8"
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{item.name}</p>
                     <p className="truncate font-data text-muted-foreground">

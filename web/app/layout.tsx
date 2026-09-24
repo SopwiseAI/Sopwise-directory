@@ -74,7 +74,7 @@ export default function RootLayout({
             <CategorySidebar />
             <div className="min-w-0 flex-1 md:overflow-y-auto">
               <CommandSearchBar className="hidden md:block" />
-              <main id="main" className="mx-auto w-full max-w-6xl scroll-mt-16 px-4 py-6 sm:px-6">
+              <main id="main" className="mx-auto w-full max-w-7xl scroll-mt-16 px-4 py-6 sm:px-6">
                 {children}
               </main>
               <Footer />

@@ -8,15 +8,27 @@ export type ViewMode = "list" | "grid"
 
 export type FilterMode = "featured" | "latest"
 
+export type SortMode = "name-asc" | "name-desc" | "latest"
+
 interface ProductToolbarProps {
   count: number
   view: ViewMode
   filter: FilterMode
+  sort: SortMode
   onViewChange: (view: ViewMode) => void
   onFilterChange: (filter: FilterMode) => void
+  onSortChange: (sort: SortMode) => void
 }
 
-export function ProductToolbar({ count, view, filter, onViewChange, onFilterChange }: ProductToolbarProps) {
+export function ProductToolbar({
+  count,
+  view,
+  filter,
+  sort,
+  onViewChange,
+  onFilterChange,
+  onSortChange
+}: ProductToolbarProps) {
   const segItem = (active: boolean) =>
     cn(
       "flex h-9 items-center justify-center gap-1.5 rounded-md px-3 text-xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -43,6 +55,33 @@ export function ProductToolbar({ count, view, filter, onViewChange, onFilterChan
           className={segItem(filter === "latest")}
         >
           全部
+        </button>
+      </div>
+
+      <div className="inline-flex items-center rounded-md border bg-card p-0.5" role="group" aria-label="排序">
+        <button
+          type="button"
+          onClick={() => onSortChange("latest")}
+          aria-pressed={sort === "latest"}
+          className={segItem(sort === "latest")}
+        >
+          最新
+        </button>
+        <button
+          type="button"
+          onClick={() => onSortChange("name-asc")}
+          aria-pressed={sort === "name-asc"}
+          className={segItem(sort === "name-asc")}
+        >
+          A-Z
+        </button>
+        <button
+          type="button"
+          onClick={() => onSortChange("name-desc")}
+          aria-pressed={sort === "name-desc"}
+          className={segItem(sort === "name-desc")}
+        >
+          Z-A
         </button>
       </div>
 

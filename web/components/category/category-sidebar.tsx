@@ -1,6 +1,6 @@
 "use client"
 
-import { useSyncExternalStore, type ReactNode } from "react"
+import { useSyncExternalStore, useEffect, useRef, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { LayoutGrid, History, Settings } from "lucide-react"
@@ -111,6 +111,23 @@ function CollapseToggle() {
 export function CategorySidebar() {
   const pathname = usePathname()
   const collapsed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  const navRef = useRef<HTMLElement>(null)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  const [scrollable, setScrollable] = useState(false)
+
+  useEffect(() => {
+    const nav = navRef.current
+    const sentinel = sentinelRef.current
+    if (!nav || !sentinel) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setScrollable(!entry.isIntersecting)
+      },
+      { root: nav, threshold: 0 }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [collapsed])
   // 折叠态 tooltip 由 shadcn Tooltip 组件统一管理（Portal + 定位 + ARIA）
 
   return (
@@ -145,45 +162,52 @@ export function CategorySidebar() {
       </div>
 
       {/* 主导航区：占满剩余空间，可滚动 */}
-      <nav
-        className={cn(
-          "flex min-h-0 flex-1 flex-col overflow-y-auto",
-          collapsed ? "gap-1.5 px-2.5 pt-3" : "gap-0.5 px-1.5 pt-1"
-        )}
-      >
-        {/* 全部产品（核心主功能，首位） */}
-        <SidebarLink
-          href="/"
-          active={pathname === "/"}
-          collapsed={collapsed}
-          label="全部产品"
-          icon={<LayoutGrid className="size-4 shrink-0" />}
-          count={formatCount(TOTAL_PRODUCTS)}
-        />
-
-        {/* 历史记录（辅助入口） */}
-        <SidebarLink
-          href="/history"
-          active={pathname === "/history"}
-          collapsed={collapsed}
-          label="历史记录"
-          icon={<History className="size-4 shrink-0" />}
-          badge={<HistoryCount />}
-        />
-
-        <p className={cn("px-3 pb-1.5 pt-4 font-data text-muted-foreground", collapsed && "sr-only")}>分类</p>
-        {categories.map(category => (
+      <div className="relative min-h-0 flex-1">
+        <nav
+          ref={navRef}
+          className={cn(
+            "flex h-full flex-col overflow-y-auto",
+            collapsed ? "gap-1.5 px-2.5 pt-3" : "gap-0.5 px-1.5 pt-1"
+          )}
+        >
+          {/* 全部产品（核心主功能，首位） */}
           <SidebarLink
-            key={category.id}
-            href={`/category/${category.id}`}
-            active={pathname === `/category/${category.id}`}
+            href="/"
+            active={pathname === "/"}
             collapsed={collapsed}
-            label={category.name}
-            icon={categoryIconNode(category.id)}
-            count={formatCount(getProductsByCategory(category.id).length)}
+            label="全部产品"
+            icon={<LayoutGrid className="size-4 shrink-0" />}
+            count={formatCount(TOTAL_PRODUCTS)}
           />
-        ))}
-      </nav>
+
+          {/* 历史记录（辅助入口） */}
+          <SidebarLink
+            href="/history"
+            active={pathname === "/history"}
+            collapsed={collapsed}
+            label="历史记录"
+            icon={<History className="size-4 shrink-0" />}
+            badge={<HistoryCount />}
+          />
+
+          <p className={cn("px-3 pb-1.5 pt-4 font-data text-muted-foreground", collapsed && "sr-only")}>分类</p>
+          {categories.map(category => (
+            <SidebarLink
+              key={category.id}
+              href={`/category/${category.id}`}
+              active={pathname === `/category/${category.id}`}
+              collapsed={collapsed}
+              label={category.name}
+              icon={categoryIconNode(category.id)}
+              count={formatCount(getProductsByCategory(category.id).length)}
+            />
+          ))}
+          <div ref={sentinelRef} className="h-px" />
+        </nav>
+        {scrollable && (
+          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-sidebar to-transparent" />
+        )}
+      </div>
 
       {/* 底部工具区：固定收拢，仅设置入口 */}
       <div className="flex shrink-0 flex-col p-2.5 pt-1.5">
@@ -251,7 +275,7 @@ function SidebarLink({ href, active, collapsed, label, icon, count, badge }: Sid
     return (
       <Tooltip>
         <TooltipTrigger render={link} />
-        <TooltipContent side="right" sideOffset={10} align="center">
+        <TooltipContent side="right" sideOffset={10} align="center" alignOffset={4}>
           {label}
           {count !== undefined && <span className="ml-1.5 font-data text-inherit opacity-70">{count}</span>}
         </TooltipContent>

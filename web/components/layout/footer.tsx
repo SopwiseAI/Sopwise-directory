@@ -36,6 +36,28 @@ export default function Footer() {
               </Link>
             ))}
           </nav>
+
+          <nav className="flex flex-col gap-2" aria-label="关于">
+            <p className="text-xs font-medium text-foreground">关于</p>
+            <Link
+              href="/settings"
+              className="rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              关于 XiGee
+            </Link>
+            <Link
+              href="#"
+              className="rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              提交产品
+            </Link>
+            <Link
+              href="#"
+              className="rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              建议反馈
+            </Link>
+          </nav>
         </div>
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t pt-4">

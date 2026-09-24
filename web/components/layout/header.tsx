@@ -55,8 +55,14 @@ function MobileSearchInput({ defaultValue, onClose }: { defaultValue: string; on
 
 function HeaderInner({ className }: { className?: string }) {
   const [searchOpen, setSearchOpen] = useState(false)
+  const [searchResetKey, setSearchResetKey] = useState(0)
   const searchParams = useSearchParams()
   const urlQuery = searchParams.get("q") ?? ""
+
+  const handleSearchClose = () => {
+    setSearchOpen(false)
+    setSearchResetKey(k => k + 1)
+  }
 
   return (
     <header
@@ -74,7 +80,11 @@ function HeaderInner({ className }: { className?: string }) {
         <div className="flex flex-1 items-center justify-end gap-2">
           {searchOpen ? (
             <div className="w-full max-w-xs">
-              <MobileSearchInput key={urlQuery} defaultValue={urlQuery} onClose={() => setSearchOpen(false)} />
+              <MobileSearchInput
+                key={`${urlQuery}-${searchResetKey}`}
+                defaultValue={urlQuery}
+                onClose={handleSearchClose}
+              />
             </div>
           ) : (
             <Button
