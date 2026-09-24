@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import CHAR, BigInteger, Boolean, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy import CHAR, BigInteger, Boolean, DateTime, ForeignKey, Index, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -8,6 +8,7 @@ from app.core.database import Base
 
 class Category(Base):
     __tablename__ = "sd_category"
+    __table_args__ = (Index("idx_status_sort", "status", "sort_order"),)
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     slug: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
@@ -26,6 +27,12 @@ class Category(Base):
 
 class Product(Base):
     __tablename__ = "sd_product"
+    __table_args__ = (
+        Index("idx_category", "category_id"),
+        Index("idx_status_sort", "status", "sort_order"),
+        Index("idx_featured", "featured"),
+        Index("idx_published_at", "published_at"),
+    )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     slug: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
@@ -51,6 +58,10 @@ class Product(Base):
 
 class ProductLink(Base):
     __tablename__ = "sd_product_link"
+    __table_args__ = (
+        Index("idx_product", "product_id"),
+        Index("idx_product_primary", "product_id", "is_primary"),
+    )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     product_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("sd_product.id", ondelete="CASCADE"), nullable=False)
@@ -80,6 +91,7 @@ class Tag(Base):
 
 class ProductTag(Base):
     __tablename__ = "sd_product_tag"
+    __table_args__ = (Index("idx_tag", "tag_id"),)
 
     product_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("sd_product.id", ondelete="CASCADE"), primary_key=True

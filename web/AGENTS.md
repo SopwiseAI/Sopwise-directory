@@ -1,20 +1,20 @@
 <!-- BEGIN:nextjs-agent-rules -->
+
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
-# ailulu — AI 产品书签网站
+# Sopwise Directory — AI 产品书签网站
 
 ## 项目概述
 
-ailulu 是一个 AI 产品书签网站，帮助用户发现和浏览各类 AI 产品。MVP 阶段为纯前端 SSG 站点，基于 data.json 驱动数据。
+Sopwise Directory 是一个 AI 产品书签网站，帮助用户发现和浏览各类 AI 产品。MVP 阶段为纯前端 SSG 站点，基于 data.json 驱动数据。
 
 ## 技术栈
 
 - Next.js 16 (App Router) + React 19 + TypeScript 5
-- Tailwind CSS 4 + shadcn/ui (new-york style, neutral base)
-- @tanstack/react-virtual (虚拟滚动)
+- Tailwind CSS 4 + shadcn/ui (base-nova-style, neutral base)
 - fuse.js (客户端模糊搜索)
 - lucide-react (图标)
 - pnpm

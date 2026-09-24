@@ -1,5 +1,4 @@
 import hashlib
-import re
 from urllib.parse import urlsplit, urlunsplit
 
 
@@ -33,12 +32,3 @@ def normalize_url(raw_url: str) -> str:
 def url_hash(raw_url: str) -> str:
     normalized = normalize_url(raw_url)
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
-
-
-def slugify(text: str) -> str:
-    text = text.strip().lower()
-    text = re.sub(r"[^\w\s-]", "", text)
-    text = re.sub(r"[\s_]+", "-", text)
-    text = re.sub(r"-+", "-", text)
-    text = text.strip("-")
-    return text or "untitled"

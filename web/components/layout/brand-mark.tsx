@@ -5,21 +5,21 @@ interface BrandMarkProps {
   size?: "sm" | "md" | "lg"
 }
 
-/** 
- * ailulu 品牌标识：书签轮廓 + 主色圆角方块。
+/**
+ * Sopwise 品牌标识：书签轮廓 + 主色圆角方块。
  * "书签"语义贴合 AI 产品书签站定位；方块 + 内切圆角营造控制台质感。
  */
 export function BrandMark({ className, size = "md" }: BrandMarkProps) {
   const sizeClass = {
     sm: "size-6 rounded-md",
     md: "size-8 rounded-lg",
-    lg: "size-9 rounded-xl",
+    lg: "size-9 rounded-xl"
   }[size]
 
   const iconSize = {
     sm: "size-3.5",
     md: "size-4.5",
-    lg: "size-5",
+    lg: "size-5"
   }[size]
 
   return (

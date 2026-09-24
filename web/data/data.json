@@ -1,35 +1,13 @@
 {
-  "categories": [
-    {
-      "id": "count-cat",
-      "name": "计数",
-      "icon": "Bot"
-    },
-    {
-      "id": "ai-chat",
-      "name": "AI对话",
-      "icon": "MessageSquare"
-    }
-  ],
+  "categories": [],
   "products": [
-    {
-      "id": "p2",
-      "name": "P2",
-      "description": "",
-      "url": "",
-      "categoryId": "count-cat",
-      "tags": [],
-      "pricing": "free",
-      "featured": false,
-      "publishedAt": "2026-09-24"
-    },
     {
       "id": "p1",
       "name": "P1",
       "description": "",
-      "url": "",
-      "categoryId": "count-cat",
-      "tags": [],
+      "url": "https://example.com",
+      "categoryId": "",
+      "tags": ["T1"],
       "pricing": "free",
       "featured": false,
       "publishedAt": "2026-09-24"

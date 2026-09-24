@@ -15,13 +15,9 @@ import { HistoryCount } from "@/components/history/history-count"
 import { getAllCategories, getProductsByCategory } from "@/lib/data"
 import { formatCount } from "@/lib/format"
 
-
 const categories = getAllCategories()
-const STORAGE_KEY = "ailulu:sidebar-collapsed"
-const TOTAL_PRODUCTS = categories.reduce(
-  (sum, c) => sum + getProductsByCategory(c.id).length,
-  0
-)
+const STORAGE_KEY = "sopwise:sidebar-collapsed"
+const TOTAL_PRODUCTS = categories.reduce((sum, c) => sum + getProductsByCategory(c.id).length, 0)
 
 function getSnapshot() {
   try {
@@ -128,7 +124,7 @@ export function CategorySidebar() {
       )}
     >
       {/* 品牌区：折叠控制恒在品牌行（DSH 式）。
-       展开态：mark + ailulu | 收起按钮。
+       展开态：mark + Sopwise | 收起按钮。
        折叠态：整个品牌区即"打开侧边栏"按钮 —— 仅见 logo，hover LOGO 时浮现展开图标，点击展开。 */}
       <div className={cn("flex shrink-0 items-center", collapsed ? "pt-2" : "h-16 justify-between px-3")}>
         {collapsed ? (
@@ -138,10 +134,10 @@ export function CategorySidebar() {
             <Link
               href="/"
               className="flex min-w-0 items-center gap-2.5 rounded-lg px-1 py-1.5 transition-colors hover:bg-secondary/60"
-              title="ailulu 首页"
+              title="Sopwise 首页"
             >
               <BrandMark size="lg" />
-              <span className="text-2xl font-semibold tracking-tight">ailulu</span>
+              <span className="text-2xl font-semibold tracking-tight">Sopwise</span>
             </Link>
             <CollapseToggle />
           </>
@@ -175,10 +171,8 @@ export function CategorySidebar() {
           badge={<HistoryCount />}
         />
 
-        <p className={cn("px-3 pb-1.5 pt-4 font-data text-muted-foreground", collapsed && "sr-only")}>
-          分类
-        </p>
-        {categories.map((category) => (
+        <p className={cn("px-3 pb-1.5 pt-4 font-data text-muted-foreground", collapsed && "sr-only")}>分类</p>
+        {categories.map(category => (
           <SidebarLink
             key={category.id}
             href={`/category/${category.id}`}
@@ -259,9 +253,7 @@ function SidebarLink({ href, active, collapsed, label, icon, count, badge }: Sid
         <TooltipTrigger render={link} />
         <TooltipContent side="right" sideOffset={10} align="center">
           {label}
-          {count !== undefined && (
-            <span className="ml-1.5 font-data text-inherit opacity-70">{count}</span>
-          )}
+          {count !== undefined && <span className="ml-1.5 font-data text-inherit opacity-70">{count}</span>}
         </TooltipContent>
       </Tooltip>
     )

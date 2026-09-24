@@ -4,6 +4,7 @@
     "charliermarsh.ruff",
     "DavidAnson.vscode-markdownlint",
     "bradlc.vscode-tailwindcss",
-    "ms-python.python"
+    "ms-python.python",
+    "dbaeumer.vscode-eslint"
   ]
 }

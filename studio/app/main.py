@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import IntegrityError
 
 from app.api.v1.router import router as v1_router
 from app.core.config import get_settings
@@ -47,6 +48,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(IntegrityError)
+async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSONResponse:
+    logger.warning("Integrity error on %s %s: %s", request.method, request.url.path, exc)
+    return JSONResponse(
+        status_code=409,
+        content={"detail": "Resource conflict — unique constraint violated"},
+    )
 
 
 @app.exception_handler(Exception)

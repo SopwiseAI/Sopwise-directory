@@ -37,17 +37,21 @@ fix: 修复 bug
 docs: 文档
 style: 格式调整
 refactor: 重构
+perf: 性能优化
 test: 测试
+build: 构建系统
+ci: CI 配置
 chore: 构建/工具
+revert: 回退
 ```
 
 ### 格式化
 
-| 文件类型               | 工具              | 命令                                |
-| ---------------------- | ----------------- | ----------------------------------- |
-| Markdown / JSON / YAML | prettier          | `npm run format`                    |
-| Python                 | ruff              | `cd studio && uv run ruff format .` |
-| TypeScript / TSX       | eslint (web 内置) | `cd web && pnpm lint`               |
+| 文件类型                                        | 工具              | 命令                                |
+| ----------------------------------------------- | ----------------- | ----------------------------------- |
+| Markdown (root/.opencode/skills) / JSON / JSONC | prettier          | `npm run format`                    |
+| Python                                          | ruff              | `cd studio && uv run ruff format .` |
+| TypeScript / TSX                                | eslint (web 内置) | `cd web && pnpm lint`               |
 
 ### 提交流程
 
@@ -64,6 +68,9 @@ husky commit-msg 自动执行 commitlint 校验提交信息格式。
 ```bash
 # 后端测试
 cd studio && APP_ENV=dev uv run pytest -v
+
+# 全量检查 (markdownlint + prettier check + ruff check + eslint)
+npm run check
 ```
 
 ## 产品状态流程

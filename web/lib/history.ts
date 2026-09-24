@@ -11,11 +11,11 @@ export interface HistoryItem {
   visitedAt: string
 }
 
-const STORAGE_KEY = "ailulu:history"
+const STORAGE_KEY = "sopwise:history"
 /** 保留上限 200 条：localStorage 容量充足（约 200KB），覆盖长期使用；
     超出自动淘汰最旧条目（见 addToHistory 的 slice）。 */
 const MAX_ITEMS = 200
-const NAV_EVENT = "ailulu:history-change"
+const NAV_EVENT = "sopwise:history-change"
 
 function isBrowser() {
   return typeof window !== "undefined"
@@ -42,7 +42,7 @@ export function getHistory(): HistoryItem[] {
 /** 访问产品时记录：同产品置顶去重，超出上限裁剪 */
 export function addToHistory(product: Product): HistoryItem[] {
   if (!isBrowser()) return getHistory()
-  const list = getHistory().filter((i) => i.id !== product.id)
+  const list = getHistory().filter(i => i.id !== product.id)
   list.unshift({
     id: product.id,
     name: product.name,
@@ -50,7 +50,7 @@ export function addToHistory(product: Product): HistoryItem[] {
     domain: getDomain(product.url),
     categoryId: product.categoryId,
     pricing: product.pricing,
-    visitedAt: new Date().toISOString(),
+    visitedAt: new Date().toISOString()
   })
   const next = list.slice(0, MAX_ITEMS)
   try {
@@ -65,7 +65,7 @@ export function addToHistory(product: Product): HistoryItem[] {
 /** 移除单条历史 */
 export function removeFromHistory(id: string): HistoryItem[] {
   if (!isBrowser()) return getHistory()
-  const next = getHistory().filter((i) => i.id !== id)
+  const next = getHistory().filter(i => i.id !== id)
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
   } catch {

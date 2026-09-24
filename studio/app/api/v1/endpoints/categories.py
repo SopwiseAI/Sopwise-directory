@@ -63,6 +63,10 @@ async def update_category(category_id: int, data: CategoryUpdate, db: AsyncSessi
         existing = await db.execute(select(Category).where(Category.slug == update_data["slug"]))
         if existing.scalar_one_or_none():
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Slug already exists")
+    if "name" in update_data and update_data["name"] != category.name:
+        existing = await db.execute(select(Category).where(Category.name == update_data["name"]))
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Category name already exists")
 
     for key, value in update_data.items():
         setattr(category, key, value)

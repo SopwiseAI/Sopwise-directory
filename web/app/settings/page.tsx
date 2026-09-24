@@ -5,7 +5,7 @@ import { formatCount } from "@/lib/format"
 
 export const metadata: Metadata = {
   title: "设置",
-  description: "ailulu 设置：外观、数据统计与关于",
+  description: "Sopwise Directory 设置：外观、数据统计与关于"
 }
 
 const products = getAllProducts()
@@ -48,9 +48,9 @@ export default function SettingsPage() {
       <section className="space-y-2">
         <h2 className="text-sm text-muted-foreground">关于</h2>
         <div className="space-y-2 rounded-lg border bg-card px-4 py-3.5">
-          <p className="text-sm">ailulu — AI 产品书签</p>
+          <p className="text-sm">Sopwise Directory — AI 产品书签</p>
           <p className="text-xs text-muted-foreground">
-            发现和探索优秀的 AI 产品，ailulu 为你精选各类 AI 工具与应用。
+            发现和探索优秀的 AI 产品，Sopwise Directory 为你精选各类 AI 工具与应用。
             数据驱动、纯静态构建，点击产品直达官方网站。
           </p>
         </div>

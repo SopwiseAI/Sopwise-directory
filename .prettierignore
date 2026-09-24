@@ -6,7 +6,7 @@ web/dist/
 studio/.venv/
 studio/.pytest_cache/
 studio/.ruff_cache/
-studio/__pycache__/
+**/__pycache__/
 scripts/run/
 package-lock.json
 pnpm-lock.yaml

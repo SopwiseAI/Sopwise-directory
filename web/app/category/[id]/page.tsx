@@ -11,8 +11,8 @@ type Props = {
 
 export async function generateStaticParams() {
   const categories = getAllCategories()
-  return categories.map((category) => ({
-    id: category.id,
+  return categories.map(category => ({
+    id: category.id
   }))
 }
 
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!category) return { title: "分类未找到" }
   return {
     title: `${category.name}`,
-    description: `发现和浏览${category.name}类别的 AI 产品，ailulu 为你精选最佳工具`,
+    description: `发现和浏览${category.name}类别的 AI 产品，Sopwise Directory 为你精选最佳工具`
   }
 }
 
@@ -47,15 +47,9 @@ export default async function CategoryPage({ params }: Props) {
         <div className="min-w-0">
           <h1 className="flex items-baseline gap-2 text-lg font-semibold tracking-tight">
             {category.name}
-            <span className="font-data font-normal text-muted-foreground">
-              {formatCount(products.length)} 个产品
-            </span>
+            <span className="font-data font-normal text-muted-foreground">{formatCount(products.length)} 个产品</span>
           </h1>
-          {latestDate && (
-            <p className="font-data text-muted-foreground">
-              最近更新 {latestDate}
-            </p>
-          )}
+          {latestDate && <p className="font-data text-muted-foreground">最近更新 {latestDate}</p>}
         </div>
       </div>
 

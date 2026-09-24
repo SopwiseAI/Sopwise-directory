@@ -2,29 +2,29 @@
 """Sopwise Directory Studio API CLI — AI 调用 studio 接口的命令行工具。
 
 用法:
-  python skills/tools/api.py products [--status N]       列出产品
-  python skills/tools/api.py product <id>                 查看产品详情
-  python skills/tools/api.py add-product --name <name> [--url <url>] [--category <id>] [--pricing <p>] [--featured]
-  python skills/tools/api.py update-product <id> [--status N] [--name <name>] [--description <desc>] [--category <id>] [--pricing <p>] [--featured]
+  python skills/tools/api.py products [--status N]          列出产品
+  python skills/tools/api.py product <id>                   查看产品详情
+  python skills/tools/api.py add-product --name <name> [--url <url>] [--category-id <id>] [--pricing <p>] [--featured] [--slug <slug>] [--description <desc>]
+  python skills/tools/api.py update-product <id> [--status N] [--name <name>] [--description <desc>] [--category-id <id>] [--pricing <p>] [--featured | --no-featured]
   python skills/tools/api.py delete-product <id>
-  python skills/tools/api.py categories                   列出分类
+  python skills/tools/api.py categories                          列出分类
   python skills/tools/api.py add-category --name <name> --slug <slug> --icon <icon>
-  python skills/tools/api.py tags                         列出标签
+  python skills/tools/api.py tags                                列出标签
   python skills/tools/api.py add-tag --name <name> --slug <slug>
-  python skills/tools/api.py product-links <id>           列出产品链接
+  python skills/tools/api.py product-links <id>                列出产品链接
   python skills/tools/api.py add-link <product_id> --url <url> [--label <label>] [--primary]
-  python skills/tools/api.py product-tags <id>            查看产品标签
+  python skills/tools/api.py product-tags <id>                 查看产品标签
   python skills/tools/api.py set-tags <product_id> --tag-ids 1,2,3
-  python skills/tools/api.py export                        导出 JSON
-  python skills/tools/api.py stats                         目录总览统计
+  python skills/tools/api.py export                             导出 JSON
+  python skills/tools/api.py stats                              目录总览统计
 """
 
 import argparse
 import json
 import os
 import sys
-import urllib.request
 import urllib.error
+import urllib.request
 
 STUDIO_URL = os.environ.get("STUDIO_URL", "http://localhost:8000")
 API_KEY = os.environ.get("STUDIO_API_KEY", "dev-secret-key")
@@ -32,7 +32,9 @@ API_KEY = os.environ.get("STUDIO_API_KEY", "dev-secret-key")
 STATUS_NAMES = {0: "草稿", 1: "待审核", 2: "已发布", 3: "已下架"}
 
 
-def _request(method: str, path: str, data: dict | None = None, need_auth: bool = False) -> dict | list:
+def _request(
+    method: str, path: str, data: dict | None = None, need_auth: bool = False
+) -> dict | list:
     url = f"{STUDIO_URL}/api/v1{path}"
     headers = {"Content-Type": "application/json"}
     if need_auth:
@@ -62,7 +64,10 @@ def _print_table(items: list, columns: list[str]):
     if not items:
         print("  (空)")
         return
-    widths = {c: max(len(c), max(len(str(item.get(c, ""))) for item in items)) for c in columns}
+    widths = {
+        c: max(len(c), max(len(str(item.get(c, ""))) for item in items))
+        for c in columns
+    }
     header = "  ".join(c.ljust(widths[c]) for c in columns)
     print(header)
     print("-" * len(header))
@@ -99,7 +104,10 @@ def cmd_product(args):
 
 
 def cmd_add_product(args):
-    payload = {"slug": args.slug or args.name.lower().replace(" ", "-"), "name": args.name}
+    payload = {
+        "slug": args.slug or args.name.lower().replace(" ", "-"),
+        "name": args.name,
+    }
     if args.url:
         payload["links"] = [{"url": args.url, "is_primary": True}]
     if args.category_id:
@@ -146,11 +154,15 @@ def cmd_categories(args):
 
 
 def cmd_add_category(args):
-    data = _request("POST", "/categories", {
-        "slug": args.slug,
-        "name": args.name,
-        "icon": args.icon,
-    })
+    data = _request(
+        "POST",
+        "/categories",
+        {
+            "slug": args.slug,
+            "name": args.name,
+            "icon": args.icon,
+        },
+    )
     _print_json(data)
 
 
@@ -199,19 +211,27 @@ def cmd_export(args):
 
 
 def cmd_stats(args):
-    products = _request("GET", "/products?page_size=100")
+    all_products = []
+    page = 1
+    while True:
+        data = _request("GET", f"/products?page={page}&page_size=100")
+        all_products.extend(data)
+        if len(data) < 100:
+            break
+        page += 1
+
     categories = _request("GET", "/categories")
     tags = _request("GET", "/tags")
 
     status_counts = {0: 0, 1: 0, 2: 0, 3: 0}
-    for p in products:
+    for p in all_products:
         s = p.get("status", 0)
         status_counts[s] = status_counts.get(s, 0) + 1
 
     print("═══ Sopwise Directory 统计 ═══")
     print(f"  分类总数: {len(categories)}")
     print(f"  标签总数: {len(tags)}")
-    print(f"  产品总数: {len(products)}")
+    print(f"  产品总数: {len(all_products)}")
     print()
     print("  产品状态分布:")
     for s, name in STATUS_NAMES.items():
@@ -256,7 +276,7 @@ def main():
     p.add_argument("--description")
     p.add_argument("--category-id", type=int)
     p.add_argument("--pricing", choices=["free", "freemium", "paid", "opensource"])
-    p.add_argument("--featured", type=bool)
+    p.add_argument("--featured", action=argparse.BooleanOptionalAction, default=None)
     p.set_defaults(func=cmd_update_product)
 
     # delete product

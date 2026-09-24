@@ -8,7 +8,7 @@
     "format:check": "prettier --check \"*.md\" \"*.json\" \"*.jsonc\" \".opencode/**/*.md\" \"skills/**/*.md\"",
     "lint:md": "markdownlint-cli2 \"**/*.md\"",
     "lint:md:fix": "markdownlint-cli2 --fix \"**/*.md\"",
-    "check": "npm run lint:md && npm run format:check",
+    "check": "npm run lint:md && npm run format:check && studio/.venv/bin/ruff check studio/app/ studio/tests/ && cd web && pnpm lint",
     "prepare": "husky"
   },
   "devDependencies": {
@@ -28,8 +28,11 @@
       "prettier --write"
     ],
     "*.py": [
-      "cd studio && uv run ruff check --fix",
-      "cd studio && uv run ruff format"
+      "studio/.venv/bin/ruff check --fix",
+      "studio/.venv/bin/ruff format"
+    ],
+    "*.{ts,tsx,js,jsx,mjs,cjs,css}": [
+      "prettier --write"
     ]
   }
 }

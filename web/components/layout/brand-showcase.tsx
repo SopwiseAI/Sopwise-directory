@@ -12,21 +12,17 @@ export function BrandShowcase() {
   const stats = [
     { label: "产品", value: products.length },
     { label: "分类", value: categories.length },
-    { label: "精选", value: featured.length },
+    { label: "精选", value: featured.length }
   ]
 
   return (
     <section className="rounded-xl border bg-card px-6 py-8 sm:px-8">
       <div className="space-y-6">
         <div className="space-y-3">
-          <p className="font-data uppercase tracking-[0.2em] text-muted-foreground">
-            AI Bookmark Directory
-          </p>
+          <p className="font-data uppercase tracking-[0.2em] text-muted-foreground">AI Bookmark Directory</p>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            ailulu
-            <span className="ml-2 text-base font-normal text-muted-foreground sm:ml-3 sm:text-xl">
-              AI 产品书签
-            </span>
+            Sopwise Directory
+            <span className="ml-2 text-base font-normal text-muted-foreground sm:ml-3 sm:text-xl">AI 产品书签</span>
           </h1>
           <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
             精选的 AI 工具与产品导航。按分类浏览，或直接搜索你需要的能力。
@@ -34,7 +30,7 @@ export function BrandShowcase() {
         </div>
 
         <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-t pt-5">
-          {stats.map((s) => (
+          {stats.map(s => (
             <div key={s.label} className="flex items-baseline gap-2">
               <span className="font-mono text-lg tabular-nums">{formatCount(s.value)}</span>
               <span className="text-xs text-muted-foreground">{s.label}</span>

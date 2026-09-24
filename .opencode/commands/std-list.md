@@ -22,4 +22,4 @@ description: 列出产品，支持按状态过滤
 !`python skills/tools/api.py products --status <N>`
 ```
 
-如果用户要查看某个产品详情，告知使用 `/std-list <ID>` 或直接用 api.py product <ID>。
+如果用户要查看某个产品详情，告知使用 `python skills/tools/api.py product <ID>`。

@@ -37,6 +37,7 @@ dist/
 .venv/
 venv/
 .ruff_cache/
+.pytest_cache/
 
 # IDE
 .idea/

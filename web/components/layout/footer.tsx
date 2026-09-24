@@ -14,7 +14,7 @@ export default function Footer() {
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <BrandMark size="sm" />
-              <span className="text-sm font-semibold tracking-tight">ailulu</span>
+              <span className="text-sm font-semibold tracking-tight">Sopwise</span>
             </div>
             <p className="max-w-xs text-xs text-muted-foreground">
               AI 产品书签 · 精选 {totalProducts} 款 AI 工具与应用
@@ -22,7 +22,7 @@ export default function Footer() {
           </div>
 
           <nav className="flex max-w-sm flex-wrap gap-x-1 gap-y-2" aria-label="分类">
-            {categories.slice(0, 8).map((c) => (
+            {categories.slice(0, 8).map(c => (
               <Link
                 key={c.id}
                 href={`/category/${c.id}`}
@@ -35,9 +35,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t pt-4">
-          <p className="font-data text-muted-foreground">
-            &copy; {new Date().getFullYear()} ailulu · v0.1.0
-          </p>
+          <p className="font-data text-muted-foreground">&copy; {new Date().getFullYear()} Sopwise · v0.1.0</p>
           <p className="font-data text-muted-foreground">
             {formatCount(totalProducts)} 个产品 · {formatCount(categories.length)} 个分类
           </p>

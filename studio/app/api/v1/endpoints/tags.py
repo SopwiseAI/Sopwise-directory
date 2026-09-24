@@ -56,6 +56,10 @@ async def update_tag(tag_id: int, data: TagUpdate, db: AsyncSession = Depends(ge
         existing = await db.execute(select(Tag).where(Tag.slug == update_data["slug"]))
         if existing.scalar_one_or_none():
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Slug already exists")
+    if "name" in update_data and update_data["name"] != tag.name:
+        existing = await db.execute(select(Tag).where(Tag.name == update_data["name"]))
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Tag name already exists")
 
     for key, value in update_data.items():
         setattr(tag, key, value)

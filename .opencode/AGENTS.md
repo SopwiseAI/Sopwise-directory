@@ -27,6 +27,7 @@ AI 驱动的目录站，包含三个模块:
 
 - 仅 status=2 的产品导出到前端
 - published_at 仅在首次 status→2 时写入
+- 合法状态转换: 0→1, 1→0, 1→2, 2→3, 3→2
 
 ## 开发命令
 
@@ -60,6 +61,12 @@ cd studio && uv run ruff check . && uv run ruff format .
 | PUT/DELETE     | /api/v1/products/{id}/links/{link_id} | 链接详情               |
 | PUT            | /api/v1/products/{id}/tags            | 产品标签               |
 | GET/POST       | /api/v1/tags                          | 标签 CRUD              |
+| GET            | /api/v1/tags/{id}                     | 标签详情               |
+| PUT            | /api/v1/tags/{id}                     | 更新标签               |
+| DELETE         | /api/v1/tags/{id}                     | 删除标签               |
+| GET            | /api/v1/tags/{id}/count               | 标签关联产品数         |
+| GET            | /api/v1/categories/{id}/count         | 分类下已发布产品数     |
+| GET            | /api/v1/env                           | 环境信息               |
 | POST           | /api/v1/export                        | 导出 JSON (需 API Key) |
 | GET            | /api/v1/health                        | 健康检查               |
 

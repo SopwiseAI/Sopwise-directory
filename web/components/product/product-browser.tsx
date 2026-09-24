@@ -16,7 +16,7 @@ interface ProductBrowserProps {
   defaultView?: ViewMode
 }
 
-const NAV_EVENT = "ailulu:nav"
+const NAV_EVENT = "sopwise:nav"
 
 function subscribe(callback: () => void) {
   window.addEventListener("popstate", callback)
@@ -40,8 +40,14 @@ function parseUrlSnapshot(snap: string): { view: ViewMode | null; filter: Filter
   const qIndex = snap.indexOf("?")
   if (qIndex === -1) return { view: null, filter: null }
   const qs = new URLSearchParams(snap.slice(qIndex + 1))
-  const view = qs.get("view") === "list" ? ("list" as ViewMode) : qs.get("view") === "grid" ? ("grid" as ViewMode) : null
-  const filter = qs.get("filter") === "latest" ? ("latest" as FilterMode) : qs.get("filter") === "featured" ? ("featured" as FilterMode) : null
+  const view =
+    qs.get("view") === "list" ? ("list" as ViewMode) : qs.get("view") === "grid" ? ("grid" as ViewMode) : null
+  const filter =
+    qs.get("filter") === "latest"
+      ? ("latest" as FilterMode)
+      : qs.get("filter") === "featured"
+        ? ("featured" as FilterMode)
+        : null
   return { view, filter }
 }
 
@@ -62,12 +68,7 @@ function writeUrl(view: ViewMode, filter: FilterMode, defaultView: ViewMode) {
   window.dispatchEvent(new Event(NAV_EVENT))
 }
 
-export function ProductBrowser({
-  products,
-  emptyTitle,
-  emptyDescription,
-  defaultView = "grid",
-}: ProductBrowserProps) {
+export function ProductBrowser({ products, emptyTitle, emptyDescription, defaultView = "grid" }: ProductBrowserProps) {
   const snap = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
   const { view: urlView, filter: urlFilter } = parseUrlSnapshot(snap)
   const view: ViewMode = urlView ?? defaultView
@@ -78,7 +79,7 @@ export function ProductBrowser({
 
   const filtered = useMemo(() => {
     if (filter === "featured") {
-      return products.filter((p) => p.featured)
+      return products.filter(p => p.featured)
     }
     return [...products].sort((a, b) => getProductDate(b).localeCompare(getProductDate(a)))
   }, [products, filter])
@@ -88,14 +89,13 @@ export function ProductBrowser({
       <div className="flex flex-col items-center gap-3 py-12 text-center">
         <PackageOpen className="size-10 text-muted-foreground/60" />
         <div>
-          <p className="text-sm font-medium text-muted-foreground">
-            {emptyTitle ?? "暂无产品"}
-          </p>
-          {emptyDescription && (
-            <p className="mt-1 text-xs text-muted-foreground">{emptyDescription}</p>
-          )}
+          <p className="text-sm font-medium text-muted-foreground">{emptyTitle ?? "暂无产品"}</p>
+          {emptyDescription && <p className="mt-1 text-xs text-muted-foreground">{emptyDescription}</p>}
         </div>
-        <Link href="/" className="mt-1 inline-flex items-center justify-center rounded-md border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <Link
+          href="/"
+          className="mt-1 inline-flex items-center justify-center rounded-md border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
           浏览全部产品
         </Link>
       </div>
@@ -114,7 +114,7 @@ export function ProductBrowser({
 
       {view === "grid" ? (
         <div className="product-card-grid">
-          {filtered.map((product) => (
+          {filtered.map(product => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>

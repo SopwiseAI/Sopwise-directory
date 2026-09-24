@@ -6,7 +6,7 @@
 set -euo pipefail
 source "$(dirname "$0")/lib.sh"
 
-API_KEY="dev-secret-key"
+API_KEY="${STUDIO_API_KEY:-dev-secret-key}"
 
 if [[ "${1:-}" == "--cli" ]]; then
     info "CLI 导出 (直接执行)..."

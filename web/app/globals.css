@@ -267,7 +267,7 @@ html[data-sidebar="collapsed"] #category-sidebar nav p {
   display: none;
 }
 
-/* 折叠态首帧品牌区：隐藏 ailulu 文字与"收起侧边栏"按钮，仅保留品牌方块并居中
+/* 折叠态首帧品牌区：隐藏 Sopwise 文字与"收起侧边栏"按钮，仅保留品牌方块并居中
    （hydration 后 React 渲染 rail 按钮接管；此规则只影响首帧展开态结构） */
 html[data-sidebar="collapsed"] #category-sidebar > div:first-child {
   justify-content: center;
