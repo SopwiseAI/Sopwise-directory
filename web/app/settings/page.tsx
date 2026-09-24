@@ -50,7 +50,7 @@ export default function SettingsPage() {
         <div className="space-y-2 rounded-lg border bg-card px-4 py-3.5">
           <p className="text-sm">XiGee — 你的 AI 发现引擎</p>
           <p className="text-xs text-muted-foreground">
-            发现和探索优秀的 AI 产品，XiGee 为你精选各类 AI 工具与应用。 数据驱动、纯静态构建，点击产品直达官方网站。
+            发现和探索优秀的 AI 产品，XiGee 为你精选各类 AI 工具与应用。 数据驱动、纯静态构建，从XiGee直达官方网站。
           </p>
         </div>
       </section>

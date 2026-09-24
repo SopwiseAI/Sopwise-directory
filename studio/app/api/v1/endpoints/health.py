@@ -6,6 +6,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_db
+from app.main import app
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -17,7 +18,7 @@ async def health_check(db: AsyncSession = Depends(get_db)) -> JSONResponse:
         await db.execute(text("SELECT 1"))
         return JSONResponse(
             status_code=status.HTTP_200_OK,
-            content={"status": "ok", "database": "connected", "brand": "XiGee", "version": "0.1.0"},
+            content={"status": "ok", "database": "connected", "brand": "XiGee", "version": app.version},
         )
     except Exception as exc:
         logger.warning("Health check failed: %s", exc, exc_info=True)
