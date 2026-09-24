@@ -16,10 +16,12 @@ export default function Footer() {
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <BrandMark size="sm" />
-              <span className="text-sm font-semibold tracking-tight">Sopwise</span>
+              <span className="text-sm font-semibold tracking-tight">
+                XiGee<span className="text-xs font-normal text-muted-foreground">.net</span>
+              </span>
             </div>
             <p className="max-w-xs text-xs text-muted-foreground">
-              AI 产品书签 · 精选 {totalProducts} 款 AI 工具与应用
+              你的 AI 发现引擎 · 精选 {totalProducts} 款 AI 工具与应用
             </p>
           </div>
 
@@ -38,7 +40,7 @@ export default function Footer() {
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t pt-4">
           <p className="font-data text-muted-foreground">
-            &copy; {new Date().getFullYear()} Sopwise · v{appVersion}
+            &copy; {new Date().getFullYear()} XiGee · v{appVersion}
           </p>
           <p className="font-data text-muted-foreground">
             {formatCount(totalProducts)} 个产品 · {formatCount(categories.length)} 个分类

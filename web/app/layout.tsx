@@ -22,16 +22,15 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: { default: "Sopwise Directory - AI 产品书签", template: "%s - Sopwise Directory" },
-  description: "发现和探索最好的 AI 产品，Sopwise Directory 为你精选各类 AI 工具和应用",
-  keywords: ["AI", "AI产品", "AI工具", "人工智能", "书签", "AI导航"],
+  title: { default: "XiGee — 你的 AI 发现引擎", template: "%s — XiGee" },
+  description: "XiGee 是你的 AI 发现引擎，精选各类 AI 工具与应用，按分类浏览或直接搜索你需要的能力",
+  keywords: ["AI", "AI产品", "AI工具", "人工智能", "AI导航", "AI发现引擎", "XiGee"],
   openGraph: {
-    title: "Sopwise Directory - AI 产品书签",
-    description: "发现和探索最好的 AI 产品，Sopwise Directory 为你精选各类 AI 工具和应用",
-    siteName: "Sopwise Directory",
+    title: "XiGee — 你的 AI 发现引擎",
+    description: "精选各类 AI 工具与应用，XiGee 为你发现最好的 AI 产品",
+    siteName: "XiGee",
     locale: "zh_CN",
     type: "website"
-    // OG 图由 app/opengraph-image.tsx（ImageResponse 运行时生成）提供
   }
 }
 
@@ -39,7 +38,7 @@ export const metadata: Metadata = {
 const themeScript = `(function(){try{const t=localStorage.getItem("theme")||"system";const m=window.matchMedia("(prefers-color-scheme:dark)");const dark=t==="dark"||(t==="system"&&m.matches);document.documentElement.classList.toggle("dark",dark);const meta=document.querySelector('meta[name="theme-color"]');if(meta){meta.setAttribute("content",dark?"#0f1114":"#fafafb")}}catch(e){}})()`
 
 /** 首帧前读取侧栏折叠偏好写入 <html data-sidebar>，CSS 据此先行渲染折叠态（SB-01，避免展开→折叠闪烁）。 */
-const sidebarScript = `(function(){try{const c=localStorage.getItem("sopwise:sidebar-collapsed")==="true";document.documentElement.setAttribute("data-sidebar",c?"collapsed":"expanded")}catch(e){document.documentElement.setAttribute("data-sidebar","expanded")}})()`
+const sidebarScript = `(function(){try{const c=localStorage.getItem("xigee:sidebar-collapsed")==="true";document.documentElement.setAttribute("data-sidebar",c?"collapsed":"expanded")}catch(e){document.documentElement.setAttribute("data-sidebar","expanded")}})()`
 
 export default function RootLayout({
   children

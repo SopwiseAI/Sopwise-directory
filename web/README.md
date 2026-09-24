@@ -1,6 +1,6 @@
-# Sopwise Directory
+# XiGee Directory
 
-AI 产品书签导航站 — 发现和浏览精选的 AI 工具与应用。
+AI 产品发现引擎 — 发现和浏览精选的 AI 工具与应用。
 
 ## 技术栈
 
@@ -22,9 +22,9 @@ pnpm lint      # 运行 ESLint
 
 ## 环境变量
 
-| 变量                   | 说明                              | 默认值                |
-| ---------------------- | --------------------------------- | --------------------- |
-| `NEXT_PUBLIC_SITE_URL` | 站点 URL（用于 sitemap / robots） | `https://sopwise.com` |
+| 变量                   | 说明                              | 默认值                  |
+| ---------------------- | --------------------------------- | ----------------------- |
+| `NEXT_PUBLIC_SITE_URL` | 站点 URL（用于 sitemap / robots） | `https://www.xigee.net` |
 
 ## 目录结构
 

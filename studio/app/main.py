@@ -34,8 +34,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 settings = get_settings()
 
 app = FastAPI(
-    title="Sopwise Directory Studio",
-    description="AI 目录站数据管理后端",
+    title="XiGee Studio API",
+    description="XiGee Directory Studio — 数据管理后端",
     version="0.1.0",
     debug=settings.app_debug,
     lifespan=lifespan,

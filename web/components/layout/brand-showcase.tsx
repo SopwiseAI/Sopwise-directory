@@ -19,10 +19,12 @@ export function BrandShowcase() {
     <section className="rounded-xl border bg-card px-6 py-8 sm:px-8">
       <div className="space-y-6">
         <div className="space-y-3">
-          <p className="font-data uppercase tracking-[0.2em] text-muted-foreground">AI Bookmark Directory</p>
+          <p className="font-data uppercase tracking-[0.2em] text-muted-foreground">AI Discovery Engine</p>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            Sopwise Directory
-            <span className="ml-2 text-base font-normal text-muted-foreground sm:ml-3 sm:text-xl">AI 产品书签</span>
+            XiGee
+            <span className="ml-2 text-base font-normal text-muted-foreground sm:ml-3 sm:text-xl">
+              你的 AI 发现引擎
+            </span>
           </h1>
           <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
             精选的 AI 工具与产品导航。按分类浏览，或直接搜索你需要的能力。

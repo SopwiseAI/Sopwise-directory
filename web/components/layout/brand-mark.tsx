@@ -6,8 +6,8 @@ interface BrandMarkProps {
 }
 
 /**
- * Sopwise 品牌标识：书签轮廓 + 主色圆角方块。
- * "书签"语义贴合 AI 产品书签站定位；方块 + 内切圆角营造控制台质感。
+ * XiGee 品牌标识：X 对角线交叉 + 右上指南针指针。
+ * "X" 传达精准交叉，指针暗示"发现方向"，贴合 AI 发现引擎定位。
  */
 export function BrandMark({ className, size = "md" }: BrandMarkProps) {
   const sizeClass = {
@@ -18,7 +18,7 @@ export function BrandMark({ className, size = "md" }: BrandMarkProps) {
 
   const iconSize = {
     sm: "size-3.5",
-    md: "size-4.5",
+    md: "size-4",
     lg: "size-5"
   }[size]
 
@@ -26,26 +26,25 @@ export function BrandMark({ className, size = "md" }: BrandMarkProps) {
     <span
       aria-hidden
       className={cn(
-        "relative inline-flex shrink-0 items-center justify-center bg-primary text-primary-foreground",
+        "relative inline-flex shrink-0 items-center justify-center bg-brand text-brand-foreground",
         sizeClass,
         className
       )}
     >
-      {/* 书签轮廓 */}
+      {/* X 对角线 + 右上指针 */}
       <svg
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth="2.2"
+        strokeWidth="2.4"
         strokeLinecap="round"
         strokeLinejoin="round"
         className={iconSize}
       >
-        <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
-        <path d="m9 10 2 2 4-4" />
+        <path d="M5 5 L19 19" />
+        <path d="M19 5 L12 12" />
+        <path d="M14.5 5 L19 5 L19 9.5" />
       </svg>
-      {/* 右下角微光点（强调"被收录/活跃"语义） */}
-      <span className="absolute bottom-[3px] right-[3px] size-1 rounded-full bg-primary-foreground/70" />
     </span>
   )
 }

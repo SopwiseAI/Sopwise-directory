@@ -16,7 +16,7 @@ import { getAllCategories, getProductsByCategory } from "@/lib/data"
 import { formatCount } from "@/lib/format"
 
 const categories = getAllCategories()
-const STORAGE_KEY = "sopwise:sidebar-collapsed"
+const STORAGE_KEY = "xigee:sidebar-collapsed"
 const TOTAL_PRODUCTS = categories.reduce((sum, c) => sum + getProductsByCategory(c.id).length, 0)
 
 function getSnapshot() {
@@ -124,7 +124,7 @@ export function CategorySidebar() {
       )}
     >
       {/* 品牌区：折叠控制恒在品牌行（DSH 式）。
-       展开态：mark + Sopwise | 收起按钮。
+       展开态：mark + XiGee | 收起按钮。
        折叠态：整个品牌区即"打开侧边栏"按钮 —— 仅见 logo，hover LOGO 时浮现展开图标，点击展开。 */}
       <div className={cn("flex shrink-0 items-center", collapsed ? "pt-2" : "h-16 justify-between px-3")}>
         {collapsed ? (
@@ -134,10 +134,10 @@ export function CategorySidebar() {
             <Link
               href="/"
               className="flex min-w-0 items-center gap-2.5 rounded-lg px-1 py-1.5 transition-colors hover:bg-secondary/60"
-              title="Sopwise 首页"
+              title="XiGee 首页"
             >
               <BrandMark size="lg" />
-              <span className="text-2xl font-semibold tracking-tight">Sopwise</span>
+              <span className="text-2xl font-semibold tracking-tight">XiGee</span>
             </Link>
             <CollapseToggle />
           </>

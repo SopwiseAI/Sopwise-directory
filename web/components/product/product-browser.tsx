@@ -16,7 +16,7 @@ interface ProductBrowserProps {
   defaultView?: ViewMode
 }
 
-const NAV_EVENT = "sopwise:nav"
+const NAV_EVENT = "xigee:nav"
 
 function subscribe(callback: () => void) {
   window.addEventListener("popstate", callback)

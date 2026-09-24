@@ -6,5 +6,5 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL || "https://sopwise.com"
+  return process.env.NEXT_PUBLIC_SITE_URL || "https://www.xigee.net"
 }

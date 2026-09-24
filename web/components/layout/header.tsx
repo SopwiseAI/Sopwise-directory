@@ -68,7 +68,7 @@ function HeaderInner({ className }: { className?: string }) {
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <Link href="/" className="flex shrink-0 items-center gap-2">
           <BrandMark size="sm" />
-          <span className="text-lg font-semibold tracking-tight">Sopwise</span>
+          <span className="text-lg font-semibold tracking-tight">XiGee</span>
         </Link>
 
         <div className="flex flex-1 items-center justify-end gap-2">

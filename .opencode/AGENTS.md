@@ -1,8 +1,8 @@
-# Sopwise Directory — AI Agent 规则
+# XiGee Directory — AI Agent 规则
 
 ## 项目概述
 
-AI 驱动的目录站，包含三个模块:
+AI 驱动的目录站 (XiGee)，包含三个模块:
 
 - `web/` — Next.js 前端，展示数据 (Vercel 部署)
 - `studio/` — FastAPI 后端，管理数据 (uv + Python 3.13)

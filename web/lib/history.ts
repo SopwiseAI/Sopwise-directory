@@ -11,11 +11,11 @@ export interface HistoryItem {
   visitedAt: string
 }
 
-const STORAGE_KEY = "sopwise:history"
+const STORAGE_KEY = "xigee:history"
 /** 保留上限 200 条：localStorage 容量充足（约 200KB），覆盖长期使用；
     超出自动淘汰最旧条目（见 addToHistory 的 slice）。 */
 const MAX_ITEMS = 200
-const NAV_EVENT = "sopwise:history-change"
+const NAV_EVENT = "xigee:history-change"
 
 function isBrowser() {
   return typeof window !== "undefined"

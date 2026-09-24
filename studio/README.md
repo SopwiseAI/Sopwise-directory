@@ -1,6 +1,6 @@
 # Studio
 
-Sopwise Directory 数据管理后端，基于 FastAPI + SQLAlchemy 2.0 (async) + MySQL。
+XiGee Directory 数据管理后端，基于 FastAPI + SQLAlchemy 2.0 (async) + MySQL。
 
 ## 环境要求
 

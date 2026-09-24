@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!category) return { title: "分类未找到" }
   return {
     title: `${category.name}`,
-    description: `发现和浏览${category.name}类别的 AI 产品，Sopwise Directory 为你精选最佳工具`
+    description: `发现和浏览${category.name}类别的 AI 产品，XiGee 为你精选最佳工具`
   }
 }
 

@@ -17,7 +17,7 @@ async def health_check(db: AsyncSession = Depends(get_db)) -> JSONResponse:
         await db.execute(text("SELECT 1"))
         return JSONResponse(
             status_code=status.HTTP_200_OK,
-            content={"status": "ok", "database": "connected"},
+            content={"status": "ok", "database": "connected", "brand": "XiGee", "version": "0.1.0"},
         )
     except Exception as exc:
         logger.warning("Health check failed: %s", exc, exc_info=True)

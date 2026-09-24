@@ -1,9 +1,9 @@
 ---
-name: sopwise-directory
-description: "Sopwise Directory 数据管理 Skills。当用户需要添加/审核/发布/补全 AI 产品、管理分类和标签、导出数据时使用。通过 skills/tools/api.py 调用 studio API 完成数据管理。"
+name: xigee
+description: "XiGee Directory 数据管理 Skills。当用户需要添加/审核/发布/补全 AI 产品、管理分类和标签、导出数据时使用。通过 skills/tools/api.py 调用 studio API 完成数据管理。"
 ---
 
-# Sopwise Directory 数据管理
+# XiGee Directory 数据管理
 
 ## 概述
 
