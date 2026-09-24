@@ -1,0 +1,284 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* 明暗模式的原生控件/滚动条配色声明 */
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* ============================================================
+   浅色主题 —— 冷调混凝土：（bg < card < popover 分层）
+   ============================================================ */
+:root {
+  --background: oklch(0.978 0.003 240);
+  --foreground: oklch(0.16 0.008 245);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.16 0.008 245);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.16 0.008 245);
+  --primary: oklch(0.205 0.01 245);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.956 0.004 240);
+  --secondary-foreground: oklch(0.205 0.01 245);
+  --muted: oklch(0.956 0.004 240);
+  --muted-foreground: oklch(0.51 0.012 250);
+  --accent: oklch(0.95 0.005 240);
+  --accent-foreground: oklch(0.205 0.01 245);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.91 0.005 240);
+  --input: oklch(0.91 0.005 240);
+  --ring: oklch(0.62 0.03 250);
+  --chart-1: oklch(0.55 0.12 250);
+  --chart-2: oklch(0.6 0.1 200);
+  --chart-3: oklch(0.55 0.09 150);
+  --chart-4: oklch(0.6 0.16 280);
+  --chart-5: oklch(0.6 0.14 30);
+  --radius: 0.6rem;
+  --sidebar: oklch(0.968 0.004 240);
+  --sidebar-foreground: oklch(0.16 0.008 245);
+  --sidebar-primary: oklch(0.205 0.01 245);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.945 0.006 240);
+  --sidebar-accent-foreground: oklch(0.205 0.01 245);
+  --sidebar-border: oklch(0.902 0.006 240);
+  --sidebar-ring: oklch(0.62 0.03 250);
+  --success: oklch(0.5 0.13 155);
+  --success-foreground: oklch(0.985 0 0);
+}
+
+/* ============================================================
+   深色主题 —— 炭黑分层：（bg 0.14 < sidebar 0.16 < card 0.19 < popover 0.22）
+   ============================================================ */
+.dark {
+  --background: oklch(0.145 0.005 245);
+  --foreground: oklch(0.96 0.003 240);
+  --card: oklch(0.19 0.006 245);
+  --card-foreground: oklch(0.96 0.003 240);
+  --popover: oklch(0.22 0.007 245);
+  --popover-foreground: oklch(0.96 0.003 240);
+  --primary: oklch(0.922 0.003 240);
+  --primary-foreground: oklch(0.19 0.01 245);
+  --secondary: oklch(0.26 0.008 245);
+  --secondary-foreground: oklch(0.96 0.003 240);
+  --muted: oklch(0.26 0.008 245);
+  --muted-foreground: oklch(0.78 0.01 240);
+  --accent: oklch(0.27 0.009 245);
+  --accent-foreground: oklch(0.96 0.003 240);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 13%);
+  --ring: oklch(0.6 0.04 250);
+  --chart-1: oklch(0.72 0.09 250);
+  --chart-2: oklch(0.72 0.08 200);
+  --chart-3: oklch(0.7 0.07 150);
+  --chart-4: oklch(0.72 0.11 280);
+  --chart-5: oklch(0.72 0.1 30);
+  --sidebar: oklch(0.165 0.006 245);
+  --sidebar-foreground: oklch(0.96 0.003 240);
+  --sidebar-primary: oklch(0.922 0.003 240);
+  --sidebar-primary-foreground: oklch(0.19 0.01 245);
+  --sidebar-accent: oklch(0.245 0.008 245);
+  --sidebar-accent-foreground: oklch(0.96 0.003 240);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.6 0.04 250);
+  --success: oklch(0.66 0.15 155);
+  --success-foreground: oklch(0.145 0.005 245);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+    scroll-padding-top: 3.5rem;
+  }
+  /* 标题自动平衡换行，避免孤行 */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  /* 移动端交互优化 */
+  a,
+  button {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 文本选中：主色淡染 */
+  ::selection {
+    background-color: color-mix(in oklch, var(--primary) 16%, transparent);
+  }
+
+  /* 细滚动条：控制台质感 */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklch, var(--foreground) 18%, transparent);
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklch, var(--foreground) 30%, transparent);
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* ============================================================
+   数据型文本（mono + 等宽数字）
+   ============================================================ */
+@utility font-data {
+  font-family: var(--font-geist-mono);
+  font-size: 0.6875rem; /* 11px */
+  line-height: 1rem;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+@utility kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding-inline: 0.3125rem;
+  border-radius: calc(var(--radius) * 0.6);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  background-color: var(--card);
+  font-family: var(--font-geist-mono);
+  font-size: 0.65625rem;
+  line-height: 1;
+  color: var(--muted-foreground);
+  box-shadow: 0 1px 0 color-mix(in oklch, var(--foreground) 6%, transparent);
+}
+
+/* ============================================================
+   卡片网格
+   ============================================================ */
+@utility product-card-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 0.625rem;
+  /* 长列表滚动性能：视口外区块跳过渲染 */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 240px;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* 动效：尊重系统减弱动效偏好 */
+@media (prefers-reduced-motion: reduce) {
+  [data-dsh-animate] {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ============================================================
+   侧边栏首帧引导（SB-01：折叠偏好 hydration 前生效，避免展开→折叠闪烁）
+   由 sidebar-init 脚本在首帧前设置 <html data-sidebar>。
+   ============================================================ */
+html[data-sidebar="collapsed"] #category-sidebar {
+  width: 3.5rem; /* 56px，与 React 折叠态一致 */
+}
+
+/* 折叠态首帧：隐藏导航文字/计数/角标（图标保留），hydration 后由 React 接管 sr-only */
+html[data-sidebar="collapsed"] #category-sidebar nav a span,
+html[data-sidebar="collapsed"] #category-sidebar nav p {
+  display: none;
+}
+
+/* 折叠态首帧品牌区：隐藏 ailulu 文字与"收起侧边栏"按钮，仅保留品牌方块并居中
+   （hydration 后 React 渲染 rail 按钮接管；此规则只影响首帧展开态结构） */
+html[data-sidebar="collapsed"] #category-sidebar > div:first-child {
+  justify-content: center;
+  padding: 0.5rem 0 0;
+}
+html[data-sidebar="collapsed"] #category-sidebar > div:first-child a span.text-2xl {
+  display: none;
+}
+html[data-sidebar="collapsed"] #category-sidebar > div:first-child a {
+  padding: 0;
+}
+html[data-sidebar="collapsed"] #category-sidebar > div:first-child button[aria-label="收起侧边栏"] {
+  display: none;
+}
