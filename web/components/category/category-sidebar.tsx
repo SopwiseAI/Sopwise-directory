@@ -246,7 +246,7 @@ function SidebarLink({ href, active, collapsed, label, icon, count, badge }: Sid
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group relative flex w-full items-center gap-3 rounded-md py-1.5 pl-3 pr-2 text-[15px] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "group relative flex w-full items-center gap-3 rounded-md py-1.5 pl-3 pr-2 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
         collapsed && "justify-center px-0 py-2.5 [&_svg]:size-5",
         active
           ? "bg-brand/8 dark:bg-brand/10 font-medium text-brand dark:text-brand"

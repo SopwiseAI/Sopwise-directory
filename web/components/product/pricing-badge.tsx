@@ -38,7 +38,7 @@ export function PricingBadge({ pricing }: { pricing: Pricing }) {
   const style = pricingStyles[pricing]
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono text-[11px] font-medium tracking-wide ${style.className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono text-xs font-medium tracking-wide ${style.className}`}
     >
       <span className={`size-1.5 rounded-full ${style.dotClass}`} aria-hidden />
       {style.label}

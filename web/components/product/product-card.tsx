@@ -58,7 +58,7 @@ export function ProductCard({ product }: ProductCardProps) {
           }}
         >
           {product.description}
-          <span className="ml-1 inline-flex items-center text-[10px] font-medium text-muted-foreground/60">
+          <span className="ml-1 inline-flex items-center text-xs font-medium text-muted-foreground/60">
             {expanded ? "收起" : "展开"}
             <ChevronDown className={`ml-0.5 size-3 transition-transform ${expanded ? "rotate-180" : ""}`} />
           </span>
@@ -68,7 +68,7 @@ export function ProductCard({ product }: ProductCardProps) {
       {product.tags && product.tags.length > 0 && (
         <div className="flex flex-wrap items-center gap-1">
           {product.tags.slice(0, 3).map(tag => (
-            <Badge key={tag} variant="secondary" className="px-1.5 py-0 text-[11px] font-normal">
+            <Badge key={tag} variant="secondary" className="px-1.5 py-0 text-xs font-normal">
               {tag}
             </Badge>
           ))}

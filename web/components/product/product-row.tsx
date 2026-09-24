@@ -35,7 +35,7 @@ export function ProductRow({ product, last = false }: { product: Product; last?:
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
           <span className="shrink-0 truncate text-sm font-medium">{product.name}</span>
-          <span className="hidden shrink-0 font-mono text-[11px] text-muted-foreground sm:inline">{domain}</span>
+          <span className="hidden shrink-0 font-mono text-xs text-muted-foreground sm:inline">{domain}</span>
         </div>
         <p className="truncate text-xs text-muted-foreground">{product.description}</p>
       </div>
@@ -44,7 +44,7 @@ export function ProductRow({ product, last = false }: { product: Product; last?:
         {product.tags && product.tags.length > 0 && (
           <div className="hidden items-center gap-1 md:flex">
             {product.tags.slice(0, 2).map(tag => (
-              <Badge key={tag} variant="secondary" className="px-1.5 py-0 text-[11px] font-normal">
+              <Badge key={tag} variant="secondary" className="px-1.5 py-0 text-xs font-normal">
                 {tag}
               </Badge>
             ))}
