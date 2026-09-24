@@ -5,7 +5,6 @@ import Link from "next/link"
 import { Clock, Search, Trash2 } from "lucide-react"
 import { clearHistory, getHistorySnapshot, removeFromHistory, subscribeHistory, type HistoryItem } from "@/lib/history"
 import { getAllCategories } from "@/lib/data"
-import { ProductIcon } from "@/components/product/product-icon"
 import { formatCount } from "@/lib/format"
 import { PricingBadge } from "@/components/product/pricing-badge"
 import { Button } from "@/components/ui/button"
@@ -188,14 +187,8 @@ export function HistoryList() {
                   href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex min-w-0 flex-1 items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                  className="flex min-w-0 flex-1 items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                 >
-                  <ProductIcon
-                    name={item.name}
-                    url={item.url}
-                    className="h-8 w-8 rounded-md border"
-                    imgClassName="h-8 w-8"
-                  />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{item.name}</p>
                     <p className="truncate font-data text-muted-foreground">

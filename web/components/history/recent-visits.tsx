@@ -5,7 +5,6 @@ import Link from "next/link"
 import { Clock } from "lucide-react"
 import { getHistorySnapshot, subscribeHistory, type HistoryItem } from "@/lib/history"
 import { getAllProducts } from "@/lib/data"
-import { ProductIcon } from "@/components/product/product-icon"
 import { getDomain } from "@/lib/product-icon"
 
 const allProducts = getAllProducts()
@@ -54,17 +53,10 @@ export function RecentVisits({ limit = 4 }: { limit?: number }) {
               data-history-url={item.url}
               data-history-category={item.categoryId}
               data-history-pricing={item.pricing ?? ""}
-              className={`group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-secondary/40 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset ${
+              className={`group flex items-center gap-2 px-4 py-2.5 transition-colors hover:bg-secondary/40 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset ${
                 i !== items.length - 1 ? "border-b border-border" : ""
               }`}
             >
-              <ProductIcon
-                name={product.name}
-                url={product.url}
-                icon={product.icon}
-                className="h-7 w-7 rounded-md border"
-                imgClassName="h-7 w-7"
-              />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{product.name}</p>
                 <p className="truncate font-data text-muted-foreground">{getDomain(product.url)}</p>

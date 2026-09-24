@@ -1,7 +1,6 @@
 import { ArrowUpRight } from "lucide-react"
 import type { Product } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
-import { ProductIcon } from "@/components/product/product-icon"
 import { PricingBadge } from "@/components/product/pricing-badge"
 import { getDomain } from "@/lib/product-icon"
 import { cn } from "@/lib/utils"
@@ -20,18 +19,10 @@ export function ProductRow({ product, last = false }: { product: Product; last?:
       data-history-category={product.categoryId}
       data-history-pricing={product.pricing ?? ""}
       className={cn(
-        "group flex items-center gap-3 px-4 py-3 transition-all hover:bg-brand/[0.02] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+        "group flex items-center gap-2 px-4 py-3 transition-all hover:bg-brand/[0.02] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
         !last && "border-b border-border"
       )}
     >
-      <ProductIcon
-        name={product.name}
-        url={product.url}
-        icon={product.icon}
-        className="h-8 w-8 rounded-md border"
-        imgClassName="h-8 w-8"
-      />
-
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
           <span className="shrink-0 truncate text-sm font-medium">{product.name}</span>

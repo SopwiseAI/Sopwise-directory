@@ -8,7 +8,6 @@ import { CommandSearchBar } from "@/components/layout/command-search-bar"
 import { HistoryTracker } from "@/components/layout/history-tracker"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import Footer from "@/components/layout/footer"
-import { FAVICON_BASE_URL } from "@/lib/product-icon"
 import "./globals.css"
 
 const geistSans = Geist({
@@ -54,7 +53,6 @@ export default function RootLayout({
       <head>
         <meta name="theme-color" content="#fafafb" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <link rel="preconnect" href={FAVICON_BASE_URL} crossOrigin="anonymous" />
       </head>
       <body className="min-h-full flex flex-col md:h-[100dvh] md:overflow-hidden">
         <HistoryTracker />

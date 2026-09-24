@@ -1,11 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowUpRight, ChevronDown } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 import type { Product } from "@/lib/types"
 import { getDomain } from "@/lib/product-icon"
 import { Badge } from "@/components/ui/badge"
-import { ProductIcon } from "@/components/product/product-icon"
 import { PricingBadge } from "@/components/product/pricing-badge"
 
 interface ProductCardProps {
@@ -27,19 +26,8 @@ export function ProductCard({ product }: ProductCardProps) {
       data-history-url={product.url}
       data-history-category={product.categoryId}
       data-history-pricing={product.pricing ?? ""}
-      className="group flex flex-col gap-3.5 rounded-lg border bg-card p-4 outline-none transition-all hover:bg-brand/[0.02] hover:border-foreground/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className="group flex flex-col gap-3 rounded-lg border bg-card p-4 outline-none transition-all hover:bg-brand/[0.02] hover:border-foreground/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
-      <div className="flex items-start justify-between gap-3">
-        <ProductIcon
-          name={product.name}
-          url={product.url}
-          icon={product.icon}
-          className="h-9 w-9 rounded-md border bg-background"
-          imgClassName="h-9 w-9"
-        />
-        <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70 transition-colors group-hover:text-foreground" />
-      </div>
-
       <div className="space-y-1">
         <h3 className="truncate text-sm font-medium tracking-tight text-foreground">{product.name}</h3>
         <p
