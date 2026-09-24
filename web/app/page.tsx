@@ -1,15 +1,11 @@
-import { getAllProducts, getAllCategories, getProductsByCategory, getProductDate } from "@/lib/data"
+import { getAllProducts, getProductDate } from "@/lib/data"
 import { ProductBrowser } from "@/components/product/product-browser"
 import { ProductCard } from "@/components/product/product-card"
 import { ProductRow } from "@/components/product/product-row"
 import { BrandShowcase } from "@/components/layout/brand-showcase"
-import { RecentVisits } from "@/components/history/recent-visits"
-import { categoryIconNode } from "@/lib/category-icon-node"
 import { formatCount } from "@/lib/format"
-import Link from "next/link"
 
 const products = getAllProducts()
-const categories = getAllCategories()
 const FEATURED_LIMIT = 6
 
 function getLatest(limit: number) {
@@ -23,7 +19,6 @@ export default function Home() {
   return (
     <div className="flex flex-col gap-8">
       <BrandShowcase />
-      <RecentVisits />
 
       <section id="featured" className="space-y-3 scroll-mt-16">
         <SectionTitle
@@ -54,29 +49,7 @@ export default function Home() {
       </section>
 
       <section className="space-y-3">
-        <SectionTitle index="03" title="浏览分类" hint={`${formatCount(categories.length)} 个分类`} />
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-          {categories.map(category => {
-            const count = formatCount(getProductsByCategory(category.id).length)
-            return (
-              <Link
-                key={category.id}
-                href={`/category/${category.id}`}
-                className="group flex items-center gap-2.5 rounded-lg border bg-card px-3 py-2.5 transition-colors hover:bg-secondary/40 hover:border-foreground/20 outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <span className="text-muted-foreground transition-colors group-hover:text-foreground">
-                  {categoryIconNode(category.id)}
-                </span>
-                <span className="truncate text-sm">{category.name}</span>
-                <span className="ml-auto font-data tabular-nums text-muted-foreground">{count}</span>
-              </Link>
-            )
-          })}
-        </div>
-      </section>
-
-      <section className="space-y-3">
-        <SectionTitle index="04" title="全部产品" hint={`${formatCount(products.length)} 个产品`} />
+        <SectionTitle index="03" title="全部产品" hint={`${formatCount(products.length)} 个产品`} />
         <ProductBrowser products={products} />
       </section>
     </div>
