@@ -33,8 +33,8 @@ export function SubNav({ className }: { className?: string }) {
             className={cn(
               "shrink-0 rounded-md px-3 py-1.5 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
               pathname === "/"
-                ? "bg-primary/10 font-medium text-primary"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                ? "bg-brand/10 font-medium text-brand"
+                : "text-muted-foreground hover:bg-brand/5 hover:text-brand"
             )}
           >
             全部
@@ -48,8 +48,8 @@ export function SubNav({ className }: { className?: string }) {
                 className={cn(
                   "flex shrink-0 items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   isActive
-                    ? "bg-primary/10 font-medium text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-brand/10 font-medium text-brand"
+                    : "text-muted-foreground hover:bg-brand/5 hover:text-brand"
                 )}
               >
                 {category.name}

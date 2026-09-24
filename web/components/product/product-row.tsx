@@ -20,7 +20,7 @@ export function ProductRow({ product, last = false }: { product: Product; last?:
       data-history-category={product.categoryId}
       data-history-pricing={product.pricing ?? ""}
       className={cn(
-        "group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-secondary/40 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+        "group flex items-center gap-3 px-4 py-3 transition-all hover:bg-brand/[0.02] card-shadow-hover outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
         !last && "border-b border-border"
       )}
     >
@@ -35,9 +35,7 @@ export function ProductRow({ product, last = false }: { product: Product; last?:
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
           <span className="shrink-0 truncate text-sm font-medium">{product.name}</span>
-          <span className="hidden shrink-0 font-mono text-[11px] text-muted-foreground sm:inline">
-            {domain}
-          </span>
+          <span className="hidden shrink-0 font-mono text-[11px] text-muted-foreground sm:inline">{domain}</span>
         </div>
         <p className="truncate text-xs text-muted-foreground">{product.description}</p>
       </div>
@@ -45,7 +43,7 @@ export function ProductRow({ product, last = false }: { product: Product; last?:
       <div className="flex shrink-0 items-center gap-2">
         {product.tags && product.tags.length > 0 && (
           <div className="hidden items-center gap-1 md:flex">
-            {product.tags.slice(0, 2).map((tag) => (
+            {product.tags.slice(0, 2).map(tag => (
               <Badge key={tag} variant="secondary" className="px-1.5 py-0 text-[11px] font-normal">
                 {tag}
               </Badge>

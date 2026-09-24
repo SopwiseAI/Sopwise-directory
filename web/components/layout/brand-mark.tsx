@@ -2,20 +2,22 @@ import { cn } from "@/lib/utils"
 
 interface BrandMarkProps {
   className?: string
-  size?: "sm" | "md" | "lg"
+  size?: "sm" | "md" | "lg" | "xl"
 }
 
 export function BrandMark({ className, size = "md" }: BrandMarkProps) {
   const sizeClass = {
     sm: "size-6 rounded-md",
     md: "size-8 rounded-lg",
-    lg: "size-9 rounded-xl"
+    lg: "size-9 rounded-xl",
+    xl: "size-12 rounded-xl"
   }[size]
 
   const iconSize = {
     sm: "size-3.5",
     md: "size-4",
-    lg: "size-5"
+    lg: "size-5",
+    xl: "size-6"
   }[size]
 
   return (

@@ -23,7 +23,7 @@ export const pricingStyles: Record<Pricing, PricingStyle> = {
   paid: {
     label: "PAID",
     className:
-      "bg-orange-500/10 text-orange-800 dark:bg-orange-400/10 dark:text-orange-400 border-orange-500/20 dark:border-orange-400/20",
+      "bg-orange-500/10 text-orange-600 dark:bg-orange-400/10 dark:text-orange-300 border-orange-500/20 dark:border-orange-400/20",
     dotClass: "bg-orange-500 dark:bg-orange-400"
   },
   opensource: {
@@ -40,7 +40,7 @@ export function PricingBadge({ pricing }: { pricing: Pricing }) {
     <span
       className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono text-[11px] font-medium tracking-wide ${style.className}`}
     >
-      <span className={`size-1 rounded-full ${style.dotClass}`} aria-hidden />
+      <span className={`size-1.5 rounded-full ${style.dotClass}`} aria-hidden />
       {style.label}
     </span>
   )

@@ -137,7 +137,7 @@ export function CategorySidebar() {
       className={cn(
         "hidden shrink-0 flex-col border-r bg-sidebar md:flex",
         collapsed ? "w-14" : "w-[280px]",
-        "transition-[width] duration-200"
+        "transition-[width] shadow-sm duration-200"
       )}
     >
       {/* 品牌区：折叠控制恒在品牌行（DSH 式）。
@@ -190,7 +190,14 @@ export function CategorySidebar() {
             badge={<HistoryCount />}
           />
 
-          <p className={cn("px-3 pb-1.5 pt-4 font-data text-muted-foreground", collapsed && "sr-only")}>分类</p>
+          <p
+            className={cn(
+              "border-t border-border px-3 pb-1.5 pt-3 font-data text-muted-foreground",
+              collapsed && "sr-only"
+            )}
+          >
+            分类
+          </p>
           {categories.map(category => (
             <SidebarLink
               key={category.id}
@@ -210,7 +217,7 @@ export function CategorySidebar() {
       </div>
 
       {/* 底部工具区：固定收拢，仅设置入口 */}
-      <div className="flex shrink-0 flex-col p-2.5 pt-1.5">
+      <div className="flex shrink-0 flex-col border-t border-border p-2.5 pt-2.5">
         <SidebarLink
           href="/settings"
           active={pathname === "/settings"}
@@ -242,15 +249,15 @@ function SidebarLink({ href, active, collapsed, label, icon, count, badge }: Sid
         "group relative flex w-full items-center gap-3 rounded-md py-1.5 pl-3 pr-2 text-[15px] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
         collapsed && "justify-center px-0 py-2.5 [&_svg]:size-5",
         active
-          ? "bg-secondary font-medium text-accent-foreground"
-          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+          ? "bg-brand/8 dark:bg-brand/10 font-medium text-brand dark:text-brand"
+          : "text-muted-foreground hover:bg-brand/5 dark:hover:bg-brand/10 hover:text-brand dark:hover:text-brand"
       )}
     >
       {/* 活跃指示条 */}
       <span
         aria-hidden
         className={cn(
-          "absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-primary transition-opacity",
+          "absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-brand transition-opacity",
           active ? "opacity-100" : "opacity-0"
         )}
       />

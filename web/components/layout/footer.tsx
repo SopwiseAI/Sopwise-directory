@@ -13,7 +13,7 @@ export default function Footer() {
     <footer className="mt-8 border-t bg-card/30">
       <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-2">
+          <div className="space-y-2 relative before:absolute before:-top-3 before:left-0 before:h-0.5 before:w-8 before:rounded-full before:bg-brand/30">
             <div className="flex items-center gap-2">
               <BrandMark size="sm" />
               <span className="text-sm font-semibold tracking-tight">
