@@ -1,0 +1,35 @@
+{
+  "name": "sopwise-directory",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI 驱动的目录站",
+  "scripts": {
+    "format": "prettier --write \"*.md\" \"*.json\" \"*.jsonc\" \".opencode/**/*.md\" \"skills/**/*.md\"",
+    "format:check": "prettier --check \"*.md\" \"*.json\" \"*.jsonc\" \".opencode/**/*.md\" \"skills/**/*.md\"",
+    "lint:md": "markdownlint-cli2 \"**/*.md\"",
+    "lint:md:fix": "markdownlint-cli2 --fix \"**/*.md\"",
+    "check": "npm run lint:md && npm run format:check",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
+    "markdownlint-cli2": "^0.17.0",
+    "prettier": "^3.4.0"
+  },
+  "lint-staged": {
+    "*.md": [
+      "prettier --write",
+      "markdownlint-cli2 --fix"
+    ],
+    "*.{json,jsonc,yaml,yml}": [
+      "prettier --write"
+    ],
+    "*.py": [
+      "cd studio && uv run ruff check --fix",
+      "cd studio && uv run ruff format"
+    ]
+  }
+}

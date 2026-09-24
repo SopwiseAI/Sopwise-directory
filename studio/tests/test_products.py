@@ -17,7 +17,7 @@ async def test_create_product_minimal(async_client):
     assert data["name"] == "最小产品"
     assert data["pricing"] == "free"
     assert data["featured"] is False
-    assert data["status"] == 1
+    assert data["status"] == 0
     assert data["description"] is None
     assert data["category_id"] is None
     assert data["links"] == []
@@ -62,21 +62,27 @@ async def test_create_product_duplicate_name(async_client):
 
 @pytest.mark.asyncio
 async def test_publish_sets_published_at(async_client):
-    """草稿产品发布时 published_at 从 null 变为时间。"""
+    """草稿产品发布时 published_at 从 null 变为时间。流程: 0→1→2。"""
     product = await create_product(async_client, slug="draft", name="草稿", status=0)
     assert product["published_at"] is None
 
+    # 提交审核: 0→1
     resp = await async_client.put(f"/api/v1/products/{product['id']}", json={"status": 1})
     assert resp.status_code == 200
+    assert resp.json()["published_at"] is None
+
+    # 审核通过发布: 1→2
+    resp = await async_client.put(f"/api/v1/products/{product['id']}", json={"status": 2})
+    assert resp.status_code == 200
     data = resp.json()
-    assert data["status"] == 1
+    assert data["status"] == 2
     assert data["published_at"] is not None
 
 
 @pytest.mark.asyncio
 async def test_publish_at_does_not_change_on_reupdate(async_client):
     """已发布产品再次更新，published_at 不变。"""
-    product = await create_product(async_client, slug="pub", name="已发布", status=1)
+    product = await create_product(async_client, slug="pub", name="已发布", status=2)
     original = product["published_at"]
 
     resp = await async_client.put(f"/api/v1/products/{product['id']}", json={"description": "改描述"})
@@ -86,10 +92,10 @@ async def test_publish_at_does_not_change_on_reupdate(async_client):
 
 @pytest.mark.asyncio
 async def test_filter_by_status(async_client):
-    await create_product(async_client, slug="p1", name="P1", status=1)
+    await create_product(async_client, slug="p1", name="P1", status=2)
     await create_product(async_client, slug="p2", name="P2", status=0)
-    await create_product(async_client, slug="p3", name="P3", status=2)
-    resp = await async_client.get("/api/v1/products?status=1")
+    await create_product(async_client, slug="p3", name="P3", status=3)
+    resp = await async_client.get("/api/v1/products?status=2")
     data = resp.json()
     assert len(data) == 1
     assert data[0]["name"] == "P1"

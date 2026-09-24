@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "charliermarsh.ruff",
+    "DavidAnson.vscode-markdownlint",
+    "bradlc.vscode-tailwindcss",
+    "ms-python.python"
+  ]
+}

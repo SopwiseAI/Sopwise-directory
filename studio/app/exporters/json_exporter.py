@@ -63,7 +63,7 @@ async def _fetch_products(session: AsyncSession, cat_map: dict[int, str]) -> lis
     stmt = (
         select(Product)
         .options(selectinload(Product.links), selectinload(Product.tags))
-        .where(Product.status == 1)
+        .where(Product.status == 2)
         .order_by(Product.sort_order.desc(), Product.published_at.desc())
     )
     result = await session.execute(stmt)

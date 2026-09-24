@@ -92,6 +92,6 @@ async def delete_category(category_id: int, db: AsyncSession = Depends(get_db)) 
 
 @router.get("/{category_id}/count")
 async def category_product_count(category_id: int, db: AsyncSession = Depends(get_db)) -> dict:
-    stmt = select(func.count()).select_from(Product).where(Product.category_id == category_id, Product.status == 1)
+    stmt = select(func.count()).select_from(Product).where(Product.category_id == category_id, Product.status == 2)
     count = (await db.execute(stmt)).scalar() or 0
     return {"category_id": category_id, "product_count": count}

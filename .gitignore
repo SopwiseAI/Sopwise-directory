@@ -40,7 +40,8 @@ venv/
 
 # IDE
 .idea/
-.vscode/
+.vscode/settings.json
+.vscode/*.code-snippets
 *.swp
 *.swo
 

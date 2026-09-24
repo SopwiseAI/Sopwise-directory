@@ -68,7 +68,7 @@ class ProductBase(BaseModel):
     pricing: str = Field("free", pattern="^(free|freemium|paid|opensource)$")
     featured: bool = False
     sort_order: int = 0
-    status: int = Field(1, ge=0, le=2)
+    status: int = Field(0, ge=0, le=3)
 
 
 class ProductCreate(ProductBase):
@@ -84,7 +84,7 @@ class ProductUpdate(BaseModel):
     pricing: str | None = Field(None, pattern="^(free|freemium|paid|opensource)$")
     featured: bool | None = None
     sort_order: int | None = None
-    status: int | None = Field(None, ge=0, le=2)
+    status: int | None = Field(None, ge=0, le=3)
 
 
 class ProductResponse(BaseModel):

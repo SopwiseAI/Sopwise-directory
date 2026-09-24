@@ -72,7 +72,7 @@ async def create_product(data: ProductCreate, db: AsyncSession = Depends(get_db)
     product_data = data.model_dump(exclude={"links", "tag_ids"})
     product = Product(**product_data)
 
-    if product.status == 1:
+    if product.status == 2:
         product.published_at = datetime.now()
 
     for link_data in data.links:
@@ -123,7 +123,7 @@ async def update_product(product_id: int, data: ProductUpdate, db: AsyncSession 
     for key, value in update_data.items():
         setattr(product, key, value)
 
-    if update_data.get("status") == 1 and old_status != 1 and not product.published_at:
+    if update_data.get("status") == 2 and old_status != 2 and not product.published_at:
         product.published_at = datetime.now()
 
     await db.commit()

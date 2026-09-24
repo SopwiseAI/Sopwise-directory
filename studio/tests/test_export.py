@@ -36,11 +36,12 @@ async def test_export_success(async_client, api_headers, tmp_path):
 
 @pytest.mark.asyncio
 async def test_export_only_includes_published(async_client, api_headers, tmp_path):
-    """草稿 (status=0) 和下架 (status=2) 的产品不应被导出。"""
+    """仅已发布 (status=2) 的产品才导出。"""
     cat = await create_category(async_client, slug="cat", name="分类", icon="Bot")
-    await create_product(async_client, slug="published", name="已发布", category_id=cat["id"], status=1)
+    await create_product(async_client, slug="published", name="已发布", category_id=cat["id"], status=2)
     await create_product(async_client, slug="draft", name="草稿", category_id=cat["id"], status=0)
-    await create_product(async_client, slug="archived", name="已下架", category_id=cat["id"], status=2)
+    await create_product(async_client, slug="pending", name="待审核", category_id=cat["id"], status=1)
+    await create_product(async_client, slug="archived", name="已下架", category_id=cat["id"], status=3)
 
     with patch("app.exporters.json_exporter.get_settings") as mock:
         settings = mock.return_value
@@ -62,6 +63,7 @@ async def test_export_data_format(async_client, api_headers, tmp_path):
         category_id=cat["id"],
         pricing="freemium",
         featured=True,
+        status=2,
         links=[{"url": "https://chat.openai.com", "is_primary": True}],
         tag_ids=[tag["id"]],
     )
@@ -100,7 +102,7 @@ async def test_export_data_format(async_client, api_headers, tmp_path):
 async def test_export_product_without_link(async_client, api_headers, tmp_path):
     """没有链接的产品 url 应为空字符串。"""
     await create_category(async_client, slug="cat", name="分类")
-    await create_product(async_client, slug="no-link", name="无链接")
+    await create_product(async_client, slug="no-link", name="无链接", status=2)
 
     output_file = tmp_path / "data.json"
     with patch("app.exporters.json_exporter.get_settings") as mock:

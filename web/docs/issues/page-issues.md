@@ -2,7 +2,7 @@
 
 > 审查日期：2026-08-30
 > 审查方式：专家代码走查（只读） + 浏览器实测核验
-> 范围：app/{page,layout,search,settings,history,not-found,category/[id]} + components/{product,layout,history,search}/* + lib/*
+> 范围：app/{page,layout,search,settings,history,not-found,category/[id]} + components/{product,layout,history,search}/_+ lib/_
 > 状态：**审查完成，未修改代码**
 
 ---
@@ -10,16 +10,19 @@
 ## P0 级（功能/内容 bug、资源 404、危险操作）
 
 ### PG-01 — 首页「精选推荐」数字 14 与实际展示 6 不符
+
 - **高** · `app/page.tsx:31,33-35` · `featured` 有 14 个，但 `slice(0,6)` 只渲染 6 张
 - **建议**：hint 改 `Math.min(featured.length, 6)` 或「精选 · 展示 6 / 共 14」；不推荐全展（拉长首页）
 - **预期**：标题数字与卡片数量严格一致
 
 ### PG-02 — og.png / favicon 缺失（必然 404）
+
 - **高** · `app/layout.tsx:33` 引用 `/og.png`，但无 `public/` 目录；无 `app/icon.*`
 - **建议**：补 `public/og.png`（1200×630）+ `app/icon.png`；产图前先删 images 配置免 404
 - **预期**：社交分享预览卡片 + 标签页品牌图标正常
 
 ### PG-03 — 历史「清空全部」无确认/撤销，误触即永久丢失
+
 - **高** · `components/history/history-list.tsx:66-72,102-110`
 - **建议**：A) AlertDialog 确认；或 B) 「已清空 · 撤销」toast（5 秒内缓存旧数组可恢复）
 - **预期**：危险操作带确认/可撤销路径
@@ -67,11 +70,11 @@
 
 ## 优先级排序
 
-| 优先级 | 条目 | 理由 |
-|---|---|---|
+| 优先级 | 条目                  | 理由                                       |
+| ------ | --------------------- | ------------------------------------------ |
 | **P0** | PG-01 / PG-02 / PG-03 | 数字造假、分享无图、误删数据——低成本高收益 |
-| **P1** | PG-04~PG-14 | 可达性 + 一致性批量收敛 |
-| **P2** | PG-15~PG-32 | 死代码、依赖卫生、文案、微优化 |
+| **P1** | PG-04~PG-14           | 可达性 + 一致性批量收敛                    |
+| **P2** | PG-15~PG-32           | 死代码、依赖卫生、文案、微优化             |
 
 ## 整体印象（最突出 3 点）
 

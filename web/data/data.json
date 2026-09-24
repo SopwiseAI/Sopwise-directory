@@ -1,6 +1,11 @@
 {
   "categories": [
     {
+      "id": "count-cat",
+      "name": "计数",
+      "icon": "Bot"
+    },
+    {
       "id": "ai-chat",
       "name": "AI对话",
       "icon": "MessageSquare"
@@ -8,27 +13,12 @@
   ],
   "products": [
     {
-      "id": "chatgpt",
-      "name": "ChatGPT",
-      "description": "AI助手",
-      "url": "https://chat.openai.com",
-      "categoryId": "ai-chat",
-      "tags": [
-        "T1"
-      ],
-      "pricing": "freemium",
-      "featured": true,
-      "publishedAt": "2026-09-24"
-    },
-    {
       "id": "p2",
       "name": "P2",
       "description": "",
       "url": "",
-      "categoryId": "",
-      "tags": [
-        "T1"
-      ],
+      "categoryId": "count-cat",
+      "tags": [],
       "pricing": "free",
       "featured": false,
       "publishedAt": "2026-09-24"
@@ -38,10 +28,8 @@
       "name": "P1",
       "description": "",
       "url": "",
-      "categoryId": "",
-      "tags": [
-        "T1"
-      ],
+      "categoryId": "count-cat",
+      "tags": [],
       "pricing": "free",
       "featured": false,
       "publishedAt": "2026-09-24"

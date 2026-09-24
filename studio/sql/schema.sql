@@ -15,7 +15,7 @@
 --
 -- 约定:
 --   1. 主键为 BIGINT AUTO_INCREMENT，业务标识用 slug（UNIQUE）
---   2. status: 0=草稿 1=已发布 2=已下架（仅 status=1 导出）
+--   2. status: 0=草稿 1=待审核 2=已发布 3=已下架（仅 status=2 导出）
 --   3. 软删除不用，靠 status 管理
 --   4. 审计字段: created_at / updated_at / published_at
 --   5. 分类产品数不冗余存储，用查询实时统计
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS sd_category (
 
 -- ----------------------------------------------------------------------------
 -- 2、产品主表
---    published_at: 首次发布（status→1）时写入，之后不再变（除非下架后重新发布）
+--    published_at: 审核通过发布（status→2）时写入，之后不再变（除非下架后重新发布）
 --    前端"最新"排序使用 published_at DESC，而非 created_at / updated_at
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS sd_product (
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS sd_product (
   pricing      VARCHAR(20)  NOT NULL DEFAULT 'free' COMMENT 'free/freemium/paid/opensource',
   featured     TINYINT(1)   NOT NULL DEFAULT 0    COMMENT '是否精选',
   sort_order   INT          NOT NULL DEFAULT 0    COMMENT '排序权重（精选列表内排序）',
-  status       TINYINT      NOT NULL DEFAULT 1    COMMENT '0=草稿 1=已发布 2=已下架',
+  status       TINYINT      NOT NULL DEFAULT 0    COMMENT '0=草稿 1=待审核 2=已发布 3=已下架',
   published_at DATETIME     DEFAULT NULL          COMMENT '首次发布时间（前端"最新"排序依据，NULL=从未发布）',
   created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

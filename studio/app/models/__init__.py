@@ -37,7 +37,7 @@ class Product(Base):
     pricing: Mapped[str] = mapped_column(String(20), default="free", nullable=False)
     featured: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    status: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    status: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     published_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(

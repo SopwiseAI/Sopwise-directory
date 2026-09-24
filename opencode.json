@@ -1,0 +1,16 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [".opencode/AGENTS.md"],
+  "watcher": {
+    "ignore": [
+      ".git/**",
+      "node_modules/**",
+      "web/node_modules/**",
+      "web/.next/**",
+      "studio/.venv/**",
+      "studio/__pycache__/**",
+      "scripts/run/**"
+    ]
+  },
+  "snapshot": false
+}

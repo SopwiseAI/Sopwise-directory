@@ -90,7 +90,7 @@ async def create_product(
     pricing: str = "free",
     featured: bool = False,
     sort_order: int = 0,
-    status: int = 1,
+    status: int = 0,
     links: list[dict] | None = None,
     tag_ids: list[int] | None = None,
 ) -> dict:
