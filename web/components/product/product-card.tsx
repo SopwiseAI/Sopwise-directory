@@ -29,7 +29,7 @@ export function ProductCard({ product }: ProductCardProps) {
       className="group flex flex-col gap-3 rounded-lg border bg-card p-4 outline-none transition-all hover:bg-brand/[0.02] hover:border-foreground/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <div className="space-y-1">
-        <h3 className="truncate text-sm font-medium tracking-tight text-foreground">{product.name}</h3>
+        <h3 className="truncate text-base font-medium tracking-tight text-foreground">{product.name}</h3>
         <p
           className={`text-xs leading-relaxed text-muted-foreground ${expanded ? "" : "line-clamp-3"} cursor-pointer`}
           onClick={e => {

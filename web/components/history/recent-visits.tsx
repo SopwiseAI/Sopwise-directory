@@ -58,7 +58,7 @@ export function RecentVisits({ limit = 4 }: { limit?: number }) {
               }`}
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{product.name}</p>
+                <p className="truncate text-base font-medium">{product.name}</p>
                 <p className="truncate font-data text-muted-foreground">{getDomain(product.url)}</p>
               </div>
               <Clock className="size-3.5 shrink-0 text-muted-foreground/50" />

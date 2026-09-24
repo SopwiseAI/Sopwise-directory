@@ -190,7 +190,7 @@ export function HistoryList() {
                   className="flex min-w-0 flex-1 items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{item.name}</p>
+                    <p className="truncate text-base font-medium">{item.name}</p>
                     <p className="truncate font-data text-muted-foreground">
                       {item.domain}
                       {item.categoryId && ` · ${categoryName(item.categoryId)}`}

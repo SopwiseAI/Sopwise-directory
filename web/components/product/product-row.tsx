@@ -25,7 +25,7 @@ export function ProductRow({ product, last = false }: { product: Product; last?:
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
-          <span className="shrink-0 truncate text-sm font-medium">{product.name}</span>
+          <span className="shrink-0 truncate text-base font-medium">{product.name}</span>
           <span className="hidden shrink-0 font-mono text-xs text-muted-foreground sm:inline">{domain}</span>
         </div>
         <p className="truncate text-xs text-muted-foreground">{product.description}</p>
