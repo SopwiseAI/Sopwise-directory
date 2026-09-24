@@ -48,7 +48,7 @@ export function BrandShowcase() {
             </div>
           ))}
           <Link
-            href="/#featured"
+            href="/?tab=featured"
             className="group inline-flex items-center gap-1 font-data text-muted-foreground transition-colors hover:text-brand outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
           >
             探索精选

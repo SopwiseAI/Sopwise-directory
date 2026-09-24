@@ -1,11 +1,11 @@
 "use client"
 
-import { useMemo, useState, useEffect, useSyncExternalStore } from "react"
+import { useMemo, useState, useEffect } from "react"
 import type { Product } from "@/lib/types"
 import { getProductDate } from "@/lib/data"
 import { ProductRow } from "@/components/product/product-row"
 import { ProductCard } from "@/components/product/product-card"
-import { ProductToolbar, type FilterMode, type SortMode, type ViewMode } from "@/components/product/product-toolbar"
+import { ProductToolbar, type TabMode, type SortMode, type ViewMode } from "@/components/product/product-toolbar"
 import { PackageOpen } from "lucide-react"
 import Link from "next/link"
 
@@ -14,114 +14,99 @@ interface ProductBrowserProps {
   emptyTitle?: string
   emptyDescription?: string
   defaultView?: ViewMode
+  showTabs?: boolean
+  defaultTab?: TabMode
 }
 
-const NAV_EVENT = "xigee:nav"
-
-function subscribe(callback: () => void) {
-  window.addEventListener("popstate", callback)
-  window.addEventListener(NAV_EVENT, callback)
-  return () => {
-    window.removeEventListener("popstate", callback)
-    window.removeEventListener(NAV_EVENT, callback)
-  }
-}
-
-function getServerSnapshot() {
-  return ""
-}
-
-function getSnapshot() {
-  if (typeof window === "undefined") return ""
-  return window.location.pathname + window.location.search
-}
-
-function subscribeDefaultView(callback: () => void) {
-  window.addEventListener("storage", callback)
-  return () => window.removeEventListener("storage", callback)
-}
-
-function getDefaultViewSnapshot(): ViewMode {
-  if (typeof window === "undefined") return "grid"
-  const saved = localStorage.getItem("xigee:default-view") as ViewMode | null
-  if (saved === "list" || saved === "grid") return saved
-  return "grid"
-}
-
-function parseUrlSnapshot(snap: string): { view: ViewMode | null; filter: FilterMode | null } {
-  const qIndex = snap.indexOf("?")
-  if (qIndex === -1) return { view: null, filter: null }
-  const qs = new URLSearchParams(snap.slice(qIndex + 1))
-
-  const viewMap: Record<string, ViewMode> = { list: "list", grid: "grid" }
-  const filterMap: Record<string, FilterMode> = { latest: "latest", featured: "featured" }
-
-  const viewParam = qs.get("view")
+function readUrlParams() {
+  if (typeof window === "undefined") return { tab: null as TabMode | null, view: null as ViewMode | null }
+  const qs = new URLSearchParams(window.location.search)
+  const tabParam = qs.get("tab")
   const filterParam = qs.get("filter")
+  const viewParam = qs.get("view")
 
-  const view = viewParam && viewParam in viewMap ? viewMap[viewParam] : null
-  const filter = filterParam && filterParam in filterMap ? filterMap[filterParam] : null
+  const validTabs: Record<string, TabMode> = { all: "all", latest: "latest", featured: "featured" }
+  const validViews: Record<string, ViewMode> = { list: "list", grid: "grid" }
+  const filterToTab: Record<string, TabMode> = { featured: "featured", latest: "all" }
 
-  return { view, filter }
+  const tab =
+    tabParam && tabParam in validTabs
+      ? validTabs[tabParam]
+      : filterParam && filterParam in filterToTab
+        ? filterToTab[filterParam]
+        : null
+  const view = viewParam && viewParam in validViews ? validViews[viewParam] : null
+
+  return { tab, view }
 }
 
-function writeUrl(view: ViewMode, filter: FilterMode, defaultView: ViewMode) {
-  sessionStorage.setItem("xigee:product-browser-state", JSON.stringify({ view, filter }))
-  const params = new URLSearchParams(window.location.search)
-  const changed = view !== defaultView || filter !== "latest"
-  if (changed) {
-    params.set("view", view)
-    params.set("filter", filter)
-  } else {
-    params.delete("view")
-    params.delete("filter")
-  }
-  const qs = params.toString()
-  const next = qs ? `${window.location.pathname}?${qs}` : window.location.pathname
-  if (window.location.pathname + window.location.search === next) return
-  window.history.replaceState(null, "", next)
-  window.dispatchEvent(new Event(NAV_EVENT))
-}
+export function ProductBrowser({
+  products,
+  emptyTitle,
+  emptyDescription,
+  defaultView = "grid",
+  showTabs = true,
+  defaultTab = "all"
+}: ProductBrowserProps) {
+  const urlParams = readUrlParams()
+  const urlTab = urlParams.tab ?? defaultTab
+  const urlView = urlParams.view
 
-export function ProductBrowser({ products, emptyTitle, emptyDescription, defaultView = "grid" }: ProductBrowserProps) {
   const [sort, setSort] = useState<SortMode>("latest")
-  const snap = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
-  const { view: urlView, filter: urlFilter } = parseUrlSnapshot(snap)
-  const initialView = useSyncExternalStore(subscribeDefaultView, getDefaultViewSnapshot, () => defaultView)
+  const [view, setViewState] = useState<ViewMode>(() => {
+    if (typeof window === "undefined") return defaultView
+    const stored = localStorage.getItem("xigee:default-view") as ViewMode | null
+    return urlView ?? (stored === "list" || stored === "grid" ? stored : defaultView)
+  })
+  const [tab, setTabState] = useState<TabMode>(urlTab)
 
   useEffect(() => {
-    if (urlView || urlFilter) return
-    const saved = sessionStorage.getItem("xigee:product-browser-state")
-    if (!saved) return
-    try {
-      const parsed = JSON.parse(saved)
-      if (parsed.view || parsed.filter) {
-        const params = new URLSearchParams(window.location.search)
-        if (parsed.view && !params.has("view")) params.set("view", parsed.view)
-        if (parsed.filter && !params.has("filter")) params.set("filter", parsed.filter)
-        const qs = params.toString()
-        const next = qs ? `${window.location.pathname}?${qs}` : window.location.pathname
-        window.history.replaceState(null, "", next)
-        window.dispatchEvent(new Event(NAV_EVENT))
-      }
-    } catch {
-      /* ignore */
-    }
-  }, [urlView, urlFilter])
+    if (!showTabs) return
+    const params = new URLSearchParams(window.location.search)
+    const changed: string[] = []
 
-  const resolvedView = urlView ?? initialView
-  const view = resolvedView as ViewMode
-  const filter: FilterMode = urlFilter ?? "latest"
+    if (tab !== defaultTab) {
+      params.set("tab", tab)
+      changed.push("tab")
+    } else {
+      params.delete("tab")
+      params.delete("filter")
+      changed.push("tab")
+    }
+
+    if (view !== defaultView) {
+      params.set("view", view)
+      changed.push("view")
+    } else {
+      params.delete("view")
+      changed.push("view")
+    }
+
+    if (changed.length > 0) {
+      const qs = params.toString()
+      const next = qs ? `${window.location.pathname}?${qs}` : window.location.pathname
+      window.history.replaceState(null, "", next)
+    }
+  }, [tab, view, defaultTab, defaultView, showTabs])
+
+  const isLatestTab = tab === "latest"
+  const resolvedSort: SortMode = isLatestTab ? "latest" : sort
 
   const setView = (v: ViewMode) => {
     localStorage.setItem("xigee:default-view", v)
-    writeUrl(v, filter, defaultView ?? "grid")
+    setViewState(v)
   }
-  const setFilter = (f: FilterMode) => writeUrl(view, f, defaultView ?? "grid")
+
+  const setTab = (t: TabMode) => {
+    setTabState(t)
+    if (t !== "latest") {
+      setSort("latest")
+    }
+  }
 
   const filtered = useMemo(() => {
-    const list = filter === "featured" ? products.filter(p => p.featured) : [...products]
-    switch (sort) {
+    const list = tab === "featured" ? products.filter(p => p.featured) : [...products]
+    switch (resolvedSort) {
       case "name-asc":
         list.sort((a, b) => a.name.localeCompare(b.name))
         break
@@ -133,7 +118,7 @@ export function ProductBrowser({ products, emptyTitle, emptyDescription, default
         break
     }
     return list
-  }, [products, filter, sort])
+  }, [products, tab, resolvedSort])
 
   if (filtered.length === 0) {
     return (
@@ -154,27 +139,28 @@ export function ProductBrowser({ products, emptyTitle, emptyDescription, default
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <ProductToolbar
         count={filtered.length}
         view={view}
-        filter={filter}
+        tab={tab}
         sort={sort}
+        showTabs={showTabs}
         onViewChange={setView}
-        onFilterChange={setFilter}
+        onTabChange={setTab}
         onSortChange={setSort}
       />
 
       {view === "grid" ? (
         <div className="product-card-grid">
           {filtered.map(product => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product} showDate={isLatestTab} />
           ))}
         </div>
       ) : (
         <div className="rounded-lg border bg-card">
           {filtered.map((product, i) => (
-            <ProductRow key={product.id} product={product} last={i === filtered.length - 1} />
+            <ProductRow key={product.id} product={product} last={i === filtered.length - 1} showDate={isLatestTab} />
           ))}
         </div>
       )}

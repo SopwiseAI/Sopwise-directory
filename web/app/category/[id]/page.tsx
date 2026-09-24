@@ -64,6 +64,7 @@ export default async function CategoryPage({ params }: Props) {
       <ProductBrowser
         products={products}
         defaultView="grid"
+        showTabs={false}
         emptyTitle={`「${category.name}」分类暂无产品收录`}
         emptyDescription="你可以浏览其他分类发现更多 AI 产品"
       />
