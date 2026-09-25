@@ -1,0 +1,119 @@
+
+> xigee@0.1.0 dev /Users/Coder/SopwiseAI/Sopwise-directory/web
+> next dev --port 3000
+
+▲ Next.js 16.2.10 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.13:3000
+✓ Ready in 608ms
+⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/Coder/SopwiseAI/Sopwise-directory/pnpm-lock.yaml as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * /Users/Coder/SopwiseAI/Sopwise-directory/web/pnpm-workspace.yaml
+
+
+[browser] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). 
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <RenderFromTemplateContext>
+      <ScrollAndMaybeFocusHandler cacheNode={{rsc:{...}, ...}}>
+        <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+          <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+            <LoadingBoundary name="chatbot/" loading={null}>
+              <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+                <RedirectBoundary>
+                  <RedirectErrorBoundary router={{...}}>
+                    <InnerLayoutRouter url="/category/..." tree={[...]} params={{id:"chatbot"}} ...>
+                      <SegmentViewNode type="page" pagePath="category/[...">
+                        <SegmentTrieNode>
+                        <CategoryPage>
+                          <div className="space-y-4">
+                            <nav>
+                            <div>
+                            <ProductBrowser products={[...]} defaultView="grid" showTabs={false} ...>
+                              <div className="space-y-4">
+                                ...
+                                  <div className="flex items...">
+                                    <div>
+                                    <div className="flex items...">
+                                      <div className="flex items..." role="group" aria-label="视图切换">
+                                        <button
+                                          type="button"
+                                          onClick={function onClick}
++                                         aria-pressed={true}
+-                                         aria-pressed="false"
+                                          aria-label="列表视图"
+                                          title="列表视图"
++                                         className="rounded-sm p-1 transition-colors outline-none focus-visible:ring-..."
+-                                         className="rounded-sm p-1 transition-colors outline-none focus-visible:ring-..."
+                                        >
+                                        <button
+                                          type="button"
+                                          onClick={function onClick}
++                                         aria-pressed={false}
+-                                         aria-pressed="true"
+                                          aria-label="卡片视图"
+                                          title="卡片视图"
++                                         className="rounded-sm p-1 transition-colors outline-none focus-visible:ring-..."
+-                                         className="rounded-sm p-1 transition-colors outline-none focus-visible:ring-..."
+                                        >
+                                      ...
+                                <div
++                                 className="rounded-lg border bg-card"
+-                                 className="product-card-grid"
+                                >
+                                  <ProductRow product={{id:"coze", ...}} last={false} showDate={false}>
+                                    <a
+                                      href="https://www.coze.cn"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      data-history-id="coze"
+                                      data-history-name="Coze"
+                                      data-history-url="https://www.coze.cn"
+                                      data-history-category="chatbot"
+                                      data-history-pricing="freemium"
++                                     className="group flex items-center gap-3 px-4 py-3.5 transition-all hover:bg-bra..."
+-                                     className="group flex flex-col gap-2.5 rounded-lg border bg-card p-4 outline-non..."
+                                    >
+                                      <div
++                                       className="min-w-0 flex-1"
+-                                       className="space-y-1.5"
+                                      >
++                                       <div className="flex items-baseline gap-2">
+-                                       <h3 className="truncate text-base font-medium tracking-tight text-foreground">
+                                        ...
+                                      ...
+                                  ...
+                      ...
+                    ...
+          ...
+
+    at <unknown> (https://react.dev/link/hydration-mismatch)
+    at div (<anonymous>)
+    at ProductRow (components/product/product-row.tsx:37:9)
+    at <unknown> (components/product/product-browser.tsx:163:13)
+    at Array.map (<anonymous>)
+    at ProductBrowser (components/product/product-browser.tsx:162:21)
+    at CategoryPage (app/category/[id]/page.tsx:64:7)
+  35 |     >
+  36 |       <div className="min-w-0 flex-1">
+> 37 |         <div className="flex items-baseline gap-2">
+     |         ^
+  38 |           <span className="shrink-0 truncate text-base font-medium">{product.name}</span>
+  39 |           <span className="hidden shrink-0 font-mono text-xs text-muted-foreground sm:inli...
+  40 |           {date && <span className="hidden shrink-0 font-data text-muted-foreground/60 sm:...
+ GET /category/chatbot 200 in 1259ms (next.js: 743ms, generate-params: 506ms, application-code: 517ms)
+[?25h

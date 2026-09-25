@@ -6,7 +6,7 @@ set -euo pipefail
 # 项目根目录（lib.sh 所在目录的上级）
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-RUN_DIR="$PROJECT_ROOT/scripts/run"
+RUN_DIR="$PROJECT_ROOT/scripts/state"
 mkdir -p "$RUN_DIR"
 
 # 固定端口
