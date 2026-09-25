@@ -20,10 +20,7 @@ def normalize_url(raw_url: str) -> str:
     if port and port not in (80, 443):
         host = f"{host}:{port}"
 
-    if host in _LOCAL_HOSTS:
-        scheme = "http"
-    else:
-        scheme = "https"
+    scheme = "http" if host in _LOCAL_HOSTS else "https"
 
     path = parsed.path.rstrip("/") or ""
     query = parsed.query

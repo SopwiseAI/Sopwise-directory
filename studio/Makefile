@@ -1,4 +1,4 @@
-.PHONY: dev prod sync lint format check test export
+.PHONY: dev prod sync lint format check test export migrate migration
 
 sync:
 	uv sync
@@ -19,7 +19,10 @@ check: lint
 	uv run ruff format --check .
 
 test:
-	uv run pytest -v
+	APP_ENV=dev uv run pytest -v
+
+test-cov:
+	APP_ENV=dev uv run pytest --cov=app --cov-report=term-missing -v
 
 export:
 	APP_ENV=dev uv run python -m app.exporters
