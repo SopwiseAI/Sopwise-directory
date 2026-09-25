@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config import get_settings
-from app.models import Category, Product, ProductStatus
+from app.models import Category, CategoryStatus, Product, ProductStatus
 
 logger = logging.getLogger(__name__)
 
@@ -42,13 +42,17 @@ async def export_to_json(session: AsyncSession) -> dict:
 
 
 async def _build_category_slug_map(session: AsyncSession) -> dict[int, str]:
-    stmt = select(Category.id, Category.slug).where(Category.status == 1)
+    stmt = select(Category.id, Category.slug).where(Category.status == CategoryStatus.ACTIVE)
     result = await session.execute(stmt)
     return {row.id: row.slug for row in result.all()}
 
 
 async def _fetch_categories(session: AsyncSession) -> list[dict]:
-    stmt = select(Category).where(Category.status == 1).order_by(Category.sort_order.desc(), Category.id)
+    stmt = (
+        select(Category)
+        .where(Category.status == CategoryStatus.ACTIVE)
+        .order_by(Category.sort_order.desc(), Category.id)
+    )
     result = await session.execute(stmt)
     rows = result.scalars().all()
 

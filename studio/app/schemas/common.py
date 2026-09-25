@@ -17,9 +17,3 @@ class ExportResponse(BaseModel):
     categories_count: int
     products_count: int
     app_env: str
-
-
-class CountResponse(BaseModel):
-    count: int
-
-    model_config = {"extra": "allow"}

@@ -1,12 +1,13 @@
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import ColumnElement, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import DeclarativeBase
 
 
 async def check_unique(
     db: AsyncSession,
-    model,
-    field,
+    model: type[DeclarativeBase],
+    field: ColumnElement[str],
     value: str,
     *,
     exclude_id: int | None = None,

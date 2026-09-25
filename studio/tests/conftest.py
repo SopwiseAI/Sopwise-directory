@@ -11,7 +11,6 @@
 import logging
 from collections.abc import AsyncGenerator
 
-import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
@@ -59,11 +58,6 @@ async def anon_client() -> AsyncGenerator[AsyncClient]:
         base_url="http://test",
     ) as ac:
         yield ac
-
-
-@pytest.fixture
-def api_headers() -> dict:
-    return {"X-API-Key": API_KEY}
 
 
 # ── 工厂函数 ──────────────────────────────────────────────────────────────────
