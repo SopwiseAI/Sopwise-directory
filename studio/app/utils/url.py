@@ -1,6 +1,8 @@
 import hashlib
 from urllib.parse import urlsplit, urlunsplit
 
+_LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "::1", "0.0.0.0"})  # noqa: S104
+
 
 def normalize_url(raw_url: str) -> str:
     url = raw_url.strip()
@@ -9,24 +11,25 @@ def normalize_url(raw_url: str) -> str:
 
     parsed = urlsplit(url)
 
-    scheme = "https"
-
-    netloc = parsed.hostname or ""
-    netloc = netloc.lower()
-    if netloc.startswith("www."):
-        netloc = netloc[4:]
+    host = parsed.hostname or ""
+    host = host.lower()
+    if host.startswith("www."):
+        host = host[4:]
 
     port = parsed.port
     if port and port not in (80, 443):
-        netloc = f"{netloc}:{port}"
+        host = f"{host}:{port}"
+
+    if host in _LOCAL_HOSTS:
+        scheme = "http"
+    else:
+        scheme = "https"
 
     path = parsed.path.rstrip("/") or ""
-
     query = parsed.query
-
     fragment = ""
 
-    return urlunsplit((scheme, netloc, path, query, fragment))
+    return urlunsplit((scheme, host, path, query, fragment))
 
 
 def url_hash(raw_url: str) -> str:

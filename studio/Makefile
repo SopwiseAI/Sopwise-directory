@@ -4,10 +4,10 @@ sync:
 	uv sync
 
 dev:
-	APP_ENV=dev uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+	APP_ENV=dev uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 prod:
-	APP_ENV=prod uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+	APP_ENV=prod uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
 
 lint:
 	uv run ruff check .

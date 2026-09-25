@@ -1,4 +1,4 @@
-from app.schemas.common import EnvResponse, ExportResponse, HealthResponse
+from app.schemas.common import CountResponse, EnvResponse, ExportResponse, HealthResponse
 from app.schemas.models import (
     CategoryCreate,
     CategoryResponse,
@@ -19,6 +19,7 @@ __all__ = [
     "CategoryCreate",
     "CategoryResponse",
     "CategoryUpdate",
+    "CountResponse",
     "EnvResponse",
     "ExportResponse",
     "HealthResponse",

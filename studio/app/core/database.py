@@ -1,4 +1,4 @@
-import sys
+import os
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
@@ -6,9 +6,9 @@ from sqlalchemy.pool import NullPool
 
 from app.core.config import get_settings
 
-settings = get_settings()
+_is_test = bool(os.getenv("PYTEST_CURRENT_TEST")) or "pytest" in os.sys.modules
 
-_is_test = "pytest" in sys.modules
+settings = get_settings()
 
 _engine_kwargs: dict = {
     "echo": settings.db_echo,

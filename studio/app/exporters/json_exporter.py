@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from datetime import datetime
@@ -7,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config import get_settings
-from app.models import Category, Product
+from app.models import Category, Product, ProductStatus
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,8 @@ async def export_to_json(session: AsyncSession) -> dict:
 
     output_path = settings.export_full_path
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    content = json.dumps(data, ensure_ascii=False, indent=2)
+    await asyncio.to_thread(output_path.write_text, content, "utf-8")
 
     logger.info("Exported %d categories, %d products → %s", len(categories), len(products), output_path)
 
@@ -64,7 +66,7 @@ async def _fetch_products(session: AsyncSession, cat_map: dict[int, str]) -> lis
     stmt = (
         select(Product)
         .options(selectinload(Product.links), selectinload(Product.tags))
-        .where(Product.status == 2)
+        .where(Product.status == ProductStatus.PUBLISHED)
         .order_by(Product.sort_order.desc(), Product.published_at.desc())
     )
     result = await session.execute(stmt)

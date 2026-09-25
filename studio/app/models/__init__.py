@@ -1,9 +1,30 @@
 from datetime import datetime
+from enum import IntEnum
 
 from sqlalchemy import CHAR, BigInteger, Boolean, DateTime, ForeignKey, Index, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+
+class ProductStatus(IntEnum):
+    DRAFT = 0
+    PENDING = 1
+    PUBLISHED = 2
+    ARCHIVED = 3
+
+
+class CategoryStatus(IntEnum):
+    DISABLED = 0
+    ACTIVE = 1
+
+
+VALID_STATUS_TRANSITIONS: dict[ProductStatus, set[ProductStatus]] = {
+    ProductStatus.DRAFT: {ProductStatus.PENDING},
+    ProductStatus.PENDING: {ProductStatus.DRAFT, ProductStatus.PUBLISHED},
+    ProductStatus.PUBLISHED: {ProductStatus.ARCHIVED},
+    ProductStatus.ARCHIVED: {ProductStatus.PUBLISHED},
+}
 
 
 class Category(Base):

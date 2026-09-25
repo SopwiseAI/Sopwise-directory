@@ -45,7 +45,7 @@ class ProductLinkCreate(ProductLinkBase):
 
 
 class ProductLinkUpdate(BaseModel):
-    url: str | None = Field(None, max_length=2048)
+    url: str | None = Field(None, max_length=2048, pattern="^https?://.+")
     label: str | None = Field(None, max_length=32)
     is_primary: bool | None = None
     sort_order: int | None = None
@@ -72,8 +72,8 @@ class ProductBase(BaseModel):
 
 
 class ProductCreate(ProductBase):
-    links: list[ProductLinkCreate] = []
-    tag_ids: list[int] = []
+    links: list[ProductLinkCreate] = Field(default_factory=list)
+    tag_ids: list[int] = Field(default_factory=list)
 
 
 class ProductUpdate(BaseModel):
@@ -85,6 +85,15 @@ class ProductUpdate(BaseModel):
     featured: bool | None = None
     sort_order: int | None = None
     status: int | None = Field(None, ge=0, le=3)
+
+
+class TagResponse(BaseModel):
+    id: int
+    slug: str
+    name: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
 
 
 class ProductResponse(BaseModel):
@@ -100,10 +109,14 @@ class ProductResponse(BaseModel):
     published_at: datetime | None
     created_at: datetime
     updated_at: datetime
-    links: list[ProductLinkResponse] = []
-    tags: list["TagResponse"] = []
+    links: list[ProductLinkResponse] = Field(default_factory=list)
+    tags: list[TagResponse] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
+
+
+TagResponse.model_rebuild()
+ProductResponse.model_rebuild()
 
 
 class TagBase(BaseModel):
@@ -120,12 +133,5 @@ class TagUpdate(BaseModel):
     name: str | None = Field(None, max_length=64)
 
 
-class TagResponse(TagBase):
-    id: int
-    created_at: datetime
-
-    model_config = {"from_attributes": True}
-
-
 class ProductTagUpdate(BaseModel):
-    tag_ids: list[int]
+    tag_ids: list[int] = Field(default_factory=list)
