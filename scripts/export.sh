@@ -14,7 +14,6 @@ CLI=false
 for arg in "$@"; do
     case "$arg" in
         --cli)  CLI=true ;;
-        --force) ;; # 兼容旧用法，忽略
         *)      error "未知参数: $arg"; exit 1 ;;
     esac
 done
