@@ -14,7 +14,7 @@ scripts/    开发脚本
 
 ```bash
 # 安装根工程化依赖
-npm install
+pnpm install
 
 # 安装各模块依赖
 ./scripts/sync.sh
@@ -69,7 +69,7 @@ revert: 回退
 
 | 文件类型                                        | 工具              | 命令                                |
 | ----------------------------------------------- | ----------------- | ----------------------------------- |
-| Markdown (root/.opencode/skills) / JSON / JSONC | prettier          | `npm run format`                    |
+| Markdown (root/.opencode/skills) / JSON / JSONC | prettier          | `pnpm run format`                   |
 | Python                                          | ruff              | `cd studio && uv run ruff format .` |
 | TypeScript / TSX                                | eslint (web 内置) | `cd web && pnpm lint`               |
 
@@ -97,5 +97,5 @@ husky commit-msg 自动执行 commitlint 校验提交信息格式。
 cd studio && APP_ENV=dev uv run pytest -v
 
 # 全量检查 (markdownlint + prettier check + ruff check + eslint)
-npm run check
+pnpm run check
 ```
