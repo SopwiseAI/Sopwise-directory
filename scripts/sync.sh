@@ -8,6 +8,11 @@ echo -e "${CYAN}  Sopwise Directory — Install Dependencies${NC}"
 echo -e "${CYAN}════════════════════════════════════════════${NC}"
 echo ""
 
+info "安装根工程化依赖 (pnpm)..."
+cd "$PROJECT_ROOT"
+pnpm install
+echo ""
+
 info "安装 web 依赖 (pnpm)..."
 cd "$PROJECT_ROOT/web"
 pnpm install

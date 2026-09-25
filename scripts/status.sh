@@ -7,7 +7,6 @@ show_status() {
     local name=$1
     local pid_file=$2
     local port=$3
-    local log_file=$4
 
     local status="${RED}stopped${NC}"
     local pid="-"
@@ -28,8 +27,8 @@ echo -e "${CYAN}  Sopwise Directory — Service Status${NC}"
 echo -e "${CYAN}════════════════════════════════════════════${NC}"
 echo ""
 
-show_status "web"    "$WEB_PID_FILE"    "$WEB_PORT"    "$WEB_LOG_FILE"
-show_status "studio" "$STUDIO_PID_FILE" "$STUDIO_PORT" "$STUDIO_LOG_FILE"
+show_status "web"    "$WEB_PID_FILE"    "$WEB_PORT"
+show_status "studio" "$STUDIO_PID_FILE" "$STUDIO_PORT"
 
 echo ""
 if is_running "$WEB_PID_FILE" && is_running "$STUDIO_PID_FILE"; then

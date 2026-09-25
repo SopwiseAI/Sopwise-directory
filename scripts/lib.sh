@@ -31,12 +31,6 @@ info()  { echo -e "${GREEN}[INFO]${NC}  $*"; }
 warn()  { echo -e "${YELLOW}[WARN]${NC}  $*"; }
 error() { echo -e "${RED}[ERROR]${NC} $*"; }
 
-# 检查端口是否被占用，返回占用该端口的 PID（不含自身）
-port_pid() {
-    local port=$1
-    lsof -ti :"$port" 2>/dev/null || true
-}
-
 # 通过 PID 文件检查进程是否存活
 is_running() {
     local pid_file=$1

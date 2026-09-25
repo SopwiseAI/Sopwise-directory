@@ -12,6 +12,7 @@ if [[ "${1:-}" == "--cli" ]]; then
     info "CLI 导出 (直接执行)..."
     cd "$PROJECT_ROOT/studio"
     APP_ENV="${APP_ENV:-dev}" uv run python -m app.exporters
+    info "导出完成 → $PROJECT_ROOT/web/data/data.json"
 else
     info "API 导出 → http://localhost:$STUDIO_PORT/api/v1/export"
 
@@ -22,7 +23,7 @@ else
 
     response=$(curl -sf -X POST "http://localhost:$STUDIO_PORT/api/v1/export" \
         -H "X-API-Key: $API_KEY" 2>&1) || {
-        error "导出请求失败，请检查 studio 是否正常运行"
+        error "导出请求失败 (可能 studio 未运行或 API Key 错误)"
         error "响应: $response"
         exit 1
     }

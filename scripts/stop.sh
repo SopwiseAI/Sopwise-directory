@@ -7,47 +7,32 @@
 set -euo pipefail
 source "$(dirname "$0")/lib.sh"
 
-stop_web() {
-    if is_running "$WEB_PID_FILE"; then
-        local pid
-        pid=$(cat "$WEB_PID_FILE")
-        warn "停止 web (PID: $pid)..."
-        kill "$pid" 2>/dev/null || true
-        for i in $(seq 1 10); do
-            sleep 0.5
-            kill -0 "$pid" 2>/dev/null || break
-        done
-        kill -9 "$pid" 2>/dev/null || true
-        info "web 已停止"
-    else
-        info "web 未运行"
-    fi
-    kill_port "$WEB_PORT" "web"
-    cleanup_pid "$WEB_PID_FILE"
-}
+stop_service() {
+    local name=$1
+    local pid_file=$2
+    local port=$3
 
-stop_studio() {
-    if is_running "$STUDIO_PID_FILE"; then
+    if is_running "$pid_file"; then
         local pid
-        pid=$(cat "$STUDIO_PID_FILE")
-        warn "停止 studio (PID: $pid)..."
+        pid=$(cat "$pid_file")
+        warn "停止 $name (PID: $pid)..."
         kill "$pid" 2>/dev/null || true
         for i in $(seq 1 10); do
             sleep 0.5
             kill -0 "$pid" 2>/dev/null || break
         done
         kill -9 "$pid" 2>/dev/null || true
-        info "studio 已停止"
+        info "$name 已停止"
     else
-        info "studio 未运行"
+        info "$name 未运行"
     fi
-    kill_port "$STUDIO_PORT" "studio"
-    cleanup_pid "$STUDIO_PID_FILE"
+    kill_port "$port" "$name"
+    cleanup_pid "$pid_file"
 }
 
 case "${1:-all}" in
-    all)    stop_web; stop_studio ;;
-    web)    stop_web ;;
-    studio) stop_studio ;;
+    all)    stop_service "web" "$WEB_PID_FILE" "$WEB_PORT"; stop_service "studio" "$STUDIO_PID_FILE" "$STUDIO_PORT" ;;
+    web)    stop_service "web" "$WEB_PID_FILE" "$WEB_PORT" ;;
+    studio) stop_service "studio" "$STUDIO_PID_FILE" "$STUDIO_PORT" ;;
     *)      error "用法: $0 [all|web|studio]"; exit 1 ;;
 esac
