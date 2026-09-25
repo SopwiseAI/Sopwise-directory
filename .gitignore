@@ -50,3 +50,6 @@ venv/
 
 # scripts runtime
 scripts/.state/
+
+# export artifacts (data-{env}.json, 保留 data.json)
+web/data/data-*.json
