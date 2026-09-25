@@ -15,7 +15,9 @@ show_status() {
     if is_running "$pid_file"; then
         pid=$(cat "$pid_file")
         status="${GREEN}running${NC}"
-        uptime=$(ps -o etime= -p "$pid" 2>/dev/null | tr -d ' ' || echo "-")
+        local uptime_str
+        uptime_str=$(ps -o etime= -p "$pid" 2>/dev/null | tr -d ' ')
+        uptime="${uptime_str:--}"
     fi
 
     printf "  ${BLUE}%-8s${NC}  %-10b  PID: %-6s  端口: %-5s  运行时长: %s\n" \

@@ -10,17 +10,17 @@ echo ""
 
 info "安装根工程化依赖 (pnpm)..."
 cd "$PROJECT_ROOT"
-pnpm install
+pnpm install --frozen-lockfile
 echo ""
 
 info "安装 web 依赖 (pnpm)..."
 cd "$PROJECT_ROOT/web"
-pnpm install
+pnpm install --frozen-lockfile
 echo ""
 
 info "安装 studio 依赖 (uv)..."
 cd "$PROJECT_ROOT/studio"
-uv sync
+uv sync --frozen
 echo ""
 
 info "所有依赖安装完成"

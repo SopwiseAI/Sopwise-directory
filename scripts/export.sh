@@ -6,7 +6,14 @@
 set -euo pipefail
 source "$(dirname "$0")/lib.sh"
 
-API_KEY="${API_KEY:-${STUDIO_API_KEY:-dev-secret-key}}"
+API_KEY="${API_KEY:-${STUDIO_API_KEY:-}}"
+if [[ -z "$API_KEY" ]]; then
+    error "API_KEY 或 STUDIO_API_KEY 未设置"
+    echo "  用法: API_KEY=xxx ./scripts/export.sh"
+    echo "  或:   export STUDIO_API_KEY=xxx && ./scripts/export.sh"
+    exit 1
+fi
+readonly API_KEY
 
 if [[ "${1:-}" == "--cli" ]]; then
     info "CLI 导出 (直接执行)..."

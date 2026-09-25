@@ -7,6 +7,13 @@
 set -euo pipefail
 source "$(dirname "$0")/lib.sh"
 
+cleanup() {
+    echo ""
+    warn "正在停止服务..."
+    "$SCRIPT_DIR/stop.sh" 2>/dev/null || true
+}
+trap cleanup INT TERM
+
 START_WEB=true
 START_STUDIO=true
 

@@ -13,7 +13,12 @@ nohup pnpm dev --port "$WEB_PORT" > "$WEB_LOG_FILE" 2>&1 &
 WEB_PID=$!
 echo "$WEB_PID" > "$WEB_PID_FILE"
 
-sleep 2
+info "等待 web 就绪..."
+for i in $(seq 1 15); do
+    curl -sf "http://127.0.0.1:$WEB_PORT" >/dev/null 2>&1 && break
+    sleep 1
+done
+
 if is_running "$WEB_PID_FILE"; then
     info "web 已启动 (PID: $WEB_PID) → http://localhost:$WEB_PORT"
     info "日志: $WEB_LOG_FILE"

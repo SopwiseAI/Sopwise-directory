@@ -9,12 +9,17 @@ kill_port "$STUDIO_PORT" "studio"
 cleanup_pid "$STUDIO_PID_FILE"
 
 cd "$PROJECT_ROOT/studio"
-nohup env APP_ENV=dev uv run uvicorn app.main:app --reload \
+nohup APP_ENV=dev uv run uvicorn app.main:app --reload \
     --host 127.0.0.1 --port "$STUDIO_PORT" > "$STUDIO_LOG_FILE" 2>&1 &
 STUDIO_PID=$!
 echo "$STUDIO_PID" > "$STUDIO_PID_FILE"
 
-sleep 3
+info "等待 studio 就绪..."
+for i in $(seq 1 20); do
+    curl -sf "http://127.0.0.1:$STUDIO_PORT/openapi.json" >/dev/null 2>&1 && break
+    sleep 1
+done
+
 if is_running "$STUDIO_PID_FILE"; then
     info "studio 已启动 (PID: $STUDIO_PID) → http://localhost:$STUDIO_PORT"
     info "日志: $STUDIO_LOG_FILE"

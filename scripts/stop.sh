@@ -21,7 +21,10 @@ stop_service() {
             sleep 0.5
             kill -0 "$pid" 2>/dev/null || break
         done
-        kill -9 "$pid" 2>/dev/null || true
+        if kill -0 "$pid" 2>/dev/null; then
+            warn "强制停止 $name..."
+            kill -9 "$pid" 2>/dev/null || true
+        fi
         info "$name 已停止"
     else
         info "$name 未运行"
