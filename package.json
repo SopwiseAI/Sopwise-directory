@@ -3,12 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "description": "AI 驱动的目录站",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
   "scripts": {
     "format": "prettier --write \"*.md\" \"*.json\" \"*.jsonc\" \".opencode/**/*.md\" \"skills/**/*.md\"",
     "format:check": "prettier --check \"*.md\" \"*.json\" \"*.jsonc\" \".opencode/**/*.md\" \"skills/**/*.md\"",
     "lint:md": "markdownlint-cli2 \"**/*.md\"",
     "lint:md:fix": "markdownlint-cli2 --fix \"**/*.md\"",
-    "check": "npm run lint:md && npm run format:check && studio/.venv/bin/ruff check studio/app/ studio/tests/ && cd web && pnpm lint",
+    "check": "npm run lint:md && npm run format:check && cd studio && uv run ruff check app/ tests/ && cd ../web && pnpm lint",
     "prepare": "husky"
   },
   "devDependencies": {

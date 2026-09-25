@@ -25,7 +25,27 @@ npm install
 ./scripts/dev-studio.sh   # 仅后端 (port 8000)
 ```
 
+## 环境变量
+
+复制 `.env.example` 创建 `.env`：
+
+```bash
+cp .env.example .env
+```
+
+各模块按需配置对应环境变量。
+
 ## 代码规范
+
+### 分支命名
+
+```
+feature/<name>   新功能
+fix/<name>       缺陷修复
+refactor/<name>  重构
+chore/<name>     工程化/工具链变更
+docs/<name>      文档
+```
 
 ### 提交规范 (Conventional Commits)
 
@@ -63,6 +83,13 @@ husky pre-commit 自动执行 lint-staged：
 
 husky commit-msg 自动执行 commitlint 校验提交信息格式。
 
+## Pull Request 流程
+
+1. 从 `main` 创建功能分支 (`feature/<name>`) 或修复分支 (`fix/<name>`)
+2. 提交代码并推送至远程
+3. 创建 Pull Request，标题遵循 Conventional Commits 格式
+4. 通过 CI 检查（lint + 构建）后合并
+
 ## 测试
 
 ```bash
@@ -72,11 +99,3 @@ cd studio && APP_ENV=dev uv run pytest -v
 # 全量检查 (markdownlint + prettier check + ruff check + eslint)
 npm run check
 ```
-
-## 产品状态流程
-
-```
-0=草稿 → 1=待审核 → 2=已发布 → 3=已下架
-```
-
-使用 `/std-*` 系列命令管理产品数据。

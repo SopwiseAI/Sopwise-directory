@@ -6,7 +6,7 @@
   "singleQuote": false,
   "trailingComma": "none",
   "bracketSpacing": true,
-  "arrowParens": "avoid",
+  "arrowParens": "always",
   "endOfLine": "lf",
   "overrides": [
     {
