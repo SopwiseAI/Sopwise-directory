@@ -10,6 +10,8 @@ router = APIRouter()
 
 
 @router.post("/export", response_model=ExportResponse, dependencies=[Security(verify_api_key)])
-async def export_data(db: AsyncSession = Depends(get_db)) -> ExportResponse:
+async def export_data(
+    db: AsyncSession = Depends(get_db),
+) -> ExportResponse:
     result = await export_to_json(db)
     return ExportResponse(**result)

@@ -35,6 +35,7 @@ async def export_to_json(session: AsyncSession) -> dict:
         "output_path": str(output_path),
         "categories_count": len(categories),
         "products_count": len(products),
+        "app_env": settings.app_env,
     }
 
 

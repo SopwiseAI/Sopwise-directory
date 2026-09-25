@@ -16,3 +16,4 @@ class ExportResponse(BaseModel):
     output_path: str
     categories_count: int
     products_count: int
+    app_env: str
