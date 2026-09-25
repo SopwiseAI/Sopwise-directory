@@ -1,11 +1,10 @@
 {
-  "name": "xigee",
+  "name": "sopwise-directory",
   "version": "0.1.0",
   "private": true,
   "description": "AI 驱动的目录站",
   "engines": {
-    "node": ">=18.0.0",
-    "pnpm": ">=8.0.0"
+    "node": ">=18.0.0"
   },
   "scripts": {
     "format": "prettier --write \"*.md\" \"*.json\" \"*.jsonc\" \".opencode/**/*.md\" \"skills/**/*.md\"",

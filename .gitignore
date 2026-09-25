@@ -49,8 +49,5 @@ venv/
 *.swp
 *.swo
 
-# OCR sessions
-.ocr/
-
 # scripts runtime
 scripts/run/

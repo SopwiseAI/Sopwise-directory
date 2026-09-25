@@ -27,10 +27,10 @@ npm install
 
 ## 环境变量
 
-复制 `.env.example` 创建 `.env`：
+复制 `studio/.env.example` 创建 `.env`：
 
 ```bash
-cp .env.example .env
+cp studio/.env.example studio/.env
 ```
 
 各模块按需配置对应环境变量。
