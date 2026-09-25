@@ -17,7 +17,7 @@ scripts/    开发脚本
 pnpm install
 
 # 安装各模块依赖
-./scripts/sync.sh
+./scripts/install.sh
 
 # 启动开发服务
 ./scripts/dev.sh          # 前端 + 后端

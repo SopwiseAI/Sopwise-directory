@@ -1,10 +1,19 @@
 import os
 from functools import lru_cache
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as pkg_version
 from pathlib import Path
 from urllib.parse import quote_plus
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def get_app_version() -> str:
+    try:
+        return pkg_version("studio")
+    except PackageNotFoundError:
+        return "0.0.0"
 
 
 class Settings(BaseSettings):

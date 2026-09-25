@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 
 from app.api.v1.router import router as v1_router
-from app.core.config import get_settings
+from app.core.config import get_app_version, get_settings
 from app.core.database import engine
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s")
@@ -34,9 +34,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 settings = get_settings()
 
 app = FastAPI(
-    title="XiGee Studio API",
-    description="XiGee Directory Studio — 数据管理后端",
-    version="0.1.0",
+    title="Sopwise Studio API",
+    description="Sopwise Directory Studio — 数据管理后端",
+    version=get_app_version(),
     debug=settings.app_debug,
     lifespan=lifespan,
 )
