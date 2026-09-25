@@ -48,5 +48,6 @@ venv/
 *.swp
 *.swo
 
-# scripts runtime
+# scripts runtime (run/ 旧名称兼容, state/ 新名称)
+scripts/run/
 scripts/state/
