@@ -1,0 +1,34 @@
+{
+  "files.encoding": "utf-8",
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "[markdown]": {
+    "files.trimTrailingWhitespace": false,
+    "editor.wordWrap": "on"
+  },
+  "[python]": {
+    "editor.tabSize": 4,
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "[typescript]": {
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[tsx]": {
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.renderWhitespace": "boundary",
+  "diffEditor.ignoreTrimWhitespace": false,
+  "search.exclude": {
+    "web/node_modules": true,
+    "web/.next": true,
+    "studio/.venv": true,
+    "studio/.ruff_cache": true,
+    "studio/.pytest_cache": true,
+    "scripts/run": true
+  },
+  "eslint.workingDirectories": [{ "pattern": "web" }],
+  "python.defaultInterpreterPath": "studio/.venv/bin/python"
+}
