@@ -49,4 +49,4 @@ venv/
 *.swo
 
 # scripts runtime
-scripts/state/
+scripts/.state/
