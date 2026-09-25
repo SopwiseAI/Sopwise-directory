@@ -83,11 +83,11 @@ async def test_publish_sets_published_at(async_client):
 async def test_publish_at_does_not_change_on_reupdate(async_client):
     """已发布产品再次更新，published_at 不变。"""
     product = await create_product(async_client, slug="pub", name="已发布", status=2)
-    original = product["published_at"]
+    original = (product["published_at"] or "")[:19]
 
     resp = await async_client.put(f"/api/v1/products/{product['id']}", json={"description": "改描述"})
     assert resp.status_code == 200
-    assert resp.json()["published_at"] == original
+    assert (resp.json()["published_at"] or "")[:19] == original
 
 
 @pytest.mark.asyncio

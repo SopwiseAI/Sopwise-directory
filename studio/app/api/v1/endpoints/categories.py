@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_db
 from app.core.security import require_write
 from app.models import Category, Product
-from app.schemas.common import CountResponse
 from app.schemas.models import CategoryCreate, CategoryResponse, CategoryUpdate
 from app.utils.db import check_unique
 
@@ -88,8 +87,8 @@ async def delete_category(category_id: int, db: AsyncSession = Depends(get_db)) 
     await db.delete(category)
 
 
-@router.get("/{category_id}/count", response_model=CountResponse)
-async def category_product_count(category_id: int, db: AsyncSession = Depends(get_db)) -> CountResponse:
+@router.get("/{category_id}/count")
+async def category_product_count(category_id: int, db: AsyncSession = Depends(get_db)) -> dict:
     stmt = select(func.count()).select_from(Product).where(Product.category_id == category_id, Product.status == 2)
     count = (await db.execute(stmt)).scalar() or 0
-    return CountResponse(count=count)
+    return {"product_count": count}

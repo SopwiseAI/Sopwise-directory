@@ -21,3 +21,5 @@ class ExportResponse(BaseModel):
 
 class CountResponse(BaseModel):
     count: int
+
+    model_config = {"extra": "allow"}

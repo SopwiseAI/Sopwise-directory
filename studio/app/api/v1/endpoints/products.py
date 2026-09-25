@@ -69,7 +69,7 @@ async def create_product(data: ProductCreate, db: AsyncSession = Depends(get_db)
     product = Product(**product_data)
 
     if product.status == ProductStatus.PUBLISHED:
-        product.published_at = datetime.now()
+        product.published_at = datetime.now().replace(microsecond=0)
 
     for link_data in data.links:
         link = ProductLink(
@@ -142,7 +142,7 @@ async def update_product(product_id: int, data: ProductUpdate, db: AsyncSession 
                     ),
                 )
         if new_status == ProductStatus.PUBLISHED and old_status != ProductStatus.PUBLISHED and not product.published_at:
-            product.published_at = datetime.now()
+            product.published_at = datetime.now().replace(microsecond=0)
 
     await db.flush()
 

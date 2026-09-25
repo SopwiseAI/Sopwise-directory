@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_db
 from app.core.security import require_write
 from app.models import ProductTag, Tag
-from app.schemas.common import CountResponse
 from app.schemas.models import TagCreate, TagResponse, TagUpdate
 from app.utils.db import check_unique
 
@@ -71,8 +70,8 @@ async def delete_tag(tag_id: int, db: AsyncSession = Depends(get_db)) -> None:
     await db.delete(tag)
 
 
-@router.get("/{tag_id}/count", response_model=CountResponse)
-async def tag_product_count(tag_id: int, db: AsyncSession = Depends(get_db)) -> CountResponse:
+@router.get("/{tag_id}/count")
+async def tag_product_count(tag_id: int, db: AsyncSession = Depends(get_db)) -> dict:
     stmt = select(func.count()).select_from(ProductTag).where(ProductTag.tag_id == tag_id)
     count = (await db.execute(stmt)).scalar() or 0
-    return CountResponse(count=count)
+    return {"product_count": count}

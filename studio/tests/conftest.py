@@ -43,7 +43,21 @@ async def clean_db():
 
 @pytest_asyncio.fixture
 async def async_client() -> AsyncGenerator[AsyncClient]:
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+        headers={"X-API-Key": API_KEY},
+    ) as ac:
+        yield ac
+
+
+@pytest_asyncio.fixture
+async def anon_client() -> AsyncGenerator[AsyncClient]:
+    """Client without API key — for testing auth failures."""
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+    ) as ac:
         yield ac
 
 
