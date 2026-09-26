@@ -1,4 +1,4 @@
-.PHONY: dev sit prod sync lint format check test test-cov export-dev export-sit export-prod migrate migration
+.PHONY: dev sit prod sync lint format check test test-cov export-dev export-sit export-prod clean
 
 sync:
 	uv sync
@@ -36,8 +36,6 @@ export-sit:
 export-prod:
 	APP_ENV=prod uv run python -m app.exporters
 
-migrate:
-	uv run alembic upgrade head
-
-migration:
-	uv run alembic revision --autogenerate -m "$(MSG)"
+clean:
+	rm -rf .ruff_cache .pytest_cache .coverage
+	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.deps import get_db
 from app.core.security import require_write
-from app.models import VALID_STATUS_TRANSITIONS, Category, Product, ProductLink, ProductStatus, Tag
+from app.models import VALID_STATUS_TRANSITIONS, Category, Product, ProductLink, ProductStatus, ProductTag, Tag
 from app.schemas.models import ProductCreate, ProductResponse, ProductUpdate
 from app.utils.db import check_unique
 from app.utils.url import url_hash
@@ -24,7 +24,7 @@ async def list_products(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-) -> list[Product]:
+) -> list[ProductResponse]:
     base = select(Product)
     if status_filter is not None:
         base = base.where(Product.status == status_filter)
@@ -47,7 +47,7 @@ async def list_products(
 
 
 @router.get("/{product_id}", response_model=ProductResponse)
-async def get_product(product_id: int, db: AsyncSession = Depends(get_db)) -> Product:
+async def get_product(product_id: int, db: AsyncSession = Depends(get_db)) -> ProductResponse:
     stmt = (
         select(Product).options(selectinload(Product.links), selectinload(Product.tags)).where(Product.id == product_id)
     )
@@ -61,7 +61,7 @@ async def get_product(product_id: int, db: AsyncSession = Depends(get_db)) -> Pr
 @router.post(
     "", response_model=ProductResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_write)]
 )
-async def create_product(data: ProductCreate, db: AsyncSession = Depends(get_db)) -> Product:
+async def create_product(data: ProductCreate, db: AsyncSession = Depends(get_db)) -> ProductResponse:
     await check_unique(db, Product, Product.slug, data.slug, label="Slug")
     await check_unique(db, Product, Product.name, data.name, label="Product name")
 
@@ -71,15 +71,19 @@ async def create_product(data: ProductCreate, db: AsyncSession = Depends(get_db)
     if product.status == ProductStatus.PUBLISHED:
         product.published_at = datetime.now().replace(microsecond=0)
 
+    db.add(product)
+    await db.flush()
+
     for link_data in data.links:
         link = ProductLink(
+            product_id=product.id,
             url=link_data.url,
             url_hash=url_hash(link_data.url),
             label=link_data.label,
             is_primary=link_data.is_primary,
             sort_order=link_data.sort_order,
         )
-        product.links.append(link)
+        db.add(link)
 
     if data.tag_ids:
         tag_result = await db.execute(select(Tag).where(Tag.id.in_(data.tag_ids)))
@@ -92,7 +96,7 @@ async def create_product(data: ProductCreate, db: AsyncSession = Depends(get_db)
                 detail=f"Tag IDs not found: {list(invalid_ids)}",
             )
         for tag in tags:
-            product.tags.append(tag)
+            db.add(ProductTag(product_id=product.id, tag_id=tag.id))
 
     if data.category_id is not None:
         category = await db.get(Category, data.category_id)
@@ -102,7 +106,6 @@ async def create_product(data: ProductCreate, db: AsyncSession = Depends(get_db)
                 detail="Category not found",
             )
 
-    db.add(product)
     await db.flush()
 
     stmt = (
@@ -113,7 +116,7 @@ async def create_product(data: ProductCreate, db: AsyncSession = Depends(get_db)
 
 
 @router.put("/{product_id}", response_model=ProductResponse, dependencies=[Depends(require_write)])
-async def update_product(product_id: int, data: ProductUpdate, db: AsyncSession = Depends(get_db)) -> Product:
+async def update_product(product_id: int, data: ProductUpdate, db: AsyncSession = Depends(get_db)) -> ProductResponse:
     product = await db.get(Product, product_id)
     if not product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")

@@ -49,19 +49,6 @@ APP_ENV=prod uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
 | GET  | `/api/v1/env`    | 环境信息                        |
 | POST | `/api/v1/export` | 导出 JSON 到 web/data/data.json |
 
-## 数据库迁移
-
-```bash
-# 生成迁移脚本
-uv run alembic revision --autogenerate -m "description"
-
-# 执行迁移
-uv run alembic upgrade head
-
-# 回滚
-uv run alembic downgrade -1
-```
-
 ## 代码风格
 
 ```bash

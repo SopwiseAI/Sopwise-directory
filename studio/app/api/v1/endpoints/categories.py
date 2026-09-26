@@ -17,7 +17,7 @@ async def list_categories(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
-) -> list[Category]:
+) -> list[CategoryResponse]:
     stmt = select(Category).order_by(Category.sort_order.desc(), Category.id)
     if status_filter is not None:
         stmt = stmt.where(Category.status == status_filter)
@@ -27,7 +27,7 @@ async def list_categories(
 
 
 @router.get("/{category_id}", response_model=CategoryResponse)
-async def get_category(category_id: int, db: AsyncSession = Depends(get_db)) -> Category:
+async def get_category(category_id: int, db: AsyncSession = Depends(get_db)) -> CategoryResponse:
     category = await db.get(Category, category_id)
     if not category:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
@@ -37,7 +37,7 @@ async def get_category(category_id: int, db: AsyncSession = Depends(get_db)) -> 
 @router.post(
     "", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_write)]
 )
-async def create_category(data: CategoryCreate, db: AsyncSession = Depends(get_db)) -> Category:
+async def create_category(data: CategoryCreate, db: AsyncSession = Depends(get_db)) -> CategoryResponse:
     await check_unique(db, Category, Category.slug, data.slug, label="Slug")
     await check_unique(db, Category, Category.name, data.name, label="Category name")
 
@@ -49,7 +49,9 @@ async def create_category(data: CategoryCreate, db: AsyncSession = Depends(get_d
 
 
 @router.put("/{category_id}", response_model=CategoryResponse, dependencies=[Depends(require_write)])
-async def update_category(category_id: int, data: CategoryUpdate, db: AsyncSession = Depends(get_db)) -> Category:
+async def update_category(
+    category_id: int, data: CategoryUpdate, db: AsyncSession = Depends(get_db)
+) -> CategoryResponse:
     category = await db.get(Category, category_id)
     if not category:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")

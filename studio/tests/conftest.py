@@ -68,13 +68,14 @@ async def create_category(
     slug: str = "test-cat",
     name: str = "测试分类",
     icon: str = "Bot",
+    description: str | None = None,
     sort_order: int = 0,
     status: int = 1,
 ) -> dict:
-    resp = await client.post(
-        "/api/v1/categories",
-        json={"slug": slug, "name": name, "icon": icon, "sort_order": sort_order, "status": status},
-    )
+    payload: dict = {"slug": slug, "name": name, "icon": icon, "sort_order": sort_order, "status": status}
+    if description is not None:
+        payload["description"] = description
+    resp = await client.post("/api/v1/categories", json=payload)
     assert resp.status_code == 201, resp.text
     return resp.json()
 

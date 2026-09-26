@@ -16,14 +16,14 @@ async def list_tags(
     page: int = Query(1, ge=1),
     page_size: int = Query(100, ge=1, le=500),
     db: AsyncSession = Depends(get_db),
-) -> list[Tag]:
+) -> list[TagResponse]:
     stmt = select(Tag).order_by(Tag.name).offset((page - 1) * page_size).limit(page_size)
     result = await db.execute(stmt)
     return list(result.scalars().all())
 
 
 @router.get("/{tag_id}", response_model=TagResponse)
-async def get_tag(tag_id: int, db: AsyncSession = Depends(get_db)) -> Tag:
+async def get_tag(tag_id: int, db: AsyncSession = Depends(get_db)) -> TagResponse:
     tag = await db.get(Tag, tag_id)
     if not tag:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found")
@@ -31,7 +31,7 @@ async def get_tag(tag_id: int, db: AsyncSession = Depends(get_db)) -> Tag:
 
 
 @router.post("", response_model=TagResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_write)])
-async def create_tag(data: TagCreate, db: AsyncSession = Depends(get_db)) -> Tag:
+async def create_tag(data: TagCreate, db: AsyncSession = Depends(get_db)) -> TagResponse:
     await check_unique(db, Tag, Tag.slug, data.slug, label="Slug")
     await check_unique(db, Tag, Tag.name, data.name, label="Tag name")
 
@@ -43,7 +43,7 @@ async def create_tag(data: TagCreate, db: AsyncSession = Depends(get_db)) -> Tag
 
 
 @router.put("/{tag_id}", response_model=TagResponse, dependencies=[Depends(require_write)])
-async def update_tag(tag_id: int, data: TagUpdate, db: AsyncSession = Depends(get_db)) -> Tag:
+async def update_tag(tag_id: int, data: TagUpdate, db: AsyncSession = Depends(get_db)) -> TagResponse:
     tag = await db.get(Tag, tag_id)
     if not tag:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found")
