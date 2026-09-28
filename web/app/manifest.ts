@@ -6,6 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "XiGee",
     description: "精选各类 AI 工具与应用，按分类浏览或直接搜索你需要的能力",
     start_url: "/",
+    scope: "/",
     display: "standalone",
     background_color: "#fafafb",
     theme_color: "#fafafb",
@@ -13,12 +14,20 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         src: "/icon.svg",
         sizes: "any",
-        type: "image/svg+xml"
+        type: "image/svg+xml",
+        purpose: "any"
+      },
+      {
+        src: "/icon.svg",
+        sizes: "any",
+        type: "image/svg+xml",
+        purpose: "maskable"
       },
       {
         src: "/apple-icon.png",
         sizes: "180x180",
-        type: "image/png"
+        type: "image/png",
+        purpose: "any"
       }
     ]
   }
