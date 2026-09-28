@@ -31,26 +31,40 @@ pnpm lint     # 运行 ESLint
 ## 目录结构
 
 ```
-app/                    # Next.js App Router 页面
-├── page.tsx            # 首页 (SSG)
-├── layout.tsx          # 根布局
-├── category/[id]/      # 分类页 (SSG, generateStaticParams)
-├── search/             # 搜索页 (CSR)
-├── sitemap.ts          # 动态 sitemap
-├── robots.ts           # robots.txt
+app/                        # Next.js App Router 页面
+├── page.tsx                # 首页 (SSG)
+├── layout.tsx              # 根布局 (字体/主题/全局壳)
+├── not-found.tsx           # 404 页
+├── error.tsx               # 全局错误边界
+├── category/[id]/          # 分类页 (SSG, generateStaticParams)
+├── search/                 # 搜索页 (CSR, useSearchParams)
+├── history/                # 历史记录页 (CSR, localStorage)
+├── settings/               # 设置页 (主题/统计/关于)
+├── sitemap.ts              # 动态 sitemap
+├── robots.ts               # robots.txt
+├── opengraph-image.tsx     # 动态 OG 图
+├── globals.css             # 全局样式 + 设计 token
+├── icon.svg                # favicon
+├── apple-icon.png          # Apple touch icon
 components/
-├── ui/                 # shadcn/ui 组件
-├── layout/             # Header, Footer, ThemeToggle
-├── product/            # ProductCard, ProductGrid
-├── category/           # CategoryIcon, CategoryNav
-├── search/             # SearchBar, SearchResults
+├── ui/                     # shadcn/ui 基础组件 (button/badge/tooltip)
+├── layout/                 # Header/SubNav/CommandSearchBar/Footer/ThemeToggle 等
+├── product/                # ProductBrowser/ProductCard/ProductRow/ProductToolbar/PricingBadge
+├── category/               # CategorySidebar
+├── search/                 # SearchResults
+├── history/                # HistoryList/HistoryCount
 lib/
-├── types.ts            # TypeScript 类型定义
-├── data.ts             # 数据读取工具函数
-├── search.ts           # fuse.js 搜索配置
-├── utils.ts            # shadcn/ui cn() 工具
+├── types.ts                # TypeScript 类型定义
+├── data.ts                 # 数据读取 (server 端 import data.json)
+├── product-utils.ts        # 产品工具函数 (getProductDate/productHistoryAttrs)
+├── search.ts               # fuse.js 搜索配置
+├── format.ts               # 数字/日期格式化
+├── history.ts              # localStorage 历史管理
+├── url.ts                  # URL 工具 (getDomain)
+├── category-icon-node.tsx  # 分类图标 (lucide 映射)
+├── utils.ts                # cn() + getBaseUrl
 data/
-├── data.json           # 产品数据（分类 + 产品列表）
+├── data.json               # 产品数据 (分类 + 产品列表)
 ```
 
 ## 数据模型
