@@ -30,6 +30,15 @@ async def export_to_json(session: AsyncSession) -> dict:
     content = json.dumps(data, ensure_ascii=False, indent=2)
     await asyncio.to_thread(output_path.write_text, content, "utf-8")
 
+    synced_frontend = False
+    if settings.app_env == "prod":
+        source_path = output_path.parent / "data.json"
+        await asyncio.to_thread(source_path.write_text, content, "utf-8")
+        synced_frontend = True
+        logger.info("Synced frontend data source → %s", source_path)
+    else:
+        logger.info("env=%s, skipped data.json sync (env artifact only)", settings.app_env)
+
     logger.info("Exported %d categories, %d products → %s", len(categories), len(products), output_path)
 
     return {
@@ -38,6 +47,7 @@ async def export_to_json(session: AsyncSession) -> dict:
         "categories_count": len(categories),
         "products_count": len(products),
         "app_env": settings.app_env,
+        "synced_frontend": synced_frontend,
     }
 
 
@@ -92,8 +102,11 @@ async def _fetch_products(session: AsyncSession, cat_map: dict[int, str]) -> lis
                 "tags": [t.name for t in row.tags],
                 "pricing": row.pricing,
                 "featured": row.featured,
-                "publishedAt": row.published_at.strftime("%Y-%m-%d") if row.published_at else "",
             }
         )
+        if row.published_at:
+            products[-1]["publishedAt"] = row.published_at.strftime("%Y-%m-%d")
+        if row.created_at:
+            products[-1]["createdAt"] = row.created_at.strftime("%Y-%m-%d")
 
     return products

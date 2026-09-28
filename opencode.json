@@ -10,8 +10,28 @@
       "web/.next/**",
       "studio/.venv/**",
       "studio/**/__pycache__/**",
-      "scripts/run/**"
+      "scripts/.state/**"
     ]
   },
-  "snapshot": false
+  "snapshot": false,
+  "mcp": {
+    "mysql-dev": {
+      "type": "local",
+      "command": ["bash", "scripts/mcp-mysql.sh"],
+      "environment": { "APP_ENV": "dev", "MYSQL_ALLOW_WRITE": "false" },
+      "timeout": 10000
+    },
+    "mysql-sit": {
+      "type": "local",
+      "command": ["bash", "scripts/mcp-mysql.sh"],
+      "environment": { "APP_ENV": "sit", "MYSQL_ALLOW_WRITE": "false" },
+      "timeout": 10000
+    },
+    "mysql-prod": {
+      "type": "local",
+      "command": ["bash", "scripts/mcp-mysql.sh"],
+      "environment": { "APP_ENV": "prod", "MYSQL_ALLOW_WRITE": "false" },
+      "timeout": 30000
+    }
+  }
 }
