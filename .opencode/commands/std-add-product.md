@@ -43,24 +43,10 @@ description: 添加 AI 产品到目录（创建为草稿状态）
 
    可选参数（仅在用户提供时追加）:
    - `--url "https://..."` — 产品官网链接
-   - `--category-id <数字ID>` — 从分类列表中选取的 ID
+   - `category-id <数字ID>` — 从分类列表中选取的 ID
    - `--pricing <值>` — 定价模式，仅接受: `free` / `freemium` / `paid` / `opensource`
    - `--description "一句话描述"` — 产品描述
    - `--featured` — 标记为精选
    - `--slug "english-slug"` — 自定义 slug；**中文产品名必须手动指定**（默认自动生成会丢失中文，如"通义千问"→"item-xxxx"）
 
-6. 告知用户产品已创建为草稿，可用 `/std-enrich` 补全信息或 `/std-review` 提交审核
-
-   ```
-   !`python skills/tools/api.py add-product --name "用户给的产品名"`
-   ```
-
-   可选参数（仅在用户提供时追加）:
-   - `--url "https://..."` — 产品官网链接
-   - `--category-id <数字ID>` — 从分类列表中选取的 ID
-   - `--pricing <值>` — 定价模式，仅接受: `free` / `freemium` / `paid` / `opensource`
-   - `--description "一句话描述"` — 产品描述
-   - `--featured` — 标记为精选
-   - `--slug "english-slug"` — 自定义 slug；**中文产品名必须手动指定**（默认自动生成会丢失中文，如"通义千问"→"item-xxxx"）
-
-7. 告知用户产品已创建为草稿，可用 `/std-enrich` 补全信息或 `/std-review` 提交审核
+6. 告知用户产品已创建为草稿，可用 `/std-enrich` 补全信息或 `/std-submit` 提交审核

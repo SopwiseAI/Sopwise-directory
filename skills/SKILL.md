@@ -19,7 +19,7 @@ description: "XiGee Directory 数据管理 Skills。当用户需要添加/审核
                                           已发布(2) → 下架(3) → 重新发布(3→2)
 ```
 
-横切动作（随时可调）: `/std-verify` 校对、`/std-list` 列出、`/std-status` 总览
+横切动作（随时可调）: `/std-verify` 校对、`/std-list` 列出、`/std-stats` 总览
 
 | 状态   | 值  | 说明                   | 导出 |
 | ------ | --- | ---------------------- | ---- |
@@ -58,12 +58,12 @@ description: "XiGee Directory 数据管理 Skills。当用户需要添加/审核
 # 产品管理
 python skills/tools/api.py products [--status N] [--search K]   # 列出产品
 python skills/tools/api.py product <id>                         # 产品详情
-python skills/tools/api.py add-product --name <name> [--url <url>] [--category-id <id>]
-python skills/tools/api.py update-product <id> --status <N>
+python skills/tools/api.py add-product --name <name> [--url <url>] [--category-id <id>] [--sort-order <N>]
+python skills/tools/api.py update-product <id> [--status <N>] [--name] [--slug] [--description] [--category-id] [--pricing] [--featured | --no-featured] [--sort-order <N>]
 python skills/tools/api.py delete-product <id>
 
 # 分类管理
-python skills/tools/api.py categories
+python skills/tools/api.py categories [--status {0,1}]
 python skills/tools/api.py add-category --name <name> --slug <slug> --icon <icon>
 python skills/tools/api.py update-category <id> [--name] [--slug] [--icon] [--sort-order] [--status]
 python skills/tools/api.py delete-category <id>
@@ -113,6 +113,7 @@ python skills/tools/api.py --version                     # 版本
 | ---------------------- | -------------------------- |
 | `/std-collect`         | 采集批量产品入库为草稿     |
 | `/std-add-product`     | 添加产品（单条，草稿状态） |
+| `/std-manage-product`  | 产品管理（查看/改/删）     |
 | `/std-add-category`    | 添加分类                   |
 | `/std-add-tag`         | 添加标签                   |
 | `/std-manage-category` | 分类管理（查看/改/删）     |
@@ -124,8 +125,14 @@ python skills/tools/api.py --version                     # 版本
 | `/std-publish`         | 发布产品                   |
 | `/std-archive`         | 下架/重新发布 (2↔3)        |
 | `/std-list`            | 列出产品                   |
-| `/std-status`          | 目录总览                   |
+| `/std-stats`           | 目录总览                   |
 | `/std-export`          | 导出 JSON                  |
+
+### 命名规范
+
+- **生命周期动作**（产品专属流程）: `std-{动词}` — collect/enrich/verify/submit/review/publish/archive
+- **CRUD 操作**（需区分实体）: `std-{动词}-{实体}` — add-product/manage-product/add-category/manage-category/add-tag/manage-tag
+- **系统命令**: `std-{动词}` — stats/export
 
 ### 完整 API 覆盖（25/25 接口）
 

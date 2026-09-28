@@ -446,6 +446,8 @@ def cmd_add_product(args):
         payload["featured"] = True
     if args.description is not None:
         payload["description"] = args.description
+    if args.sort_order is not None:
+        payload["sort_order"] = args.sort_order
     _, data = _write("POST", "/products", payload, summary=f"添加产品: {args.name}")
     if data:
         _print_json(data)
@@ -465,6 +467,10 @@ def cmd_update_product(args):
         payload["pricing"] = args.pricing
     if args.featured is not None:
         payload["featured"] = args.featured
+    if args.slug:
+        payload["slug"] = args.slug
+    if args.sort_order is not None:
+        payload["sort_order"] = args.sort_order
 
     confirm_text = ""
     if args.status is not None:
@@ -503,6 +509,8 @@ def cmd_delete_product(args):
 
 def cmd_categories(args):
     params = []
+    if args.status is not None:
+        params.append(f"status={args.status}")
     if args.page:
         params.append(f"page={args.page}")
     if args.page_size:
@@ -813,6 +821,7 @@ def main():
     p.add_argument("--pricing", choices=["free", "freemium", "paid", "opensource"])
     p.add_argument("--featured", action="store_true")
     p.add_argument("--description")
+    p.add_argument("--sort-order", type=int, default=None)
     p.set_defaults(func=cmd_add_product)
 
     # update product
@@ -824,6 +833,8 @@ def main():
     p.add_argument("--category-id", type=int)
     p.add_argument("--pricing", choices=["free", "freemium", "paid", "opensource"])
     p.add_argument("--featured", action=argparse.BooleanOptionalAction, default=None)
+    p.add_argument("--slug")
+    p.add_argument("--sort-order", type=int, default=None)
     p.set_defaults(func=cmd_update_product)
 
     # delete product
@@ -835,6 +846,7 @@ def main():
     p = sub.add_parser("categories", aliases=["c"], help="列出分类")
     p.add_argument("--page", type=int, default=1)
     p.add_argument("--page-size", type=int, default=50)
+    p.add_argument("--status", type=int, choices=[0, 1], default=None)
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=cmd_categories)
 

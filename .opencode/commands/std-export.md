@@ -12,21 +12,15 @@ description: 导出 JSON 数据到 web 目录
 
 如果连接失败，告知用户需先启动 studio: `./scripts/dev-studio.sh`
 
-## API Key 设置
-
-导出需要 API Key。如果 `STUDIO_API_KEY` 未设置，告知用户:
-
-```bash
-export STUDIO_API_KEY=你的密钥
-```
-
 ## 执行步骤
 
-1. 执行导出（需要 API Key）:
+1. 执行导出:
 
    ```
    !`python skills/tools/api.py export`
    ```
+
+   API Key 由 CLI 自动探测（调后端 `/api/v1/env` 获取环境，读 `studio/.env.{env}` 的 `API_KEY`）。除非显式设置了 `STUDIO_API_KEY` 环境变量，否则无需手动配置。
 
 2. 从导出响应中提取实际信息告知用户:
    - 导出的分类数 (`categories_count`)

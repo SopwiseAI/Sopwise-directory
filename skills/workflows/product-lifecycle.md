@@ -37,7 +37,7 @@
 ```
 /std-verify        全量校对，查有无+对错，出问题清单
 /std-list          按状态/搜索列出产品
-/std-status        目录总览统计
+/std-stats         目录总览统计
 ```
 
 ## 辅助管理
