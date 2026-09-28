@@ -102,8 +102,11 @@ async def _fetch_products(session: AsyncSession, cat_map: dict[int, str]) -> lis
                 "tags": [t.name for t in row.tags],
                 "pricing": row.pricing,
                 "featured": row.featured,
-                "publishedAt": row.published_at.strftime("%Y-%m-%d") if row.published_at else "",
             }
         )
+        if row.published_at:
+            products[-1]["publishedAt"] = row.published_at.strftime("%Y-%m-%d")
+        if row.created_at:
+            products[-1]["createdAt"] = row.created_at.strftime("%Y-%m-%d")
 
     return products

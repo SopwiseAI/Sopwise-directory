@@ -61,7 +61,7 @@ id: string, name: string, icon: string (lucide-react icon name)
 
 ### 产品 (Product)
 
-id: string, name: string, description: string, url: string, categoryId: string, tags?: string[], icon?: string, pricing?: "free"|"freemium"|"paid"|"opensource", featured?: boolean, createdAt: string
+id: string, name: string, description: string, url: string, categoryId: string, tags?: string[], icon?: string, pricing?: "free"|"freemium"|"paid"|"opensource", featured?: boolean, publishedAt?: string, createdAt?: string
 
 ## 关键约定
 
