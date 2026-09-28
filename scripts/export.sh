@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 触发 JSON 导出 — 输出 data-{env}.json，不覆盖 data.json
+# 触发 JSON 导出 — 输出 data-{env}.json 环境副本，并同步前端数据源 data.json
 # 用法:
 #   ./export.sh              # API 导出 (默认 dev)
 #   ./export.sh --cli        # CLI 导出

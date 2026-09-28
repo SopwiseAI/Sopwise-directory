@@ -45,5 +45,6 @@ description: 添加 AI 产品到目录（创建为草稿状态）
    - `--pricing <值>` — 定价模式，仅接受: `free` / `freemium` / `paid` / `opensource`
    - `--description "一句话描述"` — 产品描述
    - `--featured` — 标记为精选
+   - `--slug "english-slug"` — 自定义 slug；**中文产品名必须手动指定**（默认自动生成会丢失中文，如"通义千问"→"item-xxxx"）
 
 5. 告知用户产品已创建为草稿，可用 `/std-enrich` 补全信息或 `/std-review` 提交审核

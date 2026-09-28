@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""XiGee Directory Studio API CLI — AI 调用 studio 接口的命令行工具。
+"""Sopwise Directory Studio API CLI — AI 调用 studio 接口的命令行工具。
 
 用法:
   python skills/tools/api.py products [--status N] [--page N] [--page-size N] [--search K]  列出产品
@@ -49,9 +49,14 @@ import urllib.parse
 import urllib.request
 
 STUDIO_URL = os.environ.get("STUDIO_URL", "http://localhost:8000")
-API_KEY = os.environ.get("API_KEY") or os.environ.get("STUDIO_API_KEY", "")
+
+_PROJECT_ROOT = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
+_STUDIO_DIR = os.path.join(_PROJECT_ROOT, "studio")
 
 _GLOBAL_ARGS: argparse.Namespace | None = None
+_resolved_key: str | None = None
 
 _TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_FILE = os.path.join(_TOOL_DIR, "api.log")
@@ -129,6 +134,57 @@ def _confirm(prompt: str) -> bool:
     return resp in ("y", "yes")
 
 
+def _load_api_key_from_envfile(app_env: str) -> str:
+    """从 studio/.env.{app_env} 读取 API_KEY 行。"""
+    env_file = os.path.join(_STUDIO_DIR, f".env.{app_env}")
+    if not os.path.exists(env_file):
+        return ""
+    try:
+        with open(env_file, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if line.startswith("API_KEY="):
+                    return line[len("API_KEY=") :].strip().strip("'\"")
+    except OSError:
+        pass
+    return ""
+
+
+def _detect_backend_env() -> str:
+    """调用后端公开端点 /api/v1/env 获取当前后端环境 (dev/sit/prod)。
+
+    CLI 据此后端环境读取对应的 studio/.env.{env}，确保与后端不脱节。
+    """
+    url = f"{STUDIO_URL}/api/v1/env"
+    try:
+        req = urllib.request.Request(url, method="GET")
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            return data.get("env", "")
+    except (urllib.error.URLError, ValueError, OSError):
+        return ""
+
+
+def _resolve_api_key() -> str:
+    """解析 API Key。优先级: API_KEY > STUDIO_API_KEY > 自动探测后端环境读取 .env.{env}。"""
+    global _resolved_key
+    if _resolved_key:
+        return _resolved_key
+    key = os.environ.get("API_KEY") or os.environ.get("STUDIO_API_KEY", "")
+    src = "环境变量"
+    if not key:
+        app_env = _detect_backend_env()
+        if app_env:
+            key = _load_api_key_from_envfile(app_env)
+            src = f"studio/.env.{app_env}"
+    if key:
+        _resolved_key = key
+        logger.info("API Key 来源: %s", src)
+    return key
+
+
 def _request(
     method: str, path: str, data: dict | None = None, need_auth: bool = False
 ) -> dict | list:
@@ -142,11 +198,17 @@ def _request_with_headers(
     url = f"{STUDIO_URL}/api/v1{path}"
     headers = {"Content-Type": "application/json"}
     if need_auth:
-        if not API_KEY:
-            print("错误: 需要设置 STUDIO_API_KEY 环境变量", file=sys.stderr)
-            print("  export STUDIO_API_KEY=你的API密钥", file=sys.stderr)
+        api_key = _resolve_api_key()
+        if not api_key:
+            print("错误: 无法获取 API Key", file=sys.stderr)
+            print(
+                "  已尝试: 环境变量 API_KEY/STUDIO_API_KEY、自动探测后端 /api/v1/env 读取 .env.{env}",
+                file=sys.stderr,
+            )
+            print("  请设置: export STUDIO_API_KEY=你的密钥", file=sys.stderr)
+            print("  或确认 studio 已启动 (以便自动探测后端环境)", file=sys.stderr)
             sys.exit(2)
-        headers["X-API-Key"] = API_KEY
+        headers["X-API-Key"] = api_key
     body = json.dumps(data).encode("utf-8") if data else None
 
     is_write = method in ("POST", "PUT", "DELETE")

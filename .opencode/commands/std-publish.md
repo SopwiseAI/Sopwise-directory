@@ -34,21 +34,21 @@ description: 发布产品（status → 已发布，自动处理状态转换）
      先确认名称非空、links 数组非空，然后:
 
      ```
-     !`python skills/tools/api.py update-product <产品ID> --status 2`
+     !`python skills/tools/api.py --yes update-product <产品ID> --status 2`
      ```
 
    - **status=0 (草稿)** → 需两步，先提交审核再发布:
      先检查必要项（名称、链接），缺则告知用户先用 `/std-enrich` 补全:
 
      ```
-     !`python skills/tools/api.py update-product <产品ID> --status 1`
-     !`python skills/tools/api.py update-product <产品ID> --status 2`
+     !`python skills/tools/api.py --yes update-product <产品ID> --status 1`
+     !`python skills/tools/api.py --yes update-product <产品ID> --status 2`
      ```
 
    - **status=3 (已下架)** → 直接重新发布 (3→2 合法):
 
      ```
-     !`python skills/tools/api.py update-product <产品ID> --status 2`
+     !`python skills/tools/api.py --yes update-product <产品ID> --status 2`
      ```
 
    - **status=2 (已发布)** → 告知用户该产品已是发布状态，无需操作

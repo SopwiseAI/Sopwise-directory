@@ -45,7 +45,7 @@ description: AI 补全产品信息（描述、分类、标签、链接）
    a. 更新描述和分类（只传需要更新的字段）:
 
    ```
-   !`python skills/tools/api.py update-product <产品ID> --description "描述内容" --category-id <分类ID>`
+   !`python skills/tools/api.py --yes update-product <产品ID> --description "描述内容" --category-id <分类ID>`
    ```
 
    b. 如果需要新标签，先创建（记录返回的 id 字段）:

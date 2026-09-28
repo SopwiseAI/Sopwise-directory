@@ -31,6 +31,7 @@ export STUDIO_API_KEY=你的密钥
 2. 从导出响应中提取实际信息告知用户:
    - 导出的分类数 (`categories_count`)
    - 导出的产品数 (`products_count`)
-   - 实际输出路径 (`output_path`)，不要假设路径
+   - 环境副本路径 (`output_path`，形如 `data-{env}.json`，已被 .gitignore 忽略)
    - 当前环境 (`app_env`)
-   - 下一步: 提交代码并部署到 Vercel 即可更新前端
+   - 前端数据源 `web/data/data.json` 已同步更新（导出同时写两份）
+   - 下一步: 提交 `web/data/data.json` 并部署到 Vercel 即可更新前端

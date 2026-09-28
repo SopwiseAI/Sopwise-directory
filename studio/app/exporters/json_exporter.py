@@ -30,6 +30,11 @@ async def export_to_json(session: AsyncSession) -> dict:
     content = json.dumps(data, ensure_ascii=False, indent=2)
     await asyncio.to_thread(output_path.write_text, content, "utf-8")
 
+    source_path = output_path.parent / "data.json"
+    if source_path != output_path:
+        await asyncio.to_thread(source_path.write_text, content, "utf-8")
+        logger.info("Synced frontend data source → %s", source_path)
+
     logger.info("Exported %d categories, %d products → %s", len(categories), len(products), output_path)
 
     return {
