@@ -106,8 +106,7 @@ CREATE TABLE IF NOT EXISTS sd_product_link (
   UNIQUE KEY uk_url_hash (url_hash),
   UNIQUE KEY uk_product_primary (primary_marker),
   KEY idx_product (product_id),
-  KEY idx_product_primary (product_id, is_primary),
-  CONSTRAINT fk_link_product FOREIGN KEY (product_id) REFERENCES sd_product (id) ON DELETE CASCADE
+  KEY idx_product_primary (product_id, is_primary)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品链接表';
 
 
