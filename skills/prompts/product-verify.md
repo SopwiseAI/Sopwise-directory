@@ -10,7 +10,9 @@
 
 ## 校对清单
 
-### 1. name 空/异常 — ERROR
+校对不仅看字段**有无**，更要校内容**对错**。
+
+### 1. name 异常 — ERROR
 
 - 判定: name 为 null/空串/纯空白 → ERROR
 - 判定: name 含 HTML 标签（`<...>`）→ ERROR
@@ -25,54 +27,66 @@
 - 通过: name 为 "ChatGPT" slug 为 "chatgpt"
 - 修复: 重新生成 slug（优先官方英文名，无则拼音）
 
-### 3. links 空 — ERROR
+### 3. links — ERROR
 
 - 判定: links 数组长度为 0 → ERROR
-- 修复: 需人工提供 URL，引导 `/std-enrich`
+- 判定: links 中存在重复归一化 URL → ERROR
+- 判定: 主链接缺失（无 is_primary=true 项）→ WARN
+- 修复: 引导 `/std-enrich` 补全
 
 ### 4. URL 格式 — ERROR
 
-- 判定: 不匹配 `^https?://.+` → ERROR（非 WARN，格式错无法发布）
+- 判定: 不匹配 `^https?://.+` → ERROR（格式错无法发布）
 - 修复: 引导修正
 
-### 5. URL 未归一化 — WARN
+### 5. URL 正确性 — WARN
+
+- 判定: URL 非产品官网（指向第三方导购站/应用商店/社交媒体而非产品官网）→ WARN
+- 判定: URL 不可达（HEAD 请求超时 5s，跟随重定向最多5跳）→ INFO
+- 修复: 归一化后 update-link；非官网引导修正
+
+### 6. 重复产品 — ERROR
+
+- 方法: name 完全相同（忽略大小写）→ ERROR
+- 方法: 归一化 url 相同 → ERROR
+- 修复: 引导删除重复项（保留较早创建的）
+
+### 7. URL 未归一化 — WARN
 
 - 判定: URL 含 utm_*、fbclid、gclid 等追踪参数 → WARN
 - 判定: 域名含大写、有尾斜杠、带片段 → WARN
 - 修复: 归一化后 update-link
 - 归一化规则见 product-collect.md 的 URL 归一化段
 
-### 6. URL 可达 — INFO
-
-- 方法: HEAD 请求，超时 5s，跟随重定向（最多5跳）
-- 超时/非200 → INFO，不作错（仅提示，可能临时不可达）
-- 不自动修，仅在清单标注
-
-### 7. 重复产品 — ERROR
-
-- 方法: name 完全相同（忽略大小写）→ ERROR
-- 方法: 归一化 url 相同 → ERROR
-- 修复: 引导删除重复项（保留较早创建的）
-
-### 8. category_id 空 — WARN
-
-- 判定: null → WARN
-- 修复: 引导 `/std-enrich` 匹配分类
-
-### 9. pricing 合法 — WARN
-
-- 判定: 非 free/freemium/paid/opensource → WARN
-- 修复: update-product --pricing
-
-### 10. description 空 — INFO
+### 8. description 为空 — INFO
 
 - 判定: null/空 → INFO
 - 修复: 引导 `/std-enrich`
 
-### 11. tags 空 — INFO
+### 9. tags 为空 — INFO
 
 - 判定: tags 数组长度 0 → INFO
 - 修复: 引导 `/std-enrich`
+
+### 10. name 正确性 — WARN
+
+- 判定: name 拼写错误（如 "Chat GPT"→应 "ChatGPT"，"DJ"→应 "D-ID"）→ WARN
+
+### 11. description 正确性 — WARN
+
+- 判定: description 与实际不符 → WARN
+
+### 12. category 归属正确性 — WARN
+
+- 判定: category_id 非空但分类与产品功能不匹配 → WARN
+
+### 13. pricing 正确性 — WARN
+
+- 判定: pricing 值与实际不符 → WARN
+
+### 14. tags 正确性 — WARN
+
+- 判定: tags 存在但与产品不贴切 → WARN
 
 ## 输出格式
 
@@ -94,15 +108,17 @@ Claude (id=38)      tags 为空                           建议补全
 
 ## 修复策略
 
-| 问题            | 可自动修 | 方法                         |
-| --------------- | -------- | ---------------------------- |
-| name 含残留符号 | 是       | 清洗 + update                |
-| slug 不对应     | 是       | 重新生成 + update            |
-| links 空        | 否       | 引导人工                     |
-| URL 格式错      | 否       | 引导修正                     |
-| URL 未归一化    | 是       | 归一化 + update-link         |
-| 重复            | 是       | 删除重复项（保留较早创建的） |
-| pricing 非法    | 是       | 询用户后 update              |
-| category 空     | 半       | 建议分类，询用户确认         |
-| description 空  | 否       | 引导 enrich                  |
-| tags 空         | 否       | 引导 enrich                  |
+| 问题                | 可自动修 | 方法                   |
+| ------------------- | -------- | ---------------------- |
+| name 含残留符号     | 是       | 清洗 + update          |
+| name 拼写错误       | 半       | 询用户确认后 update    |
+| slug 不对应         | 是       | 重新生成 + update      |
+| links 空            | 否       | 引导人工               |
+| URL 格式错          | 否       | 引导修正               |
+| URL 未归一化        | 是       | 归一化 + update-link   |
+| URL 非官网          | 否       | 引导修正               |
+| 重复                | 是       | 删除重复项（保留较早） |
+| pricing 非法/不符   | 半       | 询用户核实后 update    |
+| category 空/归属错  | 半       | 建议分类，询用户确认   |
+| description 空/不符 | 否       | 引导 enrich            |
+| tags 空/不贴切      | 否       | 引导 enrich            |
