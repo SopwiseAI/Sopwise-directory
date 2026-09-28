@@ -299,7 +299,11 @@ def _write(
         )
         return False, {}
 
-    backend_env = _detect_backend_env()
+    _parsed = urllib.parse.urlparse(STUDIO_URL)
+    _target_local = _parsed.hostname in ("localhost", "127.0.0.1", "0.0.0.0")
+    backend_env = ""
+    if not _target_local:
+        backend_env = _detect_backend_env()
     if backend_env == "prod":
         print("  ⚠⚠⚠ 当前为生产环境 (prod) ⚠⚠⚠", file=sys.stderr)
         print(f"  操作: {method} /api/v1{path}", file=sys.stderr)
@@ -393,17 +397,15 @@ def cmd_products(args):
     data, resp_headers = _request_with_headers(
         "GET", f"/products?{qs}" if qs else "/products"
     )
-    if (
-        args.search
-        and data
-        and "search" not in resp_headers.get("x-supported-params", "")
-    ):
+    if args.search and "search" not in resp_headers.get("x-supported-params", ""):
+        all_data = _fetch_all("/products")
         data = [
             p
-            for p in data
+            for p in all_data
             if args.search.lower() in p.get("name", "").lower()
             or args.search.lower() in p.get("slug", "").lower()
         ]
+        resp_headers = {}
     if args.json:
         _print_json(data)
     else:
@@ -643,7 +645,7 @@ def cmd_stats(args):
         s = p.get("status", 0)
         status_counts[s] = status_counts.get(s, 0) + 1
 
-    print("═══ XiGee Directory 统计 ═══")
+    print("═══ Sopwise Directory 统计 ═══")
     print(f"  分类总数: {len(categories)}")
     print(f"  标签总数: {len(tags)}")
     print(f"  产品总数: {len(all_products)}")

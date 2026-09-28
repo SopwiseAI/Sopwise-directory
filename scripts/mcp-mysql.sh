@@ -22,6 +22,9 @@ set +a
 # 映射到 MCP server 期望的变量名
 export MYSQL_HOST="${DB_HOST:-localhost}"
 export MYSQL_PORT="${DB_PORT:-3306}"
+: "${DB_USER:?错误: DB_USER 未在 .env.${ENV} 中设置}"
+: "${DB_PASSWORD:?错误: DB_PASSWORD 未在 .env.${ENV} 中设置}"
+: "${DB_NAME:?错误: DB_NAME 未在 .env.${ENV} 中设置}"
 export MYSQL_USER="${DB_USER}"
 export MYSQL_PASS="${DB_PASSWORD}"
 export MYSQL_DB="${DB_NAME}"
