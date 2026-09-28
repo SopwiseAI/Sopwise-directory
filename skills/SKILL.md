@@ -12,9 +12,14 @@ description: "XiGee Directory 数据管理 Skills。当用户需要添加/审核
 ## 产品生命周期
 
 ```
-用户添加 → 草稿(0) → 提交审核 → 待审核(1) → 审核通过 → 已发布(2) → 下架 → 已下架(3)
-                ↑__________________审核打回___________________|
+采集(/std-collect) → 草稿(0) → 补全(/std-enrich) → 提交(/std-submit) → 待审核(1)
+                                                                        ↓
+                                          校对(/std-verify) ← 审核打回(1→0)
+                                                 ↓
+                                          已发布(2) → 下架(3) → 重新发布(3→2)
 ```
+
+横切动作（随时可调）: `/std-verify` 校对、`/std-list` 列出、`/std-status` 总览
 
 | 状态   | 值  | 说明                   | 导出 |
 | ------ | --- | ---------------------- | ---- |
@@ -51,7 +56,7 @@ description: "XiGee Directory 数据管理 Skills。当用户需要添加/审核
 
 ```bash
 # 产品管理
-python skills/tools/api.py products [--status N] [--search K]   # 列出产品(支持搜索)
+python skills/tools/api.py products [--status N] [--search K]   # 列出产品
 python skills/tools/api.py product <id>                         # 产品详情
 python skills/tools/api.py add-product --name <name> [--url <url>] [--category-id <id>]
 python skills/tools/api.py update-product <id> --status <N>
@@ -60,22 +65,31 @@ python skills/tools/api.py delete-product <id>
 # 分类管理
 python skills/tools/api.py categories
 python skills/tools/api.py add-category --name <name> --slug <slug> --icon <icon>
+python skills/tools/api.py update-category <id> [--name] [--slug] [--icon] [--sort-order] [--status]
+python skills/tools/api.py delete-category <id>
+python skills/tools/api.py category-count <id>
 
 # 标签管理
 python skills/tools/api.py tags
 python skills/tools/api.py add-tag --name <name> --slug <slug>
+python skills/tools/api.py update-tag <id> [--name] [--slug]
+python skills/tools/api.py delete-tag <id>
+python skills/tools/api.py tag-count <id>
 
 # 链接管理
 python skills/tools/api.py product-links <id>
 python skills/tools/api.py add-link <product_id> --url <url> [--primary]
+python skills/tools/api.py update-link <product_id> <link_id> [--url] [--label] [--primary]
+python skills/tools/api.py delete-link <product_id> <link_id>
 
 # 标签关联
 python skills/tools/api.py product-tags <id>
 python skills/tools/api.py set-tags <product_id> --tag-ids 1,2,3
 
 # 数据操作
-python skills/tools/api.py export                        # 导出 JSON
+python skills/tools/api.py export                        # 导出 JSON → data.json + data-{env}.json
 python skills/tools/api.py stats                         # 目录统计
+python skills/tools/api.py health                        # 健康检查（含后端环境）
 python skills/tools/api.py --version                     # 版本
 ```
 

@@ -75,7 +75,7 @@
 ### slug 生成
 
 - 英文: 转小写，空格转连字符，去非 `[a-z0-9-]` 字符
-- 中文: 优先用官方英文名（如"通义千问"→`tongyi-qianwen` 无官方英文名则用拼音
+- 中文: 优先用官方英文名（如"通义千问"→`tongyi-qianwen`），无官方英文名则用拼音
 - **不直接丢弃中文**: 中文 name 必须生成有效 slug，不可 fallback 到 `item-{随机}`
 - 无法确定时: 询问用户指定，不要自动生成无意义 slug
 
@@ -89,11 +89,11 @@
 预览必须显示归一化后的 URL，让用户确认清洗效果:
 
 ```
-#   名称          URL(归一化)                     Slug            状态
-1   ChatGPT       https://chat.openai.com          chatgpt         新增
-2   Claude        https://claude.ai                claude          新增
-3   (重复)X       https://x.com                    x               重复-跳过
-4   (无效)        (无URL)                         (无效)          失败-无URL
+#   名称            URL(归一化)                  Slug                状态
+1   ChatGPT         https://chat.openai.com      chatgpt             新增
+2   Claude          https://claude.ai            claude              新增
+3   (重复)X         https://x.com                x                   重复-跳过
+4   (无效)          (无URL)                      (无效)              失败-无URL
 ```
 
 ## 分批策略
