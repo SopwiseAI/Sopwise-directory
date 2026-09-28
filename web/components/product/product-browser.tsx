@@ -10,7 +10,7 @@ import { PackageOpen } from "lucide-react"
 import Link from "next/link"
 
 interface ProductBrowserProps {
-  products: Product[]
+  products: readonly Product[]
   emptyTitle?: string
   emptyDescription?: string
   defaultView?: ViewMode

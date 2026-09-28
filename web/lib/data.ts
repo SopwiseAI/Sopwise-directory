@@ -3,7 +3,7 @@ import type { Category, Product, SiteData } from "./types"
 
 const siteData = data as SiteData
 
-export function getAllCategories(): Category[] {
+export function getAllCategories(): readonly Category[] {
   return siteData.categories
 }
 
@@ -11,7 +11,7 @@ export function getCategoryById(id: string): Category | undefined {
   return siteData.categories.find((c) => c.id === id)
 }
 
-export function getAllProducts(): Product[] {
+export function getAllProducts(): readonly Product[] {
   return siteData.products
 }
 

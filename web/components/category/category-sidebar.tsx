@@ -107,7 +107,7 @@ function CollapseToggle() {
 }
 
 interface CategorySidebarProps {
-  categories: Category[]
+  categories: readonly Category[]
   categoryCounts: Record<string, number>
   totalProducts: number
 }

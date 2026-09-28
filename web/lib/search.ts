@@ -1,7 +1,7 @@
 import Fuse from "fuse.js"
 import type { Product } from "./types"
 
-export function createSearchIndex(products: Product[]): Fuse<Product> {
+export function createSearchIndex(products: readonly Product[]): Fuse<Product> {
   return new Fuse(products, {
     keys: [
       { name: "name", weight: 0.4 },

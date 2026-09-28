@@ -28,7 +28,7 @@ function formatRelativeTime(iso: string): string {
 }
 
 interface HistoryListProps {
-  categories: Category[]
+  categories: readonly Category[]
 }
 
 /** 历史记录列表：hover 统一、无限滚动分页、搜索过滤、单条删除与清空 */

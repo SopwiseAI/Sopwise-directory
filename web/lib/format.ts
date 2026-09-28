@@ -19,7 +19,9 @@ function formatSuffix(value: number, suffix: string): string {
 }
 
 export function formatDate(iso: string): string {
-  const date = new Date(iso)
+  if (!iso) return iso
+  // 纯日期 "2024-01-15" 追加 UTC 午夜，避免本地时区偏移导致日期偏移
+  const date = iso.length === 10 ? new Date(iso + "T00:00:00Z") : new Date(iso)
   if (Number.isNaN(date.getTime())) return iso
-  return date.toLocaleDateString("zh-CN", { year: "numeric", month: "short", day: "numeric" })
+  return date.toLocaleDateString("zh-CN", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" })
 }
