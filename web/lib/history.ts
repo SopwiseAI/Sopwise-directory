@@ -1,5 +1,5 @@
 import type { Product } from "@/lib/types"
-import { getDomain } from "@/lib/product-icon"
+import { getDomain } from "@/lib/url"
 
 export interface HistoryItem {
   id: string
@@ -42,7 +42,7 @@ export function getHistory(): HistoryItem[] {
 /** 访问产品时记录：同产品置顶去重，超出上限裁剪 */
 export function addToHistory(product: Product): HistoryItem[] {
   if (!isBrowser()) return getHistory()
-  const list = getHistory().filter(i => i.id !== product.id)
+  const list = getHistory().filter((i) => i.id !== product.id)
   list.unshift({
     id: product.id,
     name: product.name,
@@ -65,7 +65,7 @@ export function addToHistory(product: Product): HistoryItem[] {
 /** 移除单条历史 */
 export function removeFromHistory(id: string): HistoryItem[] {
   if (!isBrowser()) return getHistory()
-  const next = getHistory().filter(i => i.id !== id)
+  const next = getHistory().filter((i) => i.id !== id)
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
   } catch {

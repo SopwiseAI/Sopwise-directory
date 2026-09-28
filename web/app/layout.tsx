@@ -1,6 +1,7 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import Script from "next/script"
 import { Geist, Geist_Mono } from "next/font/google"
+import { getAllCategories, getAllProducts } from "@/lib/data"
 import Header from "@/components/layout/header"
 import { SubNav } from "@/components/layout/sub-nav"
 import { CategorySidebar } from "@/components/category/category-sidebar"
@@ -19,6 +20,20 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"]
 })
+
+const allCategories = getAllCategories()
+const allProducts = getAllProducts()
+const categoryCounts: Record<string, number> = {}
+for (const cat of allCategories) {
+  categoryCounts[cat.id] = allProducts.filter((p) => p.categoryId === cat.id).length
+}
+const totalProducts = allProducts.length
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover"
+}
 
 export const metadata: Metadata = {
   title: { default: "XiGee — 你的 AI 发现引擎", template: "%s — XiGee" },
@@ -52,7 +67,6 @@ export default function RootLayout({
     >
       <head>
         <meta name="theme-color" content="#fafafb" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </head>
       <body className="min-h-full flex flex-col md:h-[100dvh] md:overflow-hidden">
         <HistoryTracker />
@@ -67,9 +81,9 @@ export default function RootLayout({
           <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeScript }} />
           <Script id="sidebar-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: sidebarScript }} />
           <Header className="md:hidden" />
-          <SubNav className="md:hidden" />
+          <SubNav className="md:hidden" categories={allCategories} categoryCounts={categoryCounts} />
           <div className="flex flex-1 md:overflow-hidden">
-            <CategorySidebar />
+            <CategorySidebar categories={allCategories} categoryCounts={categoryCounts} totalProducts={totalProducts} />
             <div className="min-w-0 flex-1 md:overflow-y-auto flex flex-col">
               <CommandSearchBar className="hidden md:block" />
               <main id="main" className="mx-auto w-full max-w-7xl scroll-mt-16 px-4 py-6 sm:px-6 flex-1">

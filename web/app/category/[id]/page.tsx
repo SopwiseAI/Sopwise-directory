@@ -1,9 +1,10 @@
 import { type Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { getAllCategories, getCategoryById, getProductsByCategory, getProductDate } from "@/lib/data"
+import { getAllCategories, getCategoryById, getProductsByCategory } from "@/lib/data"
+import { getProductDate } from "@/lib/product-utils"
 import { categoryIconNode } from "@/lib/category-icon-node"
-import { formatCount } from "@/lib/format"
+import { formatCount, formatDate } from "@/lib/format"
 import { ProductBrowser } from "@/components/product/product-browser"
 
 type Props = {
@@ -12,7 +13,7 @@ type Props = {
 
 export async function generateStaticParams() {
   const categories = getAllCategories()
-  return categories.map(category => ({
+  return categories.map((category) => ({
     id: category.id
   }))
 }
@@ -50,14 +51,14 @@ export default async function CategoryPage({ params }: Props) {
       </nav>
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-md border bg-card">
-          {categoryIconNode(category.id, "size-4.5 text-foreground")}
+          {categoryIconNode(category.icon, "size-4.5 text-foreground")}
         </div>
         <div className="min-w-0">
           <h1 className="flex items-baseline gap-2 text-lg font-semibold tracking-tight">
             {category.name}
             <span className="font-data font-normal text-muted-foreground">{formatCount(products.length)} 个产品</span>
           </h1>
-          {latestDate && <p className="font-data text-muted-foreground">最近更新 {latestDate}</p>}
+          {latestDate && <p className="font-data text-muted-foreground">最近更新 {formatDate(latestDate)}</p>}
         </div>
       </div>
 

@@ -3,25 +3,28 @@
 import { useMemo, useState, useTransition } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { SearchX } from "lucide-react"
-import { getAllProducts, getFeaturedProducts } from "@/lib/data"
 import { createSearchIndex } from "@/lib/search"
 import { ProductRow } from "@/components/product/product-row"
 import { formatCount } from "@/lib/format"
+import type { Product } from "@/lib/types"
 
-const allProducts = getAllProducts()
-const searchIndex = createSearchIndex(allProducts)
-const featured = getFeaturedProducts()
-const suggestions = featured.slice(0, 5).map(p => p.name)
+interface SearchResultsProps {
+  products: Product[]
+  featured: Product[]
+  suggestions: string[]
+}
 
-export function SearchResults() {
+export function SearchResults({ products, featured, suggestions }: SearchResultsProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const query = searchParams.get("q") || ""
 
+  const searchIndex = useMemo(() => createSearchIndex(products), [products])
+
   const results = useMemo(() => {
     if (!query.trim()) return []
-    return searchIndex.search(query).map(r => r.item)
-  }, [query])
+    return searchIndex.search(query).map((r) => r.item)
+  }, [query, searchIndex])
 
   const [isPending, startTransition] = useTransition()
   const [pendingQuery, setPendingQuery] = useState<string | null>(null)
@@ -55,7 +58,7 @@ export function SearchResults() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
             <span className="text-xs text-muted-foreground">试试搜索：</span>
-            {suggestions.map(s => (
+            {suggestions.map((s) => (
               <button
                 key={s}
                 type="button"

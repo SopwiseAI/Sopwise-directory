@@ -1,9 +1,10 @@
 import { ArrowUpRight } from "lucide-react"
 import type { Product } from "@/lib/types"
-import { getProductDate } from "@/lib/data"
+import { getProductDate, productHistoryAttrs } from "@/lib/product-utils"
 import { Badge } from "@/components/ui/badge"
 import { PricingBadge } from "@/components/product/pricing-badge"
-import { getDomain } from "@/lib/product-icon"
+import { getDomain } from "@/lib/url"
+import { formatDate } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 export function ProductRow({
@@ -23,11 +24,7 @@ export function ProductRow({
       href={product.url}
       target="_blank"
       rel="noopener noreferrer"
-      data-history-id={product.id}
-      data-history-name={product.name}
-      data-history-url={product.url}
-      data-history-category={product.categoryId}
-      data-history-pricing={product.pricing ?? ""}
+      {...productHistoryAttrs(product)}
       className={cn(
         "group flex items-center gap-3 px-4 py-3.5 transition-all hover:bg-brand/[0.02] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
         !last && "border-b border-border"
@@ -37,7 +34,9 @@ export function ProductRow({
         <div className="flex items-baseline gap-2">
           <span className="shrink-0 truncate text-base font-medium">{product.name}</span>
           <span className="hidden shrink-0 font-mono text-xs text-muted-foreground sm:inline">{domain}</span>
-          {date && <span className="hidden shrink-0 font-data text-muted-foreground/60 sm:inline">{date}</span>}
+          {date && (
+            <span className="hidden shrink-0 font-data text-muted-foreground/60 sm:inline">{formatDate(date)}</span>
+          )}
         </div>
         <p className="truncate text-sm text-muted-foreground">{product.description}</p>
       </div>
@@ -45,7 +44,7 @@ export function ProductRow({
       <div className="flex shrink-0 items-center gap-2">
         {product.tags && product.tags.length > 0 && (
           <div className="hidden items-center gap-1 md:flex">
-            {product.tags.slice(0, 2).map(tag => (
+            {product.tags.slice(0, 2).map((tag) => (
               <Badge key={tag} variant="secondary" className="px-1.5 py-0 text-xs font-normal">
                 {tag}
               </Badge>

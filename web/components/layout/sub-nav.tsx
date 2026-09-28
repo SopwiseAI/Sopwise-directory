@@ -4,12 +4,16 @@ import { useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { getAllCategories, getProductsByCategory } from "@/lib/data"
 import { formatCount } from "@/lib/format"
+import type { Category } from "@/lib/types"
 
-const categories = getAllCategories()
+interface SubNavProps {
+  className?: string
+  categories: Category[]
+  categoryCounts: Record<string, number>
+}
 
-export function SubNav({ className }: { className?: string }) {
+export function SubNav({ className, categories, categoryCounts }: SubNavProps) {
   const pathname = usePathname()
 
   useEffect(() => {
@@ -39,7 +43,7 @@ export function SubNav({ className }: { className?: string }) {
           >
             全部
           </Link>
-          {categories.map(category => {
+          {categories.map((category) => {
             const isActive = pathname === `/category/${category.id}`
             return (
               <Link
@@ -53,9 +57,7 @@ export function SubNav({ className }: { className?: string }) {
                 )}
               >
                 {category.name}
-                <span className="font-data text-muted-foreground">
-                  {formatCount(getProductsByCategory(category.id).length)}
-                </span>
+                <span className="font-data text-muted-foreground">{formatCount(categoryCounts[category.id] ?? 0)}</span>
               </Link>
             )
           })}

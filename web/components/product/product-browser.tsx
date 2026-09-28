@@ -1,8 +1,8 @@
 "use client"
 
-import { useMemo, useState, useEffect } from "react"
+import { useMemo, useState, useEffect, useSyncExternalStore } from "react"
 import type { Product } from "@/lib/types"
-import { getProductDate } from "@/lib/data"
+import { getProductDate } from "@/lib/product-utils"
 import { ProductRow } from "@/components/product/product-row"
 import { ProductCard } from "@/components/product/product-card"
 import { ProductToolbar, type TabMode, type SortMode, type ViewMode } from "@/components/product/product-toolbar"
@@ -18,9 +18,8 @@ interface ProductBrowserProps {
   defaultTab?: TabMode
 }
 
-function readUrlParams() {
-  if (typeof window === "undefined") return { tab: null as TabMode | null, view: null as ViewMode | null }
-  const qs = new URLSearchParams(window.location.search)
+function readUrlParams(search: string) {
+  const qs = new URLSearchParams(search)
   const tabParam = qs.get("tab")
   const filterParam = qs.get("filter")
   const viewParam = qs.get("view")
@@ -40,6 +39,19 @@ function readUrlParams() {
   return { tab, view }
 }
 
+const noopSubscribe = () => () => {}
+const emptyString = ""
+
+function getStoredView(): string {
+  if (typeof window === "undefined") return emptyString
+  return localStorage.getItem("xigee:default-view") ?? emptyString
+}
+
+function getUrlSearch(): string {
+  if (typeof window === "undefined") return emptyString
+  return window.location.search
+}
+
 export function ProductBrowser({
   products,
   emptyTitle,
@@ -48,17 +60,20 @@ export function ProductBrowser({
   showTabs = true,
   defaultTab = "all"
 }: ProductBrowserProps) {
-  const urlParams = readUrlParams()
-  const urlTab = urlParams.tab ?? defaultTab
-  const urlView = urlParams.view
+  const storedView = useSyncExternalStore(noopSubscribe, getStoredView, () => emptyString)
+  const urlSearch = useSyncExternalStore(noopSubscribe, getUrlSearch, () => emptyString)
 
+  const urlParams = useMemo(() => readUrlParams(urlSearch), [urlSearch])
+  const initialView =
+    urlParams.view ?? (storedView === "list" || storedView === "grid" ? (storedView as ViewMode) : defaultView)
+  const initialTab = urlParams.tab ?? defaultTab
+
+  const [viewOverride, setViewOverride] = useState<ViewMode | null>(null)
+  const [tabOverride, setTabOverride] = useState<TabMode | null>(null)
   const [sort, setSort] = useState<SortMode>("latest")
-  const [view, setViewState] = useState<ViewMode>(() => {
-    if (typeof window === "undefined") return defaultView
-    const stored = localStorage.getItem("xigee:default-view") as ViewMode | null
-    return urlView ?? (stored === "list" || stored === "grid" ? stored : defaultView)
-  })
-  const [tab, setTabState] = useState<TabMode>(urlTab)
+
+  const view = viewOverride ?? initialView
+  const tab = tabOverride ?? initialTab
 
   useEffect(() => {
     if (!showTabs) return
@@ -94,18 +109,18 @@ export function ProductBrowser({
 
   const setView = (v: ViewMode) => {
     localStorage.setItem("xigee:default-view", v)
-    setViewState(v)
+    setViewOverride(v)
   }
 
   const setTab = (t: TabMode) => {
-    setTabState(t)
+    setTabOverride(t)
     if (t !== "latest") {
       setSort("latest")
     }
   }
 
   const filtered = useMemo(() => {
-    const list = tab === "featured" ? products.filter(p => p.featured) : [...products]
+    const list = tab === "featured" ? products.filter((p) => p.featured) : [...products]
     switch (resolvedSort) {
       case "name-asc":
         list.sort((a, b) => a.name.localeCompare(b.name))
@@ -138,6 +153,21 @@ export function ProductBrowser({
     )
   }
 
+  const content =
+    view === "grid" ? (
+      <div className="product-card-grid">
+        {filtered.map((product) => (
+          <ProductCard key={product.id} product={product} showDate={isLatestTab} />
+        ))}
+      </div>
+    ) : (
+      <div className="rounded-lg border bg-card">
+        {filtered.map((product, i) => (
+          <ProductRow key={product.id} product={product} last={i === filtered.length - 1} showDate={isLatestTab} />
+        ))}
+      </div>
+    )
+
   return (
     <div className="space-y-4">
       <ProductToolbar
@@ -151,18 +181,12 @@ export function ProductBrowser({
         onSortChange={setSort}
       />
 
-      {view === "grid" ? (
-        <div className="product-card-grid">
-          {filtered.map(product => (
-            <ProductCard key={product.id} product={product} showDate={isLatestTab} />
-          ))}
+      {showTabs ? (
+        <div role="tabpanel" id="product-tabpanel" aria-labelledby={`product-tab-${tab}`} tabIndex={0}>
+          {content}
         </div>
       ) : (
-        <div className="rounded-lg border bg-card">
-          {filtered.map((product, i) => (
-            <ProductRow key={product.id} product={product} last={i === filtered.length - 1} showDate={isLatestTab} />
-          ))}
-        </div>
+        content
       )}
     </div>
   )
