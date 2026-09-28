@@ -1,0 +1,66 @@
+import { describe, it, expect } from "vitest"
+import { createSearchIndex } from "./search"
+import type { Product } from "./types"
+
+const mockProducts: Product[] = [
+  {
+    id: "1",
+    name: "ChatGPT",
+    description: "AI 对话助手",
+    url: "https://chat.openai.com",
+    categoryId: "chat-assistant",
+    tags: ["AI", "对话"],
+    pricing: "freemium",
+    featured: true,
+    createdAt: "2022-11-30"
+  },
+  {
+    id: "2",
+    name: "Midjourney",
+    description: "AI 图像生成",
+    url: "https://midjourney.com",
+    categoryId: "image-generation",
+    tags: ["AI", "图像"],
+    pricing: "paid",
+    featured: false,
+    createdAt: "2022-07-01"
+  },
+  {
+    id: "3",
+    name: "GitHub Copilot",
+    description: "AI 代码助手",
+    url: "https://github.com/copilot",
+    categoryId: "code-tools",
+    tags: ["AI", "代码"],
+    pricing: "paid",
+    featured: true,
+    createdAt: "2021-06-29"
+  }
+]
+
+describe("createSearchIndex", () => {
+  const index = createSearchIndex(mockProducts)
+
+  it("finds products by name", () => {
+    const results = index.search("ChatGPT")
+    expect(results.length).toBeGreaterThan(0)
+    expect(results[0].item.name).toBe("ChatGPT")
+  })
+
+  it("finds products by description", () => {
+    const results = index.search("图像生成")
+    expect(results.length).toBeGreaterThan(0)
+    expect(results[0].item.id).toBe("2")
+  })
+
+  it("finds products by tag", () => {
+    const results = index.search("代码")
+    expect(results.length).toBeGreaterThan(0)
+    expect(results[0].item.id).toBe("3")
+  })
+
+  it("returns empty for no match", () => {
+    const results = index.search("zzznomatch")
+    expect(results.length).toBe(0)
+  })
+})

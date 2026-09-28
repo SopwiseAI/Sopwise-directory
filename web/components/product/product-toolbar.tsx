@@ -33,6 +33,47 @@ const sortLabels: Record<SortMode, string> = {
   "name-desc": "Z-A"
 }
 
+function ViewToggleGroup({ view, onViewChange }: { view: ViewMode; onViewChange: (v: ViewMode) => void }) {
+  return (
+    <div className="flex items-center rounded-md border bg-card p-0.5" role="group" aria-label="视图切换">
+      <button
+        type="button"
+        onClick={() => onViewChange("list")}
+        aria-pressed={view === "list"}
+        aria-label="列表视图"
+        title="列表视图"
+        className={cn(
+          "rounded-sm p-1 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          view === "list" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"
+        )}
+      >
+        <List className="size-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => onViewChange("grid")}
+        aria-pressed={view === "grid"}
+        aria-label="卡片视图"
+        title="卡片视图"
+        className={cn(
+          "rounded-sm p-1 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          view === "grid" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"
+        )}
+      >
+        <LayoutGrid className="size-3.5" />
+      </button>
+    </div>
+  )
+}
+
+function CountBadge({ count }: { count: number }) {
+  return (
+    <span className="font-data text-muted-foreground" role="status" aria-label={`共 ${count} 个产品`}>
+      {formatCount(count)}
+    </span>
+  )
+}
+
 export function ProductToolbar({
   count,
   view,
@@ -45,17 +86,35 @@ export function ProductToolbar({
 }: ProductToolbarProps) {
   const isLatestTab = tab === "latest"
 
+  const handleTabKeyDown = (e: React.KeyboardEvent) => {
+    const currentIndex = PRODUCT_TABS.findIndex((t) => t.key === tab)
+    let nextIndex: number | null = null
+    if (e.key === "ArrowRight") nextIndex = (currentIndex + 1) % PRODUCT_TABS.length
+    if (e.key === "ArrowLeft") nextIndex = (currentIndex - 1 + PRODUCT_TABS.length) % PRODUCT_TABS.length
+    if (nextIndex !== null) {
+      e.preventDefault()
+      onTabChange(PRODUCT_TABS[nextIndex].key)
+    }
+  }
+
   return (
     <div className="space-y-0">
       {showTabs && (
         <div className="flex items-center justify-between border-b border-border">
-          <div className="-mb-px flex items-center gap-0" role="tablist">
-            {PRODUCT_TABS.map(t => (
+          <div
+            className="-mb-px flex items-center gap-0"
+            role="tablist"
+            aria-label="产品筛选"
+            onKeyDown={handleTabKeyDown}
+          >
+            {PRODUCT_TABS.map((t) => (
               <button
                 key={t.key}
                 type="button"
                 role="tab"
+                id={`product-tab-${t.key}`}
                 aria-selected={tab === t.key}
+                aria-controls="product-tabpanel"
                 onClick={() => onTabChange(t.key)}
                 className={cn(
                   "px-4 py-2.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset rounded-t-sm",
@@ -72,7 +131,7 @@ export function ProductToolbar({
           <div className="flex items-center gap-2 text-sm">
             {!isLatestTab && (
               <div className="flex items-center rounded-md border bg-card p-0.5" role="group" aria-label="排序">
-                {(["latest", "name-asc", "name-desc"] as SortMode[]).map(s => (
+                {(["latest", "name-asc", "name-desc"] as SortMode[]).map((s) => (
                   <button
                     key={s}
                     type="button"
@@ -91,38 +150,8 @@ export function ProductToolbar({
               </div>
             )}
 
-            <div className="flex items-center rounded-md border bg-card p-0.5" role="group" aria-label="视图切换">
-              <button
-                type="button"
-                onClick={() => onViewChange("list")}
-                aria-pressed={view === "list"}
-                aria-label="列表视图"
-                title="列表视图"
-                className={cn(
-                  "rounded-sm p-1 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  view === "list" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <List className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => onViewChange("grid")}
-                aria-pressed={view === "grid"}
-                aria-label="卡片视图"
-                title="卡片视图"
-                className={cn(
-                  "rounded-sm p-1 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  view === "grid" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <LayoutGrid className="size-3.5" />
-              </button>
-            </div>
-
-            <span className="font-data text-muted-foreground" role="status" aria-label={`共 ${count} 个产品`}>
-              {formatCount(count)}
-            </span>
+            <ViewToggleGroup view={view} onViewChange={onViewChange} />
+            <CountBadge count={count} />
           </div>
         </div>
       )}
@@ -130,7 +159,7 @@ export function ProductToolbar({
       {!showTabs && (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm">
-            {(["latest", "name-asc", "name-desc"] as SortMode[]).map(s => (
+            {(["latest", "name-asc", "name-desc"] as SortMode[]).map((s) => (
               <button
                 key={s}
                 type="button"
@@ -149,38 +178,8 @@ export function ProductToolbar({
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center rounded-md border bg-card p-0.5" role="group" aria-label="视图切换">
-              <button
-                type="button"
-                onClick={() => onViewChange("list")}
-                aria-pressed={view === "list"}
-                aria-label="列表视图"
-                title="列表视图"
-                className={cn(
-                  "rounded-sm p-1 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  view === "list" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <List className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => onViewChange("grid")}
-                aria-pressed={view === "grid"}
-                aria-label="卡片视图"
-                title="卡片视图"
-                className={cn(
-                  "rounded-sm p-1 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  view === "grid" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <LayoutGrid className="size-3.5" />
-              </button>
-            </div>
-
-            <span className="font-data text-muted-foreground" role="status" aria-label={`共 ${count} 个产品`}>
-              {formatCount(count)}
-            </span>
+            <ViewToggleGroup view={view} onViewChange={onViewChange} />
+            <CountBadge count={count} />
           </div>
         </div>
       )}

@@ -9,64 +9,55 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 项目概述
 
-XiGee Directory 是一个 AI 产品发现引擎，帮助用户发现和浏览各类 AI 产品。MVP 阶段为纯前端 SSG 站点，基于 data.json 驱动数据。
+纯前端 SSG 站点，基于 `data/data.json` 驱动数据，部署于 Vercel。
 
 ## 技术栈
 
 - Next.js 16 (App Router) + React 19 + TypeScript 5
-- Tailwind CSS 4 + shadcn/ui (base-nova-style, neutral base)
-- fuse.js (客户端模糊搜索)
-- lucide-react (图标)
-- pnpm
+- Tailwind CSS 4 + shadcn/ui (base-nova, neutral)
+- fuse.js（客户端模糊搜索）、lucide-react（图标）
+- Vitest + Testing Library（单元测试）
+- pnpm 10 + Node 22
 
 ## 开发命令
 
 ```bash
-pnpm dev      # 启动开发服务器
-pnpm build    # 构建生产版本
-pnpm start    # 启动生产服务器
-pnpm lint     # 运行 ESLint
+pnpm dev          # 开发服务器 (http://localhost:3000)
+pnpm build        # 构建生产版本
+pnpm start        # 生产服务器
+pnpm lint         # ESLint
+pnpm typecheck    # 类型检查
+pnpm test         # 测试
+pnpm analyze      # 分析构建产物体积
 ```
 
-## 目录结构
+## 环境变量
+
+| 变量                   | 说明                      | 默认值                  |
+| ---------------------- | ------------------------- | ----------------------- |
+| `NEXT_PUBLIC_SITE_URL` | 站点 URL (sitemap/robots) | `https://www.xigee.net` |
+
+## 目录约定
 
 ```
-app/                    # Next.js App Router 页面
-├── page.tsx            # 首页 (SSG)
-├── layout.tsx          # 根布局
-├── category/[id]/      # 分类页 (SSG, generateStaticParams)
-├── search/             # 搜索页 (CSR)
-├── sitemap.ts          # 动态 sitemap
-├── robots.ts           # robots.txt
-components/
-├── ui/                 # shadcn/ui 组件
-├── layout/             # Header, Footer, ThemeToggle
-├── product/            # ProductCard, ProductGrid
-├── category/           # CategoryIcon, CategoryNav
-├── search/             # SearchBar, SearchResults
-lib/
-├── types.ts            # TypeScript 类型定义
-├── data.ts             # 数据读取工具函数
-├── search.ts           # fuse.js 搜索配置
-├── utils.ts            # shadcn/ui cn() 工具
-data/
-├── data.json           # 产品数据（分类 + 产品列表）
+app/          # App Router 页面 + 路由级元数据 (sitemap/robots/manifest/og)
+components/   # UI 组件 (ui/layout/product/category/search/history)
+lib/          # 工具函数与类型 (data 读取只在 server 端)
+data/         # 产品数据 (data.json)
 ```
 
-## 数据模型
+## 数据流
 
-### 分类 (Category)
-
-id: string, name: string, icon: string (lucide-react icon name)
-
-### 产品 (Product)
-
-id: string, name: string, description: string, url: string, categoryId: string, tags?: string[], icon?: string, pricing?: "free"|"freemium"|"paid"|"opensource", featured?: boolean, publishedAt?: string, createdAt?: string
+`data.json` → `lib/data.ts`（server 端 import）→ 页面 Server Component → props 传入 client 组件。client 组件不直接 import data.json，避免全量内联 bundle。
 
 ## 关键约定
 
-- 页面组件为 Server Component，交互组件标记 "use client"
-- Next.js 16 中 params 是 Promise，必须 await 后使用
-- 搜索使用 useSearchParams() + Suspense 边界
+- 页面为 Server Component，交互组件标记 `"use client"`
+- Next.js 16 中 `params` 是 Promise，必须 `await`
+- `useSearchParams()` 须包裹 `<Suspense>`
 - 产品卡片点击直接跳转外部网站，无详情页
-- 数据更新：修改 data/data.json → 提交 PR → 合并 → Vercel 自动部署
+- 数据更新：修改 `data/data.json` → PR → 合并 → Vercel 自动部署
+
+## CI
+
+`.github/workflows/web-ci.yml`：push/PR 时执行 `lint → typecheck → test → build`。

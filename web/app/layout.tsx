@@ -1,11 +1,14 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import Script from "next/script"
 import { Geist, Geist_Mono } from "next/font/google"
+import { getAllCategories, getAllProducts } from "@/lib/data"
+import { getBaseUrl } from "@/lib/utils"
 import Header from "@/components/layout/header"
 import { SubNav } from "@/components/layout/sub-nav"
 import { CategorySidebar } from "@/components/category/category-sidebar"
 import { CommandSearchBar } from "@/components/layout/command-search-bar"
 import { HistoryTracker } from "@/components/layout/history-tracker"
+import { WebVitals } from "@/components/layout/web-vitals"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import Footer from "@/components/layout/footer"
 import "./globals.css"
@@ -20,7 +23,35 @@ const geistMono = Geist_Mono({
   subsets: ["latin"]
 })
 
+const allCategories = getAllCategories()
+const allProducts = getAllProducts()
+const categoryCounts: Record<string, number> = {}
+for (const cat of allCategories) {
+  categoryCounts[cat.id] = allProducts.filter((p) => p.categoryId === cat.id).length
+}
+const totalProducts = allProducts.length
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "XiGee",
+  alternateName: "XiGee — AI 发现引擎",
+  url: getBaseUrl(),
+  potentialAction: {
+    "@type": "SearchAction",
+    target: `${getBaseUrl()}/search?q={search_term_string}`,
+    "query-input": "required name=search_term_string"
+  }
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover"
+}
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.xigee.net"),
   title: { default: "XiGee — 你的 AI 发现引擎", template: "%s — XiGee" },
   description: "XiGee 是你的 AI 发现引擎，精选各类 AI 工具与应用，按分类浏览或直接搜索你需要的能力",
   keywords: ["AI", "AI产品", "AI工具", "人工智能", "AI导航", "AI发现引擎", "XiGee"],
@@ -52,10 +83,11 @@ export default function RootLayout({
     >
       <head>
         <meta name="theme-color" content="#fafafb" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </head>
       <body className="min-h-full flex flex-col md:h-[100dvh] md:overflow-hidden">
         <HistoryTracker />
+        <WebVitals />
         <TooltipProvider>
           <a
             href="#main"
@@ -67,9 +99,9 @@ export default function RootLayout({
           <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeScript }} />
           <Script id="sidebar-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: sidebarScript }} />
           <Header className="md:hidden" />
-          <SubNav className="md:hidden" />
+          <SubNav className="md:hidden" categories={allCategories} categoryCounts={categoryCounts} />
           <div className="flex flex-1 md:overflow-hidden">
-            <CategorySidebar />
+            <CategorySidebar categories={allCategories} categoryCounts={categoryCounts} totalProducts={totalProducts} />
             <div className="min-w-0 flex-1 md:overflow-y-auto flex flex-col">
               <CommandSearchBar className="hidden md:block" />
               <main id="main" className="mx-auto w-full max-w-7xl scroll-mt-16 px-4 py-6 sm:px-6 flex-1">

@@ -1,15 +1,14 @@
 "use client"
 
-import { useEffect, useMemo, useReducer, useState, useSyncExternalStore, useRef } from "react"
+import { useCallback, useEffect, useMemo, useReducer, useState, useSyncExternalStore, useRef } from "react"
 import Link from "next/link"
 import { Clock, Search, Trash2 } from "lucide-react"
 import { clearHistory, getHistorySnapshot, removeFromHistory, subscribeHistory, type HistoryItem } from "@/lib/history"
-import { getAllCategories } from "@/lib/data"
 import { formatCount } from "@/lib/format"
 import { PricingBadge } from "@/components/product/pricing-badge"
 import { Button } from "@/components/ui/button"
+import type { Category } from "@/lib/types"
 
-const categories = getAllCategories()
 /** 分页步长：初始渲染 + 每次触底加载的条数（避免 200 条一次性渲染） */
 const PAGE_SIZE = 30
 
@@ -28,8 +27,12 @@ function formatRelativeTime(iso: string): string {
   return date.toLocaleDateString("zh-CN", { month: "short", day: "numeric" })
 }
 
+interface HistoryListProps {
+  categories: Category[]
+}
+
 /** 历史记录列表：hover 统一、无限滚动分页、搜索过滤、单条删除与清空 */
-export function HistoryList() {
+export function HistoryList({ categories }: HistoryListProps) {
   // 相对时间每分钟刷新（PG-13）
   const [, forceTick] = useReducer((n: number) => n + 1, 0)
   useEffect(() => {
@@ -43,7 +46,7 @@ export function HistoryList() {
   const [showClearConfirm, setShowClearConfirm] = useState(false)
 
   // 分类名查找：需在使用（filtered）之前定义（TDZ 防护）
-  const categoryName = (id: string) => categories.find(c => c.id === id)?.name ?? ""
+  const categoryName = useCallback((id: string) => categories.find((c) => c.id === id)?.name ?? "", [categories])
 
   const items = useMemo(() => {
     try {
@@ -57,13 +60,13 @@ export function HistoryList() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return items
-    return items.filter(it => {
+    return items.filter((it) => {
       const name = (it.name ?? "").toLowerCase()
       const domain = (it.domain ?? "").toLowerCase()
       const cat = categoryName(it.categoryId).toLowerCase()
       return name.includes(q) || domain.includes(q) || cat.includes(q)
     })
-  }, [items, query])
+  }, [items, query, categoryName])
 
   // 触底加载更多（无限滚动）
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -71,9 +74,9 @@ export function HistoryList() {
     const el = sentinelRef.current
     if (!el) return
     const observer = new IntersectionObserver(
-      entries => {
+      (entries) => {
         if (entries[0].isIntersecting) {
-          setVisibleCount(n => Math.min(n + PAGE_SIZE, filtered.length))
+          setVisibleCount((n) => Math.min(n + PAGE_SIZE, filtered.length))
         }
       },
       { rootMargin: "200px" }
@@ -118,7 +121,7 @@ export function HistoryList() {
             autoComplete="off"
             placeholder="搜索历史记录…"
             value={query}
-            onChange={e => {
+            onChange={(e) => {
               setQuery(e.target.value)
               setVisibleCount(PAGE_SIZE)
             }}
@@ -141,12 +144,44 @@ export function HistoryList() {
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           onClick={() => setShowClearConfirm(false)}
-          onKeyDown={e => e.key === "Escape" && setShowClearConfirm(false)}
-          tabIndex={0}
-          ref={el => el?.focus()}
         >
-          <div className="rounded-lg border bg-card p-6 shadow-lg max-w-sm mx-auto" onClick={e => e.stopPropagation()}>
-            <h3 className="text-base font-semibold">确认清空所有历史记录？</h3>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="clear-confirm-title"
+            className="rounded-lg border bg-card p-6 shadow-lg max-w-sm mx-auto"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                setShowClearConfirm(false)
+              }
+              if (e.key === "Tab") {
+                const dialog = e.currentTarget
+                const focusable = dialog.querySelectorAll<HTMLElement>(
+                  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                )
+                if (focusable.length === 0) return
+                const first = focusable[0]
+                const last = focusable[focusable.length - 1]
+                if (e.shiftKey && document.activeElement === first) {
+                  e.preventDefault()
+                  last.focus()
+                } else if (!e.shiftKey && document.activeElement === last) {
+                  e.preventDefault()
+                  first.focus()
+                }
+              }
+            }}
+            ref={(el) => {
+              if (el && !el.contains(document.activeElement)) {
+                el.focus()
+              }
+            }}
+            tabIndex={-1}
+          >
+            <h3 id="clear-confirm-title" className="text-base font-semibold">
+              确认清空所有历史记录？
+            </h3>
             <p className="mt-2 text-sm text-muted-foreground">此操作不可恢复，共 {items.length} 条记录</p>
             <div className="mt-4 flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowClearConfirm(false)}>

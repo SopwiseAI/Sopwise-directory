@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { getAllCategories } from "@/lib/data"
 import { HistoryList } from "@/components/history/history-list"
 
 export const metadata: Metadata = {
@@ -7,11 +8,13 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true }
 }
 
+const categories = getAllCategories()
+
 export default function HistoryPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-lg font-semibold tracking-tight">历史记录</h1>
-      <HistoryList />
+      <HistoryList categories={categories} />
     </div>
   )
 }

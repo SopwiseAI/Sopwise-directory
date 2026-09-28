@@ -1,27 +1,39 @@
-"use client";
+"use client"
 
-import { Monitor, Moon, Sun } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { setTheme, useTheme, type ThemeMode } from "@/components/layout/theme-toggle";
+import { Monitor, Moon, Sun } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { setTheme, useTheme, type ThemeMode } from "@/components/layout/theme-toggle"
 
 const options: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
   { value: "light", label: "亮色", icon: Sun },
   { value: "dark", label: "暗色", icon: Moon },
-  { value: "system", label: "跟随系统", icon: Monitor },
-];
+  { value: "system", label: "跟随系统", icon: Monitor }
+]
 
 /** 设置页主题选择：三张选项卡片，选中态边框高亮 */
 export function ThemeSwitch() {
-  const theme = useTheme();
+  const theme = useTheme()
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const currentIndex = options.findIndex((o) => o.value === theme)
+    let nextIndex: number | null = null
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") nextIndex = (currentIndex + 1) % options.length
+    if (e.key === "ArrowLeft" || e.key === "ArrowUp") nextIndex = (currentIndex - 1 + options.length) % options.length
+    if (nextIndex !== null) {
+      e.preventDefault()
+      setTheme(options[nextIndex].value)
+    }
+  }
 
   return (
     <div
       className="grid grid-cols-1 gap-2 sm:grid-cols-3"
       role="radiogroup"
       aria-label="主题模式"
+      onKeyDown={handleKeyDown}
     >
       {options.map(({ value, label, icon: Icon }) => {
-        const active = theme === value;
+        const active = theme === value
         return (
           <button
             key={value}
@@ -40,8 +52,8 @@ export function ThemeSwitch() {
             <Icon className={cn("size-5", active && "text-primary")} aria-hidden />
             {label}
           </button>
-        );
+        )
       })}
     </div>
-  );
+  )
 }

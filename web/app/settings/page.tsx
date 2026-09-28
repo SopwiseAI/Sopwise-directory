@@ -5,7 +5,8 @@ import { formatCount } from "@/lib/format"
 
 export const metadata: Metadata = {
   title: "设置",
-  description: "XiGee 设置：外观、数据统计与关于"
+  description: "XiGee 设置：外观、数据统计与关于",
+  robots: { index: false, follow: true }
 }
 
 const products = getAllProducts()

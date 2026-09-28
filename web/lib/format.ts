@@ -17,3 +17,9 @@ function formatSuffix(value: number, suffix: string): string {
   const str = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
   return str + suffix
 }
+
+export function formatDate(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return iso
+  return date.toLocaleDateString("zh-CN", { year: "numeric", month: "short", day: "numeric" })
+}

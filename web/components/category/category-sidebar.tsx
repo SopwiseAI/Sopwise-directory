@@ -12,12 +12,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils"
 import { categoryIconNode } from "@/lib/category-icon-node"
 import { HistoryCount } from "@/components/history/history-count"
-import { getAllCategories, getProductsByCategory } from "@/lib/data"
 import { formatCount } from "@/lib/format"
+import type { Category } from "@/lib/types"
 
-const categories = getAllCategories()
 const STORAGE_KEY = "xigee:sidebar-collapsed"
-const TOTAL_PRODUCTS = categories.reduce((sum, c) => sum + getProductsByCategory(c.id).length, 0)
 
 function getSnapshot() {
   try {
@@ -108,7 +106,13 @@ function CollapseToggle() {
   )
 }
 
-export function CategorySidebar() {
+interface CategorySidebarProps {
+  categories: Category[]
+  categoryCounts: Record<string, number>
+  totalProducts: number
+}
+
+export function CategorySidebar({ categories, categoryCounts, totalProducts }: CategorySidebarProps) {
   const pathname = usePathname()
   const collapsed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
   const navRef = useRef<HTMLElement>(null)
@@ -177,7 +181,7 @@ export function CategorySidebar() {
             collapsed={collapsed}
             label="全部产品"
             icon={<LayoutGrid className="size-4 shrink-0" />}
-            count={formatCount(TOTAL_PRODUCTS)}
+            count={formatCount(totalProducts)}
           />
 
           {/* 历史记录（辅助入口） */}
@@ -198,15 +202,15 @@ export function CategorySidebar() {
           >
             分类
           </p>
-          {categories.map(category => (
+          {categories.map((category) => (
             <SidebarLink
               key={category.id}
               href={`/category/${category.id}`}
               active={pathname === `/category/${category.id}`}
               collapsed={collapsed}
               label={category.name}
-              icon={categoryIconNode(category.id)}
-              count={formatCount(getProductsByCategory(category.id).length)}
+              icon={categoryIconNode(category.icon)}
+              count={formatCount(categoryCounts[category.id] ?? 0)}
             />
           ))}
           <div ref={sentinelRef} className="h-px" />

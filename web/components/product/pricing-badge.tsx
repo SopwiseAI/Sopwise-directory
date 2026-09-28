@@ -10,27 +10,23 @@ export interface PricingStyle {
 export const pricingStyles: Record<Pricing, PricingStyle> = {
   free: {
     label: "FREE",
-    className:
-      "bg-green-500/10 text-emerald-700 dark:bg-green-400/10 dark:text-green-400 border-green-500/20 dark:border-green-400/20",
-    dotClass: "bg-green-500 dark:bg-green-400"
+    className: "bg-chart-3/10 text-chart-3 border-chart-3/20",
+    dotClass: "bg-chart-3"
   },
   freemium: {
     label: "FREEMIUM",
-    className:
-      "bg-blue-500/10 text-blue-800 dark:bg-blue-400/10 dark:text-blue-400 border-blue-500/20 dark:border-blue-400/20",
-    dotClass: "bg-blue-500 dark:bg-blue-400"
+    className: "bg-chart-1/10 text-chart-1 border-chart-1/20",
+    dotClass: "bg-chart-1"
   },
   paid: {
     label: "PAID",
-    className:
-      "bg-orange-500/10 text-orange-600 dark:bg-orange-400/10 dark:text-orange-300 border-orange-500/20 dark:border-orange-400/20",
-    dotClass: "bg-orange-500 dark:bg-orange-400"
+    className: "bg-chart-5/10 text-chart-5 border-chart-5/20",
+    dotClass: "bg-chart-5"
   },
   opensource: {
     label: "OPEN SOURCE",
-    className:
-      "bg-purple-500/10 text-purple-800 dark:bg-purple-400/10 dark:text-purple-300 border-purple-500/20 dark:border-purple-400/20",
-    dotClass: "bg-purple-500 dark:bg-purple-400"
+    className: "bg-chart-4/10 text-chart-4 border-chart-4/20",
+    dotClass: "bg-chart-4"
   }
 }
 
