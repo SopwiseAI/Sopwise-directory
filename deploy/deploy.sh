@@ -12,7 +12,7 @@
 set -euo pipefail
 
 STUDIO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-HEALTH_URL="http://127.0.0.1:8000/api/v1/health"
+HEALTH_URL="http://127.0.0.1:8001/api/v1/health"
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 info()  { echo -e "${GREEN}[✓]${NC} $*"; }

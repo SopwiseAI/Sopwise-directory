@@ -1,16 +1,15 @@
 [Unit]
 Description=Sopwise Studio API
 After=network.target
-StartLimitIntervalSec=0
 
 [Service]
 Type=simple
-User=sopwise
-Group=sopwise
+User=root
+Group=root
 WorkingDirectory=/opt/sopwise/studio
 Environment=APP_ENV=prod
-Environment=PATH=/home/sopwise/.local/bin:/usr/local/bin:/usr/bin:/bin
-ExecStart=uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
+Environment=PATH=/root/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=uv run uvicorn app.main:app --host 127.0.0.1 --port 8001
 Restart=always
 RestartSec=5
 StandardOutput=journal

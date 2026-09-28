@@ -158,9 +158,9 @@ step "验证部署"
 
 echo -n "  等待 studio 启动..."
 for i in $(seq 1 15); do
-    if curl -sf http://127.0.0.1:8000/api/v1/health >/dev/null 2>&1; then
-        echo -e "\n${GREEN}"
-        curl -s http://127.0.0.1:8000/api/v1/health | python3 -m json.tool
+if curl -sf http://127.0.0.1:8001/api/v1/health >/dev/null 2>&1; then
+            echo -e "\n${GREEN}"
+            curl -s http://127.0.0.1:8001/api/v1/health | python3 -m json.tool
         echo -e "${NC}"
         info "部署成功!"
         exit 0
