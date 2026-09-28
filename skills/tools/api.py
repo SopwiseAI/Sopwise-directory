@@ -657,7 +657,11 @@ def cmd_stats(args):
 
 def cmd_health(args):
     data = _request("GET", "/health")
+    backend_env = _detect_backend_env()
+    data["env"] = backend_env
     _print_json(data)
+    if backend_env == "prod":
+        print("  ⚠⚠⚠ 生产环境 (prod): 写操作需 --yes, DELETE 需 --prod-confirm ⚠⚠⚠")
 
 
 def cmd_env(args):
