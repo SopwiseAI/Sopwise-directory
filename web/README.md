@@ -1,4 +1,4 @@
-# XiGee
+# Sopwise Directory
 
 你的 AI 发现引擎 — 精选各类 AI 工具与应用，按分类浏览或直接搜索你需要的能力。
 
