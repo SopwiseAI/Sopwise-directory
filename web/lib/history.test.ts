@@ -37,14 +37,14 @@ describe("addToHistory", () => {
     expect(list[1].id).toBe("test-2")
   })
 
-  it("trims to 200 items max", () => {
-    for (let i = 0; i < 205; i++) {
+  it("trims to 500 items max", () => {
+    for (let i = 0; i < 505; i++) {
       addToHistory({ ...mockProduct, id: `p-${i}`, name: `Product ${i}` })
     }
     const list = getHistory()
-    expect(list).toHaveLength(200)
-    expect(list[0].id).toBe("p-204")
-    expect(list[199].id).toBe("p-5")
+    expect(list).toHaveLength(500)
+    expect(list[0].id).toBe("p-504")
+    expect(list[499].id).toBe("p-5")
   })
 })
 

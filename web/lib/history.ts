@@ -12,9 +12,8 @@ export interface HistoryItem {
 }
 
 const STORAGE_KEY = "xigee:history"
-/** 保留上限 200 条：localStorage 容量充足（约 200KB），覆盖长期使用；
-    超出自动淘汰最旧条目（见 addToHistory 的 slice）。 */
-const MAX_ITEMS = 200
+/** 保留上限 500 条：覆盖长期使用，超出自动淘汰最旧条目（见 addToHistory 的 slice）。 */
+const MAX_ITEMS = 500
 const NAV_EVENT = "xigee:history-change"
 
 function isBrowser() {
