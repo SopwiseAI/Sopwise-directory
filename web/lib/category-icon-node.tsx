@@ -45,6 +45,8 @@ const iconMap: Record<string, LucideIcon> = {
   Gamepad2
 }
 
+export { iconMap as CATEGORY_ICONS }
+
 export function categoryIconNode(iconName: string, cls: string = "size-4 shrink-0"): React.ReactNode {
   const Icon = iconMap[iconName]
   if (!Icon) return null
