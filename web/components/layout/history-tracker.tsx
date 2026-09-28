@@ -1,11 +1,10 @@
 "use client"
 
 import { useEffect } from "react"
-import type { Product } from "@/lib/types"
+import { PRICINGS, type Pricing, type Product } from "@/lib/types"
 import { addToHistory } from "@/lib/history"
-import type { Pricing } from "@/lib/types"
 
-const VALID_PRICING = new Set<string>(["free", "freemium", "paid", "opensource"])
+const VALID_PRICING = new Set<string>(PRICINGS)
 
 /**
  * 全局历史捕捉器：事件委托监听所有带 data-history-* 的产品链接点击，

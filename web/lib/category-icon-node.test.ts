@@ -21,7 +21,9 @@ describe("categoryIconNode", () => {
     }
   })
 
-  it("iconMap has at least as many entries as data.json categories", () => {
-    expect(Object.keys(CATEGORY_ICONS).length).toBeGreaterThanOrEqual(siteData.categories.length)
+  it("every data.json category icon resolves to a node", () => {
+    for (const cat of siteData.categories) {
+      expect(categoryIconNode(cat.icon)).not.toBeNull()
+    }
   })
 })

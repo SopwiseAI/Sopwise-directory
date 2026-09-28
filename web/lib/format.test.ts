@@ -23,6 +23,12 @@ describe("formatCount", () => {
     expect(formatCount(1_000_000)).toBe("1m")
     expect(formatCount(1_234_567)).toBe("1.2m")
   })
+
+  it("carries over to m instead of emitting 1000k near the boundary", () => {
+    expect(formatCount(999_900)).toBe("999.9k")
+    expect(formatCount(999_950)).toBe("1m")
+    expect(formatCount(999_999)).toBe("1m")
+  })
 })
 
 describe("formatDate", () => {

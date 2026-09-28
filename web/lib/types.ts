@@ -1,4 +1,6 @@
-export type Pricing = "free" | "freemium" | "paid" | "opensource"
+export const PRICINGS = ["free", "freemium", "paid", "opensource"] as const
+
+export type Pricing = (typeof PRICINGS)[number]
 
 export interface Category {
   id: string

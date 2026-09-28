@@ -1,3 +1,4 @@
+import "server-only"
 import data from "@/data/data.json"
 import type { Category, Product, SiteData } from "./types"
 

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import {
   MessageSquare,
   Image,
@@ -47,7 +48,7 @@ const iconMap: Record<string, LucideIcon> = {
 
 export { iconMap as CATEGORY_ICONS }
 
-export function categoryIconNode(iconName: string, cls: string = "size-4 shrink-0"): React.ReactNode {
+export function categoryIconNode(iconName: string, cls: string = "size-4 shrink-0"): ReactNode {
   const Icon = iconMap[iconName]
   if (!Icon) return null
   return <Icon className={cls} aria-hidden />

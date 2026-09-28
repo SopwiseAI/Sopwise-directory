@@ -5,7 +5,9 @@
 export function formatCount(n: number): string {
   if (!Number.isFinite(n)) return String(n)
   if (n < 1000) return String(n)
-  if (n < 1_000_000) {
+  // 四舍五入到 1 位小数后若进位到 1000k（如 999950），改用 m 单位避免 "1000k"
+  const thousands = Math.round((n / 1000) * 10) / 10
+  if (n < 1_000_000 && thousands < 1000) {
     return formatSuffix(n / 1000, "k")
   }
   return formatSuffix(n / 1_000_000, "m")
