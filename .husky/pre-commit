@@ -1,1 +1,13 @@
+#!/usr/bin/env sh
+# 防止非 main 分支提交生产数据源 data.json (测试数据污染防护)
+branch=$(git symbolic-ref --short HEAD 2>/dev/null || echo "")
+if [ "$branch" != "main" ]; then
+    if git diff --cached --name-only | grep -q "^web/data/data.json$"; then
+        echo "拒: 禁止在非 main 分支提交 web/data/data.json (生产数据源)"
+        echo "    data.json 仅 prod 环境导出同步, 仅 main 分支允许更新"
+        echo "    本地测试前端: cp web/data/data-dev.json web/data/data.json (勿提交)"
+        exit 1
+    fi
+fi
+
 pnpm exec lint-staged

@@ -30,10 +30,14 @@ async def export_to_json(session: AsyncSession) -> dict:
     content = json.dumps(data, ensure_ascii=False, indent=2)
     await asyncio.to_thread(output_path.write_text, content, "utf-8")
 
-    source_path = output_path.parent / "data.json"
-    if source_path != output_path:
+    synced_frontend = False
+    if settings.app_env == "prod":
+        source_path = output_path.parent / "data.json"
         await asyncio.to_thread(source_path.write_text, content, "utf-8")
+        synced_frontend = True
         logger.info("Synced frontend data source → %s", source_path)
+    else:
+        logger.info("env=%s, skipped data.json sync (env artifact only)", settings.app_env)
 
     logger.info("Exported %d categories, %d products → %s", len(categories), len(products), output_path)
 
@@ -43,6 +47,7 @@ async def export_to_json(session: AsyncSession) -> dict:
         "categories_count": len(categories),
         "products_count": len(products),
         "app_env": settings.app_env,
+        "synced_frontend": synced_frontend,
     }
 
 

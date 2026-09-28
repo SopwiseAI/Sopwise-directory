@@ -27,5 +27,14 @@ description: 导出 JSON 数据到 web 目录
    - 导出的产品数 (`products_count`)
    - 环境副本路径 (`output_path`，形如 `data-{env}.json`，已被 .gitignore 忽略)
    - 当前环境 (`app_env`)
-   - 前端数据源 `web/data/data.json` 已同步更新（导出同时写两份）
-   - 下一步: 提交 `web/data/data.json` 并部署到 Vercel 即可更新前端
+   - 前端同步状态 (`synced_frontend`):
+     - **dev/sit**: `false` — 仅写环境副本，**未改动 data.json**（保护生产数据源）
+       - 本地测前端: `cp web/data/data-dev.json web/data/data.json`（勿提交）
+     - **prod**: `true` — 已同步 `web/data/data.json`
+       - 下一步: 提交 `web/data/data.json` 到 main 分支并部署到 Vercel
+
+## 安全说明
+
+- `data.json` 是生产数据源，仅 prod 环境导出才同步
+- 非 main 分支提交 `data.json` 会被 pre-commit hook 拦截
+- dev/sit 导出只写 `data-{env}.json` 环境副本（gitignore 忽略）

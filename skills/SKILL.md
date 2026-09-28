@@ -87,7 +87,7 @@ python skills/tools/api.py product-tags <id>
 python skills/tools/api.py set-tags <product_id> --tag-ids 1,2,3
 
 # 数据操作
-python skills/tools/api.py export                        # 导出 JSON → data.json + data-{env}.json
+python skills/tools/api.py export                        # 导出 → data-{env}.json; 仅 prod 同步 data.json
 python skills/tools/api.py stats                         # 目录统计
 python skills/tools/api.py health                        # 健康检查（含后端环境）
 python skills/tools/api.py --version                     # 版本
