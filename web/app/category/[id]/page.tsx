@@ -5,6 +5,7 @@ import { getAllCategories, getCategoryById, getProductsByCategory } from "@/lib/
 import { getProductDate } from "@/lib/product-utils"
 import { categoryIconNode } from "@/lib/category-icon-node"
 import { formatCount, formatDate } from "@/lib/format"
+import { getBaseUrl } from "@/lib/utils"
 import { ProductBrowser } from "@/components/product/product-browser"
 
 type Props = {
@@ -40,8 +41,31 @@ export default async function CategoryPage({ params }: Props) {
     return max === null || date > max ? date : max
   }, null)
 
+  const baseUrl = getBaseUrl()
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "全部产品", item: baseUrl },
+      { "@type": "ListItem", position: 2, name: category.name, item: `${baseUrl}/category/${id}` }
+    ]
+  }
+  const itemListLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: `${category.name} — XiGee`,
+    itemListElement: products.map((p, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: p.name,
+      url: p.url
+    }))
+  }
+
   return (
     <div className="space-y-4">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListLd) }} />
       <nav aria-label="面包屑" className="font-data text-sm text-muted-foreground">
         <Link href="/" className="hover:text-foreground transition-colors">
           全部产品

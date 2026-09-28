@@ -2,11 +2,13 @@ import type { Metadata, Viewport } from "next"
 import Script from "next/script"
 import { Geist, Geist_Mono } from "next/font/google"
 import { getAllCategories, getAllProducts } from "@/lib/data"
+import { getBaseUrl } from "@/lib/utils"
 import Header from "@/components/layout/header"
 import { SubNav } from "@/components/layout/sub-nav"
 import { CategorySidebar } from "@/components/category/category-sidebar"
 import { CommandSearchBar } from "@/components/layout/command-search-bar"
 import { HistoryTracker } from "@/components/layout/history-tracker"
+import { WebVitals } from "@/components/layout/web-vitals"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import Footer from "@/components/layout/footer"
 import "./globals.css"
@@ -28,6 +30,19 @@ for (const cat of allCategories) {
   categoryCounts[cat.id] = allProducts.filter((p) => p.categoryId === cat.id).length
 }
 const totalProducts = allProducts.length
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "XiGee",
+  alternateName: "XiGee — AI 发现引擎",
+  url: getBaseUrl(),
+  potentialAction: {
+    "@type": "SearchAction",
+    target: `${getBaseUrl()}/search?q={search_term_string}`,
+    "query-input": "required name=search_term_string"
+  }
+}
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -68,9 +83,11 @@ export default function RootLayout({
     >
       <head>
         <meta name="theme-color" content="#fafafb" />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </head>
       <body className="min-h-full flex flex-col md:h-[100dvh] md:overflow-hidden">
         <HistoryTracker />
+        <WebVitals />
         <TooltipProvider>
           <a
             href="#main"
