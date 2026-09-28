@@ -54,10 +54,16 @@ description: AI 补全产品信息（描述、分类、标签、链接）
    !`python skills/tools/api.py add-tag --name "标签名" --slug "tag-slug"`
    ```
 
-   c. 设置标签。**set-tags 是全量替换**，会覆盖产品现有标签，需传入包含新旧标签的所有 ID:
+   c. 设置标签。**set-tags 是全量替换**，会覆盖产品现有标签。执行前必须先读现有标签:
 
    ```
-   !`python skills/tools/api.py set-tags <产品ID> --tag-ids 1,2,3`
+   !`python skills/tools/api.py product-tags <产品ID>`
+   ```
+
+   传入包含**现有标签 ID + 新标签 ID** 的完整列表:
+
+   ```
+   !`python skills/tools/api.py --yes set-tags <产品ID> --tag-ids 1,2,3
    ```
 
    d. 添加链接。先检查 links 数组是否已有相同 URL，避免重复添加:

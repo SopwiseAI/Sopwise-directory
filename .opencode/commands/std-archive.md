@@ -23,6 +23,8 @@ description: 下架或重新发布产品（已发布 ↔ 已下架）
    !`python skills/tools/api.py products --status 3`
    ```
 
+   如果两者均为空，告知用户"暂无已发布/已下架产品，下架操作需先有已发布产品"，建议 `/std-publish`。
+
 2. 查看产品详情确认当前状态:
 
    ```

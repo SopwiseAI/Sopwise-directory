@@ -37,6 +37,17 @@ description: "XiGee Directory 数据管理 Skills。当用户需要添加/审核
 | **操作日志** | 每次写操作记录到 `tools/api.log`   | 自动开启                            |
 | **读重试**   | GET 请求网络/5xx 退避重试 3 次     | 自动开启                            |
 | **写不重试** | POST/PUT/DELETE 不重试，防重复写入 | 自动开启                            |
+| **生产保护** | 探测后端环境为 prod 时强制门槛     | 见下                                |
+
+### 生产环境保护
+
+写操作执行前自动探测后端 `/api/v1/env`，若返回 `prod`:
+
+- 所有写操作必须显式 `--yes`，否则拒绝 (exit 3)
+- DELETE 操作额外必须 `--prod-confirm`，否则拒绝 (exit 3)
+- 日志醒目记录 `PROD 写操作`
+
+这保证模型在 prod 环境执行命令时不会"随意乱来"，任何破坏性操作都需要双重显式确认。
 
 ```bash
 # 产品管理
@@ -71,8 +82,9 @@ python skills/tools/api.py --version                     # 版本
 ## 环境变量
 
 - `STUDIO_URL`: studio 服务地址（默认 `http://localhost:8000`）
-- `STUDIO_API_KEY`: API 密钥（**必须设置**）
+- `STUDIO_API_KEY`: API 密钥
 - `API_KEY`: 与 `STUDIO_API_KEY` 等效，二者设一个即可
+- **未设环境变量时自动探测**: CLI 调后端 `/api/v1/env` 获取当前环境，读取 `studio/.env.{env}` 的 `API_KEY`，确保与后端不脱节
 
 ## 运行时文件
 
@@ -83,17 +95,23 @@ python skills/tools/api.py --version                     # 版本
 
 ## 命令清单
 
-| 命令                | 说明                 |
-| ------------------- | -------------------- |
-| `/std-add-product`  | 添加产品（草稿状态） |
-| `/std-review`       | 审核待审核产品       |
-| `/std-publish`      | 发布产品             |
-| `/std-enrich`       | AI 补全产品信息      |
-| `/std-list`         | 列出产品             |
-| `/std-add-category` | 添加分类             |
-| `/std-add-tag`      | 添加标签             |
-| `/std-export`       | 导出 JSON            |
-| `/std-status`       | 目录总览             |
+| 命令                   | 说明                       |
+| ---------------------- | -------------------------- |
+| `/std-collect`         | 采集批量产品入库为草稿     |
+| `/std-add-product`     | 添加产品（单条，草稿状态） |
+| `/std-add-category`    | 添加分类                   |
+| `/std-add-tag`         | 添加标签                   |
+| `/std-manage-category` | 分类管理（查看/改/删）     |
+| `/std-manage-tag`      | 标签管理（查看/改/删）     |
+| `/std-enrich`          | AI 补全产品信息            |
+| `/std-verify`          | 数据正确性校对             |
+| `/std-submit`          | 提交审核 (0→1)             |
+| `/std-review`          | 审核待审核产品             |
+| `/std-publish`         | 发布产品                   |
+| `/std-archive`         | 下架/重新发布 (2↔3)        |
+| `/std-list`            | 列出产品                   |
+| `/std-status`          | 目录总览                   |
+| `/std-export`          | 导出 JSON                  |
 
 ### 完整 API 覆盖（25/25 接口）
 

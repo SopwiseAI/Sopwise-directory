@@ -28,7 +28,7 @@ description: 发布产品（status → 已发布，自动处理状态转换）
    !`python skills/tools/api.py product <产品ID>`
    ```
 
-3. 根据返回数据的 `status` 字段决定操作路径:
+3. 根据返回数据的 `status` 字段决定操作路径（先判合法性，非法直接提示不调接口）:
 
    - **status=1 (待审核)** → 检查必要项后直接发布:
      先确认名称非空、links 数组非空，然后:

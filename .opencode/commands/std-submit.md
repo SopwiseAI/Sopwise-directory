@@ -22,13 +22,16 @@ description: 提交产品审核（草稿 → 待审核）
    !`python skills/tools/api.py products --status 0`
    ```
 
-2. 查看产品详情，确认名称和链接非空:
+2. 查看产品详情，确认必要项齐全:
 
    ```
    !`python skills/tools/api.py product <产品ID>`
    ```
 
-3. 如果缺少名称或链接，告知用户先用 `/std-enrich` 补全后再提交
+3. 必填校验（缺一项即拦截，不调 update-product）:
+   - **name** 非空
+   - **links** 数组至少1条
+     缺失时告知用户先用 `/std-enrich` 补全后再提交，不要把缺数据的产品推进待审核
 
 4. 提交审核 (0→1):
 

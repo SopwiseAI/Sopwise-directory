@@ -22,10 +22,10 @@ description: 添加标签
 2. 查询现有标签，检查 name 和 slug 是否重复:
 
    ```
-   !`python skills/tools/api.py tags`
+   !`python skills/tools/api.py tags --json`
    ```
 
-   如果 name 或 slug 已存在，告知用户并停止。
+   重复判定: name 完全相同（忽略大小写）→ 拒；slug 完全相同 → 拒。任一命中即告知用户并停止，不发起创建请求。
 
 3. 创建标签（name 和 slug 均为必填）:
 

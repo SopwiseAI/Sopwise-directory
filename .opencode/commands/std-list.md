@@ -33,7 +33,11 @@ description: 列出产品，支持按状态过滤和搜索
    - 下一页: `python skills/tools/api.py products --page 2`
    - 每页条数: `--page-size 50`
 
-5. 如果用户要查看某个产品详情，告知使用:
+5. 如果结果为空，告知用户:
+   - 该状态无产品 → 提示 `/std-collect` 采集或 `/std-add-product` 添加
+   - 搜索无匹配 → 建议换关键词或 `/std-list` 查全量
+
+6. 如果用户要查看某个产品详情，告知使用:
    ```
    python skills/tools/api.py product <产品ID>
    ```

@@ -49,20 +49,13 @@ description: 审核待审核产品，AI 辅助判断是否通过
 5. 对通过的产品发布（1→2 合法）:
 
    ```
-
+   !`python skills/tools/api.py --yes update-product <产品ID> --status 2`
    ```
-
-!`python skills/tools/api.py --yes update-product <产品ID> --status 2`
-
-```
 
 6. 对打回的产品退回草稿（1→0 合法）:
 
-```
-
-!`python skills/tools/api.py --yes update-product <产品ID> --status 0`
-
-```
+   ```
+   !`python skills/tools/api.py --yes update-product <产品ID> --status 0`
+   ```
 
 7. 汇总审核结果（通过 N 个，打回 M 个）
-```

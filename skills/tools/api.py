@@ -57,6 +57,7 @@ _STUDIO_DIR = os.path.join(_PROJECT_ROOT, "studio")
 
 _GLOBAL_ARGS: argparse.Namespace | None = None
 _resolved_key: str | None = None
+_backend_env: str | None = None
 
 _TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_FILE = os.path.join(_TOOL_DIR, "api.log")
@@ -156,14 +157,20 @@ def _detect_backend_env() -> str:
     """调用后端公开端点 /api/v1/env 获取当前后端环境 (dev/sit/prod)。
 
     CLI 据此后端环境读取对应的 studio/.env.{env}，确保与后端不脱节。
+    结果缓存到 _backend_env，供生产环境保护逻辑使用。
     """
+    global _backend_env
+    if _backend_env is not None:
+        return _backend_env
     url = f"{STUDIO_URL}/api/v1/env"
     try:
         req = urllib.request.Request(url, method="GET")
         with urllib.request.urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-            return data.get("env", "")
+            _backend_env = data.get("env", "")
+            return _backend_env
     except (urllib.error.URLError, ValueError, OSError):
+        _backend_env = ""
         return ""
 
 
@@ -291,6 +298,18 @@ def _write(
             json.dumps(payload, ensure_ascii=False),
         )
         return False, {}
+
+    backend_env = _detect_backend_env()
+    if backend_env == "prod":
+        print("  ⚠⚠⚠ 当前为生产环境 (prod) ⚠⚠⚠", file=sys.stderr)
+        print(f"  操作: {method} /api/v1{path}", file=sys.stderr)
+        if not args.yes:
+            print("  生产环境保护: 写操作必须显式 --yes 确认", file=sys.stderr)
+            sys.exit(3)
+        if method == "DELETE" and not getattr(args, "prod_confirm", False):
+            print("  生产环境保护: DELETE 必须加 --prod-confirm 标志", file=sys.stderr)
+            sys.exit(3)
+        logger.warning("PROD 写操作 op_id=%s %s %s", op_id, method, path)
 
     completed = _load_op_ids()
     if op_id in completed:
@@ -755,6 +774,11 @@ def main():
     )
     parser.add_argument("--dry-run", action="store_true", help="预览模式，不实际写入")
     parser.add_argument("--yes", action="store_true", help="跳过二次确认")
+    parser.add_argument(
+        "--prod-confirm",
+        action="store_true",
+        help="生产环境 DELETE 显式确认",
+    )
     parser.add_argument("--op-id", help="幂等键，相同 op_id 的操作不会重复执行")
     sub = parser.add_subparsers(dest="command", required=True)
 
