@@ -6,12 +6,19 @@ description: 目录总览统计
 
 ## 执行步骤
 
-```
-!`python skills/tools/api.py stats`
-```
+1. 先确认 studio 可用:
 
-根据统计结果，给出简要分析:
+   ```
+   !`python skills/tools/api.py health`
+   ```
 
-- 如果待审核产品 > 0，提示用户可使用 `/std-review` 审核
-- 如果草稿产品 > 0，提示用户可使用 `/std-enrich` 补全信息
-- 如果已发布产品 = 0，提示用户需要先发布产品才能导出
+2. 执行统计:
+
+   ```
+   !`python skills/tools/api.py stats`
+   ```
+
+3. 根据统计结果给出简要分析:
+   - 待审核 > 0 → 提示 `/std-review`
+   - 草稿 > 0 → 提示 `/std-enrich`
+   - 已发布 = 0 → 提示需先发布才能导出

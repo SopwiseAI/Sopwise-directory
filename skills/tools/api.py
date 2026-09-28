@@ -2,7 +2,7 @@
 """XiGee Directory Studio API CLI — AI 调用 studio 接口的命令行工具。
 
 用法:
-  python skills/tools/api.py products [--status N] [--page N] [--page-size N]  列出产品
+  python skills/tools/api.py products [--status N] [--page N] [--page-size N] [--search K]  列出产品
   python skills/tools/api.py product <id>                   查看产品详情
   python skills/tools/api.py add-product --name <name> [--url <url>] [--category-id <id>] [--pricing <p>] [--featured] [--slug <slug>] [--description <desc>]
   python skills/tools/api.py update-product <id> [--status N] [--name <name>] [--description <desc>] [--category-id <id>] [--pricing <p>] [--featured | --no-featured]
@@ -29,9 +29,13 @@
   python skills/tools/api.py stats                     目录总览统计
   python skills/tools/api.py health                    健康检查
   python skills/tools/api.py env                       环境信息
+  python skills/tools/api.py --version                 显示版本
 
 所有写操作支持 --dry-run 预览、--op-id 幂等、自动重试、操作日志。
+注意: 写操作 (POST/PUT/DELETE) 不自动重试，避免重复写入。
 """
+
+__version__ = "1.1.0"
 
 import argparse
 import json
@@ -41,6 +45,7 @@ import secrets
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 STUDIO_URL = os.environ.get("STUDIO_URL", "http://localhost:8000")
@@ -54,8 +59,24 @@ OP_IDS_FILE = os.path.join(_TOOL_DIR, ".op_ids")
 
 _MAX_RETRIES = 3
 _RETRY_DELAYS = [1, 2, 4]
+_OP_IDS_MAX = 500
+_MAX_FETCH_PAGES = 50
 
 STATUS_NAMES = {0: "草稿", 1: "待审核", 2: "已发布", 3: "已下架"}
+
+
+def _slugify(text: str) -> str:
+    import re
+    import unicodedata
+
+    text = unicodedata.normalize("NFKC", text).strip().lower()
+    text = re.sub(r"[^\w\s-]", "", text)
+    text = re.sub(r"[\s_]+", "-", text)
+    text = re.sub(r"-+", "-", text).strip("-")
+    if text and re.match(r"^[a-z0-9-]+$", text):
+        return text
+    return re.sub(r"[^a-z0-9-]", "", text) or f"item-{secrets.token_hex(4)}"
+
 
 logging.basicConfig(
     filename=LOG_FILE,
@@ -73,9 +94,34 @@ def _load_op_ids() -> set[str]:
         return {line.strip() for line in f if line.strip()}
 
 
+def _load_op_ids_ordered() -> list[str]:
+    if not os.path.exists(OP_IDS_FILE):
+        return []
+    with open(OP_IDS_FILE) as f:
+        seen = set()
+        result = []
+        for line in f:
+            v = line.strip()
+            if v and v not in seen:
+                seen.add(v)
+                result.append(v)
+        return result
+
+
 def _save_op_id(op_id: str):
-    with open(OP_IDS_FILE, "a") as f:
-        f.write(f"{op_id}\n")
+    existing = _load_op_ids_ordered()
+    if op_id in existing:
+        return
+    existing.append(op_id)
+    if len(existing) > _OP_IDS_MAX:
+        existing = existing[-_OP_IDS_MAX:]
+    with open(OP_IDS_FILE, "w") as f:
+        f.write("\n".join(existing) + "\n")
+
+
+class CancelledError(SystemExit):
+    def __init__(self):
+        super().__init__(130)
 
 
 def _confirm(prompt: str) -> bool:
@@ -86,28 +132,37 @@ def _confirm(prompt: str) -> bool:
 def _request(
     method: str, path: str, data: dict | None = None, need_auth: bool = False
 ) -> dict | list:
+    result, _ = _request_with_headers(method, path, data, need_auth=need_auth)
+    return result
+
+
+def _request_with_headers(
+    method: str, path: str, data: dict | None = None, need_auth: bool = False
+) -> tuple[dict | list, dict]:
     url = f"{STUDIO_URL}/api/v1{path}"
     headers = {"Content-Type": "application/json"}
     if need_auth:
         if not API_KEY:
             print("错误: 需要设置 STUDIO_API_KEY 环境变量", file=sys.stderr)
             print("  export STUDIO_API_KEY=你的API密钥", file=sys.stderr)
-            sys.exit(1)
+            sys.exit(2)
         headers["X-API-Key"] = API_KEY
     body = json.dumps(data).encode("utf-8") if data else None
-    req = urllib.request.Request(url, data=body, headers=headers, method=method)
 
-    last_err = None
+    is_write = method in ("POST", "PUT", "DELETE")
+    can_retry = not is_write
+
     for attempt in range(1, _MAX_RETRIES + 1):
+        req = urllib.request.Request(url, data=body, headers=headers, method=method)
         try:
             with urllib.request.urlopen(req) as resp:
+                resp_headers = {k.lower(): v for k, v in resp.headers.items()}
                 if resp.status == 204:
-                    return {}
-                return json.loads(resp.read().decode("utf-8"))
+                    return {}, resp_headers
+                return json.loads(resp.read().decode("utf-8")), resp_headers
         except urllib.error.HTTPError as e:
             error_body = e.read().decode("utf-8", errors="replace")
-            if 500 <= e.code < 600:
-                last_err = f"HTTP {e.code}: {error_body}"
+            if 500 <= e.code < 600 and can_retry:
                 if attempt < _MAX_RETRIES:
                     delay = _RETRY_DELAYS[attempt - 1]
                     logger.warning(
@@ -127,8 +182,7 @@ def _request(
                 print(f"HTTP {e.code}: {error_body}", file=sys.stderr)
                 sys.exit(1)
         except urllib.error.URLError as e:
-            last_err = f"连接失败: {e.reason}"
-            if attempt < _MAX_RETRIES:
+            if can_retry and attempt < _MAX_RETRIES:
                 delay = _RETRY_DELAYS[attempt - 1]
                 logger.warning(
                     "重试 %d/%d: %s %s (等待 %ds)",
@@ -140,10 +194,14 @@ def _request(
                 )
                 time.sleep(delay)
                 continue
+            err_msg = f"连接失败: {e.reason}"
+            logger.error("连接失败: %s %s → %s", method, path, err_msg)
+            print(err_msg, file=sys.stderr)
+            print(f"请确认 studio 已启动 (STUDIO_URL={STUDIO_URL})", file=sys.stderr)
+            sys.exit(1)
 
-    logger.error("重试耗尽: %s %s → %s", method, path, last_err)
-    print(last_err, file=sys.stderr)
-    print(f"请确认 studio 已启动 (STUDIO_URL={STUDIO_URL})", file=sys.stderr)
+    logger.error("重试耗尽: %s %s", method, path)
+    print("重试耗尽", file=sys.stderr)
     sys.exit(1)
 
 
@@ -183,7 +241,7 @@ def _write(
         if not _confirm(confirm):
             print("  已取消")
             logger.info("取消 op_id=%s %s %s", op_id, method, path)
-            sys.exit(0)
+            raise CancelledError()
 
     result = _request(method, path, payload, need_auth=need_auth)
     _save_op_id(op_id)
@@ -205,23 +263,35 @@ def _display_width(s: str) -> int:
     return sum(2 if ord(c) > 127 else 1 for c in s)
 
 
-def _print_table(items: list, columns: list[str]):
+def _pad_to_width(s: str, width: int) -> str:
+    pad = width - _display_width(s)
+    return s + " " * max(0, pad)
+
+
+def _print_table(items: list, columns: list[str], headers: dict | None = None):
     if not items:
         print("  (空)")
         return
+    display_headers = headers or {c: c for c in columns}
     widths = {
         c: max(
-            _display_width(c),
+            _display_width(display_headers[c]),
             max(_display_width(str(item.get(c, ""))) for item in items),
         )
         for c in columns
     }
-    header = "  ".join(c.ljust(widths[c]) for c in columns)
+    header = "  ".join(_pad_to_width(display_headers[c], widths[c]) for c in columns)
     print(header)
-    print("-" * len(header))
+    print("-" * _display_width(header))
     for item in items:
-        row = "  ".join(str(item.get(c, "")).ljust(widths[c]) for c in columns)
+        row = "  ".join(_pad_to_width(str(item.get(c, "")), widths[c]) for c in columns)
         print(row)
+
+
+def _print_total_info(resp_headers: dict):
+    total = resp_headers.get("x-total-count")
+    if total:
+        print(f"  (共 {total} 条)")
 
 
 def cmd_products(args):
@@ -232,18 +302,45 @@ def cmd_products(args):
         params.append(f"category_id={args.category_id}")
     if args.featured:
         params.append("featured=true")
+    if args.search:
+        params.append(f"search={urllib.parse.quote(args.search)}")
     if args.page:
         params.append(f"page={args.page}")
     if args.page_size:
         params.append(f"page_size={args.page_size}")
     qs = "&".join(params)
-    data = _request("GET", f"/products?{qs}" if qs else "/products")
+    data, resp_headers = _request_with_headers(
+        "GET", f"/products?{qs}" if qs else "/products"
+    )
+    if (
+        args.search
+        and data
+        and "search" not in resp_headers.get("x-supported-params", "")
+    ):
+        data = [
+            p
+            for p in data
+            if args.search.lower() in p.get("name", "").lower()
+            or args.search.lower() in p.get("slug", "").lower()
+        ]
     if args.json:
         _print_json(data)
     else:
         for p in data:
             p["status_name"] = STATUS_NAMES.get(p.get("status"), "?")
-        _print_table(data, ["id", "name", "slug", "status_name", "pricing", "featured"])
+        _print_table(
+            data,
+            ["id", "name", "slug", "status_name", "pricing", "featured"],
+            headers={
+                "id": "ID",
+                "name": "名称",
+                "slug": "Slug",
+                "status_name": "状态",
+                "pricing": "定价",
+                "featured": "精选",
+            },
+        )
+        _print_total_info(resp_headers)
 
 
 def cmd_product(args):
@@ -253,7 +350,7 @@ def cmd_product(args):
 
 def cmd_add_product(args):
     payload = {
-        "slug": args.slug or args.name.lower().replace(" ", "-"),
+        "slug": args.slug if args.slug else _slugify(args.name),
         "name": args.name,
     }
     if args.url:
@@ -264,7 +361,7 @@ def cmd_add_product(args):
         payload["pricing"] = args.pricing
     if args.featured:
         payload["featured"] = True
-    if args.description:
+    if args.description is not None:
         payload["description"] = args.description
     _, data = _write("POST", "/products", payload, summary=f"添加产品: {args.name}")
     if data:
@@ -328,11 +425,25 @@ def cmd_categories(args):
     if args.page_size:
         params.append(f"page_size={args.page_size}")
     qs = "&".join(params)
-    data = _request("GET", f"/categories?{qs}" if qs else "/categories")
+    data, resp_headers = _request_with_headers(
+        "GET", f"/categories?{qs}" if qs else "/categories"
+    )
     if args.json:
         _print_json(data)
     else:
-        _print_table(data, ["id", "name", "slug", "icon", "sort_order", "status"])
+        _print_table(
+            data,
+            ["id", "name", "slug", "icon", "sort_order", "status"],
+            headers={
+                "id": "ID",
+                "name": "名称",
+                "slug": "Slug",
+                "icon": "图标",
+                "sort_order": "排序",
+                "status": "状态",
+            },
+        )
+        _print_total_info(resp_headers)
 
 
 def cmd_add_category(args):
@@ -349,11 +460,16 @@ def cmd_tags(args):
     if args.page_size:
         params.append(f"page_size={args.page_size}")
     qs = "&".join(params)
-    data = _request("GET", f"/tags?{qs}" if qs else "/tags")
+    data, resp_headers = _request_with_headers("GET", f"/tags?{qs}" if qs else "/tags")
     if args.json:
         _print_json(data)
     else:
-        _print_table(data, ["id", "name", "slug"])
+        _print_table(
+            data,
+            ["id", "name", "slug"],
+            headers={"id": "ID", "name": "名称", "slug": "Slug"},
+        )
+        _print_total_info(resp_headers)
 
 
 def cmd_add_tag(args):
@@ -365,7 +481,11 @@ def cmd_add_tag(args):
 
 def cmd_product_links(args):
     data = _request("GET", f"/products/{args.id}/links")
-    _print_table(data, ["id", "url", "label", "is_primary"])
+    _print_table(
+        data,
+        ["id", "url", "label", "is_primary"],
+        headers={"id": "ID", "url": "URL", "label": "标签", "is_primary": "主链接"},
+    )
 
 
 def cmd_add_link(args):
@@ -386,11 +506,22 @@ def cmd_add_link(args):
 
 def cmd_product_tags(args):
     data = _request("GET", f"/products/{args.id}")
-    _print_table(data.get("tags", []), ["id", "name", "slug"])
+    _print_table(
+        data.get("tags", []),
+        ["id", "name", "slug"],
+        headers={"id": "ID", "name": "名称", "slug": "Slug"},
+    )
 
 
 def cmd_set_tags(args):
-    tag_ids = [int(t) for t in args.tag_ids.split(",")]
+    try:
+        tag_ids = [int(t.strip()) for t in args.tag_ids.split(",") if t.strip()]
+    except ValueError:
+        print("错误: --tag-ids 格式无效，需逗号分隔的数字 (如 1,2,3)", file=sys.stderr)
+        sys.exit(1)
+    if not tag_ids:
+        print("错误: --tag-ids 不能为空", file=sys.stderr)
+        sys.exit(1)
     payload = {"tag_ids": tag_ids}
     _, data = _write(
         "PUT",
@@ -407,18 +538,24 @@ def cmd_export(args):
     _print_json(data)
 
 
-def cmd_stats(args):
-    all_products = []
+def _fetch_all(path: str, page_size: int = 100) -> list:
+    results = []
     page = 1
-    while True:
-        data = _request("GET", f"/products?page={page}&page_size=100")
-        all_products.extend(data)
-        if len(data) < 100:
+    while page <= _MAX_FETCH_PAGES:
+        data, _ = _request_with_headers(
+            "GET", f"{path}?page={page}&page_size={page_size}"
+        )
+        results.extend(data)
+        if len(data) < page_size:
             break
         page += 1
+    return results
 
-    categories = _request("GET", "/categories?page_size=200")
-    tags = _request("GET", "/tags?page_size=500")
+
+def cmd_stats(args):
+    all_products = _fetch_all("/products")
+    categories = _fetch_all("/categories", page_size=200)
+    tags = _fetch_all("/tags", page_size=500)
 
     status_counts = {0: 0, 1: 0, 2: 0, 3: 0}
     for p in all_products:
@@ -551,6 +688,9 @@ def cmd_delete_link(args):
 
 def main():
     parser = argparse.ArgumentParser(description="XiGee Directory Studio API CLI")
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {__version__}"
+    )
     parser.add_argument("--dry-run", action="store_true", help="预览模式，不实际写入")
     parser.add_argument("--yes", action="store_true", help="跳过二次确认")
     parser.add_argument("--op-id", help="幂等键，相同 op_id 的操作不会重复执行")
@@ -561,6 +701,7 @@ def main():
     p.add_argument("--status", type=int, choices=[0, 1, 2, 3], help="按状态过滤")
     p.add_argument("--category-id", type=int, help="按分类过滤")
     p.add_argument("--featured", action="store_true", help="仅精选")
+    p.add_argument("--search", help="按名称/slug 搜索")
     p.add_argument("--page", type=int, default=1)
     p.add_argument("--page-size", type=int, default=20)
     p.add_argument("--json", action="store_true", help="输出 JSON")

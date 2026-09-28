@@ -29,18 +29,19 @@ description: "XiGee Directory 数据管理 Skills。当用户需要添加/审核
 
 所有 API 操作通过 `skills/tools/api.py` 执行。写操作有以下安全机制：
 
-| 机制         | 说明                             | 用法                                |
-| ------------ | -------------------------------- | ----------------------------------- |
-| **Dry-Run**  | 预览变更，不实际写入             | 加 `--dry-run` 参数                 |
-| **二次确认** | 删除/状态变更前询问确认          | 交互式输入 y/N，加 `--yes` 跳过     |
-| **幂等键**   | 相同 `--op-id` 不会重复执行      | 加 `--op-id <值>`，自动生成在日志中 |
-| **操作日志** | 每次写操作记录到 `tools/api.log` | 自动开启                            |
-| **自动重试** | 网络错误退避重试 3 次            | 自动开启，业务错误不重试            |
+| 机制         | 说明                               | 用法                                |
+| ------------ | ---------------------------------- | ----------------------------------- |
+| **Dry-Run**  | 预览变更，不实际写入               | 加 `--dry-run` 参数                 |
+| **二次确认** | 删除/状态变更前询问确认            | 交互式输入 y/N，加 `--yes` 跳过     |
+| **幂等键**   | 相同 `--op-id` 不会重复执行        | 加 `--op-id <值>`，自动生成在日志中 |
+| **操作日志** | 每次写操作记录到 `tools/api.log`   | 自动开启                            |
+| **读重试**   | GET 请求网络/5xx 退避重试 3 次     | 自动开启                            |
+| **写不重试** | POST/PUT/DELETE 不重试，防重复写入 | 自动开启                            |
 
 ```bash
 # 产品管理
-python skills/tools/api.py products [--status N]      # 列出产品
-python skills/tools/api.py product <id>                 # 产品详情
+python skills/tools/api.py products [--status N] [--search K]   # 列出产品(支持搜索)
+python skills/tools/api.py product <id>                         # 产品详情
 python skills/tools/api.py add-product --name <name> [--url <url>] [--category-id <id>]
 python skills/tools/api.py update-product <id> --status <N>
 python skills/tools/api.py delete-product <id>
@@ -64,6 +65,7 @@ python skills/tools/api.py set-tags <product_id> --tag-ids 1,2,3
 # 数据操作
 python skills/tools/api.py export                        # 导出 JSON
 python skills/tools/api.py stats                         # 目录统计
+python skills/tools/api.py --version                     # 版本
 ```
 
 ## 环境变量
@@ -109,7 +111,8 @@ python skills/tools/api.py stats                         # 目录统计
 |      | `tag-count`                                        | `GET /tags/{id}/count`                   |
 | 链接 | `product-links`                                    | `GET /products/{id}/links`               |
 |      | `add-link` `update-link` `delete-link`             | CRUD                                     |
-|      | `product-tags` `set-tags`                          | `PUT /products/{id}/tags`                |
+| 标签 | `product-tags`                                     | `GET /products/{id}` (取 tags 字段)      |
+|      | `set-tags`                                         | `PUT /products/{id}/tags`                |
 | 数据 | `export` `stats`                                   | `POST /export` + 聚合查询                |
 
 所有列表命令均支持 `--page` 和 `--page-size` 分页参数。
