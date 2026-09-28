@@ -55,3 +55,7 @@ scripts/.state/
 
 # export artifacts (data-{env}.json, 保留 data.json)
 web/data/data-*.json
+
+# skills api runtime
+skills/tools/api.log
+skills/tools/.op_ids

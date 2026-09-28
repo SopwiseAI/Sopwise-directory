@@ -2,36 +2,85 @@
 """XiGee Directory Studio API CLI — AI 调用 studio 接口的命令行工具。
 
 用法:
-  python skills/tools/api.py products [--status N]          列出产品
+  python skills/tools/api.py products [--status N] [--page N] [--page-size N]  列出产品
   python skills/tools/api.py product <id>                   查看产品详情
   python skills/tools/api.py add-product --name <name> [--url <url>] [--category-id <id>] [--pricing <p>] [--featured] [--slug <slug>] [--description <desc>]
   python skills/tools/api.py update-product <id> [--status N] [--name <name>] [--description <desc>] [--category-id <id>] [--pricing <p>] [--featured | --no-featured]
   python skills/tools/api.py delete-product <id>
-  python skills/tools/api.py categories                          列出分类
+  python skills/tools/api.py categories [--page N] [--page-size N]       列出分类
+  python skills/tools/api.py category <id>              查看分类详情
   python skills/tools/api.py add-category --name <name> --slug <slug> --icon <icon>
-  python skills/tools/api.py tags                                列出标签
+  python skills/tools/api.py update-category <id> [--name <name>] [--slug <slug>]
+  python skills/tools/api.py delete-category <id>
+  python skills/tools/api.py category-count <id>        分类产品数
+  python skills/tools/api.py tags [--page N] [--page-size N]             列出标签
+  python skills/tools/api.py tag <id>                   查看标签详情
   python skills/tools/api.py add-tag --name <name> --slug <slug>
-  python skills/tools/api.py product-links <id>                列出产品链接
+  python skills/tools/api.py update-tag <id> [--name <name>] [--slug <slug>]
+  python skills/tools/api.py delete-tag <id>
+  python skills/tools/api.py tag-count <id>             标签产品数
+  python skills/tools/api.py product-links <id>         列出产品链接
   python skills/tools/api.py add-link <product_id> --url <url> [--label <label>] [--primary]
-  python skills/tools/api.py product-tags <id>                 查看产品标签
+  python skills/tools/api.py update-link <product_id> <link_id> [--url <url>] [--label] [--primary]
+  python skills/tools/api.py delete-link <product_id> <link_id>
+  python skills/tools/api.py product-tags <id>          查看产品标签
   python skills/tools/api.py set-tags <product_id> --tag-ids 1,2,3
-  python skills/tools/api.py export                             导出 JSON
-  python skills/tools/api.py stats                              目录总览统计
+  python skills/tools/api.py export                    导出 JSON
+  python skills/tools/api.py stats                     目录总览统计
+  python skills/tools/api.py health                    健康检查
+  python skills/tools/api.py env                       环境信息
+
+所有写操作支持 --dry-run 预览、--op-id 幂等、自动重试、操作日志。
 """
 
 import argparse
 import json
+import logging
 import os
+import secrets
 import sys
+import time
 import urllib.error
 import urllib.request
 
 STUDIO_URL = os.environ.get("STUDIO_URL", "http://localhost:8000")
-API_KEY = os.environ.get("API_KEY") or os.environ.get(
-    "STUDIO_API_KEY", "dev-secret-key"
-)
+API_KEY = os.environ.get("API_KEY") or os.environ.get("STUDIO_API_KEY", "")
+
+_GLOBAL_ARGS: argparse.Namespace | None = None
+
+_TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
+LOG_FILE = os.path.join(_TOOL_DIR, "api.log")
+OP_IDS_FILE = os.path.join(_TOOL_DIR, ".op_ids")
+
+_MAX_RETRIES = 3
+_RETRY_DELAYS = [1, 2, 4]
 
 STATUS_NAMES = {0: "草稿", 1: "待审核", 2: "已发布", 3: "已下架"}
+
+logging.basicConfig(
+    filename=LOG_FILE,
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("api")
+
+
+def _load_op_ids() -> set[str]:
+    if not os.path.exists(OP_IDS_FILE):
+        return set()
+    with open(OP_IDS_FILE) as f:
+        return {line.strip() for line in f if line.strip()}
+
+
+def _save_op_id(op_id: str):
+    with open(OP_IDS_FILE, "a") as f:
+        f.write(f"{op_id}\n")
+
+
+def _confirm(prompt: str) -> bool:
+    resp = input(f"  ⚠ {prompt} [y/N] ").strip().lower()
+    return resp in ("y", "yes")
 
 
 def _request(
@@ -40,26 +89,120 @@ def _request(
     url = f"{STUDIO_URL}/api/v1{path}"
     headers = {"Content-Type": "application/json"}
     if need_auth:
+        if not API_KEY:
+            print("错误: 需要设置 STUDIO_API_KEY 环境变量", file=sys.stderr)
+            print("  export STUDIO_API_KEY=你的API密钥", file=sys.stderr)
+            sys.exit(1)
         headers["X-API-Key"] = API_KEY
     body = json.dumps(data).encode("utf-8") if data else None
     req = urllib.request.Request(url, data=body, headers=headers, method=method)
-    try:
-        with urllib.request.urlopen(req) as resp:
-            if resp.status == 204:
-                return {}
-            return json.loads(resp.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode("utf-8", errors="replace")
-        print(f"HTTP {e.code}: {error_body}", file=sys.stderr)
-        sys.exit(1)
-    except urllib.error.URLError as e:
-        print(f"连接失败: {e.reason}", file=sys.stderr)
-        print(f"请确认 studio 已启动 (STUDIO_URL={STUDIO_URL})", file=sys.stderr)
-        sys.exit(1)
+
+    last_err = None
+    for attempt in range(1, _MAX_RETRIES + 1):
+        try:
+            with urllib.request.urlopen(req) as resp:
+                if resp.status == 204:
+                    return {}
+                return json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            error_body = e.read().decode("utf-8", errors="replace")
+            if 500 <= e.code < 600:
+                last_err = f"HTTP {e.code}: {error_body}"
+                if attempt < _MAX_RETRIES:
+                    delay = _RETRY_DELAYS[attempt - 1]
+                    logger.warning(
+                        "重试 %d/%d: %s %s (等待 %ds)",
+                        attempt,
+                        _MAX_RETRIES,
+                        method,
+                        path,
+                        delay,
+                    )
+                    time.sleep(delay)
+                    continue
+            else:
+                logger.error(
+                    "请求失败: %s %s → %d %s", method, path, e.code, error_body
+                )
+                print(f"HTTP {e.code}: {error_body}", file=sys.stderr)
+                sys.exit(1)
+        except urllib.error.URLError as e:
+            last_err = f"连接失败: {e.reason}"
+            if attempt < _MAX_RETRIES:
+                delay = _RETRY_DELAYS[attempt - 1]
+                logger.warning(
+                    "重试 %d/%d: %s %s (等待 %ds)",
+                    attempt,
+                    _MAX_RETRIES,
+                    method,
+                    path,
+                    delay,
+                )
+                time.sleep(delay)
+                continue
+
+    logger.error("重试耗尽: %s %s → %s", method, path, last_err)
+    print(last_err, file=sys.stderr)
+    print(f"请确认 studio 已启动 (STUDIO_URL={STUDIO_URL})", file=sys.stderr)
+    sys.exit(1)
+
+
+def _write(
+    method: str,
+    path: str,
+    payload: dict,
+    *,
+    need_auth: bool = True,
+    summary: str = "",
+    confirm: str = "",
+) -> tuple[bool, dict | list]:
+    assert _GLOBAL_ARGS is not None
+    args = _GLOBAL_ARGS
+    op_id = args.op_id or secrets.token_hex(8)
+
+    if args.dry_run:
+        print(f"  [DRY-RUN] {method} /api/v1{path}")
+        print(f"  [DRY-RUN] 参数: {json.dumps(payload, ensure_ascii=False)}")
+        logger.info(
+            "DRY-RUN op_id=%s %s %s %s",
+            op_id,
+            method,
+            path,
+            json.dumps(payload, ensure_ascii=False),
+        )
+        return False, {}
+
+    completed = _load_op_ids()
+    if op_id in completed:
+        logger.info("跳过(已执行) op_id=%s %s %s", op_id, method, path)
+        print(f"  - 操作已执行过 (op_id={op_id})，跳过")
+        return False, {}
+
+    if confirm and not args.yes:
+        print(f"  操作: {summary}")
+        if not _confirm(confirm):
+            print("  已取消")
+            logger.info("取消 op_id=%s %s %s", op_id, method, path)
+            sys.exit(0)
+
+    result = _request(method, path, payload, need_auth=need_auth)
+    _save_op_id(op_id)
+    logger.info(
+        "SUCCESS op_id=%s %s %s → %s",
+        op_id,
+        method,
+        path,
+        json.dumps(result, ensure_ascii=False, default=str),
+    )
+    return True, result
 
 
 def _print_json(data):
     print(json.dumps(data, ensure_ascii=False, indent=2))
+
+
+def _display_width(s: str) -> int:
+    return sum(2 if ord(c) > 127 else 1 for c in s)
 
 
 def _print_table(items: list, columns: list[str]):
@@ -67,7 +210,10 @@ def _print_table(items: list, columns: list[str]):
         print("  (空)")
         return
     widths = {
-        c: max(len(c), max(len(str(item.get(c, ""))) for item in items))
+        c: max(
+            _display_width(c),
+            max(_display_width(str(item.get(c, ""))) for item in items),
+        )
         for c in columns
     }
     header = "  ".join(c.ljust(widths[c]) for c in columns)
@@ -120,8 +266,9 @@ def cmd_add_product(args):
         payload["featured"] = True
     if args.description:
         payload["description"] = args.description
-    data = _request("POST", "/products", payload)
-    _print_json(data)
+    _, data = _write("POST", "/products", payload, summary=f"添加产品: {args.name}")
+    if data:
+        _print_json(data)
 
 
 def cmd_update_product(args):
@@ -138,17 +285,50 @@ def cmd_update_product(args):
         payload["pricing"] = args.pricing
     if args.featured is not None:
         payload["featured"] = args.featured
-    data = _request("PUT", f"/products/{args.id}", payload)
-    _print_json(data)
+
+    confirm_text = ""
+    if args.status is not None:
+        old = _request("GET", f"/products/{args.id}")
+        old_status_name = STATUS_NAMES.get(old.get("status"), "?")
+        new_status_name = STATUS_NAMES.get(args.status, "?")
+        summary = f"更新产品 {args.id}: 状态 {old_status_name}→{new_status_name}"
+        confirm_text = (
+            f"将产品 {args.id} 从「{old_status_name}」改为「{new_status_name}」?"
+        )
+    else:
+        keys = ", ".join(payload.keys())
+        summary = f"更新产品 {args.id}: {keys}"
+
+    _, data = _write(
+        "PUT", f"/products/{args.id}", payload, summary=summary, confirm=confirm_text
+    )
+    if data:
+        _print_json(data)
 
 
 def cmd_delete_product(args):
-    _request("DELETE", f"/products/{args.id}")
-    print(f"产品 {args.id} 已删除")
+    old = _request("GET", f"/products/{args.id}")
+    name = old.get("name", f"ID={args.id}")
+    summary = f"删除产品: {name}"
+    executed, _ = _write(
+        "DELETE",
+        f"/products/{args.id}",
+        {},
+        summary=summary,
+        confirm=f"确认删除产品「{name}」? 此操作不可恢复!",
+    )
+    if executed:
+        print(f"产品 {args.id} 已删除")
 
 
 def cmd_categories(args):
-    data = _request("GET", "/categories")
+    params = []
+    if args.page:
+        params.append(f"page={args.page}")
+    if args.page_size:
+        params.append(f"page_size={args.page_size}")
+    qs = "&".join(params)
+    data = _request("GET", f"/categories?{qs}" if qs else "/categories")
     if args.json:
         _print_json(data)
     else:
@@ -156,20 +336,20 @@ def cmd_categories(args):
 
 
 def cmd_add_category(args):
-    data = _request(
-        "POST",
-        "/categories",
-        {
-            "slug": args.slug,
-            "name": args.name,
-            "icon": args.icon,
-        },
-    )
-    _print_json(data)
+    payload = {"slug": args.slug, "name": args.name, "icon": args.icon}
+    _, data = _write("POST", "/categories", payload, summary=f"添加分类: {args.name}")
+    if data:
+        _print_json(data)
 
 
 def cmd_tags(args):
-    data = _request("GET", "/tags")
+    params = []
+    if args.page:
+        params.append(f"page={args.page}")
+    if args.page_size:
+        params.append(f"page_size={args.page_size}")
+    qs = "&".join(params)
+    data = _request("GET", f"/tags?{qs}" if qs else "/tags")
     if args.json:
         _print_json(data)
     else:
@@ -177,8 +357,10 @@ def cmd_tags(args):
 
 
 def cmd_add_tag(args):
-    data = _request("POST", "/tags", {"slug": args.slug, "name": args.name})
-    _print_json(data)
+    payload = {"slug": args.slug, "name": args.name}
+    _, data = _write("POST", "/tags", payload, summary=f"添加标签: {args.name}")
+    if data:
+        _print_json(data)
 
 
 def cmd_product_links(args):
@@ -192,8 +374,14 @@ def cmd_add_link(args):
         payload["label"] = args.label
     if args.primary:
         payload["is_primary"] = True
-    data = _request("POST", f"/products/{args.product_id}/links", payload)
-    _print_json(data)
+    _, data = _write(
+        "POST",
+        f"/products/{args.product_id}/links",
+        payload,
+        summary=f"添加链接: {args.url}",
+    )
+    if data:
+        _print_json(data)
 
 
 def cmd_product_tags(args):
@@ -203,8 +391,15 @@ def cmd_product_tags(args):
 
 def cmd_set_tags(args):
     tag_ids = [int(t) for t in args.tag_ids.split(",")]
-    data = _request("PUT", f"/products/{args.product_id}/tags", {"tag_ids": tag_ids})
-    _print_json(data)
+    payload = {"tag_ids": tag_ids}
+    _, data = _write(
+        "PUT",
+        f"/products/{args.product_id}/tags",
+        payload,
+        summary=f"设置标签: {args.product_id} → {tag_ids}",
+    )
+    if data:
+        _print_json(data)
 
 
 def cmd_export(args):
@@ -222,8 +417,8 @@ def cmd_stats(args):
             break
         page += 1
 
-    categories = _request("GET", "/categories")
-    tags = _request("GET", "/tags")
+    categories = _request("GET", "/categories?page_size=200")
+    tags = _request("GET", "/tags?page_size=500")
 
     status_counts = {0: 0, 1: 0, 2: 0, 3: 0}
     for p in all_products:
@@ -240,8 +435,125 @@ def cmd_stats(args):
         print(f"    {name} (status={s}): {status_counts.get(s, 0)}")
 
 
+def cmd_health(args):
+    data = _request("GET", "/health")
+    _print_json(data)
+
+
+def cmd_env(args):
+    data = _request("GET", "/env")
+    _print_json(data)
+
+
+def cmd_category(args):
+    data = _request("GET", f"/categories/{args.id}")
+    _print_json(data)
+
+
+def cmd_update_category(args):
+    payload = {}
+    if args.name is not None:
+        payload["name"] = args.name
+    if args.slug is not None:
+        payload["slug"] = args.slug
+    if args.icon is not None:
+        payload["icon"] = args.icon
+    if args.sort_order is not None:
+        payload["sort_order"] = args.sort_order
+    if args.status is not None:
+        payload["status"] = args.status
+    _, data = _write(
+        "PUT", f"/categories/{args.id}", payload, summary=f"更新分类: {args.id}"
+    )
+    if data:
+        _print_json(data)
+
+
+def cmd_delete_category(args):
+    executed, _ = _write(
+        "DELETE",
+        f"/categories/{args.id}",
+        {},
+        summary=f"删除分类: {args.id}",
+        confirm=f"确认删除分类 {args.id}? 此操作不可恢复!",
+    )
+    if executed:
+        print(f"分类 {args.id} 已删除")
+
+
+def cmd_category_count(args):
+    data = _request("GET", f"/categories/{args.id}/count")
+    print(f"产品数: {data.get('product_count', 0)}")
+
+
+def cmd_tag(args):
+    data = _request("GET", f"/tags/{args.id}")
+    _print_json(data)
+
+
+def cmd_update_tag(args):
+    payload = {}
+    if args.name is not None:
+        payload["name"] = args.name
+    if args.slug is not None:
+        payload["slug"] = args.slug
+    _, data = _write("PUT", f"/tags/{args.id}", payload, summary=f"更新标签: {args.id}")
+    if data:
+        _print_json(data)
+
+
+def cmd_delete_tag(args):
+    executed, _ = _write(
+        "DELETE",
+        f"/tags/{args.id}",
+        {},
+        summary=f"删除标签: {args.id}",
+        confirm=f"确认删除标签 {args.id}?",
+    )
+    if executed:
+        print(f"标签 {args.id} 已删除")
+
+
+def cmd_tag_count(args):
+    data = _request("GET", f"/tags/{args.id}/count")
+    print(f"产品数: {data.get('product_count', 0)}")
+
+
+def cmd_update_link(args):
+    payload = {}
+    if args.url is not None:
+        payload["url"] = args.url
+    if args.label is not None:
+        payload["label"] = args.label
+    if args.primary is not None:
+        payload["is_primary"] = args.primary
+    _, data = _write(
+        "PUT",
+        f"/products/{args.product_id}/links/{args.link_id}",
+        payload,
+        summary=f"更新链接: {args.link_id}",
+    )
+    if data:
+        _print_json(data)
+
+
+def cmd_delete_link(args):
+    executed, _ = _write(
+        "DELETE",
+        f"/products/{args.product_id}/links/{args.link_id}",
+        {},
+        summary=f"删除链接: {args.link_id}",
+        confirm=f"确认删除链接 {args.link_id}?",
+    )
+    if executed:
+        print(f"链接 {args.link_id} 已删除")
+
+
 def main():
     parser = argparse.ArgumentParser(description="XiGee Directory Studio API CLI")
+    parser.add_argument("--dry-run", action="store_true", help="预览模式，不实际写入")
+    parser.add_argument("--yes", action="store_true", help="跳过二次确认")
+    parser.add_argument("--op-id", help="幂等键，相同 op_id 的操作不会重复执行")
     sub = parser.add_subparsers(dest="command", required=True)
 
     # products
@@ -288,8 +600,15 @@ def main():
 
     # categories
     p = sub.add_parser("categories", aliases=["c"], help="列出分类")
+    p.add_argument("--page", type=int, default=1)
+    p.add_argument("--page-size", type=int, default=50)
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=cmd_categories)
+
+    # category detail
+    p = sub.add_parser("category", help="查看分类详情")
+    p.add_argument("id", type=int)
+    p.set_defaults(func=cmd_category)
 
     # add category
     p = sub.add_parser("add-category", help="添加分类")
@@ -298,16 +617,60 @@ def main():
     p.add_argument("--icon", required=True)
     p.set_defaults(func=cmd_add_category)
 
+    # update category
+    p = sub.add_parser("update-category", help="更新分类")
+    p.add_argument("id", type=int)
+    p.add_argument("--name")
+    p.add_argument("--slug")
+    p.add_argument("--icon")
+    p.add_argument("--sort-order", type=int)
+    p.add_argument("--status", type=int, choices=[0, 1])
+    p.set_defaults(func=cmd_update_category)
+
+    # delete category
+    p = sub.add_parser("delete-category", help="删除分类")
+    p.add_argument("id", type=int)
+    p.set_defaults(func=cmd_delete_category)
+
+    # category count
+    p = sub.add_parser("category-count", help="分类下产品数")
+    p.add_argument("id", type=int)
+    p.set_defaults(func=cmd_category_count)
+
     # tags
     p = sub.add_parser("tags", aliases=["t"], help="列出标签")
+    p.add_argument("--page", type=int, default=1)
+    p.add_argument("--page-size", type=int, default=100)
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=cmd_tags)
+
+    # tag detail
+    p = sub.add_parser("tag", help="查看标签详情")
+    p.add_argument("id", type=int)
+    p.set_defaults(func=cmd_tag)
 
     # add tag
     p = sub.add_parser("add-tag", help="添加标签")
     p.add_argument("--name", required=True)
     p.add_argument("--slug", required=True)
     p.set_defaults(func=cmd_add_tag)
+
+    # update tag
+    p = sub.add_parser("update-tag", help="更新标签")
+    p.add_argument("id", type=int)
+    p.add_argument("--name")
+    p.add_argument("--slug")
+    p.set_defaults(func=cmd_update_tag)
+
+    # delete tag
+    p = sub.add_parser("delete-tag", help="删除标签")
+    p.add_argument("id", type=int)
+    p.set_defaults(func=cmd_delete_tag)
+
+    # tag count
+    p = sub.add_parser("tag-count", help="标签下产品数")
+    p.add_argument("id", type=int)
+    p.set_defaults(func=cmd_tag_count)
 
     # product links
     p = sub.add_parser("product-links", help="列出产品链接")
@@ -321,6 +684,21 @@ def main():
     p.add_argument("--label")
     p.add_argument("--primary", action="store_true")
     p.set_defaults(func=cmd_add_link)
+
+    # update link
+    p = sub.add_parser("update-link", help="更新产品链接")
+    p.add_argument("product_id", type=int)
+    p.add_argument("link_id", type=int)
+    p.add_argument("--url")
+    p.add_argument("--label")
+    p.add_argument("--primary", action=argparse.BooleanOptionalAction, default=None)
+    p.set_defaults(func=cmd_update_link)
+
+    # delete link
+    p = sub.add_parser("delete-link", help="删除产品链接")
+    p.add_argument("product_id", type=int)
+    p.add_argument("link_id", type=int)
+    p.set_defaults(func=cmd_delete_link)
 
     # product tags
     p = sub.add_parser("product-tags", help="查看产品标签")
@@ -341,7 +719,17 @@ def main():
     p = sub.add_parser("stats", help="目录统计")
     p.set_defaults(func=cmd_stats)
 
+    # health
+    p = sub.add_parser("health", help="健康检查")
+    p.set_defaults(func=cmd_health)
+
+    # env
+    p = sub.add_parser("env", help="环境信息")
+    p.set_defaults(func=cmd_env)
+
+    global _GLOBAL_ARGS
     args = parser.parse_args()
+    _GLOBAL_ARGS = args
     args.func(args)
 
 

@@ -19,7 +19,7 @@
    → 打回: status=0 (草稿), 回到步骤 2
 
 5. 导出数据 (/std-export)
-   → 仅 status=2 的产品导出到 web/data/data.json
+   → 仅 status=2 的产品导出到 web/data/data-{env}.json
    → 提交代码 → Vercel 自动部署
 
 6. 下架 (手动 update-product --status 3)

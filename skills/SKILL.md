@@ -27,7 +27,15 @@ description: "XiGee Directory 数据管理 Skills。当用户需要添加/审核
 
 ### api.py
 
-所有 API 操作通过 `skills/tools/api.py` 执行：
+所有 API 操作通过 `skills/tools/api.py` 执行。写操作有以下安全机制：
+
+| 机制         | 说明                             | 用法                                |
+| ------------ | -------------------------------- | ----------------------------------- |
+| **Dry-Run**  | 预览变更，不实际写入             | 加 `--dry-run` 参数                 |
+| **二次确认** | 删除/状态变更前询问确认          | 交互式输入 y/N，加 `--yes` 跳过     |
+| **幂等键**   | 相同 `--op-id` 不会重复执行      | 加 `--op-id <值>`，自动生成在日志中 |
+| **操作日志** | 每次写操作记录到 `tools/api.log` | 自动开启                            |
+| **自动重试** | 网络错误退避重试 3 次            | 自动开启，业务错误不重试            |
 
 ```bash
 # 产品管理
@@ -61,7 +69,15 @@ python skills/tools/api.py stats                         # 目录统计
 ## 环境变量
 
 - `STUDIO_URL`: studio 服务地址（默认 `http://localhost:8000`）
-- `STUDIO_API_KEY`: API 密钥（默认 `dev-secret-key`）
+- `STUDIO_API_KEY`: API 密钥（**必须设置**）
+- `API_KEY`: 与 `STUDIO_API_KEY` 等效，二者设一个即可
+
+## 运行时文件
+
+| 文件            | 说明                         |
+| --------------- | ---------------------------- |
+| `tools/api.log` | 操作日志，每次写操作自动记录 |
+| `tools/.op_ids` | 已执行的操作 ID，自动管理    |
 
 ## 命令清单
 
@@ -76,3 +92,24 @@ python skills/tools/api.py stats                         # 目录统计
 | `/std-add-tag`      | 添加标签             |
 | `/std-export`       | 导出 JSON            |
 | `/std-status`       | 目录总览             |
+
+### 完整 API 覆盖（25/25 接口）
+
+| 分类 | api.py 命令                                        | 对应后端接口                             |
+| ---- | -------------------------------------------------- | ---------------------------------------- |
+| 系统 | `health`                                           | `GET /health`                            |
+|      | `env`                                              | `GET /env`                               |
+| 产品 | `products` `product`                               | `GET /products` `GET /products/{id}`     |
+|      | `add-product` `update-product` `delete-product`    | CRUD                                     |
+| 分类 | `categories` `category`                            | `GET /categories` `GET /categories/{id}` |
+|      | `add-category` `update-category` `delete-category` | CRUD                                     |
+|      | `category-count`                                   | `GET /categories/{id}/count`             |
+| 标签 | `tags` `tag`                                       | `GET /tags` `GET /tags/{id}`             |
+|      | `add-tag` `update-tag` `delete-tag`                | CRUD                                     |
+|      | `tag-count`                                        | `GET /tags/{id}/count`                   |
+| 链接 | `product-links`                                    | `GET /products/{id}/links`               |
+|      | `add-link` `update-link` `delete-link`             | CRUD                                     |
+|      | `product-tags` `set-tags`                          | `PUT /products/{id}/tags`                |
+| 数据 | `export` `stats`                                   | `POST /export` + 聚合查询                |
+
+所有列表命令均支持 `--page` 和 `--page-size` 分页参数。
