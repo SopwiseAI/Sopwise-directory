@@ -133,3 +133,20 @@ async def test_category_product_count(async_client):
     assert resp.status_code == 200
     data = resp.json()
     assert data["product_count"] == 2
+
+
+@pytest.mark.asyncio
+async def test_category_response_product_count_only_published(async_client):
+    """CategoryResponse.product_count 仅统计已发布产品，与 /count 端点一致。"""
+    cat = await create_category(async_client, slug="pub-cat", name="发布计数")
+    await create_product(async_client, slug="pub1", name="已发布1", category_ids=[cat["id"]], status=2)
+    await create_product(async_client, slug="pub2", name="已发布2", category_ids=[cat["id"]], status=2)
+    await create_product(async_client, slug="draft1", name="草稿1", category_ids=[cat["id"]], status=0)
+
+    resp = await async_client.get(f"/api/v1/categories/{cat['id']}")
+    assert resp.status_code == 200
+    assert resp.json()["product_count"] == 2
+
+    resp = await async_client.get("/api/v1/categories")
+    data = resp.json()
+    assert data[0]["product_count"] == 2

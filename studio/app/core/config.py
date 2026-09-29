@@ -45,6 +45,14 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
     )
 
+    @field_validator("app_debug")
+    @classmethod
+    def validate_app_debug(cls, v, info):
+        env = info.data.get("app_env", "dev")
+        if env == "prod" and v:
+            raise ValueError("app_debug must be False in prod (configure APP_DEBUG=false in .env.prod)")
+        return v
+
     @field_validator("api_key")
     @classmethod
     def validate_api_key(cls, v, info):

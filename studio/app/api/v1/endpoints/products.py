@@ -13,6 +13,7 @@ from app.models import (
     Product,
     ProductCategory,
     ProductLink,
+    ProductRelation,
     ProductStatus,
     ProductTag,
     Tag,
@@ -51,7 +52,7 @@ async def list_products(
         selectinload(Product.links),
         selectinload(Product.tags),
         selectinload(Product.categories),
-        selectinload(Product.relateds),
+        selectinload(Product.relateds).selectinload(ProductRelation.related_product),
     )
     stmt = stmt.order_by(Product.sort_order.desc(), Product.published_at.desc())
     stmt = stmt.offset((page - 1) * page_size).limit(page_size)
@@ -70,7 +71,7 @@ async def get_product(product_id: int, db: AsyncSession = Depends(get_db)) -> Pr
             selectinload(Product.links),
             selectinload(Product.tags),
             selectinload(Product.categories),
-            selectinload(Product.relateds),
+            selectinload(Product.relateds).selectinload(ProductRelation.related_product),
         )
         .where(Product.id == product_id)
     )
@@ -81,6 +82,9 @@ async def get_product(product_id: int, db: AsyncSession = Depends(get_db)) -> Pr
     return product
 
 
+_VALID_INITIAL_STATUSES = {ProductStatus.DRAFT, ProductStatus.PENDING}
+
+
 @router.post(
     "", response_model=ProductResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_write)]
 )
@@ -88,11 +92,21 @@ async def create_product(data: ProductCreate, db: AsyncSession = Depends(get_db)
     await check_unique(db, Product, Product.slug, data.slug, label="Slug")
     await check_unique(db, Product, Product.name, data.name, label="Product name")
 
+    initial_status = ProductStatus(data.status)
+    if initial_status not in _VALID_INITIAL_STATUSES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Initial status must be DRAFT(0) or PENDING(1), got {initial_status}",
+        )
+
     product_data = data.model_dump(exclude={"links", "tag_ids", "category_ids"})
     product = Product(**product_data)
 
-    if product.status == ProductStatus.PUBLISHED:
-        product.published_at = datetime.now().replace(microsecond=0)
+    if sum(1 for link in data.links if link.is_primary) > 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only one primary link allowed per product",
+        )
 
     db.add(product)
     await db.flush()
@@ -143,7 +157,7 @@ async def create_product(data: ProductCreate, db: AsyncSession = Depends(get_db)
             selectinload(Product.links),
             selectinload(Product.tags),
             selectinload(Product.categories),
-            selectinload(Product.relateds),
+            selectinload(Product.relateds).selectinload(ProductRelation.related_product),
         )
         .where(Product.id == product.id)
     )
@@ -165,9 +179,6 @@ async def update_product(product_id: int, data: ProductUpdate, db: AsyncSession 
         await check_unique(db, Product, Product.name, update_data["name"], exclude_id=product_id, label="Product name")
 
     old_status = ProductStatus(product.status)
-    for key, value in update_data.items():
-        if key != "category_ids":
-            setattr(product, key, value)
 
     if "status" in update_data:
         new_status = ProductStatus(update_data["status"])
@@ -183,6 +194,10 @@ async def update_product(product_id: int, data: ProductUpdate, db: AsyncSession 
                 )
         if new_status == ProductStatus.PUBLISHED and old_status != ProductStatus.PUBLISHED and not product.published_at:
             product.published_at = datetime.now().replace(microsecond=0)
+
+    for key, value in update_data.items():
+        if key not in ("category_ids", "tag_ids"):
+            setattr(product, key, value)
 
     if "category_ids" in update_data:
         new_ids = set(update_data["category_ids"])
@@ -204,6 +219,21 @@ async def update_product(product_id: int, data: ProductUpdate, db: AsyncSession 
         for cat_id in new_ids - existing_ids:
             db.add(ProductCategory(product_id=product_id, category_id=cat_id))
 
+    if "tag_ids" in update_data:
+        new_tag_ids = set(update_data["tag_ids"])
+        tag_result = await db.execute(select(Tag).where(Tag.id.in_(new_tag_ids)))
+        tags = tag_result.scalars().all()
+        valid_tags = {t.id for t in tags}
+        invalid_ids = new_tag_ids - valid_tags
+        if invalid_ids:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Tag IDs not found: {list(invalid_ids)}",
+            )
+        await db.execute(ProductTag.__table__.delete().where(ProductTag.product_id == product_id))
+        for tag_id in new_tag_ids:
+            db.add(ProductTag(product_id=product_id, tag_id=tag_id))
+
     await db.flush()
 
     stmt = (
@@ -212,7 +242,7 @@ async def update_product(product_id: int, data: ProductUpdate, db: AsyncSession 
             selectinload(Product.links),
             selectinload(Product.tags),
             selectinload(Product.categories),
-            selectinload(Product.relateds),
+            selectinload(Product.relateds).selectinload(ProductRelation.related_product),
         )
         .where(Product.id == product.id)
     )

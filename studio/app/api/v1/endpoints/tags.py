@@ -11,6 +11,12 @@ from app.utils.db import check_unique
 router = APIRouter()
 
 
+async def _product_count(db: AsyncSession, tag_id: int) -> int:
+    """该标签关联的产品总数, 与 /count 端点语义一致."""
+    stmt = select(func.count()).select_from(ProductTag).where(ProductTag.tag_id == tag_id)
+    return (await db.execute(stmt)).scalar() or 0
+
+
 @router.get("", response_model=list[TagResponse])
 async def list_tags(
     status_filter: int | None = Query(None, alias="status"),
@@ -23,7 +29,18 @@ async def list_tags(
         stmt = stmt.where(Tag.status == status_filter)
     stmt = stmt.offset((page - 1) * page_size).limit(page_size)
     result = await db.execute(stmt)
-    return list(result.scalars().all())
+    tags = list(result.scalars().all())
+
+    tag_ids = [t.id for t in tags]
+    count_result = await db.execute(
+        select(ProductTag.tag_id, func.count().label("cnt"))
+        .where(ProductTag.tag_id.in_(tag_ids))
+        .group_by(ProductTag.tag_id)
+    )
+    count_map = {r.tag_id: r.cnt for r in count_result}
+    for t in tags:
+        t.product_count = count_map.get(t.id, 0)
+    return tags
 
 
 @router.get("/{tag_id}", response_model=TagResponse)
@@ -31,6 +48,7 @@ async def get_tag(tag_id: int, db: AsyncSession = Depends(get_db)) -> TagRespons
     tag = await db.get(Tag, tag_id)
     if not tag:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found")
+    tag.product_count = await _product_count(db, tag_id)
     return tag
 
 
@@ -43,6 +61,7 @@ async def create_tag(data: TagCreate, db: AsyncSession = Depends(get_db)) -> Tag
     db.add(tag)
     await db.flush()
     await db.refresh(tag)
+    tag.product_count = 0
     return tag
 
 
@@ -63,6 +82,7 @@ async def update_tag(tag_id: int, data: TagUpdate, db: AsyncSession = Depends(ge
 
     await db.flush()
     await db.refresh(tag)
+    tag.product_count = await _product_count(db, tag_id)
     return tag
 
 
@@ -76,6 +96,5 @@ async def delete_tag(tag_id: int, db: AsyncSession = Depends(get_db)) -> None:
 
 @router.get("/{tag_id}/count")
 async def tag_product_count(tag_id: int, db: AsyncSession = Depends(get_db)) -> dict:
-    stmt = select(func.count()).select_from(ProductTag).where(ProductTag.tag_id == tag_id)
-    count = (await db.execute(stmt)).scalar() or 0
+    count = await _product_count(db, tag_id)
     return {"product_count": count}

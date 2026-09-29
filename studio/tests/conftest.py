@@ -18,6 +18,7 @@ from sqlalchemy import text
 from app.core.config import get_settings
 from app.core.database import AsyncSessionLocal, engine
 from app.main import app
+from app.models import ProductStatus
 
 API_KEY = get_settings().api_key
 
@@ -116,13 +117,15 @@ async def create_product(
     links: list[dict] | None = None,
     tag_ids: list[int] | None = None,
 ) -> dict:
+    needs_transition = status in (ProductStatus.PUBLISHED, ProductStatus.ARCHIVED)
+    create_status = ProductStatus.PENDING if needs_transition else status
     payload: dict = {
         "slug": slug,
         "name": name,
         "pricing": pricing,
         "featured": featured,
         "sort_order": sort_order,
-        "status": status,
+        "status": create_status,
     }
     if description is not None:
         payload["description"] = description
@@ -134,7 +137,21 @@ async def create_product(
         payload["tag_ids"] = tag_ids
     resp = await client.post("/api/v1/products", json=payload)
     assert resp.status_code == 201, resp.text
-    return resp.json()
+    data = resp.json()
+
+    if status == ProductStatus.PUBLISHED:
+        await client.put(f"/api/v1/products/{data['id']}", json={"status": 1})
+        resp = await client.put(f"/api/v1/products/{data['id']}", json={"status": 2})
+        assert resp.status_code == 200, resp.text
+        data = resp.json()
+    elif status == ProductStatus.ARCHIVED:
+        await client.put(f"/api/v1/products/{data['id']}", json={"status": 1})
+        await client.put(f"/api/v1/products/{data['id']}", json={"status": 2})
+        resp = await client.put(f"/api/v1/products/{data['id']}", json={"status": 3})
+        assert resp.status_code == 200, resp.text
+        data = resp.json()
+
+    return data
 
 
 async def create_link(

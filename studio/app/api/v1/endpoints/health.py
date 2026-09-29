@@ -1,29 +1,36 @@
+import asyncio
 import logging
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
-from sqlalchemy.exc import OperationalError
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import DBAPIError
 
 from app.core.config import get_app_version
-from app.core.deps import get_db
+from app.core.database import engine
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
 @router.get("/health")
-async def health_check(db: AsyncSession = Depends(get_db)) -> JSONResponse:
+async def health_check() -> JSONResponse:
     try:
-        await db.execute(text("SELECT 1"))
+        async with asyncio.timeout(5):
+            async with engine.connect() as conn:
+                await conn.execute(text("SELECT 1"))
         return JSONResponse(
             status_code=status.HTTP_200_OK,
             content={"status": "ok", "database": "connected", "brand": "Sopwise", "version": get_app_version()},
         )
-    except OperationalError as exc:
-        logger.warning("Health check failed: %s", exc, exc_info=True)
+    except (DBAPIError, TimeoutError, OSError) as exc:
+        logger.warning("Health check failed: %s", exc)
         return JSONResponse(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            content={"status": "degraded", "database": "disconnected"},
+            content={
+                "status": "degraded",
+                "database": "disconnected",
+                "brand": "Sopwise",
+                "version": get_app_version(),
+            },
         )

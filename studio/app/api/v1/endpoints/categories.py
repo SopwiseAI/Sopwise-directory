@@ -11,6 +11,17 @@ from app.utils.db import check_unique
 router = APIRouter()
 
 
+async def _published_count(db: AsyncSession, category_id: int) -> int:
+    """该分类下已发布 (status=2) 产品数, 与 /count 端点语义一致."""
+    stmt = (
+        select(func.count())
+        .select_from(Product)
+        .join(ProductCategory, ProductCategory.product_id == Product.id)
+        .where(ProductCategory.category_id == category_id, Product.status == ProductStatus.PUBLISHED)
+    )
+    return (await db.execute(stmt)).scalar() or 0
+
+
 @router.get("", response_model=list[CategoryResponse])
 async def list_categories(
     status_filter: int | None = Query(None, alias="status"),
@@ -26,28 +37,17 @@ async def list_categories(
     categories = list(result.scalars().all())
 
     cat_ids = [c.id for c in categories]
-    count_result = await db.execute(
+    count_stmt = (
         select(ProductCategory.category_id, func.count().label("cnt"))
-        .where(ProductCategory.category_id.in_(cat_ids))
+        .join(Product, Product.id == ProductCategory.product_id)
+        .where(ProductCategory.category_id.in_(cat_ids), Product.status == ProductStatus.PUBLISHED)
         .group_by(ProductCategory.category_id)
     )
+    count_result = await db.execute(count_stmt)
     count_map = {r.category_id: r.cnt for r in count_result}
-
-    return [
-        CategoryResponse(
-            id=c.id,
-            slug=c.slug,
-            name=c.name,
-            icon=c.icon,
-            description=c.description,
-            sort_order=c.sort_order,
-            status=c.status,
-            created_at=c.created_at,
-            updated_at=c.updated_at,
-            product_count=count_map.get(c.id, 0),
-        )
-        for c in categories
-    ]
+    for c in categories:
+        c.product_count = count_map.get(c.id, 0)
+    return categories
 
 
 @router.get("/{category_id}", response_model=CategoryResponse)
@@ -55,22 +55,8 @@ async def get_category(category_id: int, db: AsyncSession = Depends(get_db)) -> 
     category = await db.get(Category, category_id)
     if not category:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
-    count_result = await db.execute(
-        select(func.count()).select_from(ProductCategory).where(ProductCategory.category_id == category_id)
-    )
-    product_count = count_result.scalar() or 0
-    return CategoryResponse(
-        id=category.id,
-        slug=category.slug,
-        name=category.name,
-        icon=category.icon,
-        description=category.description,
-        sort_order=category.sort_order,
-        status=category.status,
-        created_at=category.created_at,
-        updated_at=category.updated_at,
-        product_count=product_count,
-    )
+    category.product_count = await _published_count(db, category_id)
+    return category
 
 
 @router.post(
@@ -84,18 +70,8 @@ async def create_category(data: CategoryCreate, db: AsyncSession = Depends(get_d
     db.add(category)
     await db.flush()
     await db.refresh(category)
-    return CategoryResponse(
-        id=category.id,
-        slug=category.slug,
-        name=category.name,
-        icon=category.icon,
-        description=category.description,
-        sort_order=category.sort_order,
-        status=category.status,
-        created_at=category.created_at,
-        updated_at=category.updated_at,
-        product_count=0,
-    )
+    category.product_count = 0
+    return category
 
 
 @router.put("/{category_id}", response_model=CategoryResponse, dependencies=[Depends(require_write)])
@@ -119,22 +95,8 @@ async def update_category(
 
     await db.flush()
     await db.refresh(category)
-    count_result = await db.execute(
-        select(func.count()).select_from(ProductCategory).where(ProductCategory.category_id == category_id)
-    )
-    product_count = count_result.scalar() or 0
-    return CategoryResponse(
-        id=category.id,
-        slug=category.slug,
-        name=category.name,
-        icon=category.icon,
-        description=category.description,
-        sort_order=category.sort_order,
-        status=category.status,
-        created_at=category.created_at,
-        updated_at=category.updated_at,
-        product_count=product_count,
-    )
+    category.product_count = await _published_count(db, category_id)
+    return category
 
 
 @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_write)])
@@ -149,8 +111,8 @@ async def delete_category(category_id: int, db: AsyncSession = Depends(get_db)) 
         .join(ProductCategory, ProductCategory.product_id == Product.id)
         .where(ProductCategory.category_id == category_id)
     )
-    count = (await db.execute(count_stmt)).scalar()
-    if count and count > 0:
+    count = (await db.execute(count_stmt)).scalar() or 0
+    if count > 0:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Category has {count} products. Remove or reassign them first.",
@@ -161,11 +123,5 @@ async def delete_category(category_id: int, db: AsyncSession = Depends(get_db)) 
 
 @router.get("/{category_id}/count")
 async def category_product_count(category_id: int, db: AsyncSession = Depends(get_db)) -> dict:
-    stmt = (
-        select(func.count())
-        .select_from(Product)
-        .join(ProductCategory, ProductCategory.product_id == Product.id)
-        .where(ProductCategory.category_id == category_id, Product.status == ProductStatus.PUBLISHED)
-    )
-    count = (await db.execute(stmt)).scalar() or 0
+    count = await _published_count(db, category_id)
     return {"product_count": count}

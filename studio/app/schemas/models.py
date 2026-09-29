@@ -85,6 +85,7 @@ class ProductUpdate(BaseModel):
     name: str | None = Field(None, max_length=128)
     description: str | None = Field(None, max_length=500)
     category_ids: list[int] | None = None
+    tag_ids: list[int] | None = None
     pricing: str | None = Field(None, pattern="^(free|freemium|paid|opensource)$")
     featured: bool | None = None
     sort_order: int | None = Field(None, ge=0)
@@ -97,6 +98,7 @@ class TagResponse(BaseModel):
     name: str
     sort_order: int
     status: int
+    product_count: int = 0
     created_at: datetime
     updated_at: datetime
 

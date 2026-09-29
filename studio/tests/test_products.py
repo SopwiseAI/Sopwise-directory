@@ -49,6 +49,24 @@ async def test_create_product_with_links_and_tags(async_client):
 
 
 @pytest.mark.asyncio
+async def test_create_product_rejects_multiple_primary_links(async_client):
+    """同一产品不能有多个主链接。"""
+    resp = await async_client.post(
+        "/api/v1/products",
+        json={
+            "slug": "multi-primary",
+            "name": "多主链接",
+            "links": [
+                {"url": "https://a.example.com", "is_primary": True},
+                {"url": "https://b.example.com", "is_primary": True},
+            ],
+        },
+    )
+    assert resp.status_code == 400
+    assert "primary" in resp.json()["detail"]
+
+
+@pytest.mark.asyncio
 async def test_create_product_duplicate_slug(async_client):
     await create_product(async_client, slug="dup", name="A")
     resp = await async_client.post("/api/v1/products", json={"slug": "dup", "name": "B"})
@@ -170,3 +188,72 @@ async def test_delete_product(async_client):
     assert resp.status_code == 204
     resp = await async_client.get(f"/api/v1/products/{product['id']}")
     assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_create_rejects_published_status(async_client):
+    """创建时不允许直接 status=2(已发布), 必须走 0→1→2 流程。"""
+    resp = await async_client.post(
+        "/api/v1/products",
+        json={"slug": "direct", "name": "直接发布", "status": 2},
+    )
+    assert resp.status_code == 400
+    assert "DRAFT" in resp.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_create_rejects_archived_status(async_client):
+    """创建时不允许直接 status=3(已下架)。"""
+    resp = await async_client.post(
+        "/api/v1/products",
+        json={"slug": "direct", "name": "直接下架", "status": 3},
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_create_allows_pending_status(async_client):
+    """创建时允许 status=1(待审核)。"""
+    resp = await async_client.post(
+        "/api/v1/products",
+        json={"slug": "pending", "name": "待审核", "status": 1},
+    )
+    assert resp.status_code == 201
+    assert resp.json()["status"] == 1
+
+
+@pytest.mark.asyncio
+async def test_invalid_status_transition_rejected(async_client):
+    """非法状态转换 0→2 应被拒绝。"""
+    product = await create_product(async_client, slug="p1", name="P1", status=0)
+    resp = await async_client.put(
+        f"/api/v1/products/{product['id']}",
+        json={"status": 2},
+    )
+    assert resp.status_code == 400
+    assert "Invalid status transition" in resp.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_update_product_tag_ids(async_client):
+    """update_product 支持通过 tag_ids 全量替换标签。"""
+    from tests.conftest import create_tag
+
+    product = await create_product(async_client, slug="p1", name="P1")
+    tag1 = await create_tag(async_client, slug="t1", name="T1")
+    tag2 = await create_tag(async_client, slug="t2", name="T2")
+
+    resp = await async_client.put(
+        f"/api/v1/products/{product['id']}",
+        json={"tag_ids": [tag1["id"], tag2["id"]]},
+    )
+    assert resp.status_code == 200
+    tag_names = {t["name"] for t in resp.json()["tags"]}
+    assert tag_names == {"T1", "T2"}
+
+    resp = await async_client.put(
+        f"/api/v1/products/{product['id']}",
+        json={"tag_ids": [tag1["id"]]},
+    )
+    assert resp.status_code == 200
+    assert len(resp.json()["tags"]) == 1
