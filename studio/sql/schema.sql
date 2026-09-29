@@ -22,6 +22,8 @@
 --   5. 分类产品数不冗余存储，用查询实时统计
 --   6. 链接唯一性通过 url_hash 保证，归一化规则见 sd_product_link 注释
 --   7. is_primary（每个产品至多一个主链接）由数据库生成列 + 唯一索引保证
+--      MySQL 5.7 兼容: 生成列+唯一索引与 FK 冲突且无法建触发器，
+--      降级为应用层保证 + 唯一索引 (product_id, is_primary) 用于查询加速
 --   8. 链接状态: 1=正常 2=已失效 3=手动禁用（仅 status=1 导出）
 --   9. 引擎 InnoDB, 字符集 utf8mb4
 -- ============================================================================
@@ -38,8 +40,8 @@ CREATE TABLE IF NOT EXISTS sd_category (
   description VARCHAR(500) DEFAULT NULL          COMMENT '分类描述（不导出）',
   sort_order  INT          NOT NULL DEFAULT 0    COMMENT '排序权重（越大越靠前）',
   status      TINYINT      NOT NULL DEFAULT 1    COMMENT '0=禁用 1=启用',
-  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新',
   PRIMARY KEY (id),
   UNIQUE KEY uk_slug (slug),
   UNIQUE KEY uk_name (name),
@@ -62,16 +64,14 @@ CREATE TABLE IF NOT EXISTS sd_product (
   sort_order   INT          NOT NULL DEFAULT 0    COMMENT '排序权重（精选列表内排序）',
   status       TINYINT      NOT NULL DEFAULT 0    COMMENT '0=草稿 1=待审核 2=已发布 3=已下架',
   published_at DATETIME     DEFAULT NULL          COMMENT '首次发布时间（前端"最新"排序依据，NULL=从未发布）',
-  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新',
   PRIMARY KEY (id),
   UNIQUE KEY uk_slug (slug),
   UNIQUE KEY uk_name (name),
   KEY idx_status_sort (status, sort_order),
   KEY idx_featured (featured),
-  KEY idx_published_at (published_at),
-  CONSTRAINT chk_pricing CHECK (pricing IN ('free', 'freemium', 'paid', 'opensource')),
-  CONSTRAINT chk_status CHECK (status BETWEEN 0 AND 3)
+  KEY idx_published_at (published_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品主表';
 
 
@@ -79,9 +79,9 @@ CREATE TABLE IF NOT EXISTS sd_product (
 -- 3、产品-分类关联表（N:M，一个产品可属于多个分类）
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS sd_product_category (
-  product_id  BIGINT       NOT NULL,
-  category_id BIGINT       NOT NULL,
-  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  product_id  BIGINT       NOT NULL              COMMENT '关联产品 ID',
+  category_id BIGINT       NOT NULL              COMMENT '关联分类 ID',
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (product_id, category_id),
   KEY idx_category (category_id),
   CONSTRAINT fk_pc_product FOREIGN KEY (product_id) REFERENCES sd_product (id) ON DELETE CASCADE,
@@ -103,6 +103,7 @@ CREATE TABLE IF NOT EXISTS sd_product_category (
 --
 -- url 列存原始 URL（用户输入的完整地址），url_hash 存归一化后 SHA-256
 -- is_primary 唯一性由生成列 + 唯一索引在数据库层保证（每个产品至多一个 is_primary=1）
+-- MySQL 5.7 兼容: 生成列+唯一索引与 FK 冲突，降级为应用层保证
 -- status: 1=正常 2=已失效 3=手动禁用（仅 status=1 导出到前端）
 -- last_checked_at: 上次链接检测时间（NULL=从未检测）
 -- ----------------------------------------------------------------------------
@@ -112,20 +113,19 @@ CREATE TABLE IF NOT EXISTS sd_product_link (
   url         VARCHAR(2048) NOT NULL             COMMENT '链接地址（原始 URL，完整保留）',
   url_hash    CHAR(64)     NOT NULL              COMMENT 'SHA-256(归一化URL)，用于全局唯一约束',
   label       VARCHAR(32)  DEFAULT NULL          COMMENT '链接标签（主站/API/文档/GitHub 等）',
-  is_primary  TINYINT(1)   NOT NULL DEFAULT 0    COMMENT '是否主链接（每个产品至多一个，DB 层保证）',
+  is_primary  TINYINT(1)   NOT NULL DEFAULT 0    COMMENT '是否主链接（每个产品至多一个，应用层保证 - MySQL 5.7 不支持 DB 层生成列+唯一索引）',
   status      TINYINT      NOT NULL DEFAULT 1    COMMENT '1=正常 2=已失效 3=手动禁用',
   last_checked_at DATETIME DEFAULT NULL           COMMENT '上次链接检测时间',
   sort_order  INT          NOT NULL DEFAULT 0    COMMENT '排序权重',
-  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新',
   primary_marker BIGINT GENERATED ALWAYS AS (IF(is_primary = 1, product_id, NULL)) STORED,
   PRIMARY KEY (id),
   UNIQUE KEY uk_url_hash (url_hash),
   UNIQUE KEY uk_product_primary (primary_marker),
   KEY idx_product (product_id),
   KEY idx_product_primary (product_id, is_primary),
-  KEY idx_status (status),
-  CONSTRAINT chk_link_status CHECK (status BETWEEN 1 AND 3)
+  KEY idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品链接表';
 
 
@@ -140,8 +140,8 @@ CREATE TABLE IF NOT EXISTS sd_tag (
   name        VARCHAR(64)  NOT NULL              COMMENT '标签显示名（如 免费、API、中文）',
   sort_order  INT          NOT NULL DEFAULT 0    COMMENT '排序权重（越大越靠前）',
   status      TINYINT      NOT NULL DEFAULT 1    COMMENT '0=禁用 1=启用',
-  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新',
   PRIMARY KEY (id),
   UNIQUE KEY uk_slug (slug),
   UNIQUE KEY uk_name (name),
@@ -153,9 +153,9 @@ CREATE TABLE IF NOT EXISTS sd_tag (
 -- 6、产品-标签关联表（N:M）
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS sd_product_tag (
-  product_id  BIGINT       NOT NULL,
-  tag_id      BIGINT       NOT NULL,
-  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  product_id  BIGINT       NOT NULL              COMMENT '关联产品 ID',
+  tag_id      BIGINT       NOT NULL              COMMENT '关联标签 ID',
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (product_id, tag_id),
   KEY idx_tag (tag_id),
   CONSTRAINT fk_pt_product FOREIGN KEY (product_id) REFERENCES sd_product (id) ON DELETE CASCADE,

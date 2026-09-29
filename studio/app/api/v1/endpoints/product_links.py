@@ -16,7 +16,7 @@ async def list_product_links(
     product_id: int,
     status_filter: int | None = Query(None, alias="status"),
     db: AsyncSession = Depends(get_db),
-) -> list[ProductLink]:
+) -> list[ProductLinkResponse]:
     stmt = select(ProductLink).where(ProductLink.product_id == product_id)
     if status_filter is not None:
         stmt = stmt.where(ProductLink.status == status_filter)
