@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { PRICINGS, type Pricing, type Product } from "@/lib/types"
+import { PRICINGS, type Product } from "@/lib/types"
 import { addToHistory } from "@/lib/history"
 
 const VALID_PRICING = new Set<string>(PRICINGS)
@@ -28,9 +28,9 @@ export function HistoryTracker() {
         url: link.dataset.historyUrl ?? "",
         categoryId: link.dataset.historyCategory ?? "",
         description: "",
-        publishedAt: "",
-        pricing: (VALID_PRICING.has(link.dataset.historyPricing ?? "") ? link.dataset.historyPricing : undefined) as
-          Pricing | undefined
+        pricing: VALID_PRICING.has(link.dataset.historyPricing ?? "")
+          ? (link.dataset.historyPricing as Product["pricing"])
+          : undefined
       }
       addToHistory(product)
     }

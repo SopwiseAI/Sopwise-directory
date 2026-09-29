@@ -13,10 +13,10 @@
   python skills/tools/api.py update-category <id> [--name <name>] [--slug <slug>]
   python skills/tools/api.py delete-category <id>
   python skills/tools/api.py category-count <id>        分类产品数
-  python skills/tools/api.py tags [--page N] [--page-size N]             列出标签
+  python skills/tools/api.py tags [--status {0,1}] [--page N] [--page-size N]  列出标签
   python skills/tools/api.py tag <id>                   查看标签详情
   python skills/tools/api.py add-tag --name <name> --slug <slug>
-  python skills/tools/api.py update-tag <id> [--name <name>] [--slug <slug>]
+  python skills/tools/api.py update-tag <id> [--name <name>] [--slug <slug>] [--sort-order <N>] [--status {0,1}]
   python skills/tools/api.py delete-tag <id>
   python skills/tools/api.py tag-count <id>             标签产品数
   python skills/tools/api.py product-links <id>         列出产品链接
@@ -546,6 +546,8 @@ def cmd_add_category(args):
 
 def cmd_tags(args):
     params = []
+    if args.status is not None:
+        params.append(f"status={args.status}")
     if args.page:
         params.append(f"page={args.page}")
     if args.page_size:
@@ -557,8 +559,14 @@ def cmd_tags(args):
     else:
         _print_table(
             data,
-            ["id", "name", "slug"],
-            headers={"id": "ID", "name": "名称", "slug": "Slug"},
+            ["id", "name", "slug", "sort_order", "status"],
+            headers={
+                "id": "ID",
+                "name": "名称",
+                "slug": "Slug",
+                "sort_order": "排序",
+                "status": "状态",
+            },
         )
         _print_total_info(resp_headers)
 
@@ -729,6 +737,10 @@ def cmd_update_tag(args):
         payload["name"] = args.name
     if args.slug is not None:
         payload["slug"] = args.slug
+    if args.sort_order is not None:
+        payload["sort_order"] = args.sort_order
+    if args.status is not None:
+        payload["status"] = args.status
     _, data = _write("PUT", f"/tags/{args.id}", payload, summary=f"更新标签: {args.id}")
     if data:
         _print_json(data)
@@ -886,6 +898,7 @@ def main():
     p = sub.add_parser("tags", aliases=["t"], help="列出标签")
     p.add_argument("--page", type=int, default=1)
     p.add_argument("--page-size", type=int, default=100)
+    p.add_argument("--status", type=int, choices=[0, 1], default=None)
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=cmd_tags)
 
@@ -905,6 +918,8 @@ def main():
     p.add_argument("id", type=int)
     p.add_argument("--name")
     p.add_argument("--slug")
+    p.add_argument("--sort-order", type=int)
+    p.add_argument("--status", type=int, choices=[0, 1])
     p.set_defaults(func=cmd_update_tag)
 
     # delete tag

@@ -84,8 +84,13 @@ async def create_tag(
     client: AsyncClient,
     slug: str = "test-tag",
     name: str = "测试标签",
+    sort_order: int = 0,
+    status: int = 1,
 ) -> dict:
-    resp = await client.post("/api/v1/tags", json={"slug": slug, "name": name})
+    resp = await client.post(
+        "/api/v1/tags",
+        json={"slug": slug, "name": name, "sort_order": sort_order, "status": status},
+    )
     assert resp.status_code == 201, resp.text
     return resp.json()
 

@@ -91,11 +91,8 @@ export function getProductsByCategory(categoryId: string): readonly Product[] {
 /** categoryId → 已发布产品数，供 sidebar/nav/footer 共用。 */
 export function getCategoryCounts(): Record<string, number> {
   const counts: Record<string, number> = {}
-  for (const cat of siteData.categories) {
-    counts[cat.id] = 0
-  }
   for (const p of siteData.products) {
-    if (p.categoryId in counts) counts[p.categoryId]++
+    counts[p.categoryId] = (counts[p.categoryId] ?? 0) + 1
   }
   return counts
 }
@@ -111,6 +108,6 @@ export function getStats(): SiteStats {
   return {
     products: siteData.products.length,
     categories: siteData.categories.length,
-    featured: siteData.products.filter((p) => p.featured).length
+    featured: getFeaturedProducts().length
   }
 }

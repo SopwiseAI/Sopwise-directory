@@ -91,7 +91,10 @@ class TagResponse(BaseModel):
     id: int
     slug: str
     name: str
+    sort_order: int
+    status: int
     created_at: datetime
+    updated_at: datetime
 
     model_config = {"from_attributes": True}
 
@@ -122,6 +125,8 @@ ProductResponse.model_rebuild()
 class TagBase(BaseModel):
     slug: str = Field(..., max_length=64)
     name: str = Field(..., max_length=64)
+    sort_order: int = 0
+    status: int = Field(1, ge=0, le=1)
 
 
 class TagCreate(TagBase):
@@ -131,6 +136,8 @@ class TagCreate(TagBase):
 class TagUpdate(BaseModel):
     slug: str | None = Field(None, max_length=64)
     name: str | None = Field(None, max_length=64)
+    sort_order: int | None = None
+    status: int | None = Field(None, ge=0, le=1)
 
 
 class ProductTagUpdate(BaseModel):

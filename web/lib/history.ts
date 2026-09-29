@@ -215,11 +215,10 @@ export function clearHistory(): HistoryItem[] {
   return []
 }
 
-/** 按 id 查询单条历史（走缓存索引） */
+/** 按 id 查询单条历史 */
 export function getHistoryItem(id: string): HistoryItem | undefined {
   if (!isBrowser()) return undefined
-  getHistory()
-  return cache?.index.get(id)
+  return getHistory().find((i) => i.id === id)
 }
 
 export function subscribeHistory(callback: () => void) {
@@ -251,8 +250,9 @@ function startOfDay(date: Date): number {
 }
 
 /** 按本地日期分组：今天 / 昨天 / 近 7 天 / 更早，组内保持原顺序（最近访问在前）。 */
-export function groupHistoryByPeriod(items: HistoryItem[] = getHistory(), now: Date = new Date()): HistoryGroup[] {
-  const todayStart = startOfDay(now)
+export function groupHistoryByPeriod(items: HistoryItem[] = getHistory(), now?: Date): HistoryGroup[] {
+  const effectiveNow = now ?? new Date()
+  const todayStart = startOfDay(effectiveNow)
   const yesterdayStart = todayStart - DAY_MS
   const weekStart = todayStart - 6 * DAY_MS
   const bucket: Record<string, HistoryItem[]> = { 今天: [], 昨天: [], "近 7 天": [], 更早: [] }

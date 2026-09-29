@@ -33,4 +33,10 @@ description: 添加标签
    !`python skills/tools/api.py add-tag --name "标签名" --slug "english-slug"`
    ```
 
+   创建后 sort_order 默认 0、status 默认 1（启用）。如需调整排序或禁用，创建后用 manage-tag 改:
+
+   ```
+   !`python skills/tools/api.py --yes update-tag <标签ID> --sort-order 10 --status 1`
+   ```
+
 4. 告知用户标签已创建

@@ -19,6 +19,11 @@ class CategoryStatus(IntEnum):
     ACTIVE = 1
 
 
+class TagStatus(IntEnum):
+    DISABLED = 0
+    ACTIVE = 1
+
+
 VALID_STATUS_TRANSITIONS: dict[ProductStatus, set[ProductStatus]] = {
     ProductStatus.DRAFT: {ProductStatus.PENDING},
     ProductStatus.PENDING: {ProductStatus.DRAFT, ProductStatus.PUBLISHED},
@@ -101,11 +106,17 @@ class ProductLink(Base):
 
 class Tag(Base):
     __tablename__ = "sd_tag"
+    __table_args__ = (Index("idx_status_sort", "status", "sort_order"),)
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     slug: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    status: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now(), nullable=False
+    )
 
     products: Mapped[list[Product]] = relationship(secondary="sd_product_tag", back_populates="tags")
 

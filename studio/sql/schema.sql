@@ -112,15 +112,21 @@ CREATE TABLE IF NOT EXISTS sd_product_link (
 
 -- ----------------------------------------------------------------------------
 -- 4、标签表（独立管理，支持去重/统计）
+--    sort_order: 排序权重（前端筛选栏/标签云展示顺序，越大越靠前）
+--    status: 0=禁用 1=启用（禁用标签保留关联但不导出到前端）
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS sd_tag (
   id          BIGINT       NOT NULL AUTO_INCREMENT,
   slug        VARCHAR(64)  NOT NULL              COMMENT '标签标识（如 free、api、chinese）',
   name        VARCHAR(64)  NOT NULL              COMMENT '标签显示名（如 免费、API、中文）',
+  sort_order  INT          NOT NULL DEFAULT 0    COMMENT '排序权重（越大越靠前）',
+  status      TINYINT      NOT NULL DEFAULT 1    COMMENT '0=禁用 1=启用',
   created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uk_slug (slug),
-  UNIQUE KEY uk_name (name)
+  UNIQUE KEY uk_name (name),
+  KEY idx_status_sort (status, sort_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='标签表';
 
 
@@ -136,3 +142,36 @@ CREATE TABLE IF NOT EXISTS sd_product_tag (
   CONSTRAINT fk_pt_product FOREIGN KEY (product_id) REFERENCES sd_product (id) ON DELETE CASCADE,
   CONSTRAINT fk_pt_tag FOREIGN KEY (tag_id) REFERENCES sd_tag (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品-标签关联表';
+
+
+-- ============================================================================
+-- 迁移：sd_tag 增补 sort_order / status / updated_at
+-- ----------------------------------------------------------------------------
+-- 适用 MySQL 5.7（不支持 ADD COLUMN IF NOT EXISTS，故用存储过程幂等执行）。
+-- 新库由上方 CREATE TABLE 直接建好，无需本段；旧库执行本段升级，可重复执行。
+-- ============================================================================
+DROP PROCEDURE IF EXISTS _migrate_sd_tag;
+DELIMITER $$
+CREATE PROCEDURE _migrate_sd_tag()
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sd_tag' AND COLUMN_NAME = 'sort_order') THEN
+        ALTER TABLE sd_tag ADD COLUMN sort_order INT NOT NULL DEFAULT 0 COMMENT '排序权重（越大越靠前）' AFTER name;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sd_tag' AND COLUMN_NAME = 'status') THEN
+        ALTER TABLE sd_tag ADD COLUMN status TINYINT NOT NULL DEFAULT 1 COMMENT '0=禁用 1=启用' AFTER sort_order;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sd_tag' AND COLUMN_NAME = 'updated_at') THEN
+        ALTER TABLE sd_tag ADD COLUMN updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER created_at;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.STATISTICS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sd_tag' AND INDEX_NAME = 'idx_status_sort') THEN
+        ALTER TABLE sd_tag ADD INDEX idx_status_sort (status, sort_order);
+    END IF;
+END$$
+DELIMITER ;
+
+CALL _migrate_sd_tag();
+DROP PROCEDURE IF EXISTS _migrate_sd_tag;

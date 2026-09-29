@@ -14,7 +14,7 @@ const PANEL_D =
 export function PanelIcon({ className }: PanelIconProps) {
   return (
     <svg viewBox="0 0 16 16" className={cn("size-4", className)} aria-hidden fill="currentColor">
-      <path fillRule="evenodd" clipRule="evenodd" d={PANEL_D} fill="currentColor" />
+      <path fillRule="evenodd" clipRule="evenodd" d={PANEL_D} />
     </svg>
   )
 }

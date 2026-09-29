@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config import get_settings
-from app.models import Category, CategoryStatus, Product, ProductStatus
+from app.models import Category, CategoryStatus, Product, ProductStatus, TagStatus
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +99,7 @@ async def _fetch_products(session: AsyncSession, cat_map: dict[int, str]) -> lis
                 "description": row.description or "",
                 "url": link.url if link else "",
                 "categoryId": cat_map.get(row.category_id, "") if row.category_id else "",
-                "tags": [t.name for t in row.tags],
+                "tags": [t.name for t in row.tags if t.status == TagStatus.ACTIVE],
                 "pricing": row.pricing,
                 "featured": row.featured,
             }

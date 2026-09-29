@@ -254,7 +254,11 @@ class TestFetchAll(unittest.TestCase):
 
 class TestSearchFilter(unittest.TestCase):
     def test_server_side_search_passes_param(self):
-        with patch.object(api, "_request_with_headers", return_value=([], {})) as m:
+        with patch.object(
+            api,
+            "_request_with_headers",
+            return_value=([], {"x-supported-params": "search"}),
+        ) as m:
             ns = MagicMock()
             ns.status = None
             ns.category_id = None

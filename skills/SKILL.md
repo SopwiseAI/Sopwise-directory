@@ -70,9 +70,9 @@ python skills/tools/api.py delete-category <id>
 python skills/tools/api.py category-count <id>
 
 # 标签管理
-python skills/tools/api.py tags
+python skills/tools/api.py tags [--status {0,1}]
 python skills/tools/api.py add-tag --name <name> --slug <slug>
-python skills/tools/api.py update-tag <id> [--name] [--slug]
+python skills/tools/api.py update-tag <id> [--name] [--slug] [--sort-order] [--status {0,1}]
 python skills/tools/api.py delete-tag <id>
 python skills/tools/api.py tag-count <id>
 
