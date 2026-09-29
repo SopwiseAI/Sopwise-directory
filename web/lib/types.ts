@@ -13,7 +13,7 @@ export interface Product {
   name: string
   description: string
   url: string
-  categoryId: string
+  categories: string[]
   tags?: string[]
   pricing?: Pricing
   featured?: boolean

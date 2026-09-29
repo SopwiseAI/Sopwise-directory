@@ -9,7 +9,7 @@ export function productHistoryAttrs(product: Product): Record<string, string> {
     "data-history-id": product.id,
     "data-history-name": product.name,
     "data-history-url": product.url,
-    "data-history-category": product.categoryId,
+    "data-history-category": product.categories[0] ?? "",
     "data-history-pricing": product.pricing ?? ""
   }
 }

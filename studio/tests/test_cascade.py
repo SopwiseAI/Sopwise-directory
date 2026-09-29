@@ -56,23 +56,23 @@ async def test_delete_tag_cascades_associations(async_client):
 
 
 @pytest.mark.asyncio
-async def test_delete_category_sets_product_category_null(async_client):
-    """删除分类 → 产品 category_id 变为 NULL（ON DELETE SET NULL）。
+async def test_delete_category_cascades_associations(async_client):
+    """删除分类 → 产品-分类关联自动级联删除，但产品本身仍在。
 
-    但当前实现中有产品时不允许删除分类，需要先将产品改到其他分类或设为未分类。
-    这里测试直接将产品 category_id 设为 null 后再删除分类。
+    N:M 关系下，分类有产品关联时不允许删除（先解除关联）。
+    这里测试先解除关联再删除分类。
     """
     cat = await create_category(async_client, slug="cat", name="分类")
-    product = await create_product(async_client, slug="p1", name="P1", category_id=cat["id"])
+    product = await create_product(async_client, slug="p1", name="P1", category_ids=[cat["id"]])
 
-    # 先把产品的 category_id 改为 null
-    await async_client.put(f"/api/v1/products/{product['id']}", json={"category_id": None})
+    # 先解除产品的分类关联
+    await async_client.put(f"/api/v1/products/{product['id']}", json={"category_ids": []})
 
     # 现在可以删除分类
     resp = await async_client.delete(f"/api/v1/categories/{cat['id']}")
     assert resp.status_code == 204
 
-    # 产品仍在，但 category_id 为 null
+    # 产品仍在，分类列表为空
     resp = await async_client.get(f"/api/v1/products/{product['id']}")
     assert resp.status_code == 200
-    assert resp.json()["category_id"] is None
+    assert resp.json()["categories"] == []

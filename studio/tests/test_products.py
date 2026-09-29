@@ -19,7 +19,7 @@ async def test_create_product_minimal(async_client):
     assert data["featured"] is False
     assert data["status"] == 0
     assert data["description"] is None
-    assert data["category_id"] is None
+    assert data["categories"] == []
     assert data["links"] == []
     assert data["tags"] == []
 
@@ -34,7 +34,7 @@ async def test_create_product_with_links_and_tags(async_client):
         slug="full",
         name="完整产品",
         description="描述",
-        category_id=cat["id"],
+        category_ids=[cat["id"]],
         pricing="paid",
         featured=True,
         links=[{"url": "https://example.com", "label": "主站", "is_primary": True}],
@@ -44,6 +44,8 @@ async def test_create_product_with_links_and_tags(async_client):
     assert data["links"][0]["url"] == "https://example.com"
     assert data["links"][0]["is_primary"] is True
     assert len(data["tags"]) == 2
+    assert len(data["categories"]) == 1
+    assert data["categories"][0]["id"] == cat["id"]
 
 
 @pytest.mark.asyncio
@@ -114,7 +116,7 @@ async def test_filter_by_featured(async_client):
 @pytest.mark.asyncio
 async def test_filter_by_category(async_client):
     cat = await create_category(async_client, slug="cat", name="分类")
-    await create_product(async_client, slug="p1", name="P1", category_id=cat["id"])
+    await create_product(async_client, slug="p1", name="P1", category_ids=[cat["id"]])
     await create_product(async_client, slug="p2", name="P2")
     resp = await async_client.get(f"/api/v1/products?category_id={cat['id']}")
     data = resp.json()

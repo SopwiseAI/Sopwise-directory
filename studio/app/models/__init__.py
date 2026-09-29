@@ -24,6 +24,12 @@ class TagStatus(IntEnum):
     ACTIVE = 1
 
 
+class LinkStatus(IntEnum):
+    ACTIVE = 1
+    BROKEN = 2
+    DISABLED = 3
+
+
 VALID_STATUS_TRANSITIONS: dict[ProductStatus, set[ProductStatus]] = {
     ProductStatus.DRAFT: {ProductStatus.PENDING},
     ProductStatus.PENDING: {ProductStatus.DRAFT, ProductStatus.PUBLISHED},
@@ -48,13 +54,12 @@ class Category(Base):
         DateTime, server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    products: Mapped[list["Product"]] = relationship(back_populates="category")
+    products: Mapped[list["Product"]] = relationship(secondary="sd_product_category", back_populates="categories")
 
 
 class Product(Base):
     __tablename__ = "sd_product"
     __table_args__ = (
-        Index("idx_category", "category_id"),
         Index("idx_status_sort", "status", "sort_order"),
         Index("idx_featured", "featured"),
         Index("idx_published_at", "published_at"),
@@ -64,9 +69,6 @@ class Product(Base):
     slug: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
     description: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    category_id: Mapped[int | None] = mapped_column(
-        BigInteger, ForeignKey("sd_category.id", ondelete="SET NULL"), nullable=True
-    )
     pricing: Mapped[str] = mapped_column(String(20), default="free", nullable=False)
     featured: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -77,7 +79,7 @@ class Product(Base):
         DateTime, server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    category: Mapped[Category | None] = relationship(back_populates="products")
+    categories: Mapped[list[Category]] = relationship(secondary="sd_product_category", back_populates="products")
     links: Mapped[list["ProductLink"]] = relationship(back_populates="product", cascade="all, delete-orphan")
     tags: Mapped[list["Tag"]] = relationship(secondary="sd_product_tag", back_populates="products")
 
@@ -87,6 +89,7 @@ class ProductLink(Base):
     __table_args__ = (
         Index("idx_product", "product_id"),
         Index("idx_product_primary", "product_id", "is_primary"),
+        Index("idx_status", "status"),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
@@ -95,6 +98,8 @@ class ProductLink(Base):
     url_hash: Mapped[str] = mapped_column(CHAR(64), unique=True, nullable=False)
     label: Mapped[str | None] = mapped_column(String(32), nullable=True)
     is_primary: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    status: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    last_checked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
@@ -129,4 +134,17 @@ class ProductTag(Base):
         BigInteger, ForeignKey("sd_product.id", ondelete="CASCADE"), primary_key=True
     )
     tag_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("sd_tag.id", ondelete="CASCADE"), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+
+
+class ProductCategory(Base):
+    __tablename__ = "sd_product_category"
+    __table_args__ = (Index("idx_category", "category_id"),)
+
+    product_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("sd_product.id", ondelete="CASCADE"), primary_key=True
+    )
+    category_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("sd_category.id", ondelete="CASCADE"), primary_key=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)

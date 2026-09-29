@@ -7,7 +7,7 @@ const mockProduct: Product = {
   name: "Test Product",
   description: "A test product",
   url: "https://test.com",
-  categoryId: "test-cat",
+  categories: ["test-cat"],
   tags: ["test"],
   pricing: "free",
   featured: false,

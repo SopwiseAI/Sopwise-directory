@@ -43,7 +43,7 @@ description: 添加 AI 产品到目录（创建为草稿状态）
 
    可选参数（仅在用户提供时追加）:
    - `--url "https://..."` — 产品官网链接
-   - `category-id <数字ID>` — 从分类列表中选取的 ID
+   - `--category-ids 1,2,3` — 逗号分隔的分类 ID（支持多分类）
    - `--pricing <值>` — 定价模式，仅接受: `free` / `freemium` / `paid` / `opensource`
    - `--description "一句话描述"` — 产品描述
    - `--featured` — 标记为精选

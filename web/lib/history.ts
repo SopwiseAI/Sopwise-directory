@@ -178,7 +178,7 @@ export function addToHistory(product: Product): HistoryItem[] {
     name: product.name || existing?.name || product.id,
     url,
     domain: getDomain(url),
-    categoryId: product.categoryId || existing?.categoryId || "",
+    categoryId: product.categories[0] ?? existing?.categoryId ?? "",
     pricing: product.pricing ?? existing?.pricing,
     lastVisitedAt: now,
     firstVisitedAt: existing?.firstVisitedAt ?? now,

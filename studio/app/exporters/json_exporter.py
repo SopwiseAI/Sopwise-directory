@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config import get_settings
-from app.models import Category, CategoryStatus, Product, ProductStatus, TagStatus
+from app.models import Category, CategoryStatus, LinkStatus, Product, ProductStatus, TagStatus
 
 logger = logging.getLogger(__name__)
 
@@ -16,9 +16,8 @@ logger = logging.getLogger(__name__)
 async def export_to_json(session: AsyncSession) -> dict:
     settings = get_settings()
 
-    cat_map = await _build_category_slug_map(session)
     categories = await _fetch_categories(session)
-    products = await _fetch_products(session, cat_map)
+    products = await _fetch_products(session)
 
     data = {
         "categories": categories,
@@ -51,12 +50,6 @@ async def export_to_json(session: AsyncSession) -> dict:
     }
 
 
-async def _build_category_slug_map(session: AsyncSession) -> dict[int, str]:
-    stmt = select(Category.id, Category.slug).where(Category.status == CategoryStatus.ACTIVE)
-    result = await session.execute(stmt)
-    return {row.id: row.slug for row in result.all()}
-
-
 async def _fetch_categories(session: AsyncSession) -> list[dict]:
     stmt = (
         select(Category)
@@ -76,10 +69,14 @@ async def _fetch_categories(session: AsyncSession) -> list[dict]:
     ]
 
 
-async def _fetch_products(session: AsyncSession, cat_map: dict[int, str]) -> list[dict]:
+async def _fetch_products(session: AsyncSession) -> list[dict]:
     stmt = (
         select(Product)
-        .options(selectinload(Product.links), selectinload(Product.tags))
+        .options(
+            selectinload(Product.links),
+            selectinload(Product.tags),
+            selectinload(Product.categories),
+        )
         .where(Product.status == ProductStatus.PUBLISHED)
         .order_by(Product.sort_order.desc(), Product.published_at.desc())
     )
@@ -88,17 +85,20 @@ async def _fetch_products(session: AsyncSession, cat_map: dict[int, str]) -> lis
 
     products = []
     for row in rows:
-        primary_link = next((lnk for lnk in row.links if lnk.is_primary), None)
-        fallback_link = row.links[0] if row.links else None
-        link = primary_link or fallback_link
+        active_links = [lnk for lnk in row.links if lnk.status == LinkStatus.ACTIVE]
+        primary_active = next((lnk for lnk in active_links if lnk.is_primary), None)
+        fallback_active = active_links[0] if active_links else None
+        primary_any = next((lnk for lnk in row.links if lnk.is_primary), None)
+        fallback_any = row.links[0] if row.links else None
+        lnk = primary_active or fallback_active or primary_any or fallback_any
 
         products.append(
             {
                 "id": row.slug,
                 "name": row.name,
                 "description": row.description or "",
-                "url": link.url if link else "",
-                "categoryId": cat_map.get(row.category_id, "") if row.category_id else "",
+                "url": lnk.url if lnk else "",
+                "categories": [c.slug for c in row.categories],
                 "tags": [t.name for t in row.tags if t.status == TagStatus.ACTIVE],
                 "pricing": row.pricing,
                 "featured": row.featured,

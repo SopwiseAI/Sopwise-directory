@@ -41,10 +41,10 @@ async def test_export_success(async_client, tmp_path):
 async def test_export_only_includes_published(async_client, tmp_path):
     """仅已发布 (status=2) 的产品才导出。"""
     cat = await create_category(async_client, slug="cat", name="分类", icon="Bot")
-    await create_product(async_client, slug="published", name="已发布", category_id=cat["id"], status=2)
-    await create_product(async_client, slug="draft", name="草稿", category_id=cat["id"], status=0)
-    await create_product(async_client, slug="pending", name="待审核", category_id=cat["id"], status=1)
-    await create_product(async_client, slug="archived", name="已下架", category_id=cat["id"], status=3)
+    await create_product(async_client, slug="published", name="已发布", category_ids=[cat["id"]], status=2)
+    await create_product(async_client, slug="draft", name="草稿", category_ids=[cat["id"]], status=0)
+    await create_product(async_client, slug="pending", name="待审核", category_ids=[cat["id"]], status=1)
+    await create_product(async_client, slug="archived", name="已下架", category_ids=[cat["id"]], status=3)
 
     output = tmp_path / "data-dev.json"
     with patch("app.exporters.json_exporter.get_settings") as mock:
@@ -65,7 +65,7 @@ async def test_export_data_format(async_client, tmp_path):
         slug="chatgpt",
         name="ChatGPT",
         description="AI 对话助手",
-        category_id=cat["id"],
+        category_ids=[cat["id"]],
         pricing="freemium",
         featured=True,
         status=2,
@@ -95,7 +95,7 @@ async def test_export_data_format(async_client, tmp_path):
     assert prod["name"] == "ChatGPT"
     assert prod["description"] == "AI 对话助手"
     assert prod["url"] == "https://chat.openai.com"
-    assert prod["categoryId"] == "chat"
+    assert prod["categories"] == ["chat"]
     assert prod["tags"] == ["免费"]
     assert prod["pricing"] == "freemium"
     assert prod["featured"] is True

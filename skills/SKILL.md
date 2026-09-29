@@ -58,8 +58,8 @@ description: "XiGee Directory 数据管理 Skills。当用户需要添加/审核
 # 产品管理
 python skills/tools/api.py products [--status N] [--search K]   # 列出产品
 python skills/tools/api.py product <id>                         # 产品详情
-python skills/tools/api.py add-product --name <name> [--url <url>] [--category-id <id>] [--sort-order <N>]
-python skills/tools/api.py update-product <id> [--status <N>] [--name] [--slug] [--description] [--category-id] [--pricing] [--featured | --no-featured] [--sort-order <N>]
+python skills/tools/api.py add-product --name <name> [--url <url>] [--category-ids 1,2,3] [--sort-order <N>]
+python skills/tools/api.py update-product <id> [--status <N>] [--name] [--slug] [--description] [--category-ids 1,2,3] [--pricing] [--featured | --no-featured] [--sort-order <N>]
 python skills/tools/api.py delete-product <id>
 
 # 分类管理
@@ -77,9 +77,9 @@ python skills/tools/api.py delete-tag <id>
 python skills/tools/api.py tag-count <id>
 
 # 链接管理
-python skills/tools/api.py product-links <id>
-python skills/tools/api.py add-link <product_id> --url <url> [--primary]
-python skills/tools/api.py update-link <product_id> <link_id> [--url] [--label] [--primary]
+python skills/tools/api.py product-links <id> [--status {1,2,3}]
+python skills/tools/api.py add-link <product_id> --url <url> [--primary] [--status {1,2,3}]
+python skills/tools/api.py update-link <product_id> <link_id> [--url] [--label] [--primary] [--status {1,2,3}]
 python skills/tools/api.py delete-link <product_id> <link_id>
 
 # 标签关联

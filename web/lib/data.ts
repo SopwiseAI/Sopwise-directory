@@ -32,12 +32,13 @@ function assertProduct(raw: unknown): Product {
     }
   }
   const tags = Array.isArray(r.tags) ? r.tags.filter((t): t is string => typeof t === "string") : undefined
+  const categories = Array.isArray(r.categories) ? r.categories.filter((t): t is string => typeof t === "string") : []
   return {
     id,
     name: assertString(r.name, `product[${id}].name`),
     description: typeof r.description === "string" ? r.description : "",
     url: assertString(r.url, `product[${id}].url`),
-    categoryId: assertString(r.categoryId, `product[${id}].categoryId`),
+    categories,
     tags: tags && tags.length > 0 ? tags : undefined,
     pricing: pricing as Product["pricing"],
     featured: typeof r.featured === "boolean" ? r.featured : undefined,
@@ -59,8 +60,10 @@ function assertSiteData(raw: unknown): SiteData {
   for (const p of products) {
     if (productIds.has(p.id)) throw new Error(`[data] 存在重复的 product id: ${p.id}`)
     productIds.add(p.id)
-    if (!catIds.has(p.categoryId)) {
-      throw new Error(`[data] 产品 "${p.id}" 引用了不存在的 categoryId "${p.categoryId}"`)
+    for (const cid of p.categories) {
+      if (!catIds.has(cid)) {
+        throw new Error(`[data] 产品 "${p.id}" 引用了不存在的 categoryId "${cid}"`)
+      }
     }
   }
   return { categories, products }
@@ -85,14 +88,16 @@ export function getFeaturedProducts(): readonly Product[] {
 }
 
 export function getProductsByCategory(categoryId: string): readonly Product[] {
-  return siteData.products.filter((p) => p.categoryId === categoryId)
+  return siteData.products.filter((p) => p.categories.includes(categoryId))
 }
 
 /** categoryId → 已发布产品数，供 sidebar/nav/footer 共用。 */
 export function getCategoryCounts(): Record<string, number> {
   const counts: Record<string, number> = {}
   for (const p of siteData.products) {
-    counts[p.categoryId] = (counts[p.categoryId] ?? 0) + 1
+    for (const cid of p.categories) {
+      counts[cid] = (counts[cid] ?? 0) + 1
+    }
   }
   return counts
 }

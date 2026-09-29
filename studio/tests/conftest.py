@@ -26,7 +26,14 @@ engine.echo = False
 logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
-_TABLES = ["sd_product_tag", "sd_product_link", "sd_product", "sd_category", "sd_tag"]
+_TABLES = [
+    "sd_product_tag",
+    "sd_product_category",
+    "sd_product_link",
+    "sd_product",
+    "sd_category",
+    "sd_tag",
+]
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -100,7 +107,7 @@ async def create_product(
     slug: str = "test-product",
     name: str = "测试产品",
     description: str | None = None,
-    category_id: int | None = None,
+    category_ids: list[int] | None = None,
     pricing: str = "free",
     featured: bool = False,
     sort_order: int = 0,
@@ -118,8 +125,8 @@ async def create_product(
     }
     if description is not None:
         payload["description"] = description
-    if category_id is not None:
-        payload["category_id"] = category_id
+    if category_ids:
+        payload["category_ids"] = category_ids
     if links:
         payload["links"] = links
     if tag_ids:

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,12 +12,15 @@ router = APIRouter()
 
 
 @router.get("/{product_id}/links", response_model=list[ProductLinkResponse])
-async def list_product_links(product_id: int, db: AsyncSession = Depends(get_db)) -> list[ProductLink]:
-    stmt = (
-        select(ProductLink)
-        .where(ProductLink.product_id == product_id)
-        .order_by(ProductLink.sort_order.desc(), ProductLink.id)
-    )
+async def list_product_links(
+    product_id: int,
+    status_filter: int | None = Query(None, alias="status"),
+    db: AsyncSession = Depends(get_db),
+) -> list[ProductLink]:
+    stmt = select(ProductLink).where(ProductLink.product_id == product_id)
+    if status_filter is not None:
+        stmt = stmt.where(ProductLink.status == status_filter)
+    stmt = stmt.order_by(ProductLink.sort_order.desc(), ProductLink.id)
     result = await db.execute(stmt)
     return list(result.scalars().all())
 
@@ -57,6 +60,7 @@ async def add_product_link(product_id: int, data: ProductLinkCreate, db: AsyncSe
         url_hash=new_hash,
         label=data.label,
         is_primary=data.is_primary,
+        status=data.status,
         sort_order=data.sort_order,
     )
     db.add(link)

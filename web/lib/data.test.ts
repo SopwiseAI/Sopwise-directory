@@ -21,10 +21,12 @@ describe("数据完整性不变式", () => {
     expect(new Set(ids).size).toBe(ids.length)
   })
 
-  it("所有 product.categoryId 都引用了已存在的 category", () => {
+  it("所有 product.categories 都引用了已存在的 category", () => {
     const catIds = new Set(categories.map((c) => c.id))
     for (const p of products) {
-      expect(catIds.has(p.categoryId)).toBe(true)
+      for (const cid of p.categories) {
+        expect(catIds.has(cid)).toBe(true)
+      }
     }
   })
 
@@ -58,7 +60,7 @@ describe("getProductsByCategory", () => {
   it("returns products matching categoryId", () => {
     const cat = getAllCategories()[0]
     const list = getProductsByCategory(cat.id)
-    for (const p of list) expect(p.categoryId).toBe(cat.id)
+    for (const p of list) expect(p.categories).toContain(cat.id)
   })
 
   it("returns empty for unknown categoryId", () => {

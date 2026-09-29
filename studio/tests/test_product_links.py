@@ -13,6 +13,8 @@ async def test_add_link(async_client):
     assert link["label"] == "主站"
     assert "id" in link
     assert link["product_id"] == product["id"]
+    assert link["status"] == 1
+    assert link["last_checked_at"] is None
 
 
 @pytest.mark.asyncio
@@ -113,3 +115,71 @@ async def test_add_link_to_nonexistent_product(async_client):
         json={"url": "https://example.com"},
     )
     assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_update_link_status(async_client):
+    product = await create_product(async_client, slug="p1", name="P1")
+    link = await create_link(async_client, product["id"], url="https://example.com")
+    resp = await async_client.put(
+        f"/api/v1/products/{product['id']}/links/{link['id']}",
+        json={"status": 2},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["status"] == 2
+
+
+@pytest.mark.asyncio
+async def test_list_links_filter_by_status(async_client):
+    product = await create_product(async_client, slug="p1", name="P1")
+    await create_link(async_client, product["id"], url="https://a.com")
+    await create_link(async_client, product["id"], url="https://b.com", is_primary=True)
+    resp = await async_client.get(f"/api/v1/products/{product['id']}/links?status=1")
+    assert resp.status_code == 200
+    assert len(resp.json()) == 2
+
+
+@pytest.mark.asyncio
+async def test_export_skips_broken_primary_link(async_client):
+    """导出时主链接失效 → 回退到第一个正常链接。"""
+    from tests.conftest import create_category
+
+    cat = await create_category(async_client, slug="cat", name="分类")
+    product = await create_product(
+        async_client,
+        slug="broken-primary",
+        name="失效主链接产品",
+        category_ids=[cat["id"]],
+        status=2,
+        links=[
+            {"url": "https://secondary.com", "is_primary": False},
+            {"url": "https://primary.com", "is_primary": True},
+        ],
+    )
+
+    primary_link = next(lnk for lnk in product["links"] if lnk["is_primary"])
+    await async_client.put(
+        f"/api/v1/products/{product['id']}/links/{primary_link['id']}",
+        json={"status": 2},
+    )
+
+    import json
+    import os
+    import tempfile
+    from pathlib import Path
+    from unittest.mock import patch
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output = Path(os.path.join(tmpdir, "data-dev.json"))
+        with patch("app.exporters.json_exporter.get_settings") as mock:
+            settings = mock.return_value
+            settings.export_full_path = output
+            settings.app_env = "dev"
+            resp = await async_client.post("/api/v1/export")
+
+        assert resp.status_code == 200
+
+        with open(output, encoding="utf-8") as f:
+            exported = json.load(f)
+        prod = exported["products"][0]
+        assert prod["url"] == "https://secondary.com"
