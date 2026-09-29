@@ -1,7 +1,10 @@
 import hashlib
 from urllib.parse import urlsplit, urlunsplit
 
+from url_normalize import url_normalize
+
 _LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "::1", "0.0.0.0"})
+_DEFAULT_PORTS = frozenset({80, 443})
 
 
 class InvalidURLError(ValueError):
@@ -13,34 +16,33 @@ def normalize_url(raw_url: str) -> str:
     if not url:
         return ""
 
-    parsed = urlsplit(url)
-
-    host = parsed.hostname or ""
-    host = host.lower()
-    if host.startswith("www."):
-        host = host[4:]
-
     try:
+        parsed = urlsplit(url)
+        host = (parsed.hostname or "").lower()
         port = parsed.port
     except ValueError:
-        raise InvalidURLError(f"Invalid port in URL: {raw_url}") from None
+        raise InvalidURLError(f"Invalid URL: {raw_url}") from None
 
+    if host.startswith("www."):
+        host = host[4:]
     scheme = "http" if host in _LOCAL_HOSTS else "https"
 
-    if port and port not in (80, 443):
-        host = f"{host}:{port}"
+    netloc = f"[{host}]" if ":" in host else host
+    if port and port not in _DEFAULT_PORTS:
+        netloc = f"{netloc}:{port}"
 
-    path = "/" if parsed.path == "/" or not parsed.path else parsed.path.rstrip("/")
+    clean = urlunsplit((scheme, netloc, parsed.path or "/", parsed.query, ""))
+    try:
+        normalized = url_normalize(clean)
+    except ValueError:
+        raise InvalidURLError(f"Invalid URL: {raw_url}") from None
 
-    if parsed.query:
-        pairs = parsed.query.split("&")
-        query = "&".join(sorted(pairs))
-    else:
-        query = ""
+    scheme, netloc, path, query, _ = urlsplit(normalized)
 
-    fragment = ""
+    path = "/" if path == "/" or not path else path.rstrip("/")
+    query = "&".join(sorted(query.split("&"))) if query else ""
 
-    return urlunsplit((scheme, host, path, query, fragment))
+    return urlunsplit((scheme, netloc, path, query, ""))
 
 
 def url_hash(raw_url: str) -> str:

@@ -91,13 +91,19 @@ CREATE TABLE IF NOT EXISTS sd_product_category (
 -- 4、产品链接表（1:N，一个产品多个链接）
 --
 -- URL 归一化规则（应用层实现，hash 基于归一化后的 URL 计算）:
---   1. 强制 https（http:// → https://）
+--   1. 强制 https（localhost/127.0.0.1/::1/0.0.0.0 → http）
 --   2. 域名转小写
 --   3. 去掉 www. 前缀
---   4. 去掉默认端口（:443 / :80）
+--   4. 去掉默认端口（:443 / :80），其余端口保留
 --   5. 去掉尾部 /（根路径除外）
 --   6. 去掉 fragment（#...）
---   示例: http://www.Example.com:443/foo/#top → https://example.com/foo
+--   7. 去掉 userinfo（user:pass@ 前缀）
+--   8. 解析 dot-segment（/a/../b → /b）
+--   9. 归一化 percent-encoding（%7E → ~，%2f → %2F）
+--  10. 折叠多斜杠（//foo → /foo）
+--  11. query 参数排序
+--  (7-10 及 IPv6 方括号由 url-normalize 库处理)
+-- 示例: http://www.Example.com:443/foo/#top → https://example.com/foo
 --
 -- url 列存原始 URL（用户输入的完整地址），url_hash 存归一化后 SHA-256
 -- is_primary 唯一性由应用层保证（每个产品至多一个 is_primary=1）

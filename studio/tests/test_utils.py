@@ -95,6 +95,65 @@ class TestNormalizeUrl:
         result = normalize_url("example.com/foo")
         assert "example.com" in result
 
+    # -- url_normalize 库提供的能力 -------------------------------------------
+
+    def test_dot_segment_resolved(self):
+        """/a/../b -> /b, /a/./b -> /a/b."""
+        assert normalize_url("https://example.com/a/../b") == "https://example.com/b"
+        assert normalize_url("https://example.com/a/./b") == "https://example.com/a/b"
+
+    def test_percent_encoding_unreserved_decoded(self):
+        """非保留字符 decode: %7E -> ~."""
+        assert normalize_url("https://example.com/%7e") == "https://example.com/~"
+        assert normalize_url("https://example.com/%7E") == "https://example.com/~"
+        assert normalize_url("https://example.com/foo%7E") == "https://example.com/foo~"
+
+    def test_percent_encoding_consistency(self):
+        """大小写不同的 percent-encoding 应归一化到同一结果."""
+        assert url_hash("https://example.com/%7e") == url_hash("https://example.com/%7E")
+
+    def test_ipv6_localhost(self):
+        """IPv6 localhost 应使用 http."""
+        assert normalize_url("http://[::1]:8000/") == "http://[::1]:8000/"
+
+    def test_ipv6_remote(self):
+        """IPv6 远程地址应使用 https."""
+        assert normalize_url("https://[2001:db8::1]/path") == "https://[2001:db8::1]/path"
+
+    def test_multi_slash_collapsed(self):
+        """多斜杠折叠: //foo -> /foo."""
+        assert normalize_url("https://example.com//foo") == "https://example.com/foo"
+        assert normalize_url("https://example.com/foo//bar") == "https://example.com/foo/bar"
+
+    def test_userinfo_stripped(self):
+        """userinfo (user:pass@) 应被剥离."""
+        assert normalize_url("https://user:pass@example.com/") == "https://example.com/"
+        assert normalize_url("https://user@example.com/foo") == "https://example.com/foo"
+
+    def test_userinfo_hash_consistency(self):
+        """带不带 userinfo 应产生相同 hash."""
+        assert url_hash("https://user:pass@example.com/") == url_hash("https://example.com/")
+
+    def test_invalid_ipv6_raises(self):
+        """非法 IPv6 地址应抛 InvalidURLError."""
+        with pytest.raises(InvalidURLError):
+            normalize_url("https://[::g]/")
+
+    def test_error_message_generic(self):
+        """异常消息不应透传 url_normalize 内部细节, 应为 'Invalid URL: ...'."""
+        with pytest.raises(InvalidURLError) as exc_info:
+            normalize_url("https://[::g]/")
+        assert "Invalid URL:" in str(exc_info.value)
+        assert "IPv4" not in str(exc_info.value)
+        assert "IPv6" not in str(exc_info.value)
+
+    def test_error_message_port_generic(self):
+        """端口异常消息也应为 'Invalid URL: ...'."""
+        with pytest.raises(InvalidURLError) as exc_info:
+            normalize_url("https://example.com:abc/path")
+        assert "Invalid URL:" in str(exc_info.value)
+        assert "port" not in str(exc_info.value).lower()
+
 
 # -- url_hash --------------------------------------------------------------------
 
@@ -112,6 +171,10 @@ class TestUrlHash:
 
     def test_query_order_consistency(self):
         assert url_hash("https://example.com?a=1&b=2") == url_hash("https://example.com?b=2&a=1")
+
+    def test_dot_segment_consistency(self):
+        """dot-segment 解析后相同的 URL 应产生相同 hash."""
+        assert url_hash("https://example.com/a/../b") == url_hash("https://example.com/b")
 
     def test_different_urls_different_hash(self):
         assert url_hash("https://example.com") != url_hash("https://example.org")
