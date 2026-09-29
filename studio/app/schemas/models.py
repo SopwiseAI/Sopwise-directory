@@ -35,7 +35,7 @@ class CategoryResponse(CategoryBase):
 
 class ProductLinkBase(BaseModel):
     url: str = Field(..., max_length=2048, pattern="^https?://.+")
-    label: str | None = Field(None, max_length=32)
+    label: str | None = Field(None, max_length=64)
     is_primary: bool = False
     status: int = Field(1, ge=1, le=3)
     sort_order: int = 0
@@ -47,7 +47,7 @@ class ProductLinkCreate(ProductLinkBase):
 
 class ProductLinkUpdate(BaseModel):
     url: str | None = Field(None, max_length=2048, pattern="^https?://.+")
-    label: str | None = Field(None, max_length=32)
+    label: str | None = Field(None, max_length=64)
     is_primary: bool | None = None
     status: int | None = Field(None, ge=1, le=3)
     sort_order: int | None = None

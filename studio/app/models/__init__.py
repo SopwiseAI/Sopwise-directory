@@ -96,7 +96,7 @@ class ProductLink(Base):
     product_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("sd_product.id", ondelete="CASCADE"), nullable=False)
     url: Mapped[str] = mapped_column(String(2048), nullable=False)
     url_hash: Mapped[str] = mapped_column(CHAR(64), unique=True, nullable=False)
-    label: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    label: Mapped[str | None] = mapped_column(String(64), nullable=True)
     is_primary: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     status: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     last_checked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

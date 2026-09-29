@@ -21,9 +21,7 @@
 --   4. 审计字段: created_at / updated_at / published_at
 --   5. 分类产品数不冗余存储，用查询实时统计
 --   6. 链接唯一性通过 url_hash 保证，归一化规则见 sd_product_link 注释
---   7. is_primary（每个产品至多一个主链接）由数据库生成列 + 唯一索引保证
---      MySQL 5.7 兼容: 生成列+唯一索引与 FK 冲突且无法建触发器，
---      降级为应用层保证 + 唯一索引 (product_id, is_primary) 用于查询加速
+--   7. is_primary（每个产品至多一个主链接）由应用层保证，索引 (product_id, is_primary) 用于查询加速
 --   8. 链接状态: 1=正常 2=已失效 3=手动禁用（仅 status=1 导出）
 --   9. 引擎 InnoDB, 字符集 utf8mb4
 -- ============================================================================
@@ -36,8 +34,8 @@ CREATE TABLE IF NOT EXISTS sd_category (
   id          BIGINT       NOT NULL AUTO_INCREMENT,
   slug        VARCHAR(64)  NOT NULL              COMMENT 'URL 友好标识（如 chat-assistant）',
   name        VARCHAR(64)  NOT NULL              COMMENT '分类名称（如：对话助手）',
-  icon        VARCHAR(64)  NOT NULL              COMMENT 'Lucide 图标名（如 MessageSquare）',
-  description VARCHAR(500) DEFAULT NULL          COMMENT '分类描述（不导出）',
+  icon        VARCHAR(64)  DEFAULT NULL          COMMENT 'Lucide 图标名（如 MessageSquare，为空时前端显示占位图标）',
+  description VARCHAR(500) DEFAULT NULL          COMMENT '分类描述',
   sort_order  INT          NOT NULL DEFAULT 0    COMMENT '排序权重（越大越靠前）',
   status      TINYINT      NOT NULL DEFAULT 1    COMMENT '0=禁用 1=启用',
   created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -102,8 +100,7 @@ CREATE TABLE IF NOT EXISTS sd_product_category (
 --   示例: http://www.Example.com:443/foo/#top → https://example.com/foo
 --
 -- url 列存原始 URL（用户输入的完整地址），url_hash 存归一化后 SHA-256
--- is_primary 唯一性由生成列 + 唯一索引在数据库层保证（每个产品至多一个 is_primary=1）
--- MySQL 5.7 兼容: 生成列+唯一索引与 FK 冲突，降级为应用层保证
+-- is_primary 唯一性由应用层保证（每个产品至多一个 is_primary=1）
 -- status: 1=正常 2=已失效 3=手动禁用（仅 status=1 导出到前端）
 -- last_checked_at: 上次链接检测时间（NULL=从未检测）
 -- ----------------------------------------------------------------------------
@@ -111,20 +108,19 @@ CREATE TABLE IF NOT EXISTS sd_product_link (
   id          BIGINT       NOT NULL AUTO_INCREMENT,
   product_id  BIGINT       NOT NULL              COMMENT '所属产品 ID',
   url         VARCHAR(2048) NOT NULL             COMMENT '链接地址（原始 URL，完整保留）',
-  url_hash    CHAR(64)     NOT NULL              COMMENT 'SHA-256(归一化URL)，用于全局唯一约束',
-  label       VARCHAR(32)  DEFAULT NULL          COMMENT '链接标签（主站/API/文档/GitHub 等）',
-  is_primary  TINYINT(1)   NOT NULL DEFAULT 0    COMMENT '是否主链接（每个产品至多一个，应用层保证 - MySQL 5.7 不支持 DB 层生成列+唯一索引）',
+  url_hash    CHAR(64)     NOT NULL              COMMENT 'SHA-256(归一化URL)，用于产品内唯一约束',
+  label       VARCHAR(64)  DEFAULT NULL          COMMENT '链接标签：Website API Docs GitHub Playground Pricing Plugin Other',
+  is_primary  TINYINT(1)   NOT NULL DEFAULT 0    COMMENT '是否主链接（每个产品至多一个，应用层保证）',
   status      TINYINT      NOT NULL DEFAULT 1    COMMENT '1=正常 2=已失效 3=手动禁用',
   last_checked_at DATETIME DEFAULT NULL           COMMENT '上次链接检测时间',
   sort_order  INT          NOT NULL DEFAULT 0    COMMENT '排序权重',
   created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新',
-  primary_marker BIGINT GENERATED ALWAYS AS (IF(is_primary = 1, product_id, NULL)) STORED,
   PRIMARY KEY (id),
-  UNIQUE KEY uk_url_hash (url_hash),
-  UNIQUE KEY uk_product_primary (primary_marker),
+  UNIQUE KEY uk_product_url (product_id, url_hash),
   KEY idx_product (product_id),
   KEY idx_product_primary (product_id, is_primary),
+  KEY idx_product_sort (product_id, sort_order),
   KEY idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品链接表';
 
