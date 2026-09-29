@@ -1,7 +1,7 @@
 import hashlib
 from urllib.parse import urlsplit, urlunsplit
 
-_LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "::1", "0.0.0.0"})  # noqa: S104
+_LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "::1", "0.0.0.0"})
 
 
 def normalize_url(raw_url: str) -> str:

@@ -8,6 +8,7 @@ dependencies = [
     "uvicorn[standard]>=0.34.0",
     "sqlalchemy[asyncio]>=2.0.36",
     "aiomysql>=0.2.0",
+    "pydantic>=2.0.0",
     "pydantic-settings>=2.7.0",
 ]
 
@@ -32,12 +33,13 @@ target-version = "py313"
 line-length = 120
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "N", "W", "UP", "B", "S", "C4", "RET", "SIM"]
-ignore = ["S101", "S311"]
+select = ["E", "F", "I", "N", "W", "UP", "B", "S", "C4", "RET", "SIM", "RUF", "T20"]
+ignore = []
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S", "B"]
+"tests/**" = ["S", "B", "RUF002", "RUF003"]
 "app/api/**" = ["B008"]
+"app/utils/url.py" = ["S104"]
 
 [tool.ruff.format]
 quote-style = "double"
