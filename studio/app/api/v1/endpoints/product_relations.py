@@ -78,6 +78,19 @@ async def update_product_relation(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="关联不存在")
 
     update_data = data.model_dump(exclude_unset=True)
+
+    if "relation_type" in update_data and update_data["relation_type"] != relation.relation_type:
+        existing = await db.execute(
+            select(ProductRelation).where(
+                ProductRelation.product_id == product_id,
+                ProductRelation.related_id == relation.related_id,
+                ProductRelation.relation_type == update_data["relation_type"],
+                ProductRelation.id != relation_id,
+            )
+        )
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="该关联已存在")
+
     for key, value in update_data.items():
         setattr(relation, key, value)
 
