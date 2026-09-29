@@ -1,6 +1,6 @@
 import { getAllProducts } from "@/lib/data"
 import { ProductBrowser } from "@/components/product/product-browser"
-import { BrandShowcase } from "@/components/layout/brand-showcase"
+import { BrandShowcase } from "@/components/brand/brand-showcase"
 
 const products = getAllProducts()
 

@@ -87,3 +87,30 @@ export function getFeaturedProducts(): readonly Product[] {
 export function getProductsByCategory(categoryId: string): readonly Product[] {
   return siteData.products.filter((p) => p.categoryId === categoryId)
 }
+
+/** categoryId → 已发布产品数，供 sidebar/nav/footer 共用。 */
+export function getCategoryCounts(): Record<string, number> {
+  const counts: Record<string, number> = {}
+  for (const cat of siteData.categories) {
+    counts[cat.id] = 0
+  }
+  for (const p of siteData.products) {
+    if (p.categoryId in counts) counts[p.categoryId]++
+  }
+  return counts
+}
+
+export interface SiteStats {
+  products: number
+  categories: number
+  featured: number
+}
+
+/** 站点统计：供 settings/brand-showcase 共用。 */
+export function getStats(): SiteStats {
+  return {
+    products: siteData.products.length,
+    categories: siteData.categories.length,
+    featured: siteData.products.filter((p) => p.featured).length
+  }
+}
