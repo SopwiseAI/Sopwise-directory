@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, vi } from "vitest"
 import { CATEGORY_ICONS, categoryIconNode } from "./category-icon-node"
 import data from "@/data/data.json"
 import type { SiteData } from "./types"
@@ -11,8 +11,11 @@ describe("categoryIconNode", () => {
     expect(node).not.toBeNull()
   })
 
-  it("returns null for unknown icon name", () => {
+  it("returns null and warns for unknown icon name", () => {
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {})
     expect(categoryIconNode("NonExistent")).toBeNull()
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining("未知图标名"))
+    spy.mockRestore()
   })
 
   it("all category icons in data.json exist in iconMap", () => {

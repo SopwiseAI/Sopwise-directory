@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { getProductDate, productHistoryAttrs } from "./product-utils"
+import { getProductDate, productHistoryAttrs } from "./product"
 import type { Product } from "./types"
 
 const mockProduct: Product = {

@@ -21,12 +21,11 @@ export interface HistoryGroup {
   items: HistoryItem[]
 }
 
-const STORAGE_KEY = "xigee:history"
-/** 存储结构版本：1 = 裸数组（旧），2 = 版本化信封。 */
+const PREFIX = process.env.NEXT_PUBLIC_STORAGE_PREFIX || "xigee"
+const STORAGE_KEY = `${PREFIX}:history`
 const SCHEMA_VERSION = 2
-/** 保留上限 500 条：覆盖长期使用，超出自动淘汰最旧条目（见 persist）。 */
-const MAX_ITEMS = 500
-const NAV_EVENT = "xigee:history-change"
+const MAX_ITEMS = Number(process.env.NEXT_PUBLIC_HISTORY_MAX_ITEMS) || 500
+const NAV_EVENT = `${PREFIX}:history-change`
 const VALID_PRICING: ReadonlySet<string> = new Set(PRICINGS)
 
 interface Envelope {

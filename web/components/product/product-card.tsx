@@ -1,6 +1,6 @@
 import type { Product } from "@/lib/types"
 import { getDomain } from "@/lib/url"
-import { getProductDate, productHistoryAttrs } from "@/lib/product-utils"
+import { getProductDate, productHistoryAttrs } from "@/lib/product"
 import { formatDate } from "@/lib/format"
 import { Badge } from "@/components/ui/badge"
 import { PricingBadge } from "@/components/product/pricing-badge"

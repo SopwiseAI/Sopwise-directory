@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useSyncExternalStore } from "react"
 import type { Product } from "@/lib/types"
-import { getProductDate } from "@/lib/product-utils"
+import { getProductDate } from "@/lib/product"
 import { ProductRow } from "@/components/product/product-row"
 import { ProductCard } from "@/components/product/product-card"
 import { ProductToolbar, type TabMode, type SortMode, type ViewMode } from "@/components/product/product-toolbar"

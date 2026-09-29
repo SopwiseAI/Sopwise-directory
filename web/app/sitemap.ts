@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next"
 import { getAllCategories, getAllProducts } from "@/lib/data"
-import { getProductDate } from "@/lib/product-utils"
+import { getProductDate } from "@/lib/product"
 import { getBaseUrl } from "@/lib/utils"
 
 export default function sitemap(): MetadataRoute.Sitemap {
