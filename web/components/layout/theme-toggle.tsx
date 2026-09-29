@@ -3,59 +3,15 @@
 import { useSyncExternalStore } from "react"
 import { Monitor, Moon, Sun } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { getTheme, setTheme, subscribeTheme, type ThemeMode } from "@/lib/theme"
 
-export type ThemeMode = "light" | "dark" | "system"
-
-function mediaDark() {
-  if (typeof window === "undefined") return false
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-}
-
-function getTheme(): ThemeMode {
-  if (typeof window === "undefined") return "system"
-  const t = localStorage.getItem("theme")
-  return t === "light" || t === "dark" || t === "system" ? t : "system"
-}
-
-function applyMetaThemeColor(dark: boolean) {
-  const meta = document.querySelector('meta[name="theme-color"]')
-  if (meta) meta.setAttribute("content", dark ? "#0f1114" : "#fafafb")
-}
-
-function applyTheme(theme: ThemeMode) {
-  const dark = theme === "dark" || (theme === "system" && mediaDark())
-  document.documentElement.classList.toggle("dark", dark)
-  applyMetaThemeColor(dark)
-  localStorage.setItem("theme", theme)
-}
-
-function subscribe(callback: () => void) {
-  const media = window.matchMedia("(prefers-color-scheme: dark)")
-  const handler = (e: StorageEvent) => {
-    if (e.key === "theme") callback()
-  }
-  const mediaHandler = () => {
-    // system 模式下跟随系统切换时同步浏览器主题色
-    const t = localStorage.getItem("theme")
-    if (t === "system") applyMetaThemeColor(media.matches)
-    callback()
-  }
-  media.addEventListener("change", mediaHandler)
-  window.addEventListener("storage", handler)
-  return () => {
-    media.removeEventListener("change", mediaHandler)
-    window.removeEventListener("storage", handler)
-  }
-}
+export type { ThemeMode }
 
 export function useTheme(): ThemeMode {
-  return useSyncExternalStore(subscribe, getTheme, () => "system" as ThemeMode)
+  return useSyncExternalStore(subscribeTheme, getTheme, () => "system" as ThemeMode)
 }
 
-export function setTheme(theme: ThemeMode) {
-  applyTheme(theme)
-  window.dispatchEvent(new StorageEvent("storage", { key: "theme" }))
-}
+export { setTheme }
 
 /** 单按钮循环切换（亮 → 暗 → 系统 → 亮），折叠态使用 */
 export default function ThemeToggle() {

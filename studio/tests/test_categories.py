@@ -117,7 +117,7 @@ async def test_delete_category_empty(async_client):
 @pytest.mark.asyncio
 async def test_delete_category_with_products_rejected(async_client):
     cat = await create_category(async_client, slug="has-prod", name="有产品")
-    await create_product(async_client, slug="prod-1", name="产品1", category_id=cat["id"])
+    await create_product(async_client, slug="prod-1", name="产品1", category_ids=[cat["id"]])
     resp = await async_client.delete(f"/api/v1/categories/{cat['id']}")
     assert resp.status_code == 409
     assert "products" in resp.json()["detail"]
@@ -126,9 +126,9 @@ async def test_delete_category_with_products_rejected(async_client):
 @pytest.mark.asyncio
 async def test_category_product_count(async_client):
     cat = await create_category(async_client, slug="count-cat", name="计数")
-    await create_product(async_client, slug="p1", name="P1", category_id=cat["id"], status=2)
-    await create_product(async_client, slug="p2", name="P2", category_id=cat["id"], status=2)
-    await create_product(async_client, slug="p3", name="P3", category_id=cat["id"], status=1)
+    await create_product(async_client, slug="p1", name="P1", category_ids=[cat["id"]], status=2)
+    await create_product(async_client, slug="p2", name="P2", category_ids=[cat["id"]], status=2)
+    await create_product(async_client, slug="p3", name="P3", category_ids=[cat["id"]], status=1)
     resp = await async_client.get(f"/api/v1/categories/{cat['id']}/count")
     assert resp.status_code == 200
     data = resp.json()

@@ -18,7 +18,7 @@
     "mysql-dev": {
       "type": "local",
       "command": ["bash", "scripts/mcp-mysql.sh"],
-      "environment": { "APP_ENV": "dev", "MYSQL_ALLOW_WRITE": "false" },
+      "environment": { "APP_ENV": "dev", "MYSQL_ALLOW_WRITE": "true" },
       "timeout": 10000
     },
     "mysql-sit": {

@@ -1,11 +1,10 @@
 "use client"
 
 import { useEffect } from "react"
-import type { Product } from "@/lib/types"
+import { PRICINGS, type Product } from "@/lib/types"
 import { addToHistory } from "@/lib/history"
-import type { Pricing } from "@/lib/types"
 
-const VALID_PRICING = new Set<string>(["free", "freemium", "paid", "opensource"])
+const VALID_PRICING = new Set<string>(PRICINGS)
 
 /**
  * 全局历史捕捉器：事件委托监听所有带 data-history-* 的产品链接点击，
@@ -27,11 +26,11 @@ export function HistoryTracker() {
         id,
         name: link.dataset.historyName ?? id,
         url: link.dataset.historyUrl ?? "",
-        categoryId: link.dataset.historyCategory ?? "",
+        categories: link.dataset.historyCategory ? [link.dataset.historyCategory] : [],
         description: "",
-        publishedAt: "",
-        pricing: (VALID_PRICING.has(link.dataset.historyPricing ?? "") ? link.dataset.historyPricing : undefined) as
-          Pricing | undefined
+        pricing: VALID_PRICING.has(link.dataset.historyPricing ?? "")
+          ? (link.dataset.historyPricing as Product["pricing"])
+          : undefined
       }
       addToHistory(product)
     }

@@ -9,8 +9,8 @@ import { formatCount } from "@/lib/format"
 import type { Product } from "@/lib/types"
 
 interface SearchResultsProps {
-  products: Product[]
-  featured: Product[]
+  products: readonly Product[]
+  featured: readonly Product[]
   suggestions: string[]
 }
 

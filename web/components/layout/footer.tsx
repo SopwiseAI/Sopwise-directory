@@ -1,11 +1,10 @@
 import Link from "next/link"
-import { getAllProducts, getAllCategories } from "@/lib/data"
-import { BrandMark } from "@/components/layout/brand-mark"
+import { getStats } from "@/lib/data"
+import { BrandMark } from "@/components/brand/brand-mark"
 import { formatCount } from "@/lib/format"
 import pkg from "@/package.json"
 
-const totalProducts = getAllProducts().length
-const totalCategories = getAllCategories().length
+const stats = getStats()
 const appVersion = pkg.version
 
 export default function Footer() {
@@ -25,7 +24,7 @@ export default function Footer() {
           <span className="font-data text-xs text-muted-foreground/60">v{appVersion}</span>
           <span className="hidden text-xs text-muted-foreground/40 sm:inline">·</span>
           <span className="hidden font-data text-xs text-muted-foreground/60 sm:inline">
-            {formatCount(totalProducts)} 产品 · {formatCount(totalCategories)} 分类
+            {formatCount(stats.products)} 产品 · {formatCount(stats.categories)} 分类
           </span>
           <span className="text-xs text-muted-foreground/40">·</span>
           <span className="font-data text-xs text-muted-foreground/60">&copy; {new Date().getFullYear()}</span>

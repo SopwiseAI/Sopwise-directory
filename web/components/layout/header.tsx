@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense } from "react"
 import { cn } from "@/lib/utils"
 import ThemeToggle from "./theme-toggle"
-import { BrandMark } from "./brand-mark"
+import { BrandMark } from "@/components/brand/brand-mark"
 
 function MobileSearchInput({ defaultValue, onClose }: { defaultValue: string; onClose: () => void }) {
   const [value, setValue] = useState(defaultValue)
@@ -41,7 +41,7 @@ function MobileSearchInput({ defaultValue, onClose }: { defaultValue: string; on
           autoComplete="off"
           placeholder="搜索 AI 产品…"
           value={value}
-          onChange={e => setValue(e.target.value)}
+          onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
           className="h-8 w-full rounded-md border border-border bg-card pl-8 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
         />
@@ -61,7 +61,7 @@ function HeaderInner({ className }: { className?: string }) {
 
   const handleSearchClose = () => {
     setSearchOpen(false)
-    setSearchResetKey(k => k + 1)
+    setSearchResetKey((k) => k + 1)
   }
 
   return (

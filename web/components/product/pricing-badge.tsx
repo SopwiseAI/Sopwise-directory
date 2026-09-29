@@ -9,22 +9,22 @@ export interface PricingStyle {
 /** 价格 → 状态徽章（mono 语义色） */
 export const pricingStyles: Record<Pricing, PricingStyle> = {
   free: {
-    label: "FREE",
+    label: "免费",
     className: "bg-chart-3/10 text-chart-3 border-chart-3/20",
     dotClass: "bg-chart-3"
   },
   freemium: {
-    label: "FREEMIUM",
+    label: "免费+付费",
     className: "bg-chart-1/10 text-chart-1 border-chart-1/20",
     dotClass: "bg-chart-1"
   },
   paid: {
-    label: "PAID",
+    label: "付费",
     className: "bg-chart-5/10 text-chart-5 border-chart-5/20",
     dotClass: "bg-chart-5"
   },
   opensource: {
-    label: "OPEN SOURCE",
+    label: "开源",
     className: "bg-chart-4/10 text-chart-4 border-chart-4/20",
     dotClass: "bg-chart-4"
   }

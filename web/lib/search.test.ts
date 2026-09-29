@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest"
-import { createSearchIndex } from "./search"
+import { describe, it, expect, afterEach, vi } from "vitest"
+import { createSearchIndex, resolveThreshold } from "./search"
 import type { Product } from "./types"
 
 const mockProducts: Product[] = [
@@ -8,7 +8,7 @@ const mockProducts: Product[] = [
     name: "ChatGPT",
     description: "AI 对话助手",
     url: "https://chat.openai.com",
-    categoryId: "chat-assistant",
+    categories: ["chat-assistant"],
     tags: ["AI", "对话"],
     pricing: "freemium",
     featured: true,
@@ -19,18 +19,18 @@ const mockProducts: Product[] = [
     name: "Midjourney",
     description: "AI 图像生成",
     url: "https://midjourney.com",
-    categoryId: "image-generation",
+    categories: ["image-generation"],
     tags: ["AI", "图像"],
     pricing: "paid",
     featured: false,
-    createdAt: "2022-07-01"
+    createdAt: "2pt02-07-01"
   },
   {
     id: "3",
     name: "GitHub Copilot",
     description: "AI 代码助手",
     url: "https://github.com/copilot",
-    categoryId: "code-tools",
+    categories: ["code-tools"],
     tags: ["AI", "代码"],
     pricing: "paid",
     featured: true,
@@ -62,5 +62,29 @@ describe("createSearchIndex", () => {
   it("returns empty for no match", () => {
     const results = index.search("zzznomatch")
     expect(results.length).toBe(0)
+  })
+})
+
+describe("resolveThreshold", () => {
+  afterEach(() => vi.unstubAllEnvs())
+
+  it("returns default 0.3 when env unset", () => {
+    vi.stubEnv("NEXT_PUBLIC_SEARCH_THRESHOLD", "")
+    expect(resolveThreshold()).toBe(0.3)
+  })
+
+  it("respects 0 (regression: || would coerce to 0.3)", () => {
+    vi.stubEnv("NEXT_PUBLIC_SEARCH_THRESHOLD", "0")
+    expect(resolveThreshold()).toBe(0)
+  })
+
+  it("parses custom value", () => {
+    vi.stubEnv("NEXT_PUBLIC_SEARCH_THRESHOLD", "0.5")
+    expect(resolveThreshold()).toBe(0.5)
+  })
+
+  it("falls back to default for non-numeric", () => {
+    vi.stubEnv("NEXT_PUBLIC_SEARCH_THRESHOLD", "abc")
+    expect(resolveThreshold()).toBe(0.3)
   })
 })

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { getProductDate, productHistoryAttrs } from "./product-utils"
+import { getProductDate, productHistoryAttrs } from "./product"
 import type { Product } from "./types"
 
 const mockProduct: Product = {
@@ -7,7 +7,7 @@ const mockProduct: Product = {
   name: "Test Product",
   description: "A test product",
   url: "https://test.com",
-  categoryId: "test-cat",
+  categories: ["test-cat"],
   tags: ["test"],
   pricing: "free",
   featured: false,

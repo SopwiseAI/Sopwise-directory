@@ -23,17 +23,28 @@ describe("formatCount", () => {
     expect(formatCount(1_000_000)).toBe("1m")
     expect(formatCount(1_234_567)).toBe("1.2m")
   })
+
+  it("carries over to m instead of emitting 1000k near the boundary", () => {
+    expect(formatCount(999_900)).toBe("999.9k")
+    expect(formatCount(999_950)).toBe("1m")
+    expect(formatCount(999_999)).toBe("1m")
+  })
 })
 
 describe("formatDate", () => {
   it("formats valid ISO date to zh-CN", () => {
-    const result = formatDate("2024-01-15")
-    expect(result).toContain("2024")
-    expect(result).toContain("1")
-    expect(result).toContain("15")
+    expect(formatDate("2024-01-15")).toBe("2024年1月15日")
+  })
+
+  it("handles full ISO datetime", () => {
+    expect(formatDate("2024-06-01T12:00:00Z")).toBe("2024年6月1日")
   })
 
   it("returns original string for invalid date", () => {
     expect(formatDate("not-a-date")).toBe("not-a-date")
+  })
+
+  it("returns original string for empty input", () => {
+    expect(formatDate("")).toBe("")
   })
 })

@@ -35,8 +35,9 @@ class CategoryResponse(CategoryBase):
 
 class ProductLinkBase(BaseModel):
     url: str = Field(..., max_length=2048, pattern="^https?://.+")
-    label: str | None = Field(None, max_length=32)
+    label: str | None = Field(None, max_length=64)
     is_primary: bool = False
+    status: int = Field(1, ge=1, le=3)
     sort_order: int = 0
 
 
@@ -46,14 +47,16 @@ class ProductLinkCreate(ProductLinkBase):
 
 class ProductLinkUpdate(BaseModel):
     url: str | None = Field(None, max_length=2048, pattern="^https?://.+")
-    label: str | None = Field(None, max_length=32)
+    label: str | None = Field(None, max_length=64)
     is_primary: bool | None = None
+    status: int | None = Field(None, ge=1, le=3)
     sort_order: int | None = None
 
 
 class ProductLinkResponse(ProductLinkBase):
     id: int
     product_id: int
+    last_checked_at: datetime | None
     created_at: datetime
     updated_at: datetime
 
@@ -64,7 +67,7 @@ class ProductBase(BaseModel):
     slug: str = Field(..., max_length=64)
     name: str = Field(..., max_length=128)
     description: str | None = Field(None, max_length=500)
-    category_id: int | None = None
+    category_ids: list[int] = Field(default_factory=list)
     pricing: str = Field("free", pattern="^(free|freemium|paid|opensource)$")
     featured: bool = False
     sort_order: int = 0
@@ -80,7 +83,7 @@ class ProductUpdate(BaseModel):
     slug: str | None = Field(None, max_length=64)
     name: str | None = Field(None, max_length=128)
     description: str | None = Field(None, max_length=500)
-    category_id: int | None = None
+    category_ids: list[int] | None = None
     pricing: str | None = Field(None, pattern="^(free|freemium|paid|opensource)$")
     featured: bool | None = None
     sort_order: int | None = None
@@ -91,7 +94,10 @@ class TagResponse(BaseModel):
     id: int
     slug: str
     name: str
+    sort_order: int
+    status: int
     created_at: datetime
+    updated_at: datetime
 
     model_config = {"from_attributes": True}
 
@@ -101,7 +107,6 @@ class ProductResponse(BaseModel):
     slug: str
     name: str
     description: str | None
-    category_id: int | None
     pricing: str
     featured: bool
     sort_order: int
@@ -109,6 +114,7 @@ class ProductResponse(BaseModel):
     published_at: datetime | None
     created_at: datetime
     updated_at: datetime
+    categories: list[CategoryResponse] = Field(default_factory=list)
     links: list[ProductLinkResponse] = Field(default_factory=list)
     tags: list[TagResponse] = Field(default_factory=list)
 
@@ -122,6 +128,8 @@ ProductResponse.model_rebuild()
 class TagBase(BaseModel):
     slug: str = Field(..., max_length=64)
     name: str = Field(..., max_length=64)
+    sort_order: int = 0
+    status: int = Field(1, ge=0, le=1)
 
 
 class TagCreate(TagBase):
@@ -131,7 +139,34 @@ class TagCreate(TagBase):
 class TagUpdate(BaseModel):
     slug: str | None = Field(None, max_length=64)
     name: str | None = Field(None, max_length=64)
+    sort_order: int | None = None
+    status: int | None = Field(None, ge=0, le=1)
 
 
 class ProductTagUpdate(BaseModel):
     tag_ids: list[int] = Field(default_factory=list)
+
+
+VALID_RELATION_TYPES = {"similar", "alternative", "upgrade", "complementary"}
+
+
+class ProductRelationCreate(BaseModel):
+    related_id: int
+    relation_type: str = Field("similar", pattern="^(similar|alternative|upgrade|complementary)$")
+    sort_order: int = 0
+
+
+class ProductRelationUpdate(BaseModel):
+    relation_type: str | None = Field(None, pattern="^(similar|alternative|upgrade|complementary)$")
+    sort_order: int | None = None
+
+
+class ProductRelationResponse(BaseModel):
+    id: int
+    product_id: int
+    related_id: int
+    relation_type: str
+    sort_order: int
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

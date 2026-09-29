@@ -1,14 +1,14 @@
 import type { Metadata, Viewport } from "next"
 import Script from "next/script"
 import { Geist, Geist_Mono } from "next/font/google"
-import { getAllCategories, getAllProducts } from "@/lib/data"
+import { getAllCategories, getCategoryCounts, getStats } from "@/lib/data"
 import { getBaseUrl } from "@/lib/utils"
 import Header from "@/components/layout/header"
 import { SubNav } from "@/components/layout/sub-nav"
 import { CategorySidebar } from "@/components/category/category-sidebar"
 import { CommandSearchBar } from "@/components/layout/command-search-bar"
-import { HistoryTracker } from "@/components/layout/history-tracker"
-import { WebVitals } from "@/components/layout/web-vitals"
+import { HistoryTracker } from "@/components/runtime/history-tracker"
+import { WebVitals } from "@/components/runtime/web-vitals"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import Footer from "@/components/layout/footer"
 import "./globals.css"
@@ -24,12 +24,8 @@ const geistMono = Geist_Mono({
 })
 
 const allCategories = getAllCategories()
-const allProducts = getAllProducts()
-const categoryCounts: Record<string, number> = {}
-for (const cat of allCategories) {
-  categoryCounts[cat.id] = allProducts.filter((p) => p.categoryId === cat.id).length
-}
-const totalProducts = allProducts.length
+const categoryCounts = getCategoryCounts()
+const totalProducts = getStats().products
 
 const jsonLd = {
   "@context": "https://schema.org",

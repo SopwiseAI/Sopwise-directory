@@ -9,7 +9,7 @@ import type { Category } from "@/lib/types"
 
 interface SubNavProps {
   className?: string
-  categories: Category[]
+  categories: readonly Category[]
   categoryCounts: Record<string, number>
 }
 

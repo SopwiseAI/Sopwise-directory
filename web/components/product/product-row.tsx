@@ -1,6 +1,6 @@
 import { ArrowUpRight } from "lucide-react"
 import type { Product } from "@/lib/types"
-import { getProductDate, productHistoryAttrs } from "@/lib/product-utils"
+import { getProductDate, productHistoryAttrs } from "@/lib/product"
 import { Badge } from "@/components/ui/badge"
 import { PricingBadge } from "@/components/product/pricing-badge"
 import { getDomain } from "@/lib/url"

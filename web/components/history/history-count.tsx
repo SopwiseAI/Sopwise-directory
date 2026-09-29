@@ -1,22 +1,12 @@
 "use client"
 
 import { useMemo, useSyncExternalStore } from "react"
-import {
-  getHistorySnapshot,
-  subscribeHistory,
-} from "@/lib/history"
+import { getHistorySnapshot, parseHistorySnapshot, subscribeHistory } from "@/lib/history"
 
 /** 侧栏历史记录角标：订阅本地历史条数，动态更新（带紧凑动画） */
 export function HistoryCount() {
   const raw = useSyncExternalStore(subscribeHistory, getHistorySnapshot, () => "[]")
-  const count = useMemo(() => {
-    try {
-      const items = JSON.parse(raw)
-      return Array.isArray(items) ? items.length : 0
-    } catch {
-      return 0
-    }
-  }, [raw])
+  const count = useMemo(() => parseHistorySnapshot(raw).length, [raw])
 
   if (count === 0) return null
 

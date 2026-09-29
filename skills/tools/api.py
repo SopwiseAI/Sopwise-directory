@@ -4,8 +4,8 @@
 用法:
   python skills/tools/api.py products [--status N] [--page N] [--page-size N] [--search K]  列出产品
   python skills/tools/api.py product <id>                   查看产品详情
-  python skills/tools/api.py add-product --name <name> [--url <url>] [--category-id <id>] [--pricing <p>] [--featured] [--slug <slug>] [--description <desc>]
-  python skills/tools/api.py update-product <id> [--status N] [--name <name>] [--description <desc>] [--category-id <id>] [--pricing <p>] [--featured | --no-featured]
+  python skills/tools/api.py add-product --name <name> [--url <url>] [--category-ids 1,2,3] [--pricing <p>] [--featured] [--slug <slug>] [--description <desc>]
+  python skills/tools/api.py update-product <id> [--status N] [--name <name>] [--description <desc>] [--category-ids 1,2,3] [--pricing <p>] [--featured | --no-featured]
   python skills/tools/api.py delete-product <id>
   python skills/tools/api.py categories [--page N] [--page-size N]       列出分类
   python skills/tools/api.py category <id>              查看分类详情
@@ -13,10 +13,10 @@
   python skills/tools/api.py update-category <id> [--name <name>] [--slug <slug>]
   python skills/tools/api.py delete-category <id>
   python skills/tools/api.py category-count <id>        分类产品数
-  python skills/tools/api.py tags [--page N] [--page-size N]             列出标签
+  python skills/tools/api.py tags [--status {0,1}] [--page N] [--page-size N]  列出标签
   python skills/tools/api.py tag <id>                   查看标签详情
   python skills/tools/api.py add-tag --name <name> --slug <slug>
-  python skills/tools/api.py update-tag <id> [--name <name>] [--slug <slug>]
+  python skills/tools/api.py update-tag <id> [--name <name>] [--slug <slug>] [--sort-order <N>] [--status {0,1}]
   python skills/tools/api.py delete-tag <id>
   python skills/tools/api.py tag-count <id>             标签产品数
   python skills/tools/api.py product-links <id>         列出产品链接
@@ -438,8 +438,10 @@ def cmd_add_product(args):
     }
     if args.url:
         payload["links"] = [{"url": args.url, "is_primary": True}]
-    if args.category_id:
-        payload["category_id"] = args.category_id
+    if args.category_ids:
+        payload["category_ids"] = [
+            int(c.strip()) for c in args.category_ids.split(",") if c.strip()
+        ]
     if args.pricing:
         payload["pricing"] = args.pricing
     if args.featured:
@@ -461,8 +463,10 @@ def cmd_update_product(args):
         payload["name"] = args.name
     if args.description is not None:
         payload["description"] = args.description
-    if args.category_id is not None:
-        payload["category_id"] = args.category_id
+    if args.category_ids is not None:
+        payload["category_ids"] = [
+            int(c.strip()) for c in args.category_ids.split(",") if c.strip()
+        ]
     if args.pricing:
         payload["pricing"] = args.pricing
     if args.featured is not None:
@@ -546,6 +550,8 @@ def cmd_add_category(args):
 
 def cmd_tags(args):
     params = []
+    if args.status is not None:
+        params.append(f"status={args.status}")
     if args.page:
         params.append(f"page={args.page}")
     if args.page_size:
@@ -557,8 +563,14 @@ def cmd_tags(args):
     else:
         _print_table(
             data,
-            ["id", "name", "slug"],
-            headers={"id": "ID", "name": "名称", "slug": "Slug"},
+            ["id", "name", "slug", "sort_order", "status"],
+            headers={
+                "id": "ID",
+                "name": "名称",
+                "slug": "Slug",
+                "sort_order": "排序",
+                "status": "状态",
+            },
         )
         _print_total_info(resp_headers)
 
@@ -571,11 +583,23 @@ def cmd_add_tag(args):
 
 
 def cmd_product_links(args):
-    data = _request("GET", f"/products/{args.id}/links")
+    params = []
+    if args.status is not None:
+        params.append(f"status={args.status}")
+    qs = "&".join(params)
+    data = _request(
+        "GET", f"/products/{args.id}/links?{qs}" if qs else f"/products/{args.id}/links"
+    )
     _print_table(
         data,
-        ["id", "url", "label", "is_primary"],
-        headers={"id": "ID", "url": "URL", "label": "标签", "is_primary": "主链接"},
+        ["id", "url", "label", "is_primary", "status"],
+        headers={
+            "id": "ID",
+            "url": "URL",
+            "label": "标签",
+            "is_primary": "主链接",
+            "status": "状态",
+        },
     )
 
 
@@ -585,6 +609,8 @@ def cmd_add_link(args):
         payload["label"] = args.label
     if args.primary:
         payload["is_primary"] = True
+    if args.status is not None:
+        payload["status"] = args.status
     _, data = _write(
         "POST",
         f"/products/{args.product_id}/links",
@@ -729,6 +755,10 @@ def cmd_update_tag(args):
         payload["name"] = args.name
     if args.slug is not None:
         payload["slug"] = args.slug
+    if args.sort_order is not None:
+        payload["sort_order"] = args.sort_order
+    if args.status is not None:
+        payload["status"] = args.status
     _, data = _write("PUT", f"/tags/{args.id}", payload, summary=f"更新标签: {args.id}")
     if data:
         _print_json(data)
@@ -759,6 +789,8 @@ def cmd_update_link(args):
         payload["label"] = args.label
     if args.primary is not None:
         payload["is_primary"] = args.primary
+    if args.status is not None:
+        payload["status"] = args.status
     _, data = _write(
         "PUT",
         f"/products/{args.product_id}/links/{args.link_id}",
@@ -817,7 +849,7 @@ def main():
     p.add_argument("--name", required=True)
     p.add_argument("--slug", help="默认从 name 生成")
     p.add_argument("--url", help="产品链接")
-    p.add_argument("--category-id", type=int)
+    p.add_argument("--category-ids", help="逗号分隔的分类 ID (如 1,2,3)")
     p.add_argument("--pricing", choices=["free", "freemium", "paid", "opensource"])
     p.add_argument("--featured", action="store_true")
     p.add_argument("--description")
@@ -830,7 +862,7 @@ def main():
     p.add_argument("--status", type=int, choices=[0, 1, 2, 3])
     p.add_argument("--name")
     p.add_argument("--description")
-    p.add_argument("--category-id", type=int)
+    p.add_argument("--category-ids", help="逗号分隔的分类 ID (如 1,2,3)，传空串清空")
     p.add_argument("--pricing", choices=["free", "freemium", "paid", "opensource"])
     p.add_argument("--featured", action=argparse.BooleanOptionalAction, default=None)
     p.add_argument("--slug")
@@ -886,6 +918,7 @@ def main():
     p = sub.add_parser("tags", aliases=["t"], help="列出标签")
     p.add_argument("--page", type=int, default=1)
     p.add_argument("--page-size", type=int, default=100)
+    p.add_argument("--status", type=int, choices=[0, 1], default=None)
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=cmd_tags)
 
@@ -905,6 +938,8 @@ def main():
     p.add_argument("id", type=int)
     p.add_argument("--name")
     p.add_argument("--slug")
+    p.add_argument("--sort-order", type=int)
+    p.add_argument("--status", type=int, choices=[0, 1])
     p.set_defaults(func=cmd_update_tag)
 
     # delete tag
@@ -920,6 +955,7 @@ def main():
     # product links
     p = sub.add_parser("product-links", help="列出产品链接")
     p.add_argument("id", type=int)
+    p.add_argument("--status", type=int, choices=[1, 2, 3], default=None)
     p.set_defaults(func=cmd_product_links)
 
     # add link
@@ -928,6 +964,7 @@ def main():
     p.add_argument("--url", required=True)
     p.add_argument("--label")
     p.add_argument("--primary", action="store_true")
+    p.add_argument("--status", type=int, choices=[1, 2, 3], default=None)
     p.set_defaults(func=cmd_add_link)
 
     # update link
@@ -937,6 +974,7 @@ def main():
     p.add_argument("--url")
     p.add_argument("--label")
     p.add_argument("--primary", action=argparse.BooleanOptionalAction, default=None)
+    p.add_argument("--status", type=int, choices=[1, 2, 3], default=None)
     p.set_defaults(func=cmd_update_link)
 
     # delete link

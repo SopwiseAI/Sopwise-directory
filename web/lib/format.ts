@@ -5,7 +5,9 @@
 export function formatCount(n: number): string {
   if (!Number.isFinite(n)) return String(n)
   if (n < 1000) return String(n)
-  if (n < 1_000_000) {
+  // 四舍五入到 1 位小数后若进位到 1000k（如 999950），改用 m 单位避免 "1000k"
+  const thousands = Math.round((n / 1000) * 10) / 10
+  if (n < 1_000_000 && thousands < 1000) {
     return formatSuffix(n / 1000, "k")
   }
   return formatSuffix(n / 1_000_000, "m")
@@ -19,7 +21,9 @@ function formatSuffix(value: number, suffix: string): string {
 }
 
 export function formatDate(iso: string): string {
-  const date = new Date(iso)
+  if (!iso) return iso
+  // 纯日期 "2024-01-15" 追加 UTC 午夜，避免本地时区偏移导致日期偏移
+  const date = iso.length === 10 ? new Date(iso + "T00:00:00Z") : new Date(iso)
   if (Number.isNaN(date.getTime())) return iso
-  return date.toLocaleDateString("zh-CN", { year: "numeric", month: "short", day: "numeric" })
+  return date.toLocaleDateString("zh-CN", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" })
 }

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import {
   MessageSquare,
   Image,
@@ -45,8 +46,15 @@ const iconMap: Record<string, LucideIcon> = {
   Gamepad2
 }
 
-export function categoryIconNode(iconName: string, cls: string = "size-4 shrink-0"): React.ReactNode {
+export { iconMap as CATEGORY_ICONS }
+
+export function categoryIconNode(iconName: string, cls: string = "size-4 shrink-0"): ReactNode {
   const Icon = iconMap[iconName]
-  if (!Icon) return null
+  if (!Icon) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(`[category-icon] 未知图标名: "${iconName}"，请在 iconMap 中注册`)
+    }
+    return null
+  }
   return <Icon className={cls} aria-hidden />
 }

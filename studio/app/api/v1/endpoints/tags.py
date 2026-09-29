@@ -13,11 +13,15 @@ router = APIRouter()
 
 @router.get("", response_model=list[TagResponse])
 async def list_tags(
+    status_filter: int | None = Query(None, alias="status"),
     page: int = Query(1, ge=1),
     page_size: int = Query(100, ge=1, le=500),
     db: AsyncSession = Depends(get_db),
 ) -> list[TagResponse]:
-    stmt = select(Tag).order_by(Tag.name).offset((page - 1) * page_size).limit(page_size)
+    stmt = select(Tag).order_by(Tag.sort_order.desc(), Tag.id)
+    if status_filter is not None:
+        stmt = stmt.where(Tag.status == status_filter)
+    stmt = stmt.offset((page - 1) * page_size).limit(page_size)
     result = await db.execute(stmt)
     return list(result.scalars().all())
 

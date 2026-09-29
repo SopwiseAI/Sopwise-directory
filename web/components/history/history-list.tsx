@@ -3,7 +3,14 @@
 import { useCallback, useEffect, useMemo, useReducer, useState, useSyncExternalStore, useRef } from "react"
 import Link from "next/link"
 import { Clock, Search, Trash2 } from "lucide-react"
-import { clearHistory, getHistorySnapshot, removeFromHistory, subscribeHistory, type HistoryItem } from "@/lib/history"
+import {
+  clearHistory,
+  getHistorySnapshot,
+  groupHistoryByPeriod,
+  parseHistorySnapshot,
+  removeFromHistory,
+  subscribeHistory
+} from "@/lib/history"
 import { formatCount } from "@/lib/format"
 import { PricingBadge } from "@/components/product/pricing-badge"
 import { Button } from "@/components/ui/button"
@@ -28,7 +35,7 @@ function formatRelativeTime(iso: string): string {
 }
 
 interface HistoryListProps {
-  categories: Category[]
+  categories: readonly Category[]
 }
 
 /** 历史记录列表：hover 统一、无限滚动分页、搜索过滤、单条删除与清空 */
@@ -48,13 +55,7 @@ export function HistoryList({ categories }: HistoryListProps) {
   // 分类名查找：需在使用（filtered）之前定义（TDZ 防护）
   const categoryName = useCallback((id: string) => categories.find((c) => c.id === id)?.name ?? "", [categories])
 
-  const items = useMemo(() => {
-    try {
-      return JSON.parse(raw) as HistoryItem[]
-    } catch {
-      return []
-    }
-  }, [raw])
+  const items = useMemo(() => parseHistorySnapshot(raw), [raw])
 
   // 搜索过滤（名称/域名/分类）
   const filtered = useMemo(() => {
@@ -88,6 +89,8 @@ export function HistoryList({ categories }: HistoryListProps) {
   // visibleCount 可能超过当前 filtered 长度（存储变化时），slice 自动安全
   const visible = filtered.slice(0, visibleCount)
   const hasMore = visibleCount < filtered.length
+  // 按访问时间分组（今天/昨天/本周/更早），仅对已加载部分分组
+  const groups = groupHistoryByPeriod(visible)
 
   if (!Array.isArray(items) || items.length === 0) {
     return (
@@ -209,49 +212,54 @@ export function HistoryList({ categories }: HistoryListProps) {
         </div>
       ) : (
         <>
-          <ul>
-            {visible.map((item, i) => (
-              <li
-                key={item.id}
-                className={
-                  "group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-secondary/40" +
-                  (i !== visible.length - 1 ? " border-b border-border" : "")
-                }
-              >
-                <a
-                  href={item.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex min-w-0 flex-1 items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-base font-medium">{item.name}</p>
-                    <p className="truncate font-data text-muted-foreground">
-                      {item.domain}
-                      {item.categoryId && ` · ${categoryName(item.categoryId)}`}
-                    </p>
-                  </div>
-                  <span className="hidden shrink-0 font-data text-muted-foreground sm:inline">
-                    {formatRelativeTime(item.visitedAt)}
-                  </span>
-                  {item.pricing ? (
-                    <span className="hidden shrink-0 md:inline">
-                      <PricingBadge pricing={item.pricing} />
-                    </span>
-                  ) : null}
-                </a>
-                <button
-                  type="button"
-                  aria-label={`删除 ${item.name} 的历史记录`}
-                  title="删除"
-                  onClick={() => removeFromHistory(item.id)}
-                  className="shrink-0 rounded-md p-2.5 text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive"
-                >
-                  <Trash2 className="size-4" />
-                </button>
-              </li>
-            ))}
-          </ul>
+          {groups.map((group) => (
+            <div key={group.label}>
+              <div className="sticky top-0 z-10 border-b border-border bg-card/95 px-4 py-1.5 font-data text-xs font-medium text-muted-foreground backdrop-blur">
+                {group.label}
+              </div>
+              <ul>
+                {group.items.map((item) => (
+                  <li
+                    key={item.id}
+                    className="group flex items-center gap-3 border-b border-border px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/40"
+                  >
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex min-w-0 flex-1 items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-base font-medium">{item.name}</p>
+                        <p className="truncate font-data text-muted-foreground">
+                          {item.domain}
+                          {item.categoryId && ` · ${categoryName(item.categoryId)}`}
+                          {item.visitCount > 1 && ` · 访问 ${item.visitCount} 次`}
+                        </p>
+                      </div>
+                      <span className="hidden shrink-0 font-data text-muted-foreground sm:inline">
+                        {formatRelativeTime(item.lastVisitedAt)}
+                      </span>
+                      {item.pricing ? (
+                        <span className="hidden shrink-0 md:inline">
+                          <PricingBadge pricing={item.pricing} />
+                        </span>
+                      ) : null}
+                    </a>
+                    <button
+                      type="button"
+                      aria-label={`删除 ${item.name} 的历史记录`}
+                      title="删除"
+                      onClick={() => removeFromHistory(item.id)}
+                      className="shrink-0 rounded-md p-2.5 text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
 
           {/* 触底哨兵：滚动到此处自动加载更多 */}
           {hasMore && (

@@ -1,21 +1,13 @@
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
-import { getAllProducts, getAllCategories, getFeaturedProducts } from "@/lib/data"
-import { formatCount } from "@/lib/format"
-import { BrandMark } from "@/components/layout/brand-mark"
+import { getStats } from "@/lib/data"
+import { BrandMark } from "@/components/brand/brand-mark"
+import { StatItem } from "@/components/ui/stat-item"
 
-const products = getAllProducts()
-const categories = getAllCategories()
-const featured = getFeaturedProducts()
+const stats = getStats()
 
 /** 首页 hero：克制的品牌定位 + 数据统计。简约即高级。 */
 export function BrandShowcase() {
-  const stats = [
-    { label: "产品", value: products.length },
-    { label: "分类", value: categories.length },
-    { label: "精选", value: featured.length }
-  ]
-
   return (
     <section className="rounded-xl border border-brand/15 bg-gradient-to-br from-brand/[0.04] to-brand/[0.01] dark:from-brand/[0.08] dark:to-brand/[0.03] px-6 py-8 sm:px-8">
       <div className="space-y-6">
@@ -41,12 +33,9 @@ export function BrandShowcase() {
         </div>
 
         <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-t pt-5">
-          {stats.map(s => (
-            <div key={s.label} className="flex items-baseline gap-2">
-              <span className="font-mono text-lg tabular-nums">{formatCount(s.value)}</span>
-              <span className="text-xs text-muted-foreground">{s.label}</span>
-            </div>
-          ))}
+          <StatItem label="产品" value={stats.products} />
+          <StatItem label="分类" value={stats.categories} />
+          <StatItem label="精选" value={stats.featured} />
           <Link
             href="/?tab=featured"
             className="group inline-flex items-center gap-1 font-data text-muted-foreground transition-colors hover:text-brand outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"

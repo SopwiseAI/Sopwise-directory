@@ -39,7 +39,10 @@ description: 标签管理（查看/改名/改slug/删除）
 
    注意: tag-count 统计所有状态的关联产品（不限已发布）。
 
-4. 输出表格: ID / 名称 / Slug / 关联产品数。告知用户可指定 ID 进一步操作。
+4. 输出表格: ID / 名称 / Slug / 排序 / 状态 / 关联产品数。告知用户可指定 ID 进一步操作。
+
+   - 状态: 1=启用（导出到前端）、0=禁用（保留关联但不导出）
+   - 列表默认含全部状态标签；如只看启用: `tags --status 1`
 
 ### 详情模式
 
@@ -51,17 +54,23 @@ description: 标签管理（查看/改名/改slug/删除）
 
 6. 根据用户意图执行对应操作:
 
-   **改名 / 改 slug**:
+   **改名 / 改 slug / 调排序 / 改状态**:
 
    ```
-   !`python skills/tools/api.py --yes update-tag <标签ID> --name "新名"`
+   !`python skills/tools/api.py --yes update-tag <标签ID> --name "新名" --sort-order 10 --status 1`
    ```
 
-   仅传需改的字段，可选: `--name` `--slug`
+   仅传需改的字段，可选: `--name` `--slug` `--sort-order` `--status`
+
+   - `--sort-order N`: 排序权重，越大越靠前（前端筛选栏展示顺序）
+   - `--status 0=禁用 1=启用`: 禁用标签保留产品关联但不导出到前端，适合临时下线
 
    slug 修改须遵守统一 slug 规范（见末尾）。
 
-   **删除标签**:
+   **禁用标签（推荐）vs 删除标签**:
+
+   标签不想再用时，优先 `update-tag --status 0` 禁用（保留关联、不导出），而非物理删除。
+   仅当确实要彻底清除时才走删除流程:
 
    先强制查关联产品数:
 

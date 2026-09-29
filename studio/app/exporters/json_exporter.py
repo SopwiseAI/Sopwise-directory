@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config import get_settings
-from app.models import Category, CategoryStatus, Product, ProductStatus
+from app.models import Category, CategoryStatus, LinkStatus, Product, ProductRelation, ProductStatus, TagStatus
 
 logger = logging.getLogger(__name__)
 
@@ -16,9 +16,8 @@ logger = logging.getLogger(__name__)
 async def export_to_json(session: AsyncSession) -> dict:
     settings = get_settings()
 
-    cat_map = await _build_category_slug_map(session)
     categories = await _fetch_categories(session)
-    products = await _fetch_products(session, cat_map)
+    products = await _fetch_products(session)
 
     data = {
         "categories": categories,
@@ -51,12 +50,6 @@ async def export_to_json(session: AsyncSession) -> dict:
     }
 
 
-async def _build_category_slug_map(session: AsyncSession) -> dict[int, str]:
-    stmt = select(Category.id, Category.slug).where(Category.status == CategoryStatus.ACTIVE)
-    result = await session.execute(stmt)
-    return {row.id: row.slug for row in result.all()}
-
-
 async def _fetch_categories(session: AsyncSession) -> list[dict]:
     stmt = (
         select(Category)
@@ -76,37 +69,79 @@ async def _fetch_categories(session: AsyncSession) -> list[dict]:
     ]
 
 
-async def _fetch_products(session: AsyncSession, cat_map: dict[int, str]) -> list[dict]:
+async def _fetch_products(session: AsyncSession) -> list[dict]:
     stmt = (
         select(Product)
-        .options(selectinload(Product.links), selectinload(Product.tags))
+        .options(
+            selectinload(Product.links),
+            selectinload(Product.tags),
+            selectinload(Product.categories),
+        )
         .where(Product.status == ProductStatus.PUBLISHED)
         .order_by(Product.sort_order.desc(), Product.published_at.desc())
     )
     result = await session.execute(stmt)
     rows = result.scalars().all()
 
+    if not rows:
+        return []
+
+    product_ids = [row.id for row in rows]
+
+    # 批量查询关联
+    relation_stmt = (
+        select(ProductRelation)
+        .where(ProductRelation.product_id.in_(product_ids))
+        .order_by(ProductRelation.sort_order.desc(), ProductRelation.id)
+    )
+    relation_result = await session.execute(relation_stmt)
+    all_relations = relation_result.scalars().all()
+
+    # product_id → {(related_id, relation_type)}
+    relation_set: dict[int, set[tuple[int, str]]] = {}
+    for r in all_relations:
+        if r.product_id not in relation_set:
+            relation_set[r.product_id] = set()
+        relation_set[r.product_id].add((r.related_id, r.relation_type))
+
+    # 批量查询关联产品的 slug
+    related_ids = {rid for rels in relation_set.values() for rid, _ in rels}
+    slug_stmt = select(Product.id, Product.slug).where(Product.id.in_(related_ids))
+    slug_result = await session.execute(slug_stmt)
+    id_to_slug: dict[int, str] = dict(slug_result.all())
+
     products = []
     for row in rows:
-        primary_link = next((lnk for lnk in row.links if lnk.is_primary), None)
-        fallback_link = row.links[0] if row.links else None
-        link = primary_link or fallback_link
+        active_links = [lnk for lnk in row.links if lnk.status == LinkStatus.ACTIVE]
+        primary_active = next((lnk for lnk in active_links if lnk.is_primary), None)
+        fallback_active = active_links[0] if active_links else None
+        primary_any = next((lnk for lnk in row.links if lnk.is_primary), None)
+        fallback_any = row.links[0] if row.links else None
+        lnk = primary_active or fallback_active or primary_any or fallback_any
 
-        products.append(
-            {
-                "id": row.slug,
-                "name": row.name,
-                "description": row.description or "",
-                "url": link.url if link else "",
-                "categoryId": cat_map.get(row.category_id, "") if row.category_id else "",
-                "tags": [t.name for t in row.tags],
-                "pricing": row.pricing,
-                "featured": row.featured,
-            }
-        )
+        item = {
+            "id": row.slug,
+            "name": row.name,
+            "description": row.description or "",
+            "url": lnk.url if lnk else "",
+            "categories": [c.slug for c in row.categories],
+            "tags": [t.name for t in row.tags if t.status == TagStatus.ACTIVE],
+            "pricing": row.pricing,
+            "featured": row.featured,
+        }
+
+        rels = relation_set.get(row.id)
+        if rels:
+            item["relateds"] = sorted(
+                [{"id": id_to_slug.get(rid, ""), "type": rtype} for rid, rtype in rels if id_to_slug.get(rid)],
+                key=lambda x: (x["type"], x["id"]),
+            )
+
         if row.published_at:
-            products[-1]["publishedAt"] = row.published_at.strftime("%Y-%m-%d")
+            item["publishedAt"] = row.published_at.strftime("%Y-%m-%d")
         if row.created_at:
-            products[-1]["createdAt"] = row.created_at.strftime("%Y-%m-%d")
+            item["createdAt"] = row.created_at.strftime("%Y-%m-%d")
+
+        products.append(item)
 
     return products

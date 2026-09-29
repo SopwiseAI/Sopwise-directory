@@ -7,7 +7,16 @@ from sqlalchemy.orm import selectinload
 
 from app.core.deps import get_db
 from app.core.security import require_write
-from app.models import VALID_STATUS_TRANSITIONS, Category, Product, ProductLink, ProductStatus, ProductTag, Tag
+from app.models import (
+    VALID_STATUS_TRANSITIONS,
+    Category,
+    Product,
+    ProductCategory,
+    ProductLink,
+    ProductStatus,
+    ProductTag,
+    Tag,
+)
 from app.schemas.models import ProductCreate, ProductResponse, ProductUpdate
 from app.utils.db import check_unique
 from app.utils.url import url_hash
@@ -29,14 +38,16 @@ async def list_products(
     if status_filter is not None:
         base = base.where(Product.status == status_filter)
     if category_id is not None:
-        base = base.where(Product.category_id == category_id)
+        base = base.join(ProductCategory, ProductCategory.product_id == Product.id).where(
+            ProductCategory.category_id == category_id
+        )
     if featured is not None:
         base = base.where(Product.featured == featured)
 
     count_stmt = select(func.count()).select_from(base.subquery())
     total = (await db.execute(count_stmt)).scalar() or 0
 
-    stmt = base.options(selectinload(Product.links), selectinload(Product.tags))
+    stmt = base.options(selectinload(Product.links), selectinload(Product.tags), selectinload(Product.categories))
     stmt = stmt.order_by(Product.sort_order.desc(), Product.published_at.desc())
     stmt = stmt.offset((page - 1) * page_size).limit(page_size)
 
@@ -49,7 +60,13 @@ async def list_products(
 @router.get("/{product_id}", response_model=ProductResponse)
 async def get_product(product_id: int, db: AsyncSession = Depends(get_db)) -> ProductResponse:
     stmt = (
-        select(Product).options(selectinload(Product.links), selectinload(Product.tags)).where(Product.id == product_id)
+        select(Product)
+        .options(
+            selectinload(Product.links),
+            selectinload(Product.tags),
+            selectinload(Product.categories),
+        )
+        .where(Product.id == product_id)
     )
     result = await db.execute(stmt)
     product = result.scalar_one_or_none()
@@ -65,7 +82,7 @@ async def create_product(data: ProductCreate, db: AsyncSession = Depends(get_db)
     await check_unique(db, Product, Product.slug, data.slug, label="Slug")
     await check_unique(db, Product, Product.name, data.name, label="Product name")
 
-    product_data = data.model_dump(exclude={"links", "tag_ids"})
+    product_data = data.model_dump(exclude={"links", "tag_ids", "category_ids"})
     product = Product(**product_data)
 
     if product.status == ProductStatus.PUBLISHED:
@@ -81,6 +98,7 @@ async def create_product(data: ProductCreate, db: AsyncSession = Depends(get_db)
             url_hash=url_hash(link_data.url),
             label=link_data.label,
             is_primary=link_data.is_primary,
+            status=link_data.status,
             sort_order=link_data.sort_order,
         )
         db.add(link)
@@ -98,18 +116,29 @@ async def create_product(data: ProductCreate, db: AsyncSession = Depends(get_db)
         for tag in tags:
             db.add(ProductTag(product_id=product.id, tag_id=tag.id))
 
-    if data.category_id is not None:
-        category = await db.get(Category, data.category_id)
-        if not category:
+    if data.category_ids:
+        cat_result = await db.execute(select(Category).where(Category.id.in_(data.category_ids)))
+        categories = cat_result.scalars().all()
+        valid_cats = {c.id for c in categories}
+        invalid_ids = set(data.category_ids) - valid_cats
+        if invalid_ids:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Category not found",
+                detail=f"Category IDs not found: {list(invalid_ids)}",
             )
+        for cat in categories:
+            db.add(ProductCategory(product_id=product.id, category_id=cat.id))
 
     await db.flush()
 
     stmt = (
-        select(Product).options(selectinload(Product.links), selectinload(Product.tags)).where(Product.id == product.id)
+        select(Product)
+        .options(
+            selectinload(Product.links),
+            selectinload(Product.tags),
+            selectinload(Product.categories),
+        )
+        .where(Product.id == product.id)
     )
     result = await db.execute(stmt)
     return result.scalar_one()
@@ -130,7 +159,8 @@ async def update_product(product_id: int, data: ProductUpdate, db: AsyncSession 
 
     old_status = ProductStatus(product.status)
     for key, value in update_data.items():
-        setattr(product, key, value)
+        if key != "category_ids":
+            setattr(product, key, value)
 
     if "status" in update_data:
         new_status = ProductStatus(update_data["status"])
@@ -147,10 +177,36 @@ async def update_product(product_id: int, data: ProductUpdate, db: AsyncSession 
         if new_status == ProductStatus.PUBLISHED and old_status != ProductStatus.PUBLISHED and not product.published_at:
             product.published_at = datetime.now().replace(microsecond=0)
 
+    if "category_ids" in update_data:
+        new_ids = set(update_data["category_ids"])
+        cat_result = await db.execute(select(Category).where(Category.id.in_(new_ids)))
+        categories = cat_result.scalars().all()
+        valid_cats = {c.id for c in categories}
+        invalid_ids = new_ids - valid_cats
+        if invalid_ids:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Category IDs not found: {list(invalid_ids)}",
+            )
+        existing_stmt = select(ProductCategory).where(ProductCategory.product_id == product_id)
+        existing = (await db.execute(existing_stmt)).scalars().all()
+        existing_ids = {pc.category_id for pc in existing}
+        for pc in existing:
+            if pc.category_id not in new_ids:
+                await db.delete(pc)
+        for cat_id in new_ids - existing_ids:
+            db.add(ProductCategory(product_id=product_id, category_id=cat_id))
+
     await db.flush()
 
     stmt = (
-        select(Product).options(selectinload(Product.links), selectinload(Product.tags)).where(Product.id == product.id)
+        select(Product)
+        .options(
+            selectinload(Product.links),
+            selectinload(Product.tags),
+            selectinload(Product.categories),
+        )
+        .where(Product.id == product.id)
     )
     result = await db.execute(stmt)
     return result.scalar_one()

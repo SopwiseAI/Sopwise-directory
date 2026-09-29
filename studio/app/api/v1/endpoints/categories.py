@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_db
 from app.core.security import require_write
-from app.models import Category, Product, ProductStatus
+from app.models import Category, Product, ProductCategory, ProductStatus
 from app.schemas.models import CategoryCreate, CategoryResponse, CategoryUpdate
 from app.utils.db import check_unique
 
@@ -78,7 +78,12 @@ async def delete_category(category_id: int, db: AsyncSession = Depends(get_db)) 
     if not category:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
 
-    count_stmt = select(func.count()).select_from(Product).where(Product.category_id == category_id)
+    count_stmt = (
+        select(func.count())
+        .select_from(Product)
+        .join(ProductCategory, ProductCategory.product_id == Product.id)
+        .where(ProductCategory.category_id == category_id)
+    )
     count = (await db.execute(count_stmt)).scalar()
     if count and count > 0:
         raise HTTPException(
@@ -94,7 +99,8 @@ async def category_product_count(category_id: int, db: AsyncSession = Depends(ge
     stmt = (
         select(func.count())
         .select_from(Product)
-        .where(Product.category_id == category_id, Product.status == ProductStatus.PUBLISHED)
+        .join(ProductCategory, ProductCategory.product_id == Product.id)
+        .where(ProductCategory.category_id == category_id, Product.status == ProductStatus.PUBLISHED)
     )
     count = (await db.execute(stmt)).scalar() or 0
     return {"product_count": count}
