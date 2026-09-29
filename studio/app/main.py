@@ -1,4 +1,5 @@
 import logging
+import uuid
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -11,7 +12,7 @@ from app.api.v1.router import router as v1_router
 from app.core.config import get_app_version, get_settings
 from app.core.database import engine
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(name)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -31,37 +32,61 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     logger.info("DB engine disposed")
 
 
-settings = get_settings()
-
 app = FastAPI(
     title="Sopwise Studio API",
     description="Sopwise Directory Studio — 数据管理后端",
     version=get_app_version(),
-    debug=settings.app_debug,
+    debug=get_settings().app_debug,
     lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origin_list,
+    allow_origins=get_settings().cors_origin_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
+@app.middleware("http")
+async def add_request_id(request: Request, call_next):
+    request_id = str(uuid.uuid4())[:8]
+    request.state.request_id = request_id
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+    return response
+
+
 @app.exception_handler(IntegrityError)
 async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSONResponse:
-    logger.warning("Integrity error on %s %s: %s", request.method, request.url.path, exc)
-    return JSONResponse(
-        status_code=409,
-        content={"detail": "Resource conflict — unique constraint violated"},
+    logger.warning(
+        "Integrity error [%s] on %s %s: %s",
+        request.state.request_id,
+        request.method,
+        request.url.path,
+        exc,
     )
+    detail = "Resource conflict"
+    if exc.orig and exc.orig.args:
+        err = str(exc.orig.args[0])
+        if "Duplicate entry" in err or "UNIQUE" in err:
+            detail = "Resource conflict — unique constraint violated"
+        elif "FOREIGN KEY" in err or "cannot delete" in err.lower():
+            detail = "Resource has existing associations, cannot delete"
+    return JSONResponse(status_code=409, content={"detail": detail})
 
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    logger.error("Unhandled exception on %s %s: %s", request.method, request.url.path, exc, exc_info=True)
+    logger.error(
+        "Unhandled exception [%s] on %s %s: %s",
+        request.state.request_id,
+        request.method,
+        request.url.path,
+        exc,
+        exc_info=True,
+    )
     return JSONResponse(
         status_code=500,
         content={"detail": "Internal server error"},

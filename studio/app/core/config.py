@@ -16,6 +16,9 @@ def get_app_version() -> str:
         return "0.0.0"
 
 
+_STUDIO_ROOT = Path(__file__).resolve().parent.parent.parent
+
+
 class Settings(BaseSettings):
     app_env: str = "dev"
     app_debug: bool = True
@@ -38,7 +41,7 @@ class Settings(BaseSettings):
     api_key: str = "dev-secret-key"
 
     model_config = SettingsConfigDict(
-        env_file=f".env.{os.getenv('APP_ENV', 'dev')}",
+        env_file=str(_STUDIO_ROOT / f".env.{os.getenv('APP_ENV', 'dev')}"),
         env_file_encoding="utf-8",
     )
 

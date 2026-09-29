@@ -37,9 +37,14 @@ async def add_product_link(product_id: int, data: ProductLinkCreate, db: AsyncSe
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
 
     new_hash = url_hash(data.url)
-    existing = await db.execute(select(ProductLink).where(ProductLink.url_hash == new_hash))
+    existing = await db.execute(
+        select(ProductLink).where(
+            ProductLink.product_id == product_id,
+            ProductLink.url_hash == new_hash,
+        )
+    )
     if existing.scalar_one_or_none():
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="URL already exists")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="URL already exists in this product")
 
     if data.is_primary:
         existing_primary = await db.execute(
@@ -86,10 +91,14 @@ async def update_product_link(
     if "url" in update_data and update_data["url"] != link.url:
         new_hash = url_hash(update_data["url"])
         existing = await db.execute(
-            select(ProductLink).where(ProductLink.url_hash == new_hash, ProductLink.id != link_id)
+            select(ProductLink).where(
+                ProductLink.product_id == product_id,
+                ProductLink.url_hash == new_hash,
+                ProductLink.id != link_id,
+            )
         )
         if existing.scalar_one_or_none():
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="URL already exists")
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="URL already exists in this product")
         link.url = update_data["url"]
         link.url_hash = new_hash
 

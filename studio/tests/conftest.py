@@ -30,6 +30,7 @@ _TABLES = [
     "sd_product_tag",
     "sd_product_category",
     "sd_product_link",
+    "sd_product_relation",
     "sd_product",
     "sd_category",
     "sd_tag",

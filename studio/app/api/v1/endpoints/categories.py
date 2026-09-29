@@ -23,7 +23,31 @@ async def list_categories(
         stmt = stmt.where(Category.status == status_filter)
     stmt = stmt.offset((page - 1) * page_size).limit(page_size)
     result = await db.execute(stmt)
-    return list(result.scalars().all())
+    categories = list(result.scalars().all())
+
+    cat_ids = [c.id for c in categories]
+    count_result = await db.execute(
+        select(ProductCategory.category_id, func.count().label("cnt"))
+        .where(ProductCategory.category_id.in_(cat_ids))
+        .group_by(ProductCategory.category_id)
+    )
+    count_map = {r.category_id: r.cnt for r in count_result}
+
+    return [
+        CategoryResponse(
+            id=c.id,
+            slug=c.slug,
+            name=c.name,
+            icon=c.icon,
+            description=c.description,
+            sort_order=c.sort_order,
+            status=c.status,
+            created_at=c.created_at,
+            updated_at=c.updated_at,
+            product_count=count_map.get(c.id, 0),
+        )
+        for c in categories
+    ]
 
 
 @router.get("/{category_id}", response_model=CategoryResponse)
@@ -31,7 +55,22 @@ async def get_category(category_id: int, db: AsyncSession = Depends(get_db)) -> 
     category = await db.get(Category, category_id)
     if not category:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
-    return category
+    count_result = await db.execute(
+        select(func.count()).select_from(ProductCategory).where(ProductCategory.category_id == category_id)
+    )
+    product_count = count_result.scalar() or 0
+    return CategoryResponse(
+        id=category.id,
+        slug=category.slug,
+        name=category.name,
+        icon=category.icon,
+        description=category.description,
+        sort_order=category.sort_order,
+        status=category.status,
+        created_at=category.created_at,
+        updated_at=category.updated_at,
+        product_count=product_count,
+    )
 
 
 @router.post(
@@ -45,7 +84,18 @@ async def create_category(data: CategoryCreate, db: AsyncSession = Depends(get_d
     db.add(category)
     await db.flush()
     await db.refresh(category)
-    return category
+    return CategoryResponse(
+        id=category.id,
+        slug=category.slug,
+        name=category.name,
+        icon=category.icon,
+        description=category.description,
+        sort_order=category.sort_order,
+        status=category.status,
+        created_at=category.created_at,
+        updated_at=category.updated_at,
+        product_count=0,
+    )
 
 
 @router.put("/{category_id}", response_model=CategoryResponse, dependencies=[Depends(require_write)])
@@ -69,7 +119,22 @@ async def update_category(
 
     await db.flush()
     await db.refresh(category)
-    return category
+    count_result = await db.execute(
+        select(func.count()).select_from(ProductCategory).where(ProductCategory.category_id == category_id)
+    )
+    product_count = count_result.scalar() or 0
+    return CategoryResponse(
+        id=category.id,
+        slug=category.slug,
+        name=category.name,
+        icon=category.icon,
+        description=category.description,
+        sort_order=category.sort_order,
+        status=category.status,
+        created_at=category.created_at,
+        updated_at=category.updated_at,
+        product_count=product_count,
+    )
 
 
 @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_write)])

@@ -1,13 +1,6 @@
 from pydantic import BaseModel
 
 
-class HealthResponse(BaseModel):
-    status: str
-    database: str
-    brand: str
-    version: str
-
-
 class EnvResponse(BaseModel):
     env: str
     debug: bool
@@ -19,3 +12,4 @@ class ExportResponse(BaseModel):
     categories_count: int
     products_count: int
     app_env: str
+    synced_frontend: bool

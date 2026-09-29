@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_db
 from app.core.security import require_write
 from app.models import Product, ProductRelation
-from app.schemas.models import ProductRelationCreate, ProductRelationResponse, ProductRelationUpdate
+from app.schemas import ProductRelationCreate, ProductRelationResponse, ProductRelationUpdate
 
 router = APIRouter()
 

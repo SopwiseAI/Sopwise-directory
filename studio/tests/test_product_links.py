@@ -51,7 +51,7 @@ async def test_url_normalization_dedup(async_client):
 
 @pytest.mark.asyncio
 async def test_url_dedup_cross_products(async_client):
-    """同一 URL 不能挂到两个不同产品上。"""
+    """同一 URL 可以挂到不同产品上（url_hash 为产品内唯一）。"""
     p1 = await create_product(async_client, slug="p1", name="P1")
     p2 = await create_product(async_client, slug="p2", name="P2")
     await create_link(async_client, p1["id"], url="https://shared.com")
@@ -59,7 +59,7 @@ async def test_url_dedup_cross_products(async_client):
         f"/api/v1/products/{p2['id']}/links",
         json={"url": "https://shared.com"},
     )
-    assert resp.status_code == 409
+    assert resp.status_code == 201
 
 
 @pytest.mark.asyncio

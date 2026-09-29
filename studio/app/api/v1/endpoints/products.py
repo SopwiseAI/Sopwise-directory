@@ -47,7 +47,12 @@ async def list_products(
     count_stmt = select(func.count()).select_from(base.subquery())
     total = (await db.execute(count_stmt)).scalar() or 0
 
-    stmt = base.options(selectinload(Product.links), selectinload(Product.tags), selectinload(Product.categories))
+    stmt = base.options(
+        selectinload(Product.links),
+        selectinload(Product.tags),
+        selectinload(Product.categories),
+        selectinload(Product.relateds),
+    )
     stmt = stmt.order_by(Product.sort_order.desc(), Product.published_at.desc())
     stmt = stmt.offset((page - 1) * page_size).limit(page_size)
 
@@ -65,6 +70,7 @@ async def get_product(product_id: int, db: AsyncSession = Depends(get_db)) -> Pr
             selectinload(Product.links),
             selectinload(Product.tags),
             selectinload(Product.categories),
+            selectinload(Product.relateds),
         )
         .where(Product.id == product_id)
     )
@@ -137,6 +143,7 @@ async def create_product(data: ProductCreate, db: AsyncSession = Depends(get_db)
             selectinload(Product.links),
             selectinload(Product.tags),
             selectinload(Product.categories),
+            selectinload(Product.relateds),
         )
         .where(Product.id == product.id)
     )
@@ -205,6 +212,7 @@ async def update_product(product_id: int, data: ProductUpdate, db: AsyncSession 
             selectinload(Product.links),
             selectinload(Product.tags),
             selectinload(Product.categories),
+            selectinload(Product.relateds),
         )
         .where(Product.id == product.id)
     )
