@@ -41,7 +41,14 @@ async def test_export_success(async_client, tmp_path):
 async def test_export_only_includes_published(async_client, tmp_path):
     """仅已发布 (status=2) 的产品才导出。"""
     cat = await create_category(async_client, slug="cat", name="分类", icon="Bot")
-    await create_product(async_client, slug="published", name="已发布", category_ids=[cat["id"]], status=2)
+    await create_product(
+        async_client,
+        slug="published",
+        name="已发布",
+        category_ids=[cat["id"]],
+        status=2,
+        links=[{"url": "https://published.example.com"}],
+    )
     await create_product(async_client, slug="draft", name="草稿", category_ids=[cat["id"]], status=0)
     await create_product(async_client, slug="pending", name="待审核", category_ids=[cat["id"]], status=1)
     await create_product(async_client, slug="archived", name="已下架", category_ids=[cat["id"]], status=3)
@@ -103,10 +110,66 @@ async def test_export_data_format(async_client, tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_export_product_without_link(async_client, tmp_path):
-    """没有链接的产品 url 应为空字符串。"""
+async def test_export_skips_product_without_link(async_client, tmp_path):
+    """没有链接的产品不导出（前端 url 必填，空 url 会导致构建失败）。"""
     await create_category(async_client, slug="cat", name="分类")
     await create_product(async_client, slug="no-link", name="无链接", status=2)
+
+    output = tmp_path / "data-dev.json"
+    with patch("app.exporters.json_exporter.get_settings") as mock:
+        settings = mock.return_value
+        settings.export_full_path = output
+        settings.app_env = "dev"
+        resp = await async_client.post("/api/v1/export")
+
+    assert resp.json()["products_count"] == 0
+    with open(output, encoding="utf-8") as f:
+        data = json.load(f)
+    assert data["products"] == []
+
+
+@pytest.mark.asyncio
+async def test_export_skips_product_with_only_inactive_links(async_client, tmp_path):
+    """仅有非 active 链接(已失效/已禁用)的产品不导出, 避免死链进入前端。"""
+    await create_category(async_client, slug="cat", name="分类")
+    await create_product(
+        async_client,
+        slug="dead-link",
+        name="死链产品",
+        status=2,
+        links=[
+            {"url": "https://broken.example.com", "status": 2},
+            {"url": "https://disabled.example.com", "status": 3},
+        ],
+    )
+
+    output = tmp_path / "data-dev.json"
+    with patch("app.exporters.json_exporter.get_settings") as mock:
+        settings = mock.return_value
+        settings.export_full_path = output
+        settings.app_env = "dev"
+        resp = await async_client.post("/api/v1/export")
+
+    assert resp.json()["products_count"] == 0
+    with open(output, encoding="utf-8") as f:
+        data = json.load(f)
+    assert data["products"] == []
+
+
+@pytest.mark.asyncio
+async def test_export_prefers_primary_active_link(async_client, tmp_path):
+    """多个 active 链接时优先选 is_primary 的。"""
+    await create_category(async_client, slug="cat", name="分类")
+    await create_product(
+        async_client,
+        slug="multi-link",
+        name="多链接",
+        status=2,
+        links=[
+            {"url": "https://secondary.example.com"},
+            {"url": "https://primary.example.com", "is_primary": True},
+        ],
+    )
 
     output = tmp_path / "data-dev.json"
     with patch("app.exporters.json_exporter.get_settings") as mock:
@@ -117,4 +180,29 @@ async def test_export_product_without_link(async_client, tmp_path):
 
     with open(output, encoding="utf-8") as f:
         data = json.load(f)
-    assert data["products"][0]["url"] == ""
+    assert len(data["products"]) == 1
+    assert data["products"][0]["url"] == "https://primary.example.com"
+
+
+@pytest.mark.asyncio
+async def test_export_no_relateds_field(async_client, tmp_path):
+    """导出数据不含 relateds 字段。"""
+    await create_category(async_client, slug="cat", name="分类")
+    await create_product(
+        async_client,
+        slug="p1",
+        name="P1",
+        status=2,
+        links=[{"url": "https://p1.example.com"}],
+    )
+
+    output = tmp_path / "data-dev.json"
+    with patch("app.exporters.json_exporter.get_settings") as mock:
+        settings = mock.return_value
+        settings.export_full_path = output
+        settings.app_env = "dev"
+        await async_client.post("/api/v1/export")
+
+    with open(output, encoding="utf-8") as f:
+        data = json.load(f)
+    assert "relateds" not in data["products"][0]

@@ -5,7 +5,7 @@ import sys
 from app.core.database import AsyncSessionLocal, engine
 from app.exporters.json_exporter import export_to_json
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(name)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
