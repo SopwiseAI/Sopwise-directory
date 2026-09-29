@@ -1,20 +1,22 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_db
 from app.core.security import require_write
-from app.models import ProductTag, Tag
+from app.models import Tag
 from app.schemas.models import TagCreate, TagResponse, TagUpdate
-from app.utils.db import check_unique
+from app.utils.db import check_unique, drop_none, tag_product_counts
 
 router = APIRouter()
 
 
 async def _product_count(db: AsyncSession, tag_id: int) -> int:
-    """该标签关联的产品总数, 与 /count 端点语义一致."""
-    stmt = select(func.count()).select_from(ProductTag).where(ProductTag.tag_id == tag_id)
-    return (await db.execute(stmt)).scalar() or 0
+    """该标签关联的产品总数(含草稿/下架), 与 /count 端点语义一致。
+
+    注意: 与分类不同, 分类计数仅统计已发布产品, 标签计数统计全部关联产品。
+    """
+    return (await tag_product_counts(db, {tag_id})).get(tag_id, 0)
 
 
 @router.get("", response_model=list[TagResponse])
@@ -32,12 +34,7 @@ async def list_tags(
     tags = list(result.scalars().all())
 
     tag_ids = [t.id for t in tags]
-    count_result = await db.execute(
-        select(ProductTag.tag_id, func.count().label("cnt"))
-        .where(ProductTag.tag_id.in_(tag_ids))
-        .group_by(ProductTag.tag_id)
-    )
-    count_map = {r.tag_id: r.cnt for r in count_result}
+    count_map = await tag_product_counts(db, tag_ids)
     for t in tags:
         t.product_count = count_map.get(t.id, 0)
     return tags
@@ -71,7 +68,7 @@ async def update_tag(tag_id: int, data: TagUpdate, db: AsyncSession = Depends(ge
     if not tag:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found")
 
-    update_data = data.model_dump(exclude_unset=True)
+    update_data = drop_none(data.model_dump(exclude_unset=True))
     if "slug" in update_data and update_data["slug"] != tag.slug:
         await check_unique(db, Tag, Tag.slug, update_data["slug"], exclude_id=tag_id, label="Slug")
     if "name" in update_data and update_data["name"] != tag.name:

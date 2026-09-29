@@ -8,11 +8,13 @@
 --   sd_product_link      产品链接表（1:N，主站/API/文档/GitHub 等）
 --   sd_tag               标签表（独立管理，去重/统计）
 --   sd_product_tag       产品-标签关联表（N:M）
+--   sd_product_relation  产品关联表（产品间相似/替代/升级/配套）
 --
 -- 表关系:
 --   sd_product    N──M sd_category        (sd_product_category 中间表, ON DELETE CASCADE)
 --   sd_product    1──N sd_product_link    (product_id FK, ON DELETE CASCADE)
 --   sd_product    N──M sd_tag             (sd_product_tag 中间表, ON DELETE CASCADE)
+--   sd_product    N──M sd_product         (sd_product_relation 表, ON DELETE CASCADE)
 --
 -- 约定:
 --   1. 主键为 BIGINT AUTO_INCREMENT，业务标识用 slug（UNIQUE）
@@ -167,7 +169,7 @@ CREATE TABLE IF NOT EXISTS sd_product_tag (
 
 -- ----------------------------------------------------------------------------
 -- 7、产品关联表（产品间关联，如相似/替代/升级/配套）
---    relation_type: similar=同类 similar=替代 upgrade=升级 complementary=配套
+--    relation_type: similar=同类 alternative=替代 upgrade=升级 complementary=配套
 --    不自创建反向关联，查询时通过 idx_related 反查
 --    ON DELETE CASCADE 确保产品删除时关联自动清理
 -- ----------------------------------------------------------------------------

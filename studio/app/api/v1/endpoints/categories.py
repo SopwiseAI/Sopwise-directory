@@ -4,22 +4,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_db
 from app.core.security import require_write
-from app.models import Category, Product, ProductCategory, ProductStatus
+from app.models import Category, Product, ProductCategory
 from app.schemas.models import CategoryCreate, CategoryResponse, CategoryUpdate
-from app.utils.db import check_unique
+from app.utils.db import check_unique, drop_none, published_category_counts
 
 router = APIRouter()
 
 
 async def _published_count(db: AsyncSession, category_id: int) -> int:
     """该分类下已发布 (status=2) 产品数, 与 /count 端点语义一致."""
-    stmt = (
-        select(func.count())
-        .select_from(Product)
-        .join(ProductCategory, ProductCategory.product_id == Product.id)
-        .where(ProductCategory.category_id == category_id, Product.status == ProductStatus.PUBLISHED)
-    )
-    return (await db.execute(stmt)).scalar() or 0
+    return (await published_category_counts(db, {category_id})).get(category_id, 0)
 
 
 @router.get("", response_model=list[CategoryResponse])
@@ -37,14 +31,7 @@ async def list_categories(
     categories = list(result.scalars().all())
 
     cat_ids = [c.id for c in categories]
-    count_stmt = (
-        select(ProductCategory.category_id, func.count().label("cnt"))
-        .join(Product, Product.id == ProductCategory.product_id)
-        .where(ProductCategory.category_id.in_(cat_ids), Product.status == ProductStatus.PUBLISHED)
-        .group_by(ProductCategory.category_id)
-    )
-    count_result = await db.execute(count_stmt)
-    count_map = {r.category_id: r.cnt for r in count_result}
+    count_map = await published_category_counts(db, cat_ids)
     for c in categories:
         c.product_count = count_map.get(c.id, 0)
     return categories
@@ -82,7 +69,7 @@ async def update_category(
     if not category:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
 
-    update_data = data.model_dump(exclude_unset=True)
+    update_data = drop_none(data.model_dump(exclude_unset=True), keep_none=("icon", "description"))
     if "slug" in update_data and update_data["slug"] != category.slug:
         await check_unique(db, Category, Category.slug, update_data["slug"], exclude_id=category_id, label="Slug")
     if "name" in update_data and update_data["name"] != category.name:

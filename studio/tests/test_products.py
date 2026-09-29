@@ -237,8 +237,6 @@ async def test_invalid_status_transition_rejected(async_client):
 @pytest.mark.asyncio
 async def test_update_product_tag_ids(async_client):
     """update_product 支持通过 tag_ids 全量替换标签。"""
-    from tests.conftest import create_tag
-
     product = await create_product(async_client, slug="p1", name="P1")
     tag1 = await create_tag(async_client, slug="t1", name="T1")
     tag2 = await create_tag(async_client, slug="t2", name="T2")
@@ -257,3 +255,63 @@ async def test_update_product_tag_ids(async_client):
     )
     assert resp.status_code == 200
     assert len(resp.json()["tags"]) == 1
+
+
+@pytest.mark.asyncio
+async def test_update_product_ignores_explicit_null(async_client):
+    """显式传 null 的非空字段应视为未提供, 不应触发 500。"""
+    cat = await create_category(async_client, slug="null-cat", name="空值分类")
+    tag = await create_tag(async_client, slug="null-tag", name="空值标签")
+    product = await create_product(
+        async_client,
+        slug="null-p",
+        name="空值产品",
+        category_ids=[cat["id"]],
+        tag_ids=[tag["id"]],
+        status=1,
+    )
+
+    resp = await async_client.put(
+        f"/api/v1/products/{product['id']}",
+        json={"status": None, "category_ids": None, "tag_ids": None, "sort_order": None},
+    )
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+    assert data["status"] == 1
+    assert [c["id"] for c in data["categories"]] == [cat["id"]]
+    assert [t["id"] for t in data["tags"]] == [tag["id"]]
+
+
+@pytest.mark.asyncio
+async def test_update_product_can_clear_description(async_client):
+    """description 为可空字段, 显式 null 应能清空。"""
+    product = await create_product(async_client, slug="desc-p", name="描述产品", description="原描述")
+    resp = await async_client.put(f"/api/v1/products/{product['id']}", json={"description": None})
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["description"] is None
+
+
+@pytest.mark.asyncio
+async def test_product_nested_category_product_count(async_client):
+    """产品响应中嵌套分类的 product_count 应为该分类下已发布产品数。"""
+    cat = await create_category(async_client, slug="count-cat", name="嵌套计数")
+    await create_product(async_client, slug="pub-in-cat", name="已发布", category_ids=[cat["id"]], status=2)
+    draft = await create_product(async_client, slug="draft-in-cat", name="草稿", category_ids=[cat["id"]], status=0)
+
+    resp = await async_client.get(f"/api/v1/products/{draft['id']}")
+    assert resp.status_code == 200
+    nested = next(c for c in resp.json()["categories"] if c["id"] == cat["id"])
+    assert nested["product_count"] == 1
+
+
+@pytest.mark.asyncio
+async def test_product_nested_tag_product_count(async_client):
+    """产品响应中嵌套标签的 product_count 应为该标签关联产品数。"""
+    tag = await create_tag(async_client, slug="nested-tag", name="嵌套标签")
+    await create_product(async_client, slug="tagged-1", name="标签1", tag_ids=[tag["id"]], status=2)
+    second = await create_product(async_client, slug="tagged-2", name="标签2", tag_ids=[tag["id"]], status=0)
+
+    resp = await async_client.get(f"/api/v1/products/{second['id']}")
+    assert resp.status_code == 200
+    nested = next(t for t in resp.json()["tags"] if t["id"] == tag["id"])
+    assert nested["product_count"] == 2

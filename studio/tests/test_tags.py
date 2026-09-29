@@ -108,3 +108,18 @@ async def test_tag_product_count(async_client):
     resp = await async_client.get(f"/api/v1/tags/{tag['id']}/count")
     assert resp.status_code == 200
     assert resp.json()["product_count"] == 2
+
+
+@pytest.mark.asyncio
+async def test_update_tag_ignores_explicit_null(async_client):
+    """显式传 null 的非空字段应视为未提供, 不应触发 409/500。"""
+    tag = await create_tag(async_client, slug="null-tag", name="空值", status=1)
+    resp = await async_client.put(
+        f"/api/v1/tags/{tag['id']}",
+        json={"slug": None, "name": None, "sort_order": None, "status": None},
+    )
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+    assert data["slug"] == "null-tag"
+    assert data["name"] == "空值"
+    assert data["status"] == 1

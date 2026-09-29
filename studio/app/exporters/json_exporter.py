@@ -100,7 +100,7 @@ async def _fetch_products(session: AsyncSession) -> list[dict]:
             "name": row.name,
             "description": row.description or "",
             "url": lnk.url,
-            "categories": [c.slug for c in row.categories],
+            "categories": [c.slug for c in row.categories if c.status == CategoryStatus.ACTIVE],
             "tags": [t.name for t in row.tags if t.status == TagStatus.ACTIVE],
             "pricing": row.pricing,
             "featured": row.featured,

@@ -206,3 +206,29 @@ async def test_export_no_relateds_field(async_client, tmp_path):
     with open(output, encoding="utf-8") as f:
         data = json.load(f)
     assert "relateds" not in data["products"][0]
+
+
+@pytest.mark.asyncio
+async def test_export_excludes_disabled_category(async_client, tmp_path):
+    """产品挂在禁用分类下时, 导出的 categories 不应包含该禁用分类。"""
+    active = await create_category(async_client, slug="active-cat", name="启用", status=1)
+    disabled = await create_category(async_client, slug="disabled-cat", name="禁用", status=0)
+    await create_product(
+        async_client,
+        slug="mixed-cat",
+        name="混合分类",
+        category_ids=[active["id"], disabled["id"]],
+        status=2,
+        links=[{"url": "https://mixed.example.com"}],
+    )
+
+    output = tmp_path / "data-dev.json"
+    with patch("app.exporters.json_exporter.get_settings") as mock:
+        settings = mock.return_value
+        settings.export_full_path = output
+        settings.app_env = "dev"
+        await async_client.post("/api/v1/export")
+
+    with open(output, encoding="utf-8") as f:
+        data = json.load(f)
+    assert data["products"][0]["categories"] == ["active-cat"]

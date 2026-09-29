@@ -150,3 +150,27 @@ async def test_category_response_product_count_only_published(async_client):
     resp = await async_client.get("/api/v1/categories")
     data = resp.json()
     assert data[0]["product_count"] == 2
+
+
+@pytest.mark.asyncio
+async def test_update_category_ignores_explicit_null(async_client):
+    """显式传 null 的非空字段应视为未提供, 不应触发 409/500。"""
+    cat = await create_category(async_client, slug="null-cat", name="空值", icon="Bot", status=1)
+    resp = await async_client.put(
+        f"/api/v1/categories/{cat['id']}",
+        json={"slug": None, "name": None, "sort_order": None, "status": None},
+    )
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+    assert data["slug"] == "null-cat"
+    assert data["name"] == "空值"
+    assert data["status"] == 1
+
+
+@pytest.mark.asyncio
+async def test_update_category_can_clear_icon(async_client):
+    """icon 为可空字段, 显式 null 应能清空。"""
+    cat = await create_category(async_client, slug="icon-cat", name="图标", icon="Bot")
+    resp = await async_client.put(f"/api/v1/categories/{cat['id']}", json={"icon": None})
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["icon"] is None

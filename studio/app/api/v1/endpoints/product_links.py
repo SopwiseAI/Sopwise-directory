@@ -6,6 +6,7 @@ from app.core.deps import get_db
 from app.core.security import require_write
 from app.models import Product, ProductLink, ProductTag, Tag
 from app.schemas.models import ProductLinkCreate, ProductLinkResponse, ProductLinkUpdate, ProductTagUpdate
+from app.utils.db import drop_none
 from app.utils.url import url_hash
 
 router = APIRouter()
@@ -50,7 +51,7 @@ async def add_product_link(product_id: int, data: ProductLinkCreate, db: AsyncSe
         existing_primary = await db.execute(
             select(ProductLink).where(
                 ProductLink.product_id == product_id,
-                ProductLink.is_primary == True,  # noqa: E712
+                ProductLink.is_primary.is_(True),
             )
         )
         if existing_primary.scalar_one_or_none():
@@ -86,7 +87,7 @@ async def update_product_link(
     if not link or link.product_id != product_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Link not found")
 
-    update_data = data.model_dump(exclude_unset=True)
+    update_data = drop_none(data.model_dump(exclude_unset=True), keep_none=("label",))
 
     if "url" in update_data and update_data["url"] != link.url:
         new_hash = url_hash(update_data["url"])
@@ -106,7 +107,7 @@ async def update_product_link(
         existing_primary = await db.execute(
             select(ProductLink).where(
                 ProductLink.product_id == product_id,
-                ProductLink.is_primary == True,  # noqa: E712
+                ProductLink.is_primary.is_(True),
                 ProductLink.id != link_id,
             )
         )

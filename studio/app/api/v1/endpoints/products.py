@@ -19,10 +19,23 @@ from app.models import (
     Tag,
 )
 from app.schemas.models import ProductCreate, ProductResponse, ProductUpdate
-from app.utils.db import check_unique
+from app.utils.db import check_unique, drop_none, published_category_counts, tag_product_counts
 from app.utils.url import url_hash
 
 router = APIRouter()
+
+
+async def _fill_nested_counts(db: AsyncSession, products: list[Product]) -> None:
+    """为产品响应中嵌套的分类/标签填充 product_count, 避免返回恒为 0 的误导值."""
+    category_ids = {c.id for p in products for c in p.categories}
+    tag_ids = {t.id for p in products for t in p.tags}
+    cat_counts = await published_category_counts(db, category_ids)
+    tag_counts = await tag_product_counts(db, tag_ids)
+    for product in products:
+        for category in product.categories:
+            category.product_count = cat_counts.get(category.id, 0)
+        for tag in product.tags:
+            tag.product_count = tag_counts.get(tag.id, 0)
 
 
 @router.get("", response_model=list[ProductResponse])
@@ -59,6 +72,7 @@ async def list_products(
 
     result = await db.execute(stmt)
     products = list(result.scalars().all())
+    await _fill_nested_counts(db, products)
     response.headers["X-Total-Count"] = str(total)
     return products
 
@@ -79,6 +93,7 @@ async def get_product(product_id: int, db: AsyncSession = Depends(get_db)) -> Pr
     product = result.scalar_one_or_none()
     if not product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+    await _fill_nested_counts(db, [product])
     return product
 
 
@@ -162,7 +177,9 @@ async def create_product(data: ProductCreate, db: AsyncSession = Depends(get_db)
         .where(Product.id == product.id)
     )
     result = await db.execute(stmt)
-    return result.scalar_one()
+    product = result.scalar_one()
+    await _fill_nested_counts(db, [product])
+    return product
 
 
 @router.put("/{product_id}", response_model=ProductResponse, dependencies=[Depends(require_write)])
@@ -171,7 +188,7 @@ async def update_product(product_id: int, data: ProductUpdate, db: AsyncSession 
     if not product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
 
-    update_data = data.model_dump(exclude_unset=True)
+    update_data = drop_none(data.model_dump(exclude_unset=True), keep_none=("description",))
 
     if "slug" in update_data and update_data["slug"] != product.slug:
         await check_unique(db, Product, Product.slug, update_data["slug"], exclude_id=product_id, label="Slug")
@@ -247,7 +264,9 @@ async def update_product(product_id: int, data: ProductUpdate, db: AsyncSession 
         .where(Product.id == product.id)
     )
     result = await db.execute(stmt)
-    return result.scalar_one()
+    product = result.scalar_one()
+    await _fill_nested_counts(db, [product])
+    return product
 
 
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_write)])

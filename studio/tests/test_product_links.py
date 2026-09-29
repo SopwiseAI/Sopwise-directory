@@ -183,3 +183,33 @@ async def test_export_skips_broken_primary_link(async_client):
             exported = json.load(f)
         prod = exported["products"][0]
         assert prod["url"] == "https://secondary.com"
+
+
+@pytest.mark.asyncio
+async def test_update_link_ignores_explicit_null(async_client):
+    """显式传 null 的非空字段应视为未提供, 不应触发 409/500。"""
+    product = await create_product(async_client, slug="p1", name="P1")
+    link = await create_link(async_client, product["id"], url="https://keep.com", label="保留")
+
+    resp = await async_client.put(
+        f"/api/v1/products/{product['id']}/links/{link['id']}",
+        json={"url": None, "is_primary": None, "status": None, "sort_order": None},
+    )
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+    assert data["url"] == "https://keep.com"
+    assert data["label"] == "保留"
+    assert data["status"] == 1
+
+
+@pytest.mark.asyncio
+async def test_update_link_can_clear_label(async_client):
+    """label 为可空字段, 显式 null 应能清空。"""
+    product = await create_product(async_client, slug="p1", name="P1")
+    link = await create_link(async_client, product["id"], url="https://x.com", label="标签")
+    resp = await async_client.put(
+        f"/api/v1/products/{product['id']}/links/{link['id']}",
+        json={"label": None},
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["label"] is None
