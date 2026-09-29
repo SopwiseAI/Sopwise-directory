@@ -8,6 +8,11 @@ export interface Category {
   icon: string
 }
 
+export interface RelatedProduct {
+  id: string
+  type: "similar" | "alternative" | "upgrade" | "complementary"
+}
+
 export interface Product {
   id: string
   name: string
@@ -15,6 +20,7 @@ export interface Product {
   url: string
   categories: string[]
   tags?: string[]
+  relateds?: RelatedProduct[]
   pricing?: Pricing
   featured?: boolean
   publishedAt?: string

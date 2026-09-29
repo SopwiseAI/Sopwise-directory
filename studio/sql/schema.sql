@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS sd_category (
   UNIQUE KEY uk_slug (slug),
   UNIQUE KEY uk_name (name),
   KEY idx_status_sort (status, sort_order)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='分类表';
+) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COMMENT='分类表';
 
 
 -- ----------------------------------------------------------------------------
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS sd_product (
   description  VARCHAR(500) DEFAULT NULL          COMMENT '产品描述（可空，后续 AI 填充）',
   pricing      VARCHAR(20)  NOT NULL DEFAULT 'free' COMMENT 'free/freemium/paid/opensource',
   featured     TINYINT(1)   NOT NULL DEFAULT 0    COMMENT '是否精选',
-  sort_order   INT          NOT NULL DEFAULT 0    COMMENT '排序权重（精选列表内排序）',
+  sort_order   INT          NOT NULL DEFAULT 0    COMMENT '排序权重（越大越靠前，导出排序用）',
   status       TINYINT      NOT NULL DEFAULT 0    COMMENT '0=草稿 1=待审核 2=已发布 3=已下架',
   published_at DATETIME     DEFAULT NULL          COMMENT '首次发布时间（前端"最新"排序依据，NULL=从未发布）',
   created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS sd_product (
   KEY idx_status_sort (status, sort_order),
   KEY idx_featured (featured),
   KEY idx_published_at (published_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品主表';
+) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COMMENT='产品主表';
 
 
 -- ----------------------------------------------------------------------------
@@ -122,7 +122,7 @@ CREATE TABLE IF NOT EXISTS sd_product_link (
   KEY idx_product_primary (product_id, is_primary),
   KEY idx_product_sort (product_id, sort_order),
   KEY idx_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品链接表';
+) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COMMENT='产品链接表';
 
 
 -- ----------------------------------------------------------------------------
@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS sd_tag (
   UNIQUE KEY uk_slug (slug),
   UNIQUE KEY uk_name (name),
   KEY idx_status_sort (status, sort_order)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='标签表';
+) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COMMENT='标签表';
 
 
 -- ----------------------------------------------------------------------------
@@ -157,4 +157,27 @@ CREATE TABLE IF NOT EXISTS sd_product_tag (
   CONSTRAINT fk_pt_product FOREIGN KEY (product_id) REFERENCES sd_product (id) ON DELETE CASCADE,
   CONSTRAINT fk_pt_tag FOREIGN KEY (tag_id) REFERENCES sd_tag (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品-标签关联表';
+
+
+-- ----------------------------------------------------------------------------
+-- 7、产品关联表（产品间关联，如相似/替代/升级/配套）
+--    relation_type: similar=同类 similar=替代 upgrade=升级 complementary=配套
+--    不自创建反向关联，查询时通过 idx_related 反查
+--    ON DELETE CASCADE 确保产品删除时关联自动清理
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS sd_product_relation (
+  id             BIGINT       NOT NULL AUTO_INCREMENT,
+  product_id     BIGINT       NOT NULL              COMMENT '源产品 ID',
+  related_id     BIGINT       NOT NULL              COMMENT '关联产品 ID',
+  relation_type  VARCHAR(16)  NOT NULL              COMMENT '关联类型：similar alternative upgrade complementary',
+  sort_order     INT          NOT NULL DEFAULT 0    COMMENT '排序权重',
+  created_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_relation (product_id, related_id, relation_type),
+  KEY idx_product (product_id),
+  KEY idx_related (related_id),
+  KEY idx_type (relation_type),
+  CONSTRAINT fk_pr_product FOREIGN KEY (product_id) REFERENCES sd_product (id) ON DELETE CASCADE,
+  CONSTRAINT fk_pr_related FOREIGN KEY (related_id) REFERENCES sd_product (id) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COMMENT='产品关联表';
 

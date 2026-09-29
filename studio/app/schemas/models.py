@@ -145,3 +145,28 @@ class TagUpdate(BaseModel):
 
 class ProductTagUpdate(BaseModel):
     tag_ids: list[int] = Field(default_factory=list)
+
+
+VALID_RELATION_TYPES = {"similar", "alternative", "upgrade", "complementary"}
+
+
+class ProductRelationCreate(BaseModel):
+    related_id: int
+    relation_type: str = Field("similar", pattern="^(similar|alternative|upgrade|complementary)$")
+    sort_order: int = 0
+
+
+class ProductRelationUpdate(BaseModel):
+    relation_type: str | None = Field(None, pattern="^(similar|alternative|upgrade|complementary)$")
+    sort_order: int | None = None
+
+
+class ProductRelationResponse(BaseModel):
+    id: int
+    product_id: int
+    related_id: int
+    relation_type: str
+    sort_order: int
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

@@ -1,5 +1,5 @@
 from datetime import datetime
-from enum import IntEnum
+from enum import IntEnum, StrEnum
 
 from sqlalchemy import CHAR, BigInteger, Boolean, DateTime, ForeignKey, Index, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -134,6 +134,29 @@ class ProductTag(Base):
         BigInteger, ForeignKey("sd_product.id", ondelete="CASCADE"), primary_key=True
     )
     tag_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("sd_tag.id", ondelete="CASCADE"), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+
+
+class RelationType(StrEnum):
+    SIMILAR = "similar"
+    ALTERNATIVE = "alternative"
+    UPGRADE = "upgrade"
+    COMPLEMENTARY = "complementary"
+
+
+class ProductRelation(Base):
+    __tablename__ = "sd_product_relation"
+    __table_args__ = (
+        Index("idx_product", "product_id"),
+        Index("idx_related", "related_id"),
+        Index("idx_type", "relation_type"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    product_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("sd_product.id", ondelete="CASCADE"), nullable=False)
+    related_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("sd_product.id", ondelete="CASCADE"), nullable=False)
+    relation_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
 
 
