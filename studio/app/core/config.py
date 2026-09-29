@@ -70,7 +70,7 @@ class Settings(BaseSettings):
     def export_full_path(self) -> Path:
         path = Path(self.export_output_path)
         if not path.is_absolute():
-            path = Path(__file__).resolve().parent.parent.parent / path
+            path = _STUDIO_ROOT / path
         return path.with_stem(f"{path.stem}-{self.app_env}")
 
 
