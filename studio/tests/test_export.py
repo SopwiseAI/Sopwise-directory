@@ -1,10 +1,15 @@
 """JSON 导出 鉴权 + 数据格式验证 完整测试。"""
 
 import json
+from datetime import datetime
 from unittest.mock import patch
 
 import pytest
+from sqlalchemy import update
 
+from app.core.database import AsyncSessionLocal
+from app.exporters.json_exporter import _write_text_atomic
+from app.models import Product, ProductLink
 from tests.conftest import create_category, create_product, create_tag
 
 
@@ -232,3 +237,195 @@ async def test_export_excludes_disabled_category(async_client, tmp_path):
     with open(output, encoding="utf-8") as f:
         data = json.load(f)
     assert data["products"][0]["categories"] == ["active-cat"]
+
+
+@pytest.mark.asyncio
+async def test_export_orphan_product_falls_back_to_uncategorized(async_client, tmp_path):
+    """产品所有分类均被禁用时回退到合成的未分类(misc), 且分类列表包含该项。"""
+    disabled = await create_category(async_client, slug="disabled-only", name="禁用", status=0)
+    await create_product(
+        async_client,
+        slug="orphan",
+        name="孤儿产品",
+        category_ids=[disabled["id"]],
+        status=2,
+        links=[{"url": "https://orphan.example.com"}],
+    )
+
+    output = tmp_path / "data-dev.json"
+    with patch("app.exporters.json_exporter.get_settings") as mock:
+        settings = mock.return_value
+        settings.export_full_path = output
+        settings.app_env = "dev"
+        await async_client.post("/api/v1/export")
+
+    with open(output, encoding="utf-8") as f:
+        data = json.load(f)
+    assert data["products"][0]["categories"] == ["misc"]
+    assert data["categories"][-1] == {"id": "misc", "name": "未分类", "icon": "Box"}
+
+
+@pytest.mark.asyncio
+async def test_export_omits_uncategorized_when_not_needed(async_client, tmp_path):
+    """没有孤儿产品时不应凭空追加未分类分类。"""
+    cat = await create_category(async_client, slug="only-cat", name="正常")
+    await create_product(
+        async_client,
+        slug="normal",
+        name="正常产品",
+        category_ids=[cat["id"]],
+        status=2,
+        links=[{"url": "https://normal.example.com"}],
+    )
+
+    output = tmp_path / "data-dev.json"
+    with patch("app.exporters.json_exporter.get_settings") as mock:
+        settings = mock.return_value
+        settings.export_full_path = output
+        settings.app_env = "dev"
+        await async_client.post("/api/v1/export")
+
+    with open(output, encoding="utf-8") as f:
+        data = json.load(f)
+    assert [c["id"] for c in data["categories"]] == ["only-cat"]
+
+
+@pytest.mark.asyncio
+async def test_export_reuses_real_misc_category(async_client, tmp_path):
+    """已存在启用的 misc 分类时应复用, 不得产生重复 category id。"""
+    real = await create_category(async_client, slug="misc", name="其他", icon="Box", status=1)
+    disabled = await create_category(async_client, slug="disabled-x", name="禁用", status=0)
+    await create_product(
+        async_client,
+        slug="mixed",
+        name="混合",
+        category_ids=[real["id"], disabled["id"]],
+        status=2,
+        links=[{"url": "https://mixed2.example.com"}],
+    )
+
+    output = tmp_path / "data-dev.json"
+    with patch("app.exporters.json_exporter.get_settings") as mock:
+        settings = mock.return_value
+        settings.export_full_path = output
+        settings.app_env = "dev"
+        await async_client.post("/api/v1/export")
+
+    with open(output, encoding="utf-8") as f:
+        data = json.load(f)
+    assert data["products"][0]["categories"] == ["misc"]
+    miscs = [c for c in data["categories"] if c["id"] == "misc"]
+    assert len(miscs) == 1
+    assert miscs[0]["name"] == "其他"
+
+
+async def test_write_text_atomic_replaces_and_leaves_no_tmp(tmp_path):
+    """原子写入应覆盖旧内容且不残留临时文件。"""
+    target = tmp_path / "data-dev.json"
+    _write_text_atomic(target, "old")
+    _write_text_atomic(target, "new")
+    assert target.read_text(encoding="utf-8") == "new"
+    assert list(tmp_path.glob(".*tmp")) == []
+
+
+@pytest.mark.asyncio
+async def test_export_skips_invalid_records(async_client, tmp_path):
+    """pricing 非法或 url 为空(直连改库绕过 API 校验)的产品应被跳过, 避免前端构建失败。"""
+    cat = await create_category(async_client, slug="cat", name="分类")
+    await create_product(
+        async_client,
+        slug="good",
+        name="Good",
+        category_ids=[cat["id"]],
+        status=2,
+        links=[{"url": "https://good.example.com"}],
+    )
+    bad_price = await create_product(
+        async_client,
+        slug="bad-price",
+        name="BadPrice",
+        category_ids=[cat["id"]],
+        status=2,
+        links=[{"url": "https://bad-price.example.com"}],
+    )
+    bad_url = await create_product(
+        async_client,
+        slug="bad-url",
+        name="BadUrl",
+        category_ids=[cat["id"]],
+        status=2,
+        links=[{"url": "https://bad-url.example.com"}],
+    )
+    async with AsyncSessionLocal() as session:
+        await session.execute(update(Product).where(Product.id == bad_price["id"]).values(pricing="enterprise"))
+        await session.execute(update(ProductLink).where(ProductLink.product_id == bad_url["id"]).values(url=""))
+        await session.commit()
+
+    output = tmp_path / "data-dev.json"
+    with patch("app.exporters.json_exporter.get_settings") as mock:
+        settings = mock.return_value
+        settings.export_full_path = output
+        settings.app_env = "dev"
+        await async_client.post("/api/v1/export")
+
+    with open(output, encoding="utf-8") as f:
+        data = json.load(f)
+    assert [p["id"] for p in data["products"]] == ["good"]
+
+
+@pytest.mark.asyncio
+async def test_export_stable_order_tiebreak_by_id(async_client, tmp_path):
+    """sort_order 与 published_at 均相同时按 id 升序, 保证导出顺序稳定。"""
+    cat = await create_category(async_client, slug="cat", name="分类")
+    first = await create_product(
+        async_client, slug="pa", name="PA", category_ids=[cat["id"]], status=2, links=[{"url": "https://a.example.com"}]
+    )
+    second = await create_product(
+        async_client, slug="pb", name="PB", category_ids=[cat["id"]], status=2, links=[{"url": "https://b.example.com"}]
+    )
+    async with AsyncSessionLocal() as session:
+        await session.execute(
+            update(Product)
+            .where(Product.id.in_([first["id"], second["id"]]))
+            .values(sort_order=5, published_at=datetime(2026, 1, 1, 0, 0, 0))
+        )
+        await session.commit()
+
+    output = tmp_path / "data-dev.json"
+    with patch("app.exporters.json_exporter.get_settings") as mock:
+        settings = mock.return_value
+        settings.export_full_path = output
+        settings.app_env = "dev"
+        await async_client.post("/api/v1/export")
+
+    with open(output, encoding="utf-8") as f:
+        data = json.load(f)
+    assert [p["id"] for p in data["products"]] == ["pa", "pb"]
+
+
+@pytest.mark.asyncio
+async def test_export_link_and_category_order_is_deterministic(async_client, tmp_path):
+    """多个 active 链接无 primary 时按 sort_order/id 取首个; 分类也按 sort_order/id 稳定排序。"""
+    cat_b = await create_category(async_client, slug="cat-b", name="B")
+    cat_a = await create_category(async_client, slug="cat-a", name="A")
+    await create_product(
+        async_client,
+        slug="multi",
+        name="多链接",
+        category_ids=[cat_b["id"], cat_a["id"]],
+        status=2,
+        links=[{"url": "https://first.example.com"}, {"url": "https://second.example.com"}],
+    )
+
+    output = tmp_path / "data-dev.json"
+    with patch("app.exporters.json_exporter.get_settings") as mock:
+        settings = mock.return_value
+        settings.export_full_path = output
+        settings.app_env = "dev"
+        await async_client.post("/api/v1/export")
+
+    with open(output, encoding="utf-8") as f:
+        data = json.load(f)
+    prod = data["products"][0]
+    assert prod["url"] == "https://first.example.com"
+    assert prod["categories"] == ["cat-b", "cat-a"]

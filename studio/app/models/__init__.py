@@ -30,6 +30,9 @@ class LinkStatus(IntEnum):
     DISABLED = 3
 
 
+PRICINGS = ("free", "freemium", "paid", "opensource")
+
+
 VALID_STATUS_TRANSITIONS: dict[ProductStatus, set[ProductStatus]] = {
     ProductStatus.DRAFT: {ProductStatus.PENDING},
     ProductStatus.PENDING: {ProductStatus.DRAFT, ProductStatus.PUBLISHED},

@@ -2,10 +2,10 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from app.models import RelationType
+from app.models import PRICINGS, RelationType
 
 _SLUG_PATTERN = r"^[a-z0-9]+(?:-[a-z0-9]+)*$"
-_PRICING_PATTERN = "^(free|freemium|paid|opensource)$"
+_PRICING_PATTERN = "^(" + "|".join(PRICINGS) + ")$"
 _RELATION_TYPE_PATTERN = "^(?:" + "|".join(t.value for t in RelationType) + ")$"
 
 
