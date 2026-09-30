@@ -37,14 +37,14 @@ async def create_product_relation(
     db: AsyncSession = Depends(get_db),
 ) -> ProductRelationResponse:
     if product_id == data.related_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="产品不能关联自身")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Product cannot relate to itself")
 
     product = await db.get(Product, product_id)
     if not product:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="源产品不存在")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Source product not found")
     related = await db.get(Product, data.related_id)
     if not related:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="关联产品不存在")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Related product not found")
 
     existing = await db.execute(
         select(ProductRelation).where(
@@ -54,7 +54,7 @@ async def create_product_relation(
         )
     )
     if existing.scalar_one_or_none():
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="该关联已存在")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Relation already exists")
 
     relation = ProductRelation(product_id=product_id, **data.model_dump())
     db.add(relation)
@@ -76,7 +76,7 @@ async def update_product_relation(
 ) -> ProductRelationResponse:
     relation = await db.get(ProductRelation, relation_id)
     if not relation or relation.product_id != product_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="关联不存在")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Relation not found")
 
     update_data = drop_none(data.model_dump(exclude_unset=True))
 
@@ -90,7 +90,7 @@ async def update_product_relation(
             )
         )
         if existing.scalar_one_or_none():
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="该关联已存在")
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Relation already exists")
 
     for key, value in update_data.items():
         setattr(relation, key, value)
@@ -112,5 +112,5 @@ async def delete_product_relation(
 ) -> None:
     relation = await db.get(ProductRelation, relation_id)
     if not relation or relation.product_id != product_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="关联不存在")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Relation not found")
     await db.delete(relation)

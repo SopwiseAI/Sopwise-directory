@@ -1,9 +1,10 @@
 import logging
-import uuid
+import secrets
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
@@ -15,6 +16,10 @@ from app.utils.url import InvalidURLError
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(name)s - %(message)s")
 logger = logging.getLogger(__name__)
+
+
+def _generate_request_id() -> str:
+    return secrets.token_hex(12)
 
 
 @asynccontextmanager
@@ -33,19 +38,21 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     logger.info("DB engine disposed")
 
 
+_settings = get_settings()
+
 app = FastAPI(
     title="Sopwise Studio API",
     description="Sopwise Directory Studio — 数据管理后端",
     version=get_app_version(),
-    debug=get_settings().app_debug,
+    debug=_settings.app_debug,
     lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=get_settings().cors_origin_list,
+    allow_origins=_settings.cors_origin_list,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["X-Total-Count", "X-Request-ID"],
 )
@@ -53,7 +60,7 @@ app.add_middleware(
 
 @app.middleware("http")
 async def add_request_id(request: Request, call_next):
-    request_id = str(uuid.uuid4())[:8]
+    request_id = request.headers.get("X-Request-ID") or _generate_request_id()
     request.state.request_id = request_id
     response = await call_next(request)
     response.headers["X-Request-ID"] = request_id
@@ -65,14 +72,29 @@ async def invalid_url_handler(request: Request, exc: InvalidURLError) -> JSONRes
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content={"detail": str(exc)},
+        headers={"X-Request-ID": getattr(request.state, "request_id", "-")},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    errors = []
+    for err in exc.errors():
+        loc = ".".join(str(p) for p in err.get("loc", []))
+        errors.append(f"{loc}: {err.get('msg', '')}")
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": "; ".join(errors)},
+        headers={"X-Request-ID": getattr(request.state, "request_id", "-")},
     )
 
 
 @app.exception_handler(IntegrityError)
 async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSONResponse:
+    request_id = getattr(request.state, "request_id", "-")
     logger.warning(
         "Integrity error [%s] on %s %s: %s",
-        request.state.request_id,
+        request_id,
         request.method,
         request.url.path,
         exc,
@@ -84,7 +106,11 @@ async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSON
             detail = "Resource conflict — unique constraint violated"
         elif "FOREIGN KEY" in err or "cannot delete" in err.lower():
             detail = "Resource has existing associations, cannot delete"
-    return JSONResponse(status_code=409, content={"detail": detail})
+    return JSONResponse(
+        status_code=409,
+        content={"detail": detail},
+        headers={"X-Request-ID": request_id},
+    )
 
 
 @app.exception_handler(Exception)

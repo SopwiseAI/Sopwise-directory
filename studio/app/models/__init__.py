@@ -33,6 +33,13 @@ class LinkStatus(IntEnum):
 PRICINGS = ("free", "freemium", "paid", "opensource")
 
 
+class PricingType(StrEnum):
+    FREE = "free"
+    FREEMIUM = "freemium"
+    PAID = "paid"
+    OPENSOURCE = "opensource"
+
+
 VALID_STATUS_TRANSITIONS: dict[ProductStatus, set[ProductStatus]] = {
     ProductStatus.DRAFT: {ProductStatus.PENDING},
     ProductStatus.PENDING: {ProductStatus.DRAFT, ProductStatus.PUBLISHED},
@@ -175,12 +182,12 @@ class ProductRelation(Base):
     )
 
     @property
-    def related_slug(self) -> str:
-        return self.related_product.slug if self.related_product else ""
+    def related_slug(self) -> str | None:
+        return self.related_product.slug if self.related_product else None
 
     @property
-    def related_name(self) -> str:
-        return self.related_product.name if self.related_product else ""
+    def related_name(self) -> str | None:
+        return self.related_product.name if self.related_product else None
 
 
 class ProductCategory(Base):

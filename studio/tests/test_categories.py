@@ -1,11 +1,8 @@
 """分类 CRUD 完整测试。"""
 
-import pytest
-
 from tests.conftest import create_category, create_product
 
 
-@pytest.mark.asyncio
 async def test_create_category(async_client):
     resp = await async_client.post(
         "/api/v1/categories",
@@ -23,7 +20,6 @@ async def test_create_category(async_client):
     assert "updated_at" in data
 
 
-@pytest.mark.asyncio
 async def test_create_category_duplicate_slug(async_client):
     await create_category(async_client, slug="chat", name="对话")
     resp = await async_client.post(
@@ -34,7 +30,6 @@ async def test_create_category_duplicate_slug(async_client):
     assert "Slug already exists" in resp.json()["detail"]
 
 
-@pytest.mark.asyncio
 async def test_create_category_duplicate_name(async_client):
     await create_category(async_client, slug="cat-a", name="重复名")
     resp = await async_client.post(
@@ -44,7 +39,6 @@ async def test_create_category_duplicate_name(async_client):
     assert resp.status_code == 409
 
 
-@pytest.mark.asyncio
 async def test_list_categories_sorted_by_sort_order(async_client):
     await create_category(async_client, slug="cat-a", name="A", sort_order=10)
     await create_category(async_client, slug="cat-b", name="B", sort_order=100)
@@ -58,17 +52,16 @@ async def test_list_categories_sorted_by_sort_order(async_client):
     assert data[2]["name"] == "A"
 
 
-@pytest.mark.asyncio
 async def test_list_categories_filter_by_status(async_client):
     await create_category(async_client, slug="cat-on", name="启用", status=1)
     await create_category(async_client, slug="cat-off", name="禁用", status=0)
     resp = await async_client.get("/api/v1/categories?status=1")
+    assert resp.status_code == 200
     data = resp.json()
     assert len(data) == 1
     assert data[0]["name"] == "启用"
 
 
-@pytest.mark.asyncio
 async def test_get_category_by_id(async_client):
     cat = await create_category(async_client, slug="cat-1", name="分类1")
     resp = await async_client.get(f"/api/v1/categories/{cat['id']}")
@@ -76,13 +69,11 @@ async def test_get_category_by_id(async_client):
     assert resp.json()["name"] == "分类1"
 
 
-@pytest.mark.asyncio
 async def test_get_category_not_found(async_client):
     resp = await async_client.get("/api/v1/categories/99999")
     assert resp.status_code == 404
 
 
-@pytest.mark.asyncio
 async def test_update_category(async_client):
     cat = await create_category(async_client, slug="old-slug", name="旧名")
     resp = await async_client.put(
@@ -96,7 +87,6 @@ async def test_update_category(async_client):
     assert data["slug"] == "old-slug"
 
 
-@pytest.mark.asyncio
 async def test_update_category_slug_conflict(async_client):
     await create_category(async_client, slug="slug-a", name="A")
     cat_b = await create_category(async_client, slug="slug-b", name="B")
@@ -107,14 +97,12 @@ async def test_update_category_slug_conflict(async_client):
     assert resp.status_code == 409
 
 
-@pytest.mark.asyncio
 async def test_delete_category_empty(async_client):
     cat = await create_category(async_client, slug="del-me", name="待删除")
     resp = await async_client.delete(f"/api/v1/categories/{cat['id']}")
     assert resp.status_code == 204
 
 
-@pytest.mark.asyncio
 async def test_delete_category_with_products_rejected(async_client):
     cat = await create_category(async_client, slug="has-prod", name="有产品")
     await create_product(async_client, slug="prod-1", name="产品1", category_ids=[cat["id"]])
@@ -123,7 +111,6 @@ async def test_delete_category_with_products_rejected(async_client):
     assert "products" in resp.json()["detail"]
 
 
-@pytest.mark.asyncio
 async def test_category_product_count(async_client):
     cat = await create_category(async_client, slug="count-cat", name="计数")
     await create_product(async_client, slug="p1", name="P1", category_ids=[cat["id"]], status=2)
@@ -135,7 +122,6 @@ async def test_category_product_count(async_client):
     assert data["product_count"] == 2
 
 
-@pytest.mark.asyncio
 async def test_category_response_product_count_only_published(async_client):
     """CategoryResponse.product_count 仅统计已发布产品，与 /count 端点一致。"""
     cat = await create_category(async_client, slug="pub-cat", name="发布计数")
@@ -152,7 +138,6 @@ async def test_category_response_product_count_only_published(async_client):
     assert data[0]["product_count"] == 2
 
 
-@pytest.mark.asyncio
 async def test_update_category_ignores_explicit_null(async_client):
     """显式传 null 的非空字段应视为未提供, 不应触发 409/500。"""
     cat = await create_category(async_client, slug="null-cat", name="空值", icon="Bot", status=1)
@@ -167,7 +152,6 @@ async def test_update_category_ignores_explicit_null(async_client):
     assert data["status"] == 1
 
 
-@pytest.mark.asyncio
 async def test_delete_category_guard_counts_all_statuses(async_client):
     """删除守卫需拦截所有状态的产品(含草稿), 提示语应给出总数以免与 product_count 混淆。"""
     cat = await create_category(async_client, slug="mix-cat", name="混合")
@@ -184,28 +168,24 @@ async def test_delete_category_guard_counts_all_statuses(async_client):
     assert "unpublished" in detail
 
 
-@pytest.mark.asyncio
 async def test_category_count_not_found(async_client):
     """不存在的分类取计数应 404, 与详情端点语义一致。"""
     resp = await async_client.get("/api/v1/categories/99999/count")
     assert resp.status_code == 404
 
 
-@pytest.mark.asyncio
 async def test_category_count_declares_response_model(async_client):
     """/count 应声明 response_model, 以便生成 OpenAPI schema。"""
     resp = await async_client.get("/openapi.json")
     assert "CategoryCountResponse" in resp.json()["components"]["schemas"]
 
 
-@pytest.mark.asyncio
 async def test_list_categories_rejects_out_of_range_status(async_client):
     """status 仅允许 0/1, 越界应 422 而非静默返回空列表。"""
     resp = await async_client.get("/api/v1/categories?status=5")
     assert resp.status_code == 422
 
 
-@pytest.mark.asyncio
 async def test_update_category_can_clear_icon(async_client):
     """icon 为可空字段, 显式 null 应能清空。"""
     cat = await create_category(async_client, slug="icon-cat", name="图标", icon="Bot")

@@ -1,11 +1,8 @@
 """产品-标签关联 完整测试。"""
 
-import pytest
-
 from tests.conftest import create_product, create_tag
 
 
-@pytest.mark.asyncio
 async def test_set_product_tags(async_client):
     product = await create_product(async_client, slug="p1", name="P1")
     tag1 = await create_tag(async_client, slug="t1", name="T1")
@@ -25,7 +22,6 @@ async def test_set_product_tags(async_client):
     assert tag_names == {"T1", "T2"}
 
 
-@pytest.mark.asyncio
 async def test_update_product_tags_replace(async_client):
     """更新标签应完全替换，而非追加。"""
     product = await create_product(async_client, slug="p1", name="P1")
@@ -47,7 +43,6 @@ async def test_update_product_tags_replace(async_client):
     assert tags[0]["name"] == "T3"
 
 
-@pytest.mark.asyncio
 async def test_clear_product_tags(async_client):
     product = await create_product(async_client, slug="p1", name="P1")
     tag1 = await create_tag(async_client, slug="t1", name="T1")
@@ -63,7 +58,6 @@ async def test_clear_product_tags(async_client):
     assert len(resp.json()["tags"]) == 0
 
 
-@pytest.mark.asyncio
 async def test_set_tags_duplicate_ids_are_idempotent(async_client):
     """重复的 tag_id 应去重, 而非触发主键冲突(409)。"""
     product = await create_product(async_client, slug="p1", name="P1")
@@ -79,14 +73,12 @@ async def test_set_tags_duplicate_ids_are_idempotent(async_client):
     assert len(resp.json()["tags"]) == 1
 
 
-@pytest.mark.asyncio
 async def test_product_tags_declares_response_model(async_client):
     """PUT /products/{id}/tags 应声明 response_model。"""
     resp = await async_client.get("/openapi.json")
     assert "ProductTagsResponse" in resp.json()["components"]["schemas"]
 
 
-@pytest.mark.asyncio
 async def test_set_tags_with_invalid_id(async_client):
     product = await create_product(async_client, slug="p1", name="P1")
     tag = await create_tag(async_client, slug="t1", name="T1")
@@ -98,7 +90,6 @@ async def test_set_tags_with_invalid_id(async_client):
     assert "99999" in resp.json()["detail"]
 
 
-@pytest.mark.asyncio
 async def test_set_tags_nonexistent_product(async_client):
     tag = await create_tag(async_client, slug="t1", name="T1")
     resp = await async_client.put(

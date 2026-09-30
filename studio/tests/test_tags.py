@@ -1,11 +1,8 @@
 """标签 CRUD 完整测试。"""
 
-import pytest
-
 from tests.conftest import create_tag
 
 
-@pytest.mark.asyncio
 async def test_create_tag(async_client):
     resp = await async_client.post("/api/v1/tags", json={"slug": "free", "name": "免费"})
     assert resp.status_code == 201
@@ -19,21 +16,18 @@ async def test_create_tag(async_client):
     assert "updated_at" in data
 
 
-@pytest.mark.asyncio
 async def test_create_tag_duplicate_slug(async_client):
     await create_tag(async_client, slug="free", name="免费")
     resp = await async_client.post("/api/v1/tags", json={"slug": "free", "name": "免费2"})
     assert resp.status_code == 409
 
 
-@pytest.mark.asyncio
 async def test_create_tag_duplicate_name(async_client):
     await create_tag(async_client, slug="tag-a", name="重复")
     resp = await async_client.post("/api/v1/tags", json={"slug": "tag-b", "name": "重复"})
     assert resp.status_code == 409
 
 
-@pytest.mark.asyncio
 async def test_list_tags_sorted_by_sort_order(async_client):
     await create_tag(async_client, slug="t-a", name="Alpha", sort_order=1)
     await create_tag(async_client, slug="t-b", name="Bravo", sort_order=5)
@@ -47,17 +41,16 @@ async def test_list_tags_sorted_by_sort_order(async_client):
     assert data[2]["name"] == "Alpha"
 
 
-@pytest.mark.asyncio
 async def test_list_tags_filter_by_status(async_client):
     await create_tag(async_client, slug="t-on", name="启用", status=1)
     await create_tag(async_client, slug="t-off", name="禁用", status=0)
     resp = await async_client.get("/api/v1/tags", params={"status": 1})
+    assert resp.status_code == 200
     data = resp.json()
     assert len(data) == 1
     assert data[0]["name"] == "启用"
 
 
-@pytest.mark.asyncio
 async def test_get_tag_by_id(async_client):
     tag = await create_tag(async_client, slug="api", name="API")
     resp = await async_client.get(f"/api/v1/tags/{tag['id']}")
@@ -65,13 +58,11 @@ async def test_get_tag_by_id(async_client):
     assert resp.json()["name"] == "API"
 
 
-@pytest.mark.asyncio
 async def test_get_tag_not_found(async_client):
     resp = await async_client.get("/api/v1/tags/99999")
     assert resp.status_code == 404
 
 
-@pytest.mark.asyncio
 async def test_update_tag(async_client):
     tag = await create_tag(async_client, slug="old", name="旧名")
     resp = await async_client.put(f"/api/v1/tags/{tag['id']}", json={"name": "新名"})
@@ -79,7 +70,6 @@ async def test_update_tag(async_client):
     assert resp.json()["name"] == "新名"
 
 
-@pytest.mark.asyncio
 async def test_update_tag_sort_order_and_status(async_client):
     tag = await create_tag(async_client, slug="ord", name="排序")
     resp = await async_client.put(f"/api/v1/tags/{tag['id']}", json={"sort_order": 10, "status": 0})
@@ -89,7 +79,6 @@ async def test_update_tag_sort_order_and_status(async_client):
     assert data["status"] == 0
 
 
-@pytest.mark.asyncio
 async def test_delete_tag(async_client):
     tag = await create_tag(async_client, slug="del", name="待删")
     resp = await async_client.delete(f"/api/v1/tags/{tag['id']}")
@@ -98,7 +87,6 @@ async def test_delete_tag(async_client):
     assert resp.status_code == 404
 
 
-@pytest.mark.asyncio
 async def test_tag_product_count_only_published(async_client):
     """标签 product_count 仅统计已发布产品, 与分类口径一致。"""
     from tests.conftest import create_product
@@ -111,28 +99,24 @@ async def test_tag_product_count_only_published(async_client):
     assert resp.json()["product_count"] == 1
 
 
-@pytest.mark.asyncio
 async def test_tag_count_not_found(async_client):
     """不存在的标签取计数应 404, 与详情端点语义一致。"""
     resp = await async_client.get("/api/v1/tags/99999/count")
     assert resp.status_code == 404
 
 
-@pytest.mark.asyncio
 async def test_tag_count_declares_response_model(async_client):
     """/count 应声明 response_model, 以便生成 OpenAPI schema。"""
     resp = await async_client.get("/openapi.json")
     assert "TagCountResponse" in resp.json()["components"]["schemas"]
 
 
-@pytest.mark.asyncio
 async def test_list_tags_rejects_out_of_range_status(async_client):
     """status 仅允许 0/1, 越界应 422 而非静默返回空列表。"""
     resp = await async_client.get("/api/v1/tags?status=9")
     assert resp.status_code == 422
 
 
-@pytest.mark.asyncio
 async def test_update_tag_ignores_explicit_null(async_client):
     """显式传 null 的非空字段应视为未提供, 不应触发 409/500。"""
     tag = await create_tag(async_client, slug="null-tag", name="空值", status=1)

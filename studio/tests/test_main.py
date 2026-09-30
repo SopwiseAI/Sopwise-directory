@@ -1,11 +1,9 @@
-import pytest
 from httpx import AsyncClient
 from starlette.requests import Request
 
 from app.main import global_exception_handler
 
 
-@pytest.mark.asyncio
 async def test_cors_exposes_pagination_and_request_id_headers(anon_client: AsyncClient):
     """分页总数与请求 id 需通过 CORS expose_headers 暴露给浏览器。"""
     resp = await anon_client.get("/api/v1/health", headers={"Origin": "http://localhost:3000"})
@@ -15,7 +13,6 @@ async def test_cors_exposes_pagination_and_request_id_headers(anon_client: Async
     assert "X-Request-ID" in exposed
 
 
-@pytest.mark.asyncio
 async def test_global_exception_handler_attaches_request_id():
     """500 兜底响应应带上 X-Request-ID 以便与日志关联。
 

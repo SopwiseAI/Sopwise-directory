@@ -205,14 +205,12 @@ class TestUrlHash:
 # -- check_unique ----------------------------------------------------------------
 
 
-@pytest.mark.asyncio
 async def test_check_unique_available(async_client):
     """字段值不存在时不应抛异常."""
     async with AsyncSessionLocal() as session:
         await check_unique(session, Category, Category.slug, "unique-slug", label="Slug")
 
 
-@pytest.mark.asyncio
 async def test_check_unique_conflict(async_client):
     """字段值已存在时应抛 409."""
     await create_category(async_client, slug="dup-slug", name="重复Slug")
@@ -224,7 +222,6 @@ async def test_check_unique_conflict(async_client):
         assert "Slug already exists" in exc_info.value.detail
 
 
-@pytest.mark.asyncio
 async def test_check_unique_exclude_id(async_client):
     """更新场景: exclude_id 应排除自身记录."""
     cat = await create_category(async_client, slug="keep-slug", name="保留Slug")
@@ -233,7 +230,6 @@ async def test_check_unique_exclude_id(async_client):
         await check_unique(session, Category, Category.slug, "keep-slug", exclude_id=cat["id"], label="Slug")
 
 
-@pytest.mark.asyncio
 async def test_check_unique_exclude_id_still_conflicts(async_client):
     """更新场景: exclude_id 排除自身后, 与其他记录冲突仍应抛 409."""
     cat1 = await create_category(async_client, slug="slug-a", name="Slug A")

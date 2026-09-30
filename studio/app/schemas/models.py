@@ -102,56 +102,6 @@ class ProductUpdate(BaseModel):
     status: int | None = Field(None, ge=0, le=3)
 
 
-class TagResponse(BaseModel):
-    id: int
-    slug: str
-    name: str
-    sort_order: int
-    status: int
-    product_count: int = 0
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = {"from_attributes": True}
-
-
-class ProductRelationResponse(BaseModel):
-    id: int
-    product_id: int
-    related_id: int
-    relation_type: str
-    sort_order: int
-    created_at: datetime
-    related_slug: str = ""
-    related_name: str = ""
-
-    model_config = {"from_attributes": True}
-
-
-class ProductResponse(BaseModel):
-    id: int
-    slug: str
-    name: str
-    description: str | None
-    pricing: str
-    featured: bool
-    sort_order: int
-    status: int
-    published_at: datetime | None
-    created_at: datetime
-    updated_at: datetime
-    categories: list[CategoryResponse] = Field(default_factory=list)
-    links: list[ProductLinkResponse] = Field(default_factory=list)
-    tags: list[TagResponse] = Field(default_factory=list)
-    relateds: list[ProductRelationResponse] = Field(default_factory=list)
-
-    model_config = {"from_attributes": True}
-
-
-class TagCountResponse(BaseModel):
-    product_count: int
-
-
 class TagBase(BaseModel):
     slug: str = Field(..., max_length=64, pattern=_SLUG_PATTERN)
     name: str = Field(..., max_length=64)
@@ -168,6 +118,46 @@ class TagUpdate(BaseModel):
     name: str | None = Field(None, max_length=64)
     sort_order: int | None = Field(None, ge=0)
     status: int | None = Field(None, ge=0, le=1)
+
+
+class TagResponse(TagBase):
+    id: int
+    product_count: int = 0
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class TagCountResponse(BaseModel):
+    product_count: int
+
+
+class ProductRelationResponse(BaseModel):
+    id: int
+    product_id: int
+    related_id: int
+    relation_type: str
+    sort_order: int
+    created_at: datetime
+    related_slug: str | None = None
+    related_name: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class ProductResponse(ProductBase):
+    id: int
+    category_ids: list[int] = Field(default_factory=list, exclude=True)
+    published_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+    categories: list[CategoryResponse] = Field(default_factory=list)
+    links: list[ProductLinkResponse] = Field(default_factory=list)
+    tags: list[TagResponse] = Field(default_factory=list)
+    relateds: list[ProductRelationResponse] = Field(default_factory=list)
+
+    model_config = {"from_attributes": True}
 
 
 class ProductTagUpdate(BaseModel):

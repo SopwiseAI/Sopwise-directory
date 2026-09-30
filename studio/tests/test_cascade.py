@@ -1,11 +1,8 @@
 """级联删除测试 — 验证外键 ON DELETE CASCADE / SET NULL 行为。"""
 
-import pytest
-
 from tests.conftest import create_category, create_link, create_product, create_tag
 
 
-@pytest.mark.asyncio
 async def test_delete_product_cascades_links(async_client):
     """删除产品 → 链接自动级联删除。"""
     product = await create_product(async_client, slug="p1", name="P1")
@@ -24,7 +21,6 @@ async def test_delete_product_cascades_links(async_client):
     assert len(resp.json()) == 0
 
 
-@pytest.mark.asyncio
 async def test_delete_product_cascades_tag_associations(async_client):
     """删除产品 → 标签关联自动级联删除，但标签本身仍在。"""
     tag = await create_tag(async_client, slug="t1", name="T1")
@@ -41,7 +37,6 @@ async def test_delete_product_cascades_tag_associations(async_client):
     assert resp.json()["product_count"] == 0
 
 
-@pytest.mark.asyncio
 async def test_delete_tag_cascades_associations(async_client):
     """删除标签 → 产品-标签关联自动级联删除，但产品本身仍在。"""
     tag = await create_tag(async_client, slug="t1", name="T1")
@@ -55,7 +50,6 @@ async def test_delete_tag_cascades_associations(async_client):
     assert len(resp.json()["tags"]) == 0
 
 
-@pytest.mark.asyncio
 async def test_delete_category_cascades_associations(async_client):
     """删除分类 → 产品-分类关联自动级联删除，但产品本身仍在。
 

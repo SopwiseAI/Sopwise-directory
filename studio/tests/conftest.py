@@ -140,12 +140,10 @@ async def create_product(
     data = resp.json()
 
     if status == ProductStatus.PUBLISHED:
-        await client.put(f"/api/v1/products/{data['id']}", json={"status": 1})
         resp = await client.put(f"/api/v1/products/{data['id']}", json={"status": 2})
         assert resp.status_code == 200, resp.text
         data = resp.json()
     elif status == ProductStatus.ARCHIVED:
-        await client.put(f"/api/v1/products/{data['id']}", json={"status": 1})
         await client.put(f"/api/v1/products/{data['id']}", json={"status": 2})
         resp = await client.put(f"/api/v1/products/{data['id']}", json={"status": 3})
         assert resp.status_code == 200, resp.text

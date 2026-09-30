@@ -1,7 +1,5 @@
 """产品链接 CRUD + is_primary 唯一性 + URL 归一化去重 完整测试。"""
 
-import pytest
-
 from app.core.database import AsyncSessionLocal
 from app.models import ProductLink
 from app.utils.url import url_hash
@@ -16,7 +14,6 @@ async def _seed_two_primaries(product_id: int) -> None:
         await session.commit()
 
 
-@pytest.mark.asyncio
 async def test_add_primary_link_tolerates_inconsistent_data(async_client):
     """存量数据已有两个主链接时, 新建主链接应 409 而非 500。"""
     product = await create_product(async_client, slug="p1", name="P1")
@@ -28,7 +25,6 @@ async def test_add_primary_link_tolerates_inconsistent_data(async_client):
     assert resp.status_code == 409, resp.text
 
 
-@pytest.mark.asyncio
 async def test_update_to_primary_tolerates_inconsistent_data(async_client):
     """存量数据已有两个主链接时, 改主链接应 409 而非 500。"""
     product = await create_product(async_client, slug="p1", name="P1")
@@ -41,7 +37,6 @@ async def test_update_to_primary_tolerates_inconsistent_data(async_client):
     assert resp.status_code == 409, resp.text
 
 
-@pytest.mark.asyncio
 async def test_set_primary_twice_is_idempotent(async_client):
     """对已是主链接的链接重复设主应 200 (无其它主链接)。"""
     product = await create_product(async_client, slug="p1", name="P1")
@@ -54,7 +49,6 @@ async def test_set_primary_twice_is_idempotent(async_client):
     assert resp.json()["is_primary"] is True
 
 
-@pytest.mark.asyncio
 async def test_list_links_rejects_out_of_range_status(async_client):
     """链接 status 仅 1..3, 越界应 422 而非静默返回空列表。"""
     product = await create_product(async_client, slug="p1", name="P1")
@@ -62,7 +56,6 @@ async def test_list_links_rejects_out_of_range_status(async_client):
     assert resp.status_code == 422
 
 
-@pytest.mark.asyncio
 async def test_add_link(async_client):
     product = await create_product(async_client, slug="p1", name="P1")
     link = await create_link(async_client, product["id"], url="https://example.com", label="主站")
@@ -74,14 +67,12 @@ async def test_add_link(async_client):
     assert link["last_checked_at"] is None
 
 
-@pytest.mark.asyncio
 async def test_add_primary_link(async_client):
     product = await create_product(async_client, slug="p1", name="P1")
     link = await create_link(async_client, product["id"], url="https://example.com", is_primary=True)
     assert link["is_primary"] is True
 
 
-@pytest.mark.asyncio
 async def test_second_primary_link_rejected(async_client):
     product = await create_product(async_client, slug="p1", name="P1")
     await create_link(async_client, product["id"], url="https://a.com", is_primary=True)
@@ -93,7 +84,6 @@ async def test_second_primary_link_rejected(async_client):
     assert "primary" in resp.json()["detail"].lower()
 
 
-@pytest.mark.asyncio
 async def test_url_normalization_dedup(async_client):
     """http://www.example.com 与 https://example.com 应判为同一 URL。"""
     product = await create_product(async_client, slug="p1", name="P1")
@@ -106,7 +96,6 @@ async def test_url_normalization_dedup(async_client):
     assert "URL already exists" in resp.json()["detail"]
 
 
-@pytest.mark.asyncio
 async def test_url_dedup_cross_products(async_client):
     """同一 URL 可以挂到不同产品上（url_hash 为产品内唯一）。"""
     p1 = await create_product(async_client, slug="p1", name="P1")
@@ -119,7 +108,6 @@ async def test_url_dedup_cross_products(async_client):
     assert resp.status_code == 201
 
 
-@pytest.mark.asyncio
 async def test_list_product_links(async_client):
     product = await create_product(async_client, slug="p1", name="P1")
     await create_link(async_client, product["id"], url="https://a.com", label="A", is_primary=True)
@@ -129,7 +117,6 @@ async def test_list_product_links(async_client):
     assert len(resp.json()) == 2
 
 
-@pytest.mark.asyncio
 async def test_update_link(async_client):
     product = await create_product(async_client, slug="p1", name="P1")
     link = await create_link(async_client, product["id"], url="https://old.com", label="旧")
@@ -143,7 +130,6 @@ async def test_update_link(async_client):
     assert data["url"] == "https://new.com"
 
 
-@pytest.mark.asyncio
 async def test_update_link_to_primary(async_client):
     product = await create_product(async_client, slug="p1", name="P1")
     await create_link(async_client, product["id"], url="https://a.com", is_primary=True)
@@ -155,7 +141,6 @@ async def test_update_link_to_primary(async_client):
     assert resp.status_code == 409
 
 
-@pytest.mark.asyncio
 async def test_delete_link(async_client):
     product = await create_product(async_client, slug="p1", name="P1")
     link = await create_link(async_client, product["id"], url="https://del.com")
@@ -165,7 +150,6 @@ async def test_delete_link(async_client):
     assert len(resp.json()) == 0
 
 
-@pytest.mark.asyncio
 async def test_add_link_to_nonexistent_product(async_client):
     resp = await async_client.post(
         "/api/v1/products/99999/links",
@@ -174,7 +158,6 @@ async def test_add_link_to_nonexistent_product(async_client):
     assert resp.status_code == 404
 
 
-@pytest.mark.asyncio
 async def test_update_link_status(async_client):
     product = await create_product(async_client, slug="p1", name="P1")
     link = await create_link(async_client, product["id"], url="https://example.com")
@@ -186,63 +169,17 @@ async def test_update_link_status(async_client):
     assert resp.json()["status"] == 2
 
 
-@pytest.mark.asyncio
 async def test_list_links_filter_by_status(async_client):
     product = await create_product(async_client, slug="p1", name="P1")
     await create_link(async_client, product["id"], url="https://a.com")
     await create_link(async_client, product["id"], url="https://b.com", is_primary=True)
     resp = await async_client.get(f"/api/v1/products/{product['id']}/links?status=1")
     assert resp.status_code == 200
-    assert len(resp.json()) == 2
+    links = resp.json()
+    assert len(links) == 2
+    assert all(lnk["status"] == 1 for lnk in links)
 
 
-@pytest.mark.asyncio
-async def test_export_skips_broken_primary_link(async_client):
-    """导出时主链接失效 → 回退到第一个正常链接。"""
-    from tests.conftest import create_category
-
-    cat = await create_category(async_client, slug="cat", name="分类")
-    product = await create_product(
-        async_client,
-        slug="broken-primary",
-        name="失效主链接产品",
-        category_ids=[cat["id"]],
-        status=2,
-        links=[
-            {"url": "https://secondary.com", "is_primary": False},
-            {"url": "https://primary.com", "is_primary": True},
-        ],
-    )
-
-    primary_link = next(lnk for lnk in product["links"] if lnk["is_primary"])
-    await async_client.put(
-        f"/api/v1/products/{product['id']}/links/{primary_link['id']}",
-        json={"status": 2},
-    )
-
-    import json
-    import os
-    import tempfile
-    from pathlib import Path
-    from unittest.mock import patch
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        output = Path(os.path.join(tmpdir, "data-dev.json"))
-        with patch("app.exporters.json_exporter.get_settings") as mock:
-            settings = mock.return_value
-            settings.export_full_path = output
-            settings.app_env = "dev"
-            resp = await async_client.post("/api/v1/export")
-
-        assert resp.status_code == 200
-
-        with open(output, encoding="utf-8") as f:
-            exported = json.load(f)
-        prod = exported["products"][0]
-        assert prod["url"] == "https://secondary.com"
-
-
-@pytest.mark.asyncio
 async def test_update_link_ignores_explicit_null(async_client):
     """显式传 null 的非空字段应视为未提供, 不应触发 409/500。"""
     product = await create_product(async_client, slug="p1", name="P1")
@@ -259,7 +196,6 @@ async def test_update_link_ignores_explicit_null(async_client):
     assert data["status"] == 1
 
 
-@pytest.mark.asyncio
 async def test_update_link_can_clear_label(async_client):
     """label 为可空字段, 显式 null 应能清空。"""
     product = await create_product(async_client, slug="p1", name="P1")

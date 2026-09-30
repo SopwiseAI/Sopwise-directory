@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from sqlalchemy import select
@@ -27,10 +27,14 @@ def _blank(value: str | None) -> bool:
 
 def _write_text_atomic(path: Path, content: str) -> None:
     """原子写入: 先写同目录临时文件再 os.replace, 避免中途失败留下被截断的 JSON。"""
+    import tempfile
+
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_name(f".{path.name}.tmp")
+    fd, tmp_name = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+    tmp = Path(tmp_name)
     try:
-        tmp.write_text(content, encoding="utf-8")
+        with open(fd, "w", encoding="utf-8") as f:
+            f.write(content)
         os.replace(tmp, path)
     finally:
         tmp.unlink(missing_ok=True)
@@ -75,7 +79,7 @@ async def export_to_json(session: AsyncSession) -> ExportResponse:
     logger.info("Exported %d categories, %d products → %s", len(categories), len(products), output_path)
 
     return ExportResponse(
-        exported_at=datetime.now().isoformat(),
+        exported_at=datetime.now(UTC),
         output_path=str(output_path),
         categories_count=len(categories),
         products_count=len(products),
@@ -135,6 +139,7 @@ async def _fetch_products(session: AsyncSession) -> list[dict]:
 
         # 无 active 链接的产品跳过导出; 前端 url 必填, 避免死链
         if not lnk:
+            logger.warning("跳过产品 id=%s slug=%s: 无 active 链接", row.id, row.slug)
             continue
 
         if reason := _invalid_reason(row, lnk.url):

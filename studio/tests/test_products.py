@@ -1,11 +1,8 @@
 """产品 CRUD + 发布逻辑 + 过滤 + 分页 完整测试。"""
 
-import pytest
-
 from tests.conftest import create_category, create_product, create_tag
 
 
-@pytest.mark.asyncio
 async def test_create_product_minimal(async_client):
     """只传 name 和 slug，其他全部默认。"""
     resp = await async_client.post(
@@ -24,7 +21,6 @@ async def test_create_product_minimal(async_client):
     assert data["tags"] == []
 
 
-@pytest.mark.asyncio
 async def test_create_product_with_links_and_tags(async_client):
     cat = await create_category(async_client, slug="cat", name="分类")
     tag1 = await create_tag(async_client, slug="t1", name="T1")
@@ -48,7 +44,6 @@ async def test_create_product_with_links_and_tags(async_client):
     assert data["categories"][0]["id"] == cat["id"]
 
 
-@pytest.mark.asyncio
 async def test_create_product_rejects_multiple_primary_links(async_client):
     """同一产品不能有多个主链接。"""
     resp = await async_client.post(
@@ -66,21 +61,18 @@ async def test_create_product_rejects_multiple_primary_links(async_client):
     assert "primary" in resp.json()["detail"]
 
 
-@pytest.mark.asyncio
 async def test_create_product_duplicate_slug(async_client):
     await create_product(async_client, slug="dup", name="A")
     resp = await async_client.post("/api/v1/products", json={"slug": "dup", "name": "B"})
     assert resp.status_code == 409
 
 
-@pytest.mark.asyncio
 async def test_create_product_duplicate_name(async_client):
     await create_product(async_client, slug="a", name="重复名")
     resp = await async_client.post("/api/v1/products", json={"slug": "b", "name": "重复名"})
     assert resp.status_code == 409
 
 
-@pytest.mark.asyncio
 async def test_publish_sets_published_at(async_client):
     """草稿产品发布时 published_at 从 null 变为时间。流程: 0→1→2。"""
     product = await create_product(async_client, slug="draft", name="草稿", status=0)
@@ -99,7 +91,6 @@ async def test_publish_sets_published_at(async_client):
     assert data["published_at"] is not None
 
 
-@pytest.mark.asyncio
 async def test_publish_at_does_not_change_on_reupdate(async_client):
     """已发布产品再次更新，published_at 不变。"""
     product = await create_product(async_client, slug="pub", name="已发布", status=2)
@@ -110,7 +101,6 @@ async def test_publish_at_does_not_change_on_reupdate(async_client):
     assert (resp.json()["published_at"] or "")[:19] == original
 
 
-@pytest.mark.asyncio
 async def test_filter_by_status(async_client):
     await create_product(async_client, slug="p1", name="P1", status=2)
     await create_product(async_client, slug="p2", name="P2", status=0)
@@ -121,7 +111,6 @@ async def test_filter_by_status(async_client):
     assert data[0]["name"] == "P1"
 
 
-@pytest.mark.asyncio
 async def test_filter_by_featured(async_client):
     await create_product(async_client, slug="p1", name="P1", featured=True)
     await create_product(async_client, slug="p2", name="P2", featured=False)
@@ -131,7 +120,6 @@ async def test_filter_by_featured(async_client):
     assert data[0]["featured"] is True
 
 
-@pytest.mark.asyncio
 async def test_filter_by_category(async_client):
     cat = await create_category(async_client, slug="cat", name="分类")
     await create_product(async_client, slug="p1", name="P1", category_ids=[cat["id"]])
@@ -142,7 +130,6 @@ async def test_filter_by_category(async_client):
     assert data[0]["name"] == "P1"
 
 
-@pytest.mark.asyncio
 async def test_pagination(async_client):
     for i in range(5):
         await create_product(async_client, slug=f"p{i}", name=f"P{i}")
@@ -154,7 +141,6 @@ async def test_pagination(async_client):
     assert len(resp.json()) == 1
 
 
-@pytest.mark.asyncio
 async def test_list_products_order_is_deterministic_on_tie(async_client):
     """sort_order/published_at 并列时按 id 升序，保证翻页顺序稳定。"""
     a = await create_product(async_client, slug="tie-a", name="并列A")
@@ -167,14 +153,12 @@ async def test_list_products_order_is_deterministic_on_tie(async_client):
     assert [p["id"] for p in page1 + page2] == expected
 
 
-@pytest.mark.asyncio
 async def test_list_products_rejects_out_of_range_status(async_client):
     """status 仅 0..3, 越界应 422 而非静默返回空列表。"""
     resp = await async_client.get("/api/v1/products?status=99")
     assert resp.status_code == 422
 
 
-@pytest.mark.asyncio
 async def test_create_product_rejects_duplicate_link_urls(async_client):
     """links 内归一化后重复的 URL 应 400, 而非撞唯一约束的 409。"""
     resp = await async_client.post(
@@ -192,7 +176,6 @@ async def test_create_product_rejects_duplicate_link_urls(async_client):
     assert resp.json() == []
 
 
-@pytest.mark.asyncio
 async def test_get_product_by_id(async_client):
     product = await create_product(async_client, slug="p1", name="P1")
     resp = await async_client.get(f"/api/v1/products/{product['id']}")
@@ -200,13 +183,11 @@ async def test_get_product_by_id(async_client):
     assert resp.json()["name"] == "P1"
 
 
-@pytest.mark.asyncio
 async def test_get_product_not_found(async_client):
     resp = await async_client.get("/api/v1/products/99999")
     assert resp.status_code == 404
 
 
-@pytest.mark.asyncio
 async def test_update_product(async_client):
     product = await create_product(async_client, slug="p1", name="旧名")
     resp = await async_client.put(
@@ -219,7 +200,6 @@ async def test_update_product(async_client):
     assert data["pricing"] == "paid"
 
 
-@pytest.mark.asyncio
 async def test_delete_product(async_client):
     product = await create_product(async_client, slug="del", name="待删")
     resp = await async_client.delete(f"/api/v1/products/{product['id']}")
@@ -228,7 +208,6 @@ async def test_delete_product(async_client):
     assert resp.status_code == 404
 
 
-@pytest.mark.asyncio
 async def test_create_rejects_published_status(async_client):
     """创建时不允许直接 status=2(已发布), 必须走 0→1→2 流程。"""
     resp = await async_client.post(
@@ -239,7 +218,6 @@ async def test_create_rejects_published_status(async_client):
     assert "DRAFT" in resp.json()["detail"]
 
 
-@pytest.mark.asyncio
 async def test_create_rejects_archived_status(async_client):
     """创建时不允许直接 status=3(已下架)。"""
     resp = await async_client.post(
@@ -249,7 +227,6 @@ async def test_create_rejects_archived_status(async_client):
     assert resp.status_code == 400
 
 
-@pytest.mark.asyncio
 async def test_create_allows_pending_status(async_client):
     """创建时允许 status=1(待审核)。"""
     resp = await async_client.post(
@@ -260,7 +237,6 @@ async def test_create_allows_pending_status(async_client):
     assert resp.json()["status"] == 1
 
 
-@pytest.mark.asyncio
 async def test_invalid_status_transition_rejected(async_client):
     """非法状态转换 0→2 应被拒绝。"""
     product = await create_product(async_client, slug="p1", name="P1", status=0)
@@ -272,7 +248,6 @@ async def test_invalid_status_transition_rejected(async_client):
     assert "Invalid status transition" in resp.json()["detail"]
 
 
-@pytest.mark.asyncio
 async def test_update_product_tag_ids(async_client):
     """update_product 支持通过 tag_ids 全量替换标签。"""
     product = await create_product(async_client, slug="p1", name="P1")
@@ -295,7 +270,6 @@ async def test_update_product_tag_ids(async_client):
     assert len(resp.json()["tags"]) == 1
 
 
-@pytest.mark.asyncio
 async def test_update_product_ignores_explicit_null(async_client):
     """显式传 null 的非空字段应视为未提供, 不应触发 500。"""
     cat = await create_category(async_client, slug="null-cat", name="空值分类")
@@ -320,7 +294,6 @@ async def test_update_product_ignores_explicit_null(async_client):
     assert [t["id"] for t in data["tags"]] == [tag["id"]]
 
 
-@pytest.mark.asyncio
 async def test_update_product_can_clear_description(async_client):
     """description 为可空字段, 显式 null 应能清空。"""
     product = await create_product(async_client, slug="desc-p", name="描述产品", description="原描述")
@@ -329,7 +302,6 @@ async def test_update_product_can_clear_description(async_client):
     assert resp.json()["description"] is None
 
 
-@pytest.mark.asyncio
 async def test_product_nested_category_product_count(async_client):
     """产品响应中嵌套分类的 product_count 应为该分类下已发布产品数。"""
     cat = await create_category(async_client, slug="count-cat", name="嵌套计数")
@@ -342,7 +314,6 @@ async def test_product_nested_category_product_count(async_client):
     assert nested["product_count"] == 1
 
 
-@pytest.mark.asyncio
 async def test_product_nested_tag_product_count(async_client):
     """产品响应中嵌套标签的 product_count 应为该标签下已发布产品数。"""
     tag = await create_tag(async_client, slug="nested-tag", name="嵌套标签")
