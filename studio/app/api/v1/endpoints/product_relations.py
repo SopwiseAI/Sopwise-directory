@@ -4,8 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_db
 from app.core.security import require_write
-from app.models import Product, ProductRelation
-from app.schemas import ProductRelationCreate, ProductRelationResponse, ProductRelationUpdate
+from app.models import Product, ProductRelation, RelationType
+from app.schemas.models import ProductRelationCreate, ProductRelationResponse, ProductRelationUpdate
+from app.utils.db import drop_none
 
 router = APIRouter()
 
@@ -13,11 +14,11 @@ router = APIRouter()
 @router.get("/{product_id}/relations", response_model=list[ProductRelationResponse])
 async def list_product_relations(
     product_id: int,
-    relation_type: str | None = Query(None, alias="type"),
+    relation_type: RelationType | None = Query(None, alias="type"),
     db: AsyncSession = Depends(get_db),
 ) -> list[ProductRelationResponse]:
     stmt = select(ProductRelation).where(ProductRelation.product_id == product_id)
-    if relation_type:
+    if relation_type is not None:
         stmt = stmt.where(ProductRelation.relation_type == relation_type)
     stmt = stmt.order_by(ProductRelation.sort_order.desc(), ProductRelation.id)
     result = await db.execute(stmt)
@@ -77,7 +78,7 @@ async def update_product_relation(
     if not relation or relation.product_id != product_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="关联不存在")
 
-    update_data = data.model_dump(exclude_unset=True)
+    update_data = drop_none(data.model_dump(exclude_unset=True))
 
     if "relation_type" in update_data and update_data["relation_type"] != relation.relation_type:
         existing = await db.execute(

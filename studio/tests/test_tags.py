@@ -112,6 +112,27 @@ async def test_tag_product_count_only_published(async_client):
 
 
 @pytest.mark.asyncio
+async def test_tag_count_not_found(async_client):
+    """不存在的标签取计数应 404, 与详情端点语义一致。"""
+    resp = await async_client.get("/api/v1/tags/99999/count")
+    assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_tag_count_declares_response_model(async_client):
+    """/count 应声明 response_model, 以便生成 OpenAPI schema。"""
+    resp = await async_client.get("/openapi.json")
+    assert "TagCountResponse" in resp.json()["components"]["schemas"]
+
+
+@pytest.mark.asyncio
+async def test_list_tags_rejects_out_of_range_status(async_client):
+    """status 仅允许 0/1, 越界应 422 而非静默返回空列表。"""
+    resp = await async_client.get("/api/v1/tags?status=9")
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_update_tag_ignores_explicit_null(async_client):
     """显式传 null 的非空字段应视为未提供, 不应触发 409/500。"""
     tag = await create_tag(async_client, slug="null-tag", name="空值", status=1)

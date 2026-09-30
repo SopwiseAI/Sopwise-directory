@@ -155,6 +155,44 @@ async def test_pagination(async_client):
 
 
 @pytest.mark.asyncio
+async def test_list_products_order_is_deterministic_on_tie(async_client):
+    """sort_order/published_at 并列时按 id 升序，保证翻页顺序稳定。"""
+    a = await create_product(async_client, slug="tie-a", name="并列A")
+    b = await create_product(async_client, slug="tie-b", name="并列B")
+    c = await create_product(async_client, slug="tie-c", name="并列C")
+    expected = [a["id"], b["id"], c["id"]]
+
+    page1 = (await async_client.get("/api/v1/products?page=1&page_size=2")).json()
+    page2 = (await async_client.get("/api/v1/products?page=2&page_size=2")).json()
+    assert [p["id"] for p in page1 + page2] == expected
+
+
+@pytest.mark.asyncio
+async def test_list_products_rejects_out_of_range_status(async_client):
+    """status 仅 0..3, 越界应 422 而非静默返回空列表。"""
+    resp = await async_client.get("/api/v1/products?status=99")
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_product_rejects_duplicate_link_urls(async_client):
+    """links 内归一化后重复的 URL 应 400, 而非撞唯一约束的 409。"""
+    resp = await async_client.post(
+        "/api/v1/products",
+        json={
+            "slug": "dup-link",
+            "name": "重复链接",
+            "links": [{"url": "https://a.example.com"}, {"url": "http://www.a.example.com/"}],
+        },
+    )
+    assert resp.status_code == 400, resp.text
+    assert "Duplicate" in resp.json()["detail"]
+
+    resp = await async_client.get("/api/v1/products")
+    assert resp.json() == []
+
+
+@pytest.mark.asyncio
 async def test_get_product_by_id(async_client):
     product = await create_product(async_client, slug="p1", name="P1")
     resp = await async_client.get(f"/api/v1/products/{product['id']}")

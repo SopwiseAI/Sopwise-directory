@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_db
 from app.core.security import require_write
 from app.models import Tag
-from app.schemas.models import TagCreate, TagResponse, TagUpdate
+from app.schemas.models import TagCountResponse, TagCreate, TagResponse, TagUpdate
 from app.utils.db import check_unique, drop_none, published_tag_product_counts
 
 router = APIRouter()
@@ -18,7 +18,7 @@ async def _product_count(db: AsyncSession, tag_id: int) -> int:
 
 @router.get("", response_model=list[TagResponse])
 async def list_tags(
-    status_filter: int | None = Query(None, alias="status"),
+    status_filter: int | None = Query(None, alias="status", ge=0, le=1),
     page: int = Query(1, ge=1),
     page_size: int = Query(100, ge=1, le=500),
     db: AsyncSession = Depends(get_db),
@@ -88,7 +88,9 @@ async def delete_tag(tag_id: int, db: AsyncSession = Depends(get_db)) -> None:
     await db.delete(tag)
 
 
-@router.get("/{tag_id}/count")
-async def tag_product_count(tag_id: int, db: AsyncSession = Depends(get_db)) -> dict:
+@router.get("/{tag_id}/count", response_model=TagCountResponse)
+async def tag_product_count(tag_id: int, db: AsyncSession = Depends(get_db)) -> TagCountResponse:
+    if not await db.get(Tag, tag_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found")
     count = await _product_count(db, tag_id)
-    return {"product_count": count}
+    return TagCountResponse(product_count=count)

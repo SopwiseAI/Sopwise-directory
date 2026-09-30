@@ -41,7 +41,7 @@ async def _fill_nested_counts(db: AsyncSession, products: list[Product]) -> None
 @router.get("", response_model=list[ProductResponse])
 async def list_products(
     response: Response,
-    status_filter: int | None = Query(None, alias="status"),
+    status_filter: int | None = Query(None, alias="status", ge=0, le=3),
     category_id: int | None = None,
     featured: bool | None = None,
     page: int = Query(1, ge=1),
@@ -67,7 +67,7 @@ async def list_products(
         selectinload(Product.categories),
         selectinload(Product.relateds).selectinload(ProductRelation.related_product),
     )
-    stmt = stmt.order_by(Product.sort_order.desc(), Product.published_at.desc())
+    stmt = stmt.order_by(Product.sort_order.desc(), Product.published_at.desc(), Product.id)
     stmt = stmt.offset((page - 1) * page_size).limit(page_size)
 
     result = await db.execute(stmt)
@@ -123,14 +123,21 @@ async def create_product(data: ProductCreate, db: AsyncSession = Depends(get_db)
             detail="Only one primary link allowed per product",
         )
 
+    link_hashes = [url_hash(link.url) for link in data.links]
+    if len(set(link_hashes)) != len(link_hashes):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Duplicate URLs in links payload",
+        )
+
     db.add(product)
     await db.flush()
 
-    for link_data in data.links:
+    for link_data, link_hash in zip(data.links, link_hashes, strict=True):
         link = ProductLink(
             product_id=product.id,
             url=link_data.url,
-            url_hash=url_hash(link_data.url),
+            url_hash=link_hash,
             label=link_data.label,
             is_primary=link_data.is_primary,
             status=link_data.status,

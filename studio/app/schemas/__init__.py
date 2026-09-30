@@ -1,5 +1,6 @@
-from app.schemas.common import EnvResponse, ExportResponse
+from app.schemas.common import EnvResponse, ExportResponse, HealthResponse
 from app.schemas.models import (
+    CategoryCountResponse,
     CategoryCreate,
     CategoryResponse,
     CategoryUpdate,
@@ -11,19 +12,23 @@ from app.schemas.models import (
     ProductRelationResponse,
     ProductRelationUpdate,
     ProductResponse,
+    ProductTagsResponse,
     ProductTagUpdate,
     ProductUpdate,
+    TagCountResponse,
     TagCreate,
     TagResponse,
     TagUpdate,
 )
 
 __all__ = [
+    "CategoryCountResponse",
     "CategoryCreate",
     "CategoryResponse",
     "CategoryUpdate",
     "EnvResponse",
     "ExportResponse",
+    "HealthResponse",
     "ProductCreate",
     "ProductLinkCreate",
     "ProductLinkResponse",
@@ -33,7 +38,9 @@ __all__ = [
     "ProductRelationUpdate",
     "ProductResponse",
     "ProductTagUpdate",
+    "ProductTagsResponse",
     "ProductUpdate",
+    "TagCountResponse",
     "TagCreate",
     "TagResponse",
     "TagUpdate",

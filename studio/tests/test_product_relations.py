@@ -157,6 +157,37 @@ async def test_update_relation_not_found(async_client):
 
 
 @pytest.mark.asyncio
+async def test_update_relation_rejects_invalid_type_filter(async_client):
+    """type 仅允许 RelationType 枚举值, 非法/空串应 422。"""
+    a = await create_product(async_client, slug="badtype-a", name="非法类型")
+    resp = await async_client.get(f"/api/v1/products/{a['id']}/relations?type=bogus")
+    assert resp.status_code == 422
+    resp = await async_client.get(f"/api/v1/products/{a['id']}/relations?type=")
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_update_relation_ignores_explicit_null(async_client):
+    """显式传 null 的非空字段应视为未提供, 不应触发 409/500。"""
+    a = await create_product(async_client, slug="null-a", name="空值A")
+    b = await create_product(async_client, slug="null-b", name="空值B")
+    rel = (
+        await async_client.post(
+            f"/api/v1/products/{a['id']}/relations",
+            json={"related_id": b["id"], "relation_type": "similar", "sort_order": 5},
+        )
+    ).json()
+    resp = await async_client.put(
+        f"/api/v1/products/{a['id']}/relations/{rel['id']}",
+        json={"relation_type": None, "sort_order": None},
+    )
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+    assert data["relation_type"] == "similar"
+    assert data["sort_order"] == 5
+
+
+@pytest.mark.asyncio
 async def test_delete_relation(async_client):
     a = await create_product(async_client, slug="del-a", name="删除A")
     b = await create_product(async_client, slug="del-b", name="删除B")

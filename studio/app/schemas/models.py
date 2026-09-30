@@ -148,6 +148,10 @@ class ProductResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class TagCountResponse(BaseModel):
+    product_count: int
+
+
 class TagBase(BaseModel):
     slug: str = Field(..., max_length=64, pattern=_SLUG_PATTERN)
     name: str = Field(..., max_length=64)
