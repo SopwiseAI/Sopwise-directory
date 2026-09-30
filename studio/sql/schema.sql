@@ -17,7 +17,8 @@
 --   sd_product    N──M sd_product         (sd_product_relation 表, ON DELETE CASCADE)
 --
 -- 约定:
---   1. 主键为 BIGINT AUTO_INCREMENT，业务标识用 slug（UNIQUE）
+--   1. 业务表主键为 BIGINT AUTO_INCREMENT，业务标识用 slug（UNIQUE）；
+--      关联表（sd_product_category / sd_product_tag）用复合主键，无自增列
 --   2. status: 0=草稿 1=待审核 2=已发布 3=已下架（仅 status=2 导出）
 --   3. 软删除不用，靠 status 管理
 --   4. 审计字段: created_at / updated_at / published_at
@@ -25,7 +26,7 @@
 --   6. 链接唯一性通过 url_hash 保证，归一化规则见 sd_product_link 注释
 --   7. is_primary（每个产品至多一个主链接）由应用层保证，索引 (product_id, is_primary) 用于查询加速
 --   8. 链接状态: 1=正常 2=已失效 3=手动禁用（仅 status=1 导出）
---   9. 引擎 InnoDB, 字符集 utf8mb4
+--   9. 引擎 InnoDB, 字符集 utf8mb4 / collate utf8mb4_general_ci
 -- ============================================================================
 
 
@@ -46,12 +47,12 @@ CREATE TABLE IF NOT EXISTS sd_category (
   UNIQUE KEY uk_slug (slug),
   UNIQUE KEY uk_name (name),
   KEY idx_status_sort (status, sort_order)
-) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COMMENT='分类表';
+) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='分类表';
 
 
 -- ----------------------------------------------------------------------------
 -- 2、产品主表
---    published_at: 审核通过发布（status→2）时写入，之后不再变（除非下架后重新发布）
+--    published_at: 首次发布（status→2）时写入，之后不再变（含下架后重新发布）
 --    前端"最新"排序使用 published_at DESC，而非 created_at / updated_at
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS sd_product (
@@ -72,7 +73,7 @@ CREATE TABLE IF NOT EXISTS sd_product (
   KEY idx_status_sort (status, sort_order),
   KEY idx_featured (featured),
   KEY idx_published_at (published_at)
-) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COMMENT='产品主表';
+) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='产品主表';
 
 
 -- ----------------------------------------------------------------------------
@@ -86,7 +87,7 @@ CREATE TABLE IF NOT EXISTS sd_product_category (
   KEY idx_category (category_id),
   CONSTRAINT fk_pc_product FOREIGN KEY (product_id) REFERENCES sd_product (id) ON DELETE CASCADE,
   CONSTRAINT fk_pc_category FOREIGN KEY (category_id) REFERENCES sd_category (id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品-分类关联表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='产品-分类关联表';
 
 
 -- ----------------------------------------------------------------------------
@@ -129,8 +130,9 @@ CREATE TABLE IF NOT EXISTS sd_product_link (
   KEY idx_product (product_id),
   KEY idx_product_primary (product_id, is_primary),
   KEY idx_product_sort (product_id, sort_order),
-  KEY idx_status (status)
-) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COMMENT='产品链接表';
+  KEY idx_status (status),
+  CONSTRAINT fk_link_product FOREIGN KEY (product_id) REFERENCES sd_product (id) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='产品链接表';
 
 
 -- ----------------------------------------------------------------------------
@@ -150,7 +152,7 @@ CREATE TABLE IF NOT EXISTS sd_tag (
   UNIQUE KEY uk_slug (slug),
   UNIQUE KEY uk_name (name),
   KEY idx_status_sort (status, sort_order)
-) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COMMENT='标签表';
+) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='标签表';
 
 
 -- ----------------------------------------------------------------------------
@@ -164,7 +166,7 @@ CREATE TABLE IF NOT EXISTS sd_product_tag (
   KEY idx_tag (tag_id),
   CONSTRAINT fk_pt_product FOREIGN KEY (product_id) REFERENCES sd_product (id) ON DELETE CASCADE,
   CONSTRAINT fk_pt_tag FOREIGN KEY (tag_id) REFERENCES sd_tag (id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品-标签关联表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='产品-标签关联表';
 
 
 -- ----------------------------------------------------------------------------
@@ -187,5 +189,5 @@ CREATE TABLE IF NOT EXISTS sd_product_relation (
   KEY idx_type (relation_type),
   CONSTRAINT fk_pr_product FOREIGN KEY (product_id) REFERENCES sd_product (id) ON DELETE CASCADE,
   CONSTRAINT fk_pr_related FOREIGN KEY (related_id) REFERENCES sd_product (id) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COMMENT='产品关联表';
+) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='产品关联表';
 

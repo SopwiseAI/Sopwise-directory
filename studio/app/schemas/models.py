@@ -2,9 +2,15 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from app.models import RelationType
+
+_SLUG_PATTERN = r"^[a-z0-9]+(?:-[a-z0-9]+)*$"
+_PRICING_PATTERN = "^(free|freemium|paid|opensource)$"
+_RELATION_TYPE_PATTERN = "^(?:" + "|".join(t.value for t in RelationType) + ")$"
+
 
 class CategoryBase(BaseModel):
-    slug: str = Field(..., max_length=64)
+    slug: str = Field(..., max_length=64, pattern=_SLUG_PATTERN)
     name: str = Field(..., max_length=64)
     icon: str | None = Field(None, max_length=64)
     description: str | None = Field(None, max_length=500)
@@ -17,7 +23,7 @@ class CategoryCreate(CategoryBase):
 
 
 class CategoryUpdate(BaseModel):
-    slug: str | None = Field(None, max_length=64)
+    slug: str | None = Field(None, max_length=64, pattern=_SLUG_PATTERN)
     name: str | None = Field(None, max_length=64)
     icon: str | None = Field(None, max_length=64)
     description: str | None = Field(None, max_length=500)
@@ -65,11 +71,11 @@ class ProductLinkResponse(ProductLinkBase):
 
 
 class ProductBase(BaseModel):
-    slug: str = Field(..., max_length=64)
+    slug: str = Field(..., max_length=64, pattern=_SLUG_PATTERN)
     name: str = Field(..., max_length=128)
     description: str | None = Field(None, max_length=500)
     category_ids: list[int] = Field(default_factory=list)
-    pricing: str = Field("free", pattern="^(free|freemium|paid|opensource)$")
+    pricing: str = Field("free", pattern=_PRICING_PATTERN)
     featured: bool = False
     sort_order: int = Field(0, ge=0)
     status: int = Field(0, ge=0, le=3)
@@ -81,12 +87,12 @@ class ProductCreate(ProductBase):
 
 
 class ProductUpdate(BaseModel):
-    slug: str | None = Field(None, max_length=64)
+    slug: str | None = Field(None, max_length=64, pattern=_SLUG_PATTERN)
     name: str | None = Field(None, max_length=128)
     description: str | None = Field(None, max_length=500)
     category_ids: list[int] | None = None
     tag_ids: list[int] | None = None
-    pricing: str | None = Field(None, pattern="^(free|freemium|paid|opensource)$")
+    pricing: str | None = Field(None, pattern=_PRICING_PATTERN)
     featured: bool | None = None
     sort_order: int | None = Field(None, ge=0)
     status: int | None = Field(None, ge=0, le=3)
@@ -101,6 +107,19 @@ class TagResponse(BaseModel):
     product_count: int = 0
     created_at: datetime
     updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ProductRelationResponse(BaseModel):
+    id: int
+    product_id: int
+    related_id: int
+    relation_type: str
+    sort_order: int
+    created_at: datetime
+    related_slug: str = ""
+    related_name: str = ""
 
     model_config = {"from_attributes": True}
 
@@ -120,13 +139,13 @@ class ProductResponse(BaseModel):
     categories: list[CategoryResponse] = Field(default_factory=list)
     links: list[ProductLinkResponse] = Field(default_factory=list)
     tags: list[TagResponse] = Field(default_factory=list)
-    relateds: list["ProductRelationResponse"] = Field(default_factory=list)
+    relateds: list[ProductRelationResponse] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
 
 
 class TagBase(BaseModel):
-    slug: str = Field(..., max_length=64)
+    slug: str = Field(..., max_length=64, pattern=_SLUG_PATTERN)
     name: str = Field(..., max_length=64)
     sort_order: int = Field(0, ge=0)
     status: int = Field(1, ge=0, le=1)
@@ -137,7 +156,7 @@ class TagCreate(TagBase):
 
 
 class TagUpdate(BaseModel):
-    slug: str | None = Field(None, max_length=64)
+    slug: str | None = Field(None, max_length=64, pattern=_SLUG_PATTERN)
     name: str | None = Field(None, max_length=64)
     sort_order: int | None = Field(None, ge=0)
     status: int | None = Field(None, ge=0, le=1)
@@ -149,26 +168,10 @@ class ProductTagUpdate(BaseModel):
 
 class ProductRelationCreate(BaseModel):
     related_id: int
-    relation_type: str = Field("similar", pattern="^(similar|alternative|upgrade|complementary)$")
+    relation_type: str = Field(RelationType.SIMILAR.value, pattern=_RELATION_TYPE_PATTERN)
     sort_order: int = Field(0, ge=0)
 
 
 class ProductRelationUpdate(BaseModel):
-    relation_type: str | None = Field(None, pattern="^(similar|alternative|upgrade|complementary)$")
+    relation_type: str | None = Field(None, pattern=_RELATION_TYPE_PATTERN)
     sort_order: int | None = Field(None, ge=0)
-
-
-class ProductRelationResponse(BaseModel):
-    id: int
-    product_id: int
-    related_id: int
-    relation_type: str
-    sort_order: int
-    created_at: datetime
-    related_slug: str = ""
-    related_name: str = ""
-
-    model_config = {"from_attributes": True}
-
-
-ProductResponse.model_rebuild()
