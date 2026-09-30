@@ -1,12 +1,16 @@
+import logging
 import os
 from functools import lru_cache
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as pkg_version
 from pathlib import Path
-from urllib.parse import quote_plus
+from typing import Literal
+from urllib.parse import quote
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger(__name__)
 
 
 def get_app_version() -> str:
@@ -20,7 +24,7 @@ _STUDIO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 class Settings(BaseSettings):
-    app_env: str = "dev"
+    app_env: Literal["dev", "sit", "prod"] = "dev"
     app_debug: bool = True
     app_host: str = "127.0.0.1"
     app_port: int = 8000
@@ -30,8 +34,8 @@ class Settings(BaseSettings):
     db_name: str = ""
     db_user: str = ""
     db_password: str = ""
-    db_pool_size: int = 5
-    db_max_overflow: int = 10
+    db_pool_size: int = Field(5, ge=1)
+    db_max_overflow: int = Field(10, ge=0)
     db_echo: bool = False
 
     export_output_path: str = "../web/data/data.json"
@@ -57,6 +61,8 @@ class Settings(BaseSettings):
     @classmethod
     def validate_api_key(cls, v, info):
         env = info.data.get("app_env", "dev")
+        if not v:
+            raise ValueError(f"api_key must not be empty (configure API_KEY in .env.{env})")
         if env != "dev" and v == "dev-secret-key":
             raise ValueError(
                 f"api_key must be set to a non-default value in {env} environment (configure API_KEY in .env.{env})"
@@ -66,8 +72,8 @@ class Settings(BaseSettings):
     @property
     def database_url(self) -> str:
         return (
-            f"mysql+aiomysql://{quote_plus(self.db_user)}:{quote_plus(self.db_password)}"
-            f"@{self.db_host}:{self.db_port}/{self.db_name}?charset=utf8mb4"
+            f"mysql+aiomysql://{quote(self.db_user, safe='')}:{quote(self.db_password, safe='')}"
+            f"@{self.db_host}:{self.db_port}/{quote(self.db_name, safe='')}?charset=utf8mb4"
         )
 
     @property
@@ -84,4 +90,8 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    value = Settings()
+    env_file = _STUDIO_ROOT / f".env.{value.app_env}"
+    if not env_file.exists():
+        logger.warning("Env file not found: %s (falling back to env vars/defaults)", env_file)
+    return value
