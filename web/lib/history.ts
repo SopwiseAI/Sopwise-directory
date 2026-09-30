@@ -24,9 +24,21 @@ export interface HistoryGroup {
 const PREFIX = process.env.NEXT_PUBLIC_STORAGE_PREFIX || "xigee"
 const STORAGE_KEY = `${PREFIX}:history`
 const SCHEMA_VERSION = 2
-const MAX_ITEMS = Number(process.env.NEXT_PUBLIC_HISTORY_MAX_ITEMS) || 500
 const NAV_EVENT = `${PREFIX}:history-change`
 const VALID_PRICING: ReadonlySet<string> = new Set(PRICINGS)
+const DEFAULT_MAX_ITEMS = 500
+
+/**
+ * 解析历史上限环境变量：未设/空白/非正整数 → 默认 500。
+ * 不用 `Number(x) || 500`，否则 0 会被吞掉、负值会让 slice 静默丢弃尾部数据。
+ */
+export function resolveMaxItems(raw: string | undefined): number {
+  if (raw === undefined || raw.trim() === "") return DEFAULT_MAX_ITEMS
+  const n = Number(raw)
+  return Number.isInteger(n) && n > 0 ? n : DEFAULT_MAX_ITEMS
+}
+
+const MAX_ITEMS = resolveMaxItems(process.env.NEXT_PUBLIC_HISTORY_MAX_ITEMS)
 
 interface Envelope {
   v: number
@@ -243,18 +255,22 @@ export function getHistorySnapshot() {
   }
 }
 
-const DAY_MS = 86_400_000
-
 function startOfDay(date: Date): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
+}
+
+/** 在本地日历上平移天数，避免固定 86_400_000 在 DST 时区出现偏差。 */
+function shiftDays(ts: number, days: number): number {
+  const d = new Date(ts)
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + days).getTime()
 }
 
 /** 按本地日期分组：今天 / 昨天 / 近 7 天 / 更早，组内保持原顺序（最近访问在前）。 */
 export function groupHistoryByPeriod(items: HistoryItem[] = getHistory(), now?: Date): HistoryGroup[] {
   const effectiveNow = now ?? new Date()
   const todayStart = startOfDay(effectiveNow)
-  const yesterdayStart = todayStart - DAY_MS
-  const weekStart = todayStart - 6 * DAY_MS
+  const yesterdayStart = shiftDays(todayStart, -1)
+  const weekStart = shiftDays(todayStart, -6)
   const bucket: Record<string, HistoryItem[]> = { 今天: [], 昨天: [], "近 7 天": [], 更早: [] }
   for (const item of items) {
     const t = Date.parse(item.lastVisitedAt)

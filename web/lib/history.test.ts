@@ -8,6 +8,7 @@ import {
   getHistorySnapshot,
   groupHistoryByPeriod,
   parseHistorySnapshot,
+  resolveMaxItems,
   subscribeHistory,
   type HistoryItem
 } from "./history"
@@ -271,5 +272,43 @@ describe("parseHistorySnapshot", () => {
 
   it("非法 JSON 返回空数组", () => {
     expect(parseHistorySnapshot("{bad")).toEqual([])
+  })
+})
+
+describe("resolveMaxItems", () => {
+  it("未设/空白/非正整数回退 500", () => {
+    expect(resolveMaxItems(undefined)).toBe(500)
+    expect(resolveMaxItems("")).toBe(500)
+    expect(resolveMaxItems(" ")).toBe(500)
+    expect(resolveMaxItems("abc")).toBe(500)
+    expect(resolveMaxItems("0")).toBe(500)
+    expect(resolveMaxItems("-5")).toBe(500)
+    expect(resolveMaxItems("100.5")).toBe(500)
+  })
+
+  it("正整数原样返回", () => {
+    expect(resolveMaxItems("250")).toBe(250)
+  })
+})
+
+describe("v2 信封上限裁剪", () => {
+  beforeEach(() => localStorage.clear())
+
+  it("条目超过上限时保留最前方的 MAX_ITEMS 条", () => {
+    const items = Array.from({ length: 505 }, (_, i) => ({
+      id: `h-${i}`,
+      name: `H${i}`,
+      url: `https://h${i}.com`,
+      domain: `h${i}.com`,
+      categoryId: "",
+      lastVisitedAt: "2024-01-01T00:00:00.000Z",
+      firstVisitedAt: "2024-01-01T00:00:00.000Z",
+      visitCount: 1
+    }))
+    localStorage.setItem("xigee:history", JSON.stringify({ v: 2, items }))
+    const list = getHistory()
+    expect(list).toHaveLength(500)
+    expect(list[0].id).toBe("h-0")
+    expect(list[499].id).toBe("h-499")
   })
 })

@@ -1,9 +1,8 @@
 import "server-only"
 import data from "@/data/data.json"
-import { PRICINGS, type Category, type Product, type RelatedProduct, type SiteData } from "./types"
+import { PRICINGS, type Category, type Product, type SiteData } from "./types"
 
 const PRICING_SET: ReadonlySet<string> = new Set(PRICINGS)
-const VALID_RELATION_TYPES: ReadonlySet<string> = new Set(["similar", "alternative", "upgrade", "complementary"])
 
 function assertString(val: unknown, field: string): string {
   if (typeof val !== "string" || !val.trim()) {
@@ -32,23 +31,12 @@ function assertProduct(raw: unknown): Product {
       throw new Error(`[data] 产品 "${id}" 的 pricing 非法: ${JSON.stringify(pricing)}`)
     }
   }
-  const tags = Array.isArray(r.tags) ? r.tags.filter((t): t is string => typeof t === "string") : undefined
-  const categories = Array.isArray(r.categories) ? r.categories.filter((t): t is string => typeof t === "string") : []
-
-  let relateds: RelatedProduct[] | undefined
-  if (Array.isArray(r.relateds)) {
-    relateds = []
-    for (const rel of r.relateds) {
-      if (rel && typeof rel === "object") {
-        const relId = (rel as Record<string, unknown>).id
-        const relType = (rel as Record<string, unknown>).type
-        if (typeof relId === "string" && typeof relType === "string" && VALID_RELATION_TYPES.has(relType)) {
-          relateds.push({ id: relId, type: relType as RelatedProduct["type"] })
-        }
-      }
-    }
-    if (relateds.length === 0) relateds = undefined
-  }
+  const tags = Array.isArray(r.tags)
+    ? [...new Set(r.tags.filter((t): t is string => typeof t === "string"))]
+    : undefined
+  const categories = Array.isArray(r.categories)
+    ? [...new Set(r.categories.filter((t): t is string => typeof t === "string"))]
+    : []
 
   return {
     id,

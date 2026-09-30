@@ -23,7 +23,7 @@ const mockProducts: Product[] = [
     tags: ["AI", "图像"],
     pricing: "paid",
     featured: false,
-    createdAt: "2pt02-07-01"
+    createdAt: "2022-07-01"
   },
   {
     id: "3",
@@ -86,5 +86,17 @@ describe("resolveThreshold", () => {
   it("falls back to default for non-numeric", () => {
     vi.stubEnv("NEXT_PUBLIC_SEARCH_THRESHOLD", "abc")
     expect(resolveThreshold()).toBe(0.3)
+  })
+
+  it("treats whitespace-only as unset", () => {
+    vi.stubEnv("NEXT_PUBLIC_SEARCH_THRESHOLD", " ")
+    expect(resolveThreshold()).toBe(0.3)
+  })
+
+  it("clamps out-of-range values into [0,1]", () => {
+    vi.stubEnv("NEXT_PUBLIC_SEARCH_THRESHOLD", "5")
+    expect(resolveThreshold()).toBe(1)
+    vi.stubEnv("NEXT_PUBLIC_SEARCH_THRESHOLD", "-1")
+    expect(resolveThreshold()).toBe(0)
   })
 })

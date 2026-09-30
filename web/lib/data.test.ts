@@ -1,11 +1,19 @@
 import { describe, it, expect } from "vitest"
-import { getAllCategories, getAllProducts, getCategoryById, getFeaturedProducts, getProductsByCategory } from "./data"
+import {
+  getAllCategories,
+  getAllProducts,
+  getCategoryById,
+  getCategoryCounts,
+  getFeaturedProducts,
+  getProductsByCategory,
+  getStats
+} from "./data"
 import { CATEGORY_ICONS } from "./category-icon-node"
 
-describe("数据完整性不变式", () => {
-  const categories = getAllCategories()
-  const products = getAllProducts()
+const categories = getAllCategories()
+const products = getAllProducts()
 
+describe("数据完整性不变式", () => {
   it("categories 与 products 均非空", () => {
     expect(categories.length).toBeGreaterThan(0)
     expect(products.length).toBeGreaterThan(0)
@@ -65,5 +73,29 @@ describe("getProductsByCategory", () => {
 
   it("returns empty for unknown categoryId", () => {
     expect(getProductsByCategory("no-such-cat")).toEqual([])
+  })
+})
+
+describe("getCategoryCounts", () => {
+  it("去重后总数等于各产品分类引用数之和", () => {
+    const counts = getCategoryCounts()
+    const total = products.reduce((n, p) => n + p.categories.length, 0)
+    expect(Object.values(counts).reduce((a, b) => a + b, 0)).toBe(total)
+  })
+
+  it("被任一产品引用的分类计数至少为 1", () => {
+    const counts = getCategoryCounts()
+    for (const p of products) {
+      for (const cid of p.categories) expect(counts[cid]).toBeGreaterThanOrEqual(1)
+    }
+  })
+})
+
+describe("getStats", () => {
+  it("与源数据一致", () => {
+    const stats = getStats()
+    expect(stats.products).toBe(products.length)
+    expect(stats.categories).toBe(categories.length)
+    expect(stats.featured).toBe(products.filter((p) => p.featured).length)
   })
 })
