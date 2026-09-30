@@ -90,6 +90,12 @@ class TestNormalizeUrl:
         with pytest.raises(InvalidURLError):
             normalize_url("https://example.com:-1/")
 
+    def test_empty_host_with_authority_raises(self):
+        """含 '://' 但主机为空时不得静默改写主机 (https:///evil.com -> https://evil.com/), 应报错."""
+        for url in ("https:///evil.com", "https://", "https://user@/x", "http:///x.com"):
+            with pytest.raises(InvalidURLError):
+                normalize_url(url)
+
     def test_no_scheme(self):
         """无 scheme 的 URL 仍可解析 (hostname 提取)."""
         result = normalize_url("example.com/foo")
@@ -190,6 +196,10 @@ class TestUrlHash:
     def test_invalid_port_raises(self):
         with pytest.raises(InvalidURLError):
             url_hash("https://example.com:abc/path")
+
+    def test_empty_host_raises(self):
+        with pytest.raises(InvalidURLError):
+            url_hash("https:///evil.com")
 
 
 # -- check_unique ----------------------------------------------------------------

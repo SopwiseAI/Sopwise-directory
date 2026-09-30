@@ -6,17 +6,14 @@ from app.core.deps import get_db
 from app.core.security import require_write
 from app.models import Tag
 from app.schemas.models import TagCreate, TagResponse, TagUpdate
-from app.utils.db import check_unique, drop_none, tag_product_counts
+from app.utils.db import check_unique, drop_none, published_tag_product_counts
 
 router = APIRouter()
 
 
 async def _product_count(db: AsyncSession, tag_id: int) -> int:
-    """该标签关联的产品总数(含草稿/下架), 与 /count 端点语义一致。
-
-    注意: 与分类不同, 分类计数仅统计已发布产品, 标签计数统计全部关联产品。
-    """
-    return (await tag_product_counts(db, {tag_id})).get(tag_id, 0)
+    """该标签下已发布(status=2)产品数, 与分类计数口径一致。"""
+    return (await published_tag_product_counts(db, {tag_id})).get(tag_id, 0)
 
 
 @router.get("", response_model=list[TagResponse])
@@ -34,7 +31,7 @@ async def list_tags(
     tags = list(result.scalars().all())
 
     tag_ids = [t.id for t in tags]
-    count_map = await tag_product_counts(db, tag_ids)
+    count_map = await published_tag_product_counts(db, tag_ids)
     for t in tags:
         t.product_count = count_map.get(t.id, 0)
     return tags

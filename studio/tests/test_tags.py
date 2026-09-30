@@ -99,15 +99,16 @@ async def test_delete_tag(async_client):
 
 
 @pytest.mark.asyncio
-async def test_tag_product_count(async_client):
+async def test_tag_product_count_only_published(async_client):
+    """标签 product_count 仅统计已发布产品, 与分类口径一致。"""
     from tests.conftest import create_product
 
     tag = await create_tag(async_client, slug="t1", name="T1")
-    await create_product(async_client, slug="p1", name="P1", tag_ids=[tag["id"]])
-    await create_product(async_client, slug="p2", name="P2", tag_ids=[tag["id"]])
+    await create_product(async_client, slug="p1", name="P1", tag_ids=[tag["id"]], status=2)
+    await create_product(async_client, slug="p2", name="P2", tag_ids=[tag["id"]], status=0)
     resp = await async_client.get(f"/api/v1/tags/{tag['id']}/count")
     assert resp.status_code == 200
-    assert resp.json()["product_count"] == 2
+    assert resp.json()["product_count"] == 1
 
 
 @pytest.mark.asyncio

@@ -1,9 +1,9 @@
 from collections.abc import Collection, Iterable
 
 from fastapi import HTTPException, status
-from sqlalchemy import ColumnElement, func, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, InstrumentedAttribute
 
 from app.models import Product, ProductCategory, ProductStatus, ProductTag
 
@@ -22,7 +22,7 @@ def drop_none(data: dict, *, keep_none: Collection[str] = ()) -> dict:
 async def check_unique(
     db: AsyncSession,
     model: type[DeclarativeBase],
-    field: ColumnElement[str],
+    field: InstrumentedAttribute[str],
     value: str,
     *,
     exclude_id: int | None = None,
@@ -41,7 +41,7 @@ async def check_unique(
     if exclude_id is not None:
         stmt = stmt.where(model.id != exclude_id)
     result = await db.execute(stmt)
-    if result.scalar_one_or_none():
+    if result.scalar_one_or_none() is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"{label} already exists",
@@ -63,14 +63,15 @@ async def published_category_counts(db: AsyncSession, category_ids: Iterable[int
     return {row.category_id: row.cnt for row in rows}
 
 
-async def tag_product_counts(db: AsyncSession, tag_ids: Iterable[int]) -> dict[int, int]:
-    """批量统计各标签关联的产品数, 返回 {tag_id: count}."""
+async def published_tag_product_counts(db: AsyncSession, tag_ids: Iterable[int]) -> dict[int, int]:
+    """批量统计各标签下已发布(status=2)产品数, 返回 {tag_id: count}."""
     ids = set(tag_ids)
     if not ids:
         return {}
     stmt = (
         select(ProductTag.tag_id, func.count().label("cnt"))
-        .where(ProductTag.tag_id.in_(ids))
+        .join(Product, Product.id == ProductTag.product_id)
+        .where(ProductTag.tag_id.in_(ids), Product.status == ProductStatus.PUBLISHED)
         .group_by(ProductTag.tag_id)
     )
     rows = await db.execute(stmt)

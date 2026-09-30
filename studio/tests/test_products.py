@@ -306,7 +306,7 @@ async def test_product_nested_category_product_count(async_client):
 
 @pytest.mark.asyncio
 async def test_product_nested_tag_product_count(async_client):
-    """产品响应中嵌套标签的 product_count 应为该标签关联产品数。"""
+    """产品响应中嵌套标签的 product_count 应为该标签下已发布产品数。"""
     tag = await create_tag(async_client, slug="nested-tag", name="嵌套标签")
     await create_product(async_client, slug="tagged-1", name="标签1", tag_ids=[tag["id"]], status=2)
     second = await create_product(async_client, slug="tagged-2", name="标签2", tag_ids=[tag["id"]], status=0)
@@ -314,4 +314,4 @@ async def test_product_nested_tag_product_count(async_client):
     resp = await async_client.get(f"/api/v1/products/{second['id']}")
     assert resp.status_code == 200
     nested = next(t for t in resp.json()["tags"] if t["id"] == tag["id"])
-    assert nested["product_count"] == 2
+    assert nested["product_count"] == 1

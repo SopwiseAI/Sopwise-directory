@@ -23,6 +23,9 @@ def normalize_url(raw_url: str) -> str:
     except ValueError:
         raise InvalidURLError(f"Invalid URL: {raw_url}") from None
 
+    if "://" in url and not host:
+        raise InvalidURLError(f"Invalid URL: {raw_url}")
+
     if host.startswith("www."):
         host = host[4:]
     scheme = "http" if host in _LOCAL_HOSTS else "https"

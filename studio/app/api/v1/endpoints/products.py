@@ -19,7 +19,7 @@ from app.models import (
     Tag,
 )
 from app.schemas.models import ProductCreate, ProductResponse, ProductUpdate
-from app.utils.db import check_unique, drop_none, published_category_counts, tag_product_counts
+from app.utils.db import check_unique, drop_none, published_category_counts, published_tag_product_counts
 from app.utils.url import url_hash
 
 router = APIRouter()
@@ -30,7 +30,7 @@ async def _fill_nested_counts(db: AsyncSession, products: list[Product]) -> None
     category_ids = {c.id for p in products for c in p.categories}
     tag_ids = {t.id for p in products for t in p.tags}
     cat_counts = await published_category_counts(db, category_ids)
-    tag_counts = await tag_product_counts(db, tag_ids)
+    tag_counts = await published_tag_product_counts(db, tag_ids)
     for product in products:
         for category in product.categories:
             category.product_count = cat_counts.get(category.id, 0)
