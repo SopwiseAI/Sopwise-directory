@@ -24,9 +24,12 @@ pnpm test      # 单元测试
 
 ## 环境变量
 
-| 变量                   | 说明                      | 默认值                  |
-| ---------------------- | ------------------------- | ----------------------- |
-| `NEXT_PUBLIC_SITE_URL` | 站点 URL (sitemap/robots) | `https://www.xigee.net` |
+| 变量                            | 说明                              | 默认值                  |
+| ------------------------------- | --------------------------------- | ----------------------- |
+| `NEXT_PUBLIC_SITE_URL`          | 站点 URL (sitemap/robots)         | `https://www.xigee.net` |
+| `NEXT_PUBLIC_STORAGE_PREFIX`    | 本地存储 key 前缀（变更会丢历史） | `xigee`                 |
+| `NEXT_PUBLIC_HISTORY_MAX_ITEMS` | 单用户历史记录上限                | `500`                   |
+| `NEXT_PUBLIC_SEARCH_THRESHOLD`  | 模糊搜索灵敏度 (0-1，越小越精确)  | `0.3`                   |
 
 ## 目录结构
 

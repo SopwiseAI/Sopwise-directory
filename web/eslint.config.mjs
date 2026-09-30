@@ -13,8 +13,9 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     // Test config
-    "vitest.config.ts",
-    "vitest.setup.ts"
+    "vitest.config.mts",
+    "vitest.setup.ts",
+    "vitest.server-only-stub.ts"
   ])
 ])
 
