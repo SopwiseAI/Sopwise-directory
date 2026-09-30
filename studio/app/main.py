@@ -47,6 +47,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Total-Count", "X-Request-ID"],
 )
 
 
@@ -88,9 +89,10 @@ async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSON
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    request_id = getattr(request.state, "request_id", "-")
     logger.error(
         "Unhandled exception [%s] on %s %s: %s",
-        request.state.request_id,
+        request_id,
         request.method,
         request.url.path,
         exc,
@@ -99,6 +101,7 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
     return JSONResponse(
         status_code=500,
         content={"detail": "Internal server error"},
+        headers={"X-Request-ID": request_id},
     )
 
 
