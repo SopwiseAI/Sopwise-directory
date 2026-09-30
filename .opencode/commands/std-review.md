@@ -41,6 +41,7 @@ description: 审核待审核产品，AI 辅助判断是否通过
    - **分类**: category_id 非空
    - **定价**: pricing 为 free/freemium/paid/opensource 之一
    - **描述**: description 非空
+   - **标签**: tags 非空且与产品特征贴切
 
    d. 给出审核意见: 通过 / 打回（附具体原因）
 

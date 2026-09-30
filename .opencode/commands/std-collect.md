@@ -14,7 +14,7 @@ description: 采集批量产品入库为草稿（支持文本/网页/列表/JSON
 
 ## 你的任务
 
-从混乱的输入数据中提取产品候选，清洗去重后批量入库为草稿（status=0）。**最小化入库**：只写 name + url，分类/标签/描述交给后续 `/std-enrich` 补全。
+从混乱的输入数据中提取产品候选，清洗去重后批量入库为草稿（status=0）。**最小化入库**：只写 name + url + slug，分类/标签/描述交给后续 `/std-enrich` 补全。
 
 ## 输入识别（自动判别类型）
 
@@ -48,14 +48,14 @@ description: 采集批量产品入库为草稿（支持文本/网页/列表/JSON
    ```
 
 5. 分批控制:
-   - 默认每批 `--limit 20`，上限 500
+   - 默认每批 20 条，上限 500（批量由本工作流控制，无 `--limit` 参数）
    - 候选数超过当前 limit 时，**提示用户分批操作**: 告知总数、建议批次划分、询问是否处理当前批次或调整 limit
    - **文件输入数据量较大时**: 读取后汇报总行数，按 limit 切批，逐批预览确认
 
-6. 逐条入库（仅 name + url）:
+6. 逐条入库（仅 name + url + slug）:
 
    ```
-   !`python skills/tools/api.py add-product --name "产品名" --url "https://..."`
+   !`python skills/tools/api.py add-product --name "产品名" --slug "生成slug" --url "https://..."`
    ```
 
    单条失败不中断，记录失败原因继续下一条

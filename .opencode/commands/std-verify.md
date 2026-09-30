@@ -38,7 +38,7 @@ description: 数据正确性校对（全量扫描，输出问题清单+修复建
    | name 空/异常      | ERROR | 非空、无拼写错、用官方名      |
    | slug 与 name 对应 | WARN  | 中文 name 应有拼音/英文 slug  |
    | links 空          | ERROR | 至少1条                       |
-   | URL 格式          | WARN  | 合法 http(s)://               |
+   | URL 格式          | ERROR | 合法 http(s)://               |
    | URL 可达          | INFO  | HEAD 请求，超时不作错         |
    | 重复产品          | ERROR | 跨库查 name/url 重复          |
    | category_id 空    | WARN  | 建议归属分类                  |

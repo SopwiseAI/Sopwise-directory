@@ -71,6 +71,6 @@
 - DELETE 操作额外必须 `--prod-confirm`，否则拒绝 (exit 3)
 - 日志醒目记录 `PROD 写操作`
 
-**模型如何知晓后端环境**: 所有命令前置检查都调 `api.py health`，该命令输出含 `env` 字段并在 prod 时显示醒目警示行。模型读到警示后主动带 `--yes`/`--prod-confirm`；若仍遗漏，`_write` 层强制拒绝兜底。
+**模型如何知晓后端环境**: 多数命令的前置检查会调 `api.py health`（`/std-list` 除外），该命令输出含 `env` 字段并在 prod 时显示醒目警示行。模型读到警示后主动带 `--yes`/`--prod-confirm`；若仍遗漏，`_write` 层强制拒绝兜底。
 
 模型在 prod 执行命令前应: 优先 dry-run 预览、写操作带 `--yes`、删除带 `--prod-confirm`、状态变更需用户明确指令。

@@ -13,10 +13,12 @@ description: "XiGee Directory 数据管理 Skills。当用户需要添加/审核
 
 ```
 采集(/std-collect) → 草稿(0) → 补全(/std-enrich) → 提交(/std-submit) → 待审核(1)
-                                                                        ↓
-                                          校对(/std-verify) ← 审核打回(1→0)
-                                                 ↓
-                                          已发布(2) → 下架(3) → 重新发布(3→2)
+      ↑                                                                    │
+      └──── 审核打回(1→0, /std-review) ────────────────────────────────────┤
+                                                                          ▼
+                                                     审核通过(1→2, /std-review)
+                                                                          ▼
+                                                    已发布(2) ⇄ 下架/重新发布(3)
 ```
 
 横切动作（随时可调）: `/std-verify` 校对、`/std-list` 列出、`/std-stats` 总览
@@ -136,22 +138,22 @@ python skills/tools/api.py --version                     # 版本
 
 ### 完整 API 覆盖（25/25 接口）
 
-| 分类 | api.py 命令                                        | 对应后端接口                             |
-| ---- | -------------------------------------------------- | ---------------------------------------- |
-| 系统 | `health`                                           | `GET /health`                            |
-|      | `env`                                              | `GET /env`                               |
-| 产品 | `products` `product`                               | `GET /products` `GET /products/{id}`     |
-|      | `add-product` `update-product` `delete-product`    | CRUD                                     |
-| 分类 | `categories` `category`                            | `GET /categories` `GET /categories/{id}` |
-|      | `add-category` `update-category` `delete-category` | CRUD                                     |
-|      | `category-count`                                   | `GET /categories/{id}/count`             |
-| 标签 | `tags` `tag`                                       | `GET /tags` `GET /tags/{id}`             |
-|      | `add-tag` `update-tag` `delete-tag`                | CRUD                                     |
-|      | `tag-count`                                        | `GET /tags/{id}/count`                   |
-| 链接 | `product-links`                                    | `GET /products/{id}/links`               |
-|      | `add-link` `update-link` `delete-link`             | CRUD                                     |
-| 标签 | `product-tags`                                     | `GET /products/{id}` (取 tags 字段)      |
-|      | `set-tags`                                         | `PUT /products/{id}/tags`                |
-| 数据 | `export` `stats`                                   | `POST /export` + 聚合查询                |
+| 分类 | api.py 命令                                        | 对应后端接口                               |
+| ---- | -------------------------------------------------- | ------------------------------------------ |
+| 系统 | `health`                                           | `GET /health`                              |
+|      | `env`                                              | `GET /env`                                 |
+| 产品 | `products` `product`                               | `GET /products` `GET /products/{id}`       |
+|      | `add-product` `update-product` `delete-product`    | CRUD                                       |
+| 分类 | `categories` `category`                            | `GET /categories` `GET /categories/{id}`   |
+|      | `add-category` `update-category` `delete-category` | CRUD                                       |
+|      | `category-count`                                   | `GET /categories/{id}/count`               |
+| 标签 | `tags` `tag`                                       | `GET /tags` `GET /tags/{id}`               |
+|      | `add-tag` `update-tag` `delete-tag`                | CRUD                                       |
+|      | `tag-count`                                        | `GET /tags/{id}/count`                     |
+| 链接 | `product-links`                                    | `GET /products/{id}/links`                 |
+|      | `add-link` `update-link` `delete-link`             | CRUD                                       |
+| 标签 | `product-tags`                                     | `GET /products/{id}` (取 tags 字段)        |
+|      | `set-tags`                                         | `PUT /products/{id}/tags`                  |
+| 数据 | `export` `stats`                                   | `POST /export` (export) / 聚合查询 (stats) |
 
 所有列表命令均支持 `--page` 和 `--page-size` 分页参数。

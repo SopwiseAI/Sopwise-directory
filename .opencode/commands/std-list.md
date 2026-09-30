@@ -33,7 +33,7 @@ description: 列出产品，支持按状态过滤和搜索
    !`python skills/tools/api.py products --search "关键词"`
    ```
 
-   注意: 后端不支持 search 参数，CLI 做客户端过滤，底部"共 N 条"是后端全量计数，可能大于实际显示行数。
+   注意: 后端不支持 search 参数，CLI 拉取全量后做客户端过滤；此模式下不显示"共 N 条"（该行仅在后端分页计数时出现）。
 
 3. status + search + 其他过滤可组合:
 
