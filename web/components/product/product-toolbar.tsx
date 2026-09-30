@@ -93,7 +93,9 @@ export function ProductToolbar({
     if (e.key === "ArrowLeft") nextIndex = (currentIndex - 1 + PRODUCT_TABS.length) % PRODUCT_TABS.length
     if (nextIndex !== null) {
       e.preventDefault()
-      onTabChange(PRODUCT_TABS[nextIndex].key)
+      const next = PRODUCT_TABS[nextIndex].key
+      onTabChange(next)
+      document.getElementById(`product-tab-${next}`)?.focus()
     }
   }
 
@@ -115,6 +117,7 @@ export function ProductToolbar({
                 id={`product-tab-${t.key}`}
                 aria-selected={tab === t.key}
                 aria-controls="product-tabpanel"
+                tabIndex={tab === t.key ? 0 : -1}
                 onClick={() => onTabChange(t.key)}
                 className={cn(
                   "px-4 py-2.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset rounded-t-sm",

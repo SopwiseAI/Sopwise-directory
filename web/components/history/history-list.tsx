@@ -92,7 +92,7 @@ export function HistoryList({ categories }: HistoryListProps) {
   // 按访问时间分组（今天/昨天/本周/更早），仅对已加载部分分组
   const groups = groupHistoryByPeriod(visible)
 
-  if (!Array.isArray(items) || items.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-lg border bg-card py-14 text-center">
         <Clock className="size-8 text-muted-foreground/60" />

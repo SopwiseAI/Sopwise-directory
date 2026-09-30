@@ -31,6 +31,9 @@ const jsonLd = {
   }
 }
 
+/** JSON-LD 注入前转义 `<`，避免内容中的 </script> 提前闭合脚本标签。 */
+const jsonLdString = JSON.stringify(jsonLd).replace(/</g, "\\u003c")
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -38,7 +41,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.xigee.net"),
+  metadataBase: new URL(getBaseUrl()),
   title: { default: "XiGee — 你的 AI 发现引擎", template: "%s — XiGee" },
   description: "XiGee 是你的 AI 发现引擎，精选各类 AI 工具与应用，按分类浏览或直接搜索你需要的能力",
   keywords: ["AI", "AI产品", "AI工具", "人工智能", "AI导航", "AI发现引擎", "XiGee"],
@@ -70,7 +73,7 @@ export default function RootLayout({
     >
       <head>
         <meta name="theme-color" content="#fafafb" />
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString }} />
       </head>
       <body className="min-h-full flex flex-col md:h-[100dvh] md:overflow-hidden">
         <HistoryTracker />

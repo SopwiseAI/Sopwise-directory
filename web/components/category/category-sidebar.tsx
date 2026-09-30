@@ -16,6 +16,7 @@ import { formatCount } from "@/lib/format"
 import type { Category } from "@/lib/types"
 
 const STORAGE_KEY = "xigee:sidebar-collapsed"
+const COLLAPSE_EVENT = "xigee:sidebar-collapse"
 
 function getSnapshot() {
   try {
@@ -30,7 +31,7 @@ function getServerSnapshot() {
 }
 
 function subscribe(callback: () => void) {
-  const handler = (e: StorageEvent) => {
+  const storageHandler = (e: StorageEvent) => {
     if (e.key !== STORAGE_KEY) return
     // 其他 tab 折叠变化时同步 data-sidebar，保持 CSS 引导一致（SB-01）
     try {
@@ -41,8 +42,12 @@ function subscribe(callback: () => void) {
     }
     callback()
   }
-  window.addEventListener("storage", handler)
-  return () => window.removeEventListener("storage", handler)
+  window.addEventListener("storage", storageHandler)
+  window.addEventListener(COLLAPSE_EVENT, callback)
+  return () => {
+    window.removeEventListener("storage", storageHandler)
+    window.removeEventListener(COLLAPSE_EVENT, callback)
+  }
 }
 
 /** 切换折叠状态并同步 <html data-sidebar>（保持与首帧引导 CSS 双轨一致，SB-01） */
@@ -54,7 +59,7 @@ function toggleCollapsed(collapsed: boolean) {
   } catch {
     return
   }
-  window.dispatchEvent(new StorageEvent("storage", { key: STORAGE_KEY }))
+  window.dispatchEvent(new Event(COLLAPSE_EVENT))
 }
 
 /** 折叠态品牌竖轨：居中品牌方块即"打开侧边栏"按钮。
@@ -118,6 +123,11 @@ export function CategorySidebar({ categories, categoryCounts, totalProducts }: C
   const navRef = useRef<HTMLElement>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
   const [scrollable, setScrollable] = useState(false)
+
+  // 标记 hydration 完成，关闭首帧引导 CSS（否则 display:none 会盖过 sr-only）
+  useEffect(() => {
+    document.documentElement.setAttribute("data-sidebar-hydrated", "")
+  }, [])
 
   useEffect(() => {
     const nav = navRef.current

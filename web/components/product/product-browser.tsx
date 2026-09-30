@@ -78,37 +78,27 @@ export function ProductBrowser({
   useEffect(() => {
     if (!showTabs) return
     const params = new URLSearchParams(window.location.search)
-    const changed: string[] = []
+    params.delete("filter") // 旧版别名，统一由 tab 表达
+    if (tab !== defaultTab) params.set("tab", tab)
+    else params.delete("tab")
+    if (view !== defaultView) params.set("view", view)
+    else params.delete("view")
 
-    if (tab !== defaultTab) {
-      params.set("tab", tab)
-      changed.push("tab")
-    } else {
-      params.delete("tab")
-      params.delete("filter")
-      changed.push("tab")
-    }
-
-    if (view !== defaultView) {
-      params.set("view", view)
-      changed.push("view")
-    } else {
-      params.delete("view")
-      changed.push("view")
-    }
-
-    if (changed.length > 0) {
-      const qs = params.toString()
-      const next = qs ? `${window.location.pathname}?${qs}` : window.location.pathname
-      window.history.replaceState(null, "", next)
-    }
+    const qs = params.toString()
+    const next = qs ? `${window.location.pathname}?${qs}` : window.location.pathname
+    const current = `${window.location.pathname}${window.location.search}`
+    if (next !== current) window.history.replaceState(null, "", next)
   }, [tab, view, defaultTab, defaultView, showTabs])
 
   const isLatestTab = tab === "latest"
   const resolvedSort: SortMode = isLatestTab ? "latest" : sort
 
   const setView = (v: ViewMode) => {
-    localStorage.setItem("xigee:default-view", v)
+    try {
+      localStorage.setItem("xigee:default-view", v)
+    } catch {
+      /* 隐私模式/配额不足时忽略持久化失败，当前会话视图仍然生效 */
+    }
     setViewOverride(v)
   }
 

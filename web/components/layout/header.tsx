@@ -79,7 +79,7 @@ function HeaderInner({ className }: { className?: string }) {
 
         <div className="flex flex-1 items-center justify-end gap-2">
           {searchOpen ? (
-            <div className="w-full max-w-xs">
+            <div id="mobile-search" className="w-full max-w-xs">
               <MobileSearchInput
                 key={`${urlQuery}-${searchResetKey}`}
                 defaultValue={urlQuery}
@@ -91,6 +91,8 @@ function HeaderInner({ className }: { className?: string }) {
               variant="outline"
               size="sm"
               className="h-8 gap-2 rounded-md pr-1.5 text-xs text-muted-foreground"
+              aria-expanded={false}
+              aria-controls="mobile-search"
               onClick={() => setSearchOpen(true)}
             >
               <Search className="size-3.5" />

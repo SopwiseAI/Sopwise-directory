@@ -253,38 +253,48 @@
 
 /* 动效：尊重系统减弱动效偏好 */
 @media (prefers-reduced-motion: reduce) {
-  [data-dsh-animate] {
-    animation: none !important;
-    transition: none !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
 /* ============================================================
    侧边栏首帧引导（SB-01：折叠偏好 hydration 前生效，避免展开→折叠闪烁）
-   由 sidebar-init 脚本在首帧前设置 <html data-sidebar>。
+   由 sidebar-init 脚本在首帧前设置 <html data-sidebar>；
+   data-sidebar-hydrated 由 CategorySidebar 挂载后设置，用于关闭首帧规则。
    ============================================================ */
 html[data-sidebar="collapsed"] #category-sidebar {
   width: 3.5rem; /* 56px，与 React 折叠态一致 */
 }
 
-/* 折叠态首帧：隐藏导航文字/计数/角标（图标保留），hydration 后由 React 接管 sr-only */
-html[data-sidebar="collapsed"] #category-sidebar nav a span,
-html[data-sidebar="collapsed"] #category-sidebar nav p {
+/* 折叠态首帧：隐藏导航文字/计数/角标（图标保留）。
+   仅在 hydration 前生效——否则 display:none 会盖过 React 的 sr-only，
+   导致折叠态链接失去无障碍名称（图标为 aria-hidden）。 */
+html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #category-sidebar nav a span,
+html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #category-sidebar nav p {
   display: none;
 }
 
 /* 折叠态首帧品牌区：隐藏 XiGee 文字与"收起侧边栏"按钮，仅保留品牌方块并居中
    （hydration 后 React 渲染 rail 按钮接管；此规则只影响首帧展开态结构） */
-html[data-sidebar="collapsed"] #category-sidebar > div:first-child {
+html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #category-sidebar > div:first-child {
   justify-content: center;
   padding: 0.5rem 0 0;
 }
-html[data-sidebar="collapsed"] #category-sidebar > div:first-child a span.text-2xl {
+html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #category-sidebar > div:first-child a span.text-2xl {
   display: none;
 }
-html[data-sidebar="collapsed"] #category-sidebar > div:first-child a {
+html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #category-sidebar > div:first-child a {
   padding: 0;
 }
-html[data-sidebar="collapsed"] #category-sidebar > div:first-child button[aria-label="收起侧边栏"] {
+html[data-sidebar="collapsed"]:not([data-sidebar-hydrated])
+  #category-sidebar
+  > div:first-child
+  button[aria-label="收起侧边栏"] {
   display: none;
 }

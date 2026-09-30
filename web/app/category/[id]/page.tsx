@@ -61,11 +61,13 @@ export default async function CategoryPage({ params }: Props) {
       url: p.url
     }))
   }
+  // JSON-LD 注入前转义 `<`，避免产品/分类名中的 </script> 提前闭合脚本标签
+  const ld = (obj: unknown) => JSON.stringify(obj).replace(/</g, "\\u003c")
 
   return (
     <div className="space-y-4">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld(breadcrumbLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld(itemListLd) }} />
       <nav aria-label="面包屑" className="font-data text-sm text-muted-foreground">
         <Link href="/" className="hover:text-foreground transition-colors">
           全部产品

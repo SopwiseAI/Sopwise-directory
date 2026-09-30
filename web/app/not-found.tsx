@@ -29,6 +29,7 @@ export default function NotFound() {
           <input
             type="text"
             name="q"
+            aria-label="搜索 AI 产品"
             placeholder="搜索 AI 产品…"
             className="flex-1 rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
@@ -44,7 +45,7 @@ export default function NotFound() {
       <div className="space-y-2">
         <p className="font-data text-xs text-muted-foreground">浏览分类</p>
         <div className="flex flex-wrap justify-center gap-2">
-          {topCategories.map(cat => (
+          {topCategories.map((cat) => (
             <Link
               key={cat.id}
               href={`/category/${cat.id}`}

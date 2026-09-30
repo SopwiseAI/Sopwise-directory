@@ -21,7 +21,9 @@ export function ThemeSwitch() {
     if (e.key === "ArrowLeft" || e.key === "ArrowUp") nextIndex = (currentIndex - 1 + options.length) % options.length
     if (nextIndex !== null) {
       e.preventDefault()
-      setTheme(options[nextIndex].value)
+      const next = options[nextIndex].value
+      setTheme(next)
+      document.getElementById(`theme-${next}`)?.focus()
     }
   }
 
@@ -38,9 +40,11 @@ export function ThemeSwitch() {
           <button
             key={value}
             type="button"
+            id={`theme-${value}`}
             role="radio"
             aria-checked={active}
             aria-label={label}
+            tabIndex={active ? 0 : -1}
             onClick={() => setTheme(value)}
             className={cn(
               "flex flex-col items-center gap-1.5 rounded-lg border px-2 py-3 text-xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",

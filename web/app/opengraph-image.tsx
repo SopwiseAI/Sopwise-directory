@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og"
 
 export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
-export const alt = "XiGee — 你的 AI 发现引擎"
+export const alt = "XiGee — AI Discovery Engine"
 
 /** 动态 OG 分享图（运行时渲染 PNG，无本地资源 404） */
 export default function OpengraphImage() {
@@ -46,7 +46,7 @@ export default function OpengraphImage() {
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ fontSize: 44, fontWeight: 700, letterSpacing: -1 }}>XiGee</div>
-          <div style={{ fontSize: 26, color: "#9aa0a6", marginTop: 4 }}>你的 AI 发现引擎</div>
+          <div style={{ fontSize: 26, color: "#9aa0a6", marginTop: 4 }}>AI Discovery Engine</div>
         </div>
       </div>
       <div
@@ -59,7 +59,7 @@ export default function OpengraphImage() {
           letterSpacing: -1
         }}
       >
-        精选的 AI 工具与产品导航
+        A curated directory of AI tools &amp; products
       </div>
       <div style={{ display: "flex", flexDirection: "column", fontSize: 24, color: "#9aa0a6", marginTop: 40 }}>
         XiGee.net

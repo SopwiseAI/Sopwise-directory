@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
+import { Button } from "@/components/ui/button"
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
@@ -8,16 +9,12 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
   }, [error])
 
   return (
-    <div className="flex flex-col items-center gap-4 py-16 text-center">
+    <div role="alert" className="flex flex-col items-center gap-4 py-16 text-center">
       <h2 className="text-lg font-semibold tracking-tight">页面出错了</h2>
       <p className="text-sm text-muted-foreground">加载时发生意外错误，可以尝试重新加载</p>
-      <button
-        type="button"
-        onClick={reset}
-        className="inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
+      <Button variant="outline" onClick={reset}>
         重试
-      </button>
+      </Button>
     </div>
   )
 }

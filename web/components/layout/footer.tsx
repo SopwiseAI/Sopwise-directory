@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { getStats } from "@/lib/data"
 import { BrandMark } from "@/components/brand/brand-mark"
+import { CopyrightYear } from "@/components/layout/copyright-year"
 import { formatCount } from "@/lib/format"
 import pkg from "@/package.json"
 
@@ -27,7 +28,9 @@ export default function Footer() {
             {formatCount(stats.products)} 产品 · {formatCount(stats.categories)} 分类
           </span>
           <span className="text-xs text-muted-foreground/40">·</span>
-          <span className="font-data text-xs text-muted-foreground/60">&copy; {new Date().getFullYear()}</span>
+          <span className="font-data text-xs text-muted-foreground/60">
+            &copy; <CopyrightYear />
+          </span>
         </div>
       </div>
     </footer>

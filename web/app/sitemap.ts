@@ -19,9 +19,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: lastModifiedDate
   }))
 
-  return [
-    { url: baseUrl, lastModified: lastModifiedDate },
-    { url: `${baseUrl}/settings`, lastModified: lastModifiedDate },
-    ...categoryUrls
-  ]
+  return [{ url: baseUrl, lastModified: lastModifiedDate }, ...categoryUrls]
 }

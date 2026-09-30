@@ -16,6 +16,7 @@ function CommandSearchInput({ defaultValue }: { defaultValue: string }) {
   const [value, setValue] = useState(defaultValue)
   const [fade, setFade] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const fadeTimer = useRef<number | null>(null)
   const router = useRouter()
 
   const isTypingTarget = (el: EventTarget | null) => {
@@ -32,7 +33,10 @@ function CommandSearchInput({ defaultValue }: { defaultValue: string }) {
       inputRef.current?.focus()
     }
     window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
+    return () => {
+      window.removeEventListener("keydown", onKey)
+      if (fadeTimer.current !== null) window.clearTimeout(fadeTimer.current)
+    }
   }, [])
 
   const handleSearch = () => {
@@ -54,14 +58,15 @@ function CommandSearchInput({ defaultValue }: { defaultValue: string }) {
         aria-label="搜索 AI 产品"
         autoComplete="off"
         value={value}
-        onChange={e => setValue(e.target.value)}
-        onKeyDown={e => {
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
           if (e.key === "Enter") handleSearch()
           if (e.key === "Escape") {
             if (value) {
               setValue("")
               setFade(true)
-              setTimeout(() => setFade(false), 200)
+              if (fadeTimer.current !== null) window.clearTimeout(fadeTimer.current)
+              fadeTimer.current = window.setTimeout(() => setFade(false), 200)
             } else {
               inputRef.current?.blur()
             }
