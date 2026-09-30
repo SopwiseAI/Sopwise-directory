@@ -1,9 +1,18 @@
 from pydantic import BaseModel
 
+from app.core.config import AppEnv
+
 
 class EnvResponse(BaseModel):
-    env: str
+    env: AppEnv
     debug: bool
+
+
+class HealthResponse(BaseModel):
+    status: str
+    database: str
+    brand: str
+    version: str
 
 
 class ExportResponse(BaseModel):

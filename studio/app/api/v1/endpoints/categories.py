@@ -4,8 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_db
 from app.core.security import require_write
-from app.models import Category, Product, ProductCategory
-from app.schemas.models import CategoryCreate, CategoryResponse, CategoryUpdate
+from app.models import Category, ProductCategory
+from app.schemas.models import CategoryCountResponse, CategoryCreate, CategoryResponse, CategoryUpdate
 from app.utils.db import check_unique, drop_none, published_category_counts
 
 router = APIRouter()
@@ -18,7 +18,7 @@ async def _published_count(db: AsyncSession, category_id: int) -> int:
 
 @router.get("", response_model=list[CategoryResponse])
 async def list_categories(
-    status_filter: int | None = Query(None, alias="status"),
+    status_filter: int | None = Query(None, alias="status", ge=0, le=1),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
@@ -92,23 +92,20 @@ async def delete_category(category_id: int, db: AsyncSession = Depends(get_db)) 
     if not category:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
 
-    count_stmt = (
-        select(func.count())
-        .select_from(Product)
-        .join(ProductCategory, ProductCategory.product_id == Product.id)
-        .where(ProductCategory.category_id == category_id)
-    )
+    count_stmt = select(func.count()).select_from(ProductCategory).where(ProductCategory.category_id == category_id)
     count = (await db.execute(count_stmt)).scalar() or 0
     if count > 0:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Category has {count} products. Remove or reassign them first.",
+            detail=f"Category has {count} products (incl. unpublished). Remove or reassign them first.",
         )
 
     await db.delete(category)
 
 
-@router.get("/{category_id}/count")
-async def category_product_count(category_id: int, db: AsyncSession = Depends(get_db)) -> dict:
+@router.get("/{category_id}/count", response_model=CategoryCountResponse)
+async def category_product_count(category_id: int, db: AsyncSession = Depends(get_db)) -> CategoryCountResponse:
+    if not await db.get(Category, category_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
     count = await _published_count(db, category_id)
-    return {"product_count": count}
+    return CategoryCountResponse(product_count=count)

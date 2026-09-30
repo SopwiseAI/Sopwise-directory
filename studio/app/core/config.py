@@ -12,6 +12,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
 
+AppEnv = Literal["dev", "sit", "prod"]
+
 
 def get_app_version() -> str:
     try:
@@ -24,7 +26,7 @@ _STUDIO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 class Settings(BaseSettings):
-    app_env: Literal["dev", "sit", "prod"] = "dev"
+    app_env: AppEnv = "dev"
     app_debug: bool = True
     app_host: str = "127.0.0.1"
     app_port: int = 8000

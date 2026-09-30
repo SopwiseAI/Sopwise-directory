@@ -40,6 +40,10 @@ class CategoryResponse(CategoryBase):
     model_config = {"from_attributes": True}
 
 
+class CategoryCountResponse(BaseModel):
+    product_count: int
+
+
 class ProductLinkBase(BaseModel):
     url: str = Field(..., max_length=2048, pattern="^https?://.+")
     label: str | None = Field(None, max_length=64)

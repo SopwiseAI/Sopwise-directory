@@ -168,6 +168,44 @@ async def test_update_category_ignores_explicit_null(async_client):
 
 
 @pytest.mark.asyncio
+async def test_delete_category_guard_counts_all_statuses(async_client):
+    """删除守卫需拦截所有状态的产品(含草稿), 提示语应给出总数以免与 product_count 混淆。"""
+    cat = await create_category(async_client, slug="mix-cat", name="混合")
+    await create_product(async_client, slug="m-pub", name="已发布", category_ids=[cat["id"]], status=2)
+    await create_product(async_client, slug="m-draft", name="草稿", category_ids=[cat["id"]], status=0)
+
+    resp = await async_client.get(f"/api/v1/categories/{cat['id']}/count")
+    assert resp.json()["product_count"] == 1
+
+    resp = await async_client.delete(f"/api/v1/categories/{cat['id']}")
+    assert resp.status_code == 409
+    detail = resp.json()["detail"]
+    assert "2 products" in detail
+    assert "unpublished" in detail
+
+
+@pytest.mark.asyncio
+async def test_category_count_not_found(async_client):
+    """不存在的分类取计数应 404, 与详情端点语义一致。"""
+    resp = await async_client.get("/api/v1/categories/99999/count")
+    assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_category_count_declares_response_model(async_client):
+    """/count 应声明 response_model, 以便生成 OpenAPI schema。"""
+    resp = await async_client.get("/openapi.json")
+    assert "CategoryCountResponse" in resp.json()["components"]["schemas"]
+
+
+@pytest.mark.asyncio
+async def test_list_categories_rejects_out_of_range_status(async_client):
+    """status 仅允许 0/1, 越界应 422 而非静默返回空列表。"""
+    resp = await async_client.get("/api/v1/categories?status=5")
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_update_category_can_clear_icon(async_client):
     """icon 为可空字段, 显式 null 应能清空。"""
     cat = await create_category(async_client, slug="icon-cat", name="图标", icon="Bot")
