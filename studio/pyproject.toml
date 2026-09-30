@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Sopwise Directory Studio — data management backend"
 requires-python = ">=3.13"
 dependencies = [
-    "fastapi>=0.115.0,<1.0",
+    "fastapi>=0.141.1,<1.0",
     "uvicorn[standard]>=0.34.0,<1.0",
     "sqlalchemy[asyncio]>=2.0.36,<3.0",
     "aiomysql>=0.2.0,<1.0",
