@@ -64,6 +64,29 @@ async def test_clear_product_tags(async_client):
 
 
 @pytest.mark.asyncio
+async def test_set_tags_duplicate_ids_are_idempotent(async_client):
+    """重复的 tag_id 应去重, 而非触发主键冲突(409)。"""
+    product = await create_product(async_client, slug="p1", name="P1")
+    tag = await create_tag(async_client, slug="t1", name="T1")
+    resp = await async_client.put(
+        f"/api/v1/products/{product['id']}/tags",
+        json={"tag_ids": [tag["id"], tag["id"]]},
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["tag_ids"] == [tag["id"]]
+
+    resp = await async_client.get(f"/api/v1/products/{product['id']}")
+    assert len(resp.json()["tags"]) == 1
+
+
+@pytest.mark.asyncio
+async def test_product_tags_declares_response_model(async_client):
+    """PUT /products/{id}/tags 应声明 response_model。"""
+    resp = await async_client.get("/openapi.json")
+    assert "ProductTagsResponse" in resp.json()["components"]["schemas"]
+
+
+@pytest.mark.asyncio
 async def test_set_tags_with_invalid_id(async_client):
     product = await create_product(async_client, slug="p1", name="P1")
     tag = await create_tag(async_client, slug="t1", name="T1")

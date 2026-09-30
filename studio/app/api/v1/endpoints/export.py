@@ -13,5 +13,4 @@ router = APIRouter()
 async def export_data(
     db: AsyncSession = Depends(get_db),
 ) -> ExportResponse:
-    result = await export_to_json(db)
-    return ExportResponse(**result)
+    return await export_to_json(db)

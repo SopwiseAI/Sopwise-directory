@@ -8,8 +8,9 @@ import pytest
 from sqlalchemy import update
 
 from app.core.database import AsyncSessionLocal
-from app.exporters.json_exporter import _write_text_atomic
+from app.exporters.json_exporter import _write_text_atomic, export_to_json
 from app.models import Product, ProductLink
+from app.schemas.common import ExportResponse
 from tests.conftest import create_category, create_product, create_tag
 
 
@@ -40,6 +41,20 @@ async def test_export_success(async_client, tmp_path):
     assert "categories_count" in data
     assert "products_count" in data
     assert data["app_env"] == "dev"
+
+
+@pytest.mark.asyncio
+async def test_export_to_json_returns_export_response(tmp_path):
+    """导出器直接返回 ExportResponse, 避免返回值与响应 schema 隐式对齐。"""
+    output = tmp_path / "data-dev.json"
+    with patch("app.exporters.json_exporter.get_settings") as mock:
+        mock.return_value.export_full_path = output
+        mock.return_value.app_env = "dev"
+        async with AsyncSessionLocal() as session:
+            result = await export_to_json(session)
+    assert isinstance(result, ExportResponse)
+    assert result.output_path == str(output)
+    assert result.synced_frontend is False
 
 
 @pytest.mark.asyncio

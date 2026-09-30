@@ -170,6 +170,11 @@ class ProductTagUpdate(BaseModel):
     tag_ids: list[int] = Field(default_factory=list)
 
 
+class ProductTagsResponse(BaseModel):
+    product_id: int
+    tag_ids: list[int]
+
+
 class ProductRelationCreate(BaseModel):
     related_id: int
     relation_type: str = Field(RelationType.SIMILAR.value, pattern=_RELATION_TYPE_PATTERN)

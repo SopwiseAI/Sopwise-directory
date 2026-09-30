@@ -2,7 +2,64 @@
 
 import pytest
 
+from app.core.database import AsyncSessionLocal
+from app.models import ProductLink
+from app.utils.url import url_hash
 from tests.conftest import create_link, create_product
+
+
+async def _seed_two_primaries(product_id: int) -> None:
+    """直连造出不一致数据: 同一产品两个主链接(应用层本应阻止)。"""
+    async with AsyncSessionLocal() as session:
+        for url in ("https://dup-a.com", "https://dup-b.com"):
+            session.add(ProductLink(product_id=product_id, url=url, url_hash=url_hash(url), is_primary=True))
+        await session.commit()
+
+
+@pytest.mark.asyncio
+async def test_add_primary_link_tolerates_inconsistent_data(async_client):
+    """存量数据已有两个主链接时, 新建主链接应 409 而非 500。"""
+    product = await create_product(async_client, slug="p1", name="P1")
+    await _seed_two_primaries(product["id"])
+    resp = await async_client.post(
+        f"/api/v1/products/{product['id']}/links",
+        json={"url": "https://c.com", "is_primary": True},
+    )
+    assert resp.status_code == 409, resp.text
+
+
+@pytest.mark.asyncio
+async def test_update_to_primary_tolerates_inconsistent_data(async_client):
+    """存量数据已有两个主链接时, 改主链接应 409 而非 500。"""
+    product = await create_product(async_client, slug="p1", name="P1")
+    await _seed_two_primaries(product["id"])
+    link = await create_link(async_client, product["id"], url="https://c.com")
+    resp = await async_client.put(
+        f"/api/v1/products/{product['id']}/links/{link['id']}",
+        json={"is_primary": True},
+    )
+    assert resp.status_code == 409, resp.text
+
+
+@pytest.mark.asyncio
+async def test_set_primary_twice_is_idempotent(async_client):
+    """对已是主链接的链接重复设主应 200 (无其它主链接)。"""
+    product = await create_product(async_client, slug="p1", name="P1")
+    link = await create_link(async_client, product["id"], url="https://a.com", is_primary=True)
+    resp = await async_client.put(
+        f"/api/v1/products/{product['id']}/links/{link['id']}",
+        json={"is_primary": True},
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["is_primary"] is True
+
+
+@pytest.mark.asyncio
+async def test_list_links_rejects_out_of_range_status(async_client):
+    """链接 status 仅 1..3, 越界应 422 而非静默返回空列表。"""
+    product = await create_product(async_client, slug="p1", name="P1")
+    resp = await async_client.get(f"/api/v1/products/{product['id']}/links?status=9")
+    assert resp.status_code == 422
 
 
 @pytest.mark.asyncio

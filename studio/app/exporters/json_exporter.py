@@ -11,6 +11,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.config import get_settings
 from app.models import PRICINGS, Category, CategoryStatus, LinkStatus, Product, ProductStatus, TagStatus
+from app.schemas.common import ExportResponse
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ def _invalid_reason(row: Product, url: str) -> str | None:
     return None
 
 
-async def export_to_json(session: AsyncSession) -> dict:
+async def export_to_json(session: AsyncSession) -> ExportResponse:
     settings = get_settings()
 
     categories = await _fetch_categories(session)
@@ -73,14 +74,14 @@ async def export_to_json(session: AsyncSession) -> dict:
 
     logger.info("Exported %d categories, %d products → %s", len(categories), len(products), output_path)
 
-    return {
-        "exported_at": datetime.now().isoformat(),
-        "output_path": str(output_path),
-        "categories_count": len(categories),
-        "products_count": len(products),
-        "app_env": settings.app_env,
-        "synced_frontend": synced_frontend,
-    }
+    return ExportResponse(
+        exported_at=datetime.now().isoformat(),
+        output_path=str(output_path),
+        categories_count=len(categories),
+        products_count=len(products),
+        app_env=settings.app_env,
+        synced_frontend=synced_frontend,
+    )
 
 
 def _ensure_uncategorized(categories: list[dict], products: list[dict]) -> None:

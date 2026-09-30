@@ -5,7 +5,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_db
 from app.core.security import require_write
 from app.models import Product, ProductLink, ProductTag, Tag
-from app.schemas.models import ProductLinkCreate, ProductLinkResponse, ProductLinkUpdate, ProductTagUpdate
+from app.schemas.models import (
+    ProductLinkCreate,
+    ProductLinkResponse,
+    ProductLinkUpdate,
+    ProductTagsResponse,
+    ProductTagUpdate,
+)
 from app.utils.db import drop_none
 from app.utils.url import url_hash
 
@@ -15,7 +21,7 @@ router = APIRouter()
 @router.get("/{product_id}/links", response_model=list[ProductLinkResponse])
 async def list_product_links(
     product_id: int,
-    status_filter: int | None = Query(None, alias="status"),
+    status_filter: int | None = Query(None, alias="status", ge=1, le=3),
     db: AsyncSession = Depends(get_db),
 ) -> list[ProductLinkResponse]:
     stmt = select(ProductLink).where(ProductLink.product_id == product_id)
@@ -48,13 +54,17 @@ async def add_product_link(product_id: int, data: ProductLinkCreate, db: AsyncSe
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="URL already exists in this product")
 
     if data.is_primary:
-        existing_primary = await db.execute(
-            select(ProductLink).where(
-                ProductLink.product_id == product_id,
-                ProductLink.is_primary.is_(True),
+        existing_primary = (
+            await db.execute(
+                select(ProductLink.id)
+                .where(
+                    ProductLink.product_id == product_id,
+                    ProductLink.is_primary.is_(True),
+                )
+                .limit(1)
             )
-        )
-        if existing_primary.scalar_one_or_none():
+        ).first()
+        if existing_primary:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Product already has a primary link",
@@ -103,15 +113,19 @@ async def update_product_link(
         link.url = update_data["url"]
         link.url_hash = new_hash
 
-    if update_data.get("is_primary") is True and not link.is_primary:
-        existing_primary = await db.execute(
-            select(ProductLink).where(
-                ProductLink.product_id == product_id,
-                ProductLink.is_primary.is_(True),
-                ProductLink.id != link_id,
+    if update_data.get("is_primary") is True:
+        existing_primary = (
+            await db.execute(
+                select(ProductLink.id)
+                .where(
+                    ProductLink.product_id == product_id,
+                    ProductLink.is_primary.is_(True),
+                    ProductLink.id != link_id,
+                )
+                .limit(1)
             )
-        )
-        if existing_primary.scalar_one_or_none():
+        ).first()
+        if existing_primary:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Product already has a primary link",
@@ -140,16 +154,20 @@ async def delete_product_link(product_id: int, link_id: int, db: AsyncSession = 
 
 @router.put(
     "/{product_id}/tags",
+    response_model=ProductTagsResponse,
     dependencies=[Depends(require_write)],
 )
-async def update_product_tags(product_id: int, data: ProductTagUpdate, db: AsyncSession = Depends(get_db)) -> dict:
+async def update_product_tags(
+    product_id: int, data: ProductTagUpdate, db: AsyncSession = Depends(get_db)
+) -> ProductTagsResponse:
     product = await db.get(Product, product_id)
     if not product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
 
-    tag_result = await db.execute(select(Tag).where(Tag.id.in_(data.tag_ids)))
+    tag_ids = list(dict.fromkeys(data.tag_ids))
+    tag_result = await db.execute(select(Tag).where(Tag.id.in_(tag_ids)))
     valid_tags = {t.id for t in tag_result.scalars().all()}
-    invalid_ids = set(data.tag_ids) - valid_tags
+    invalid_ids = set(tag_ids) - valid_tags
     if invalid_ids:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -157,8 +175,8 @@ async def update_product_tags(product_id: int, data: ProductTagUpdate, db: Async
         )
 
     await db.execute(ProductTag.__table__.delete().where(ProductTag.product_id == product_id))
-    for tag_id in data.tag_ids:
+    for tag_id in tag_ids:
         db.add(ProductTag(product_id=product_id, tag_id=tag_id))
 
     await db.flush()
-    return {"product_id": product_id, "tag_ids": data.tag_ids}
+    return ProductTagsResponse(product_id=product_id, tag_ids=tag_ids)

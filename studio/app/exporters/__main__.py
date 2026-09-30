@@ -16,9 +16,9 @@ async def main() -> int:
             result = await export_to_json(session)
         logger.info(
             "Export complete: %d categories, %d products → %s",
-            result["categories_count"],
-            result["products_count"],
-            result["output_path"],
+            result.categories_count,
+            result.products_count,
+            result.output_path,
         )
         return 0
     finally:
