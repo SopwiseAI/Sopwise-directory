@@ -16,6 +16,7 @@ import { PricingBadge } from "@/components/product/pricing-badge"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Button } from "@/components/ui/button"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,17 +45,17 @@ function HistorySkeleton() {
   return (
     <div className="overflow-hidden rounded-lg border bg-card" aria-hidden>
       <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
-        <div className="h-8 min-w-0 flex-1 animate-pulse rounded-md bg-muted" />
-        <div className="h-4 w-12 animate-pulse rounded bg-muted" />
-        <div className="h-4 w-10 animate-pulse rounded bg-muted" />
+        <Skeleton className="h-8 min-w-0 flex-1 rounded-md" />
+        <Skeleton className="h-4 w-12 rounded" />
+        <Skeleton className="h-4 w-10 rounded" />
       </div>
       {Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className="flex items-center gap-3 border-b border-border px-4 py-3 last:border-b-0">
           <div className="min-w-0 flex-1 space-y-1.5">
-            <div className="h-4 w-1/3 animate-pulse rounded bg-muted" />
-            <div className="h-3 w-2/3 animate-pulse rounded bg-muted" />
+            <Skeleton className="h-4 w-1/3 rounded" />
+            <Skeleton className="h-3 w-2/3 rounded" />
           </div>
-          <div className="h-8 w-8 shrink-0 animate-pulse rounded-md bg-muted" />
+          <Skeleton className="size-8 shrink-0 rounded-md" />
         </div>
       ))}
     </div>

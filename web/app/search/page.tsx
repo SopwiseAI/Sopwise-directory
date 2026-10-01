@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Suspense } from "react"
 import { getAllProducts, getFeaturedProducts } from "@/lib/data"
 import { SearchResults } from "@/components/search/search-results"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export const metadata: Metadata = {
   title: "搜索",
@@ -16,13 +17,13 @@ const suggestions = featured.slice(0, 5).map((p) => p.name)
 function ResultsSkeleton() {
   return (
     <div className="space-y-3" aria-busy="true" aria-live="polite">
-      <div className="h-5 w-44 animate-pulse rounded bg-muted" />
+      <Skeleton className="h-5 w-44 rounded" />
       <div className="overflow-hidden rounded-lg border bg-card">
         {Array.from({ length: 12 }).map((_, i) => (
           <div key={i} className="flex items-center gap-3 border-b border-border px-4 py-3.5 last:border-b-0">
             <div className="min-w-0 flex-1 space-y-1.5">
-              <div className="h-4 w-1/4 animate-pulse rounded bg-muted" />
-              <div className="h-3 w-3/4 animate-pulse rounded bg-muted" />
+              <Skeleton className="h-4 w-1/4 rounded" />
+              <Skeleton className="h-3 w-3/4 rounded" />
             </div>
           </div>
         ))}
