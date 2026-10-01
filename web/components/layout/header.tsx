@@ -79,7 +79,7 @@ function HeaderInner({ className }: { className?: string }) {
           aria-label="XiGee.net 首页"
           className="shrink-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <Wordmark size="md" tone="brand" />
+          <Wordmark size="md" />
         </Link>
 
         <div className="flex flex-1 items-center justify-end gap-2">

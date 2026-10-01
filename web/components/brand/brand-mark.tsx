@@ -8,7 +8,7 @@ interface BrandGlyphProps {
 /** 纯几何星芒标记（无容器），fill 跟随 currentColor。 */
 export function BrandGlyph({ className }: BrandGlyphProps) {
   return (
-    <svg viewBox={BRAND_GLYPH_VIEWBOX} fill="currentColor" className={cn("shrink-0", className)} aria-hidden>
+    <svg viewBox={BRAND_GLYPH_VIEWBOX} fill="currentColor" className={cn("size-4 shrink-0", className)} aria-hidden>
       <path d={BRAND_GLYPH_PATH} />
     </svg>
   )
@@ -41,7 +41,7 @@ export function BrandMark({ className, glyphClassName, size = "md" }: BrandMarkP
     <span
       aria-hidden
       className={cn(
-        "brand-tile relative inline-flex shrink-0 items-center justify-center bg-brand text-brand-foreground",
+        "brand-tile relative inline-flex shrink-0 items-center justify-center text-brand-foreground",
         BOX[size],
         className
       )}

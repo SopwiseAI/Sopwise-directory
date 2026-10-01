@@ -24,7 +24,7 @@ export default function OpengraphImage() {
         justifyContent: "center",
         padding: "80px 96px",
         background: BRAND_PAGE.dark,
-        color: "#f9fafb",
+        color: BRAND_TILE.dark,
         fontFamily: "sans-serif"
       }}
     >

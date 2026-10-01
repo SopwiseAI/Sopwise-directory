@@ -25,8 +25,8 @@ export const Colors: Story = {
   render: () => (
     <div className="flex items-center gap-6">
       <BrandGlyph className="size-8 text-brand" />
-      <BrandGlyph className="size-8 text-foreground" />
       <BrandGlyph className="size-8 text-muted-foreground" />
+      <BrandGlyph className="size-8 text-destructive" />
     </div>
   )
 }

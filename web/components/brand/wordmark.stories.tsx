@@ -5,10 +5,9 @@ const meta = {
   title: "Brand/Wordmark",
   component: Wordmark,
   tags: ["autodocs"],
-  args: { size: "md", tone: "default" },
+  args: { size: "md" },
   argTypes: {
-    size: { control: "inline-radio", options: ["sm", "md", "lg", "xl"] },
-    tone: { control: "inline-radio", options: ["default", "brand"] }
+    size: { control: "inline-radio", options: ["sm", "md", "lg", "xl"] }
   }
 } satisfies Meta<typeof Wordmark>
 
@@ -19,10 +18,7 @@ export const Sizes: Story = {
   render: () => (
     <div className="flex flex-col gap-6">
       {(["sm", "md", "lg", "xl"] as const).map((s) => (
-        <div key={s} className="flex items-center gap-8">
-          <Wordmark size={s} />
-          <Wordmark size={s} tone="brand" />
-        </div>
+        <Wordmark key={s} size={s} />
       ))}
     </div>
   )

@@ -5,8 +5,6 @@ type WordmarkSize = "sm" | "md" | "lg" | "xl"
 
 interface WordmarkProps {
   size?: WordmarkSize
-  /** default：前景色字标（侧栏/hero/footer）；brand：品牌色字标（移动端 header）。 */
-  tone?: "default" | "brand"
   className?: string
 }
 
@@ -25,7 +23,7 @@ const CFG: Record<WordmarkSize, { gap: string; text: string; net: string }> = {
  * 统一品牌字标：`XiGee.net` —— Outfit Variable 粗体 XiGee + 弱化小号 .net。
  * 左上角 / hero / footer / 移动端共用，保证各处完全一致。
  */
-export function Wordmark({ size = "md", tone = "default", className }: WordmarkProps) {
+export function Wordmark({ size = "md", className }: WordmarkProps) {
   const cfg = CFG[size]
 
   return (
@@ -38,7 +36,7 @@ export function Wordmark({ size = "md", tone = "default", className }: WordmarkP
       )}
     >
       <BrandMark className="size-[1.28em] rounded-[0.36em]" glyphClassName="size-[0.8em]" />
-      <span data-wordmark-text className={cn("min-w-0 truncate", tone === "brand" && "text-brand")}>
+      <span data-wordmark-text className="min-w-0 truncate">
         XiGee
         <span className={cn("ml-[0.14em] font-normal tracking-normal text-muted-foreground", cfg.net)}>.net</span>
       </span>
