@@ -30,7 +30,7 @@ const BOX = {
 
 const GLYPH = {
   sm: "size-3.5",
-  md: "size-5",
+  md: "size-4.5",
   lg: "size-5",
   xl: "size-7"
 } as const

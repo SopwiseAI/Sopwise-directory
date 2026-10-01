@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react"
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore } from "react"
 import { useSearchParams } from "next/navigation"
 import type { Product } from "@/lib/types"
 import { getProductDate } from "@/lib/product"
@@ -46,6 +46,11 @@ function UrlStateSync({ onChange }: { onChange: (state: UrlState) => void }) {
 
 const noopSubscribe = () => () => {}
 const emptyString = ""
+const mountedSnapshot = () => true
+const notMountedSnapshot = () => false
+
+/** SSR 期退化为 useEffect，客户端用 useLayoutEffect 在首绘帧前揭示（避免中介帧闪烁）。 */
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect
 
 function readStore(key: string): string {
   if (typeof window === "undefined") return emptyString
@@ -85,6 +90,7 @@ export function ProductBrowser({
   const storedView = useSyncExternalStore(noopSubscribe, getStoredView, () => emptyString)
   const storedSort = useSyncExternalStore(noopSubscribe, getStoredSort, () => emptyString)
   const urlSearch = useSyncExternalStore(noopSubscribe, getUrlSearch, () => emptyString)
+  const mounted = useSyncExternalStore(noopSubscribe, mountedSnapshot, notMountedSnapshot)
 
   const initial = useMemo(() => readUrlParams(urlSearch), [urlSearch])
   const initialView = initial.view ?? (isValidView(storedView) ? storedView : defaultView)
@@ -98,6 +104,13 @@ export function ProductBrowser({
   const view = viewOverride ?? initialView
   const sort = sortOverride ?? initialSort
   const tab = tabOverride ?? initialTab
+
+  // PB-01：首帧由 prefsScript 隐藏产品区（仅当偏好≠默认），hydration 应用真实偏好后揭示。
+  // mounted 与 stored* 同由 useSyncExternalStore 驱动，同一次重渲染翻转，故揭示时偏好已就绪。
+  useIsomorphicLayoutEffect(() => {
+    if (!mounted) return
+    document.documentElement.removeAttribute("data-prefs")
+  }, [mounted, view, sort, tab])
 
   const applyUrlState = useCallback((state: UrlState) => {
     setTabOverride(state.tab)
@@ -113,7 +126,9 @@ export function ProductBrowser({
     else params.delete("tab")
     if (view !== defaultView) params.set("view", view)
     else params.delete("view")
-    if (sort !== defaultSort) params.set("sort", sort)
+    // latest tab 下 resolvedSort 强制为 latest，URL 不写 sort 以免误导
+    const effectiveSort = tab === "latest" ? defaultSort : sort
+    if (effectiveSort !== defaultSort) params.set("sort", effectiveSort)
     else params.delete("sort")
 
     const qs = params.toString()
@@ -157,7 +172,7 @@ export function ProductBrowser({
   }, [products, tab, resolvedSort])
 
   return (
-    <>
+    <div id="product-browser">
       <Suspense fallback={null}>
         <UrlStateSync onChange={applyUrlState} />
       </Suspense>
@@ -188,7 +203,7 @@ export function ProductBrowser({
           />
 
           {showTabs ? (
-            <div role="tabpanel" id="product-tabpanel" aria-labelledby={`product-tab-${tab}`} tabIndex={0}>
+            <div role="tabpanel" id="product-tabpanel" aria-labelledby={`product-tab-${tab}`}>
               <BrowserContent view={view} products={filtered} showDate={resolvedSort === "latest"} />
             </div>
           ) : (
@@ -196,7 +211,7 @@ export function ProductBrowser({
           )}
         </div>
       )}
-    </>
+    </div>
   )
 }
 

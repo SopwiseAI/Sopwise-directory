@@ -19,6 +19,36 @@ import type { Category } from "@/lib/types"
 /** 分页步长：初始渲染 + 每次触底加载的条数（避免 200 条一次性渲染） */
 const PAGE_SIZE = 30
 
+const noopSubscribe = () => () => {}
+const mountedSnapshot = () => true
+const notMountedSnapshot = () => false
+
+/**
+ * 首帧骨架：历史数据只在客户端（localStorage）可得，SSR 无从渲染真实内容。
+ * 若直接渲染空态会在刷新时闪现「暂无访问记录」再跳成列表（HG-01）。
+ * 故挂载前渲染与真实卡片同构的骨架，既消除错误内容闪烁，又稳定布局高度。
+ */
+function HistorySkeleton() {
+  return (
+    <div className="overflow-hidden rounded-lg border bg-card" aria-hidden>
+      <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
+        <div className="h-8 min-w-0 flex-1 animate-pulse rounded-md bg-muted" />
+        <div className="h-4 w-12 animate-pulse rounded bg-muted" />
+        <div className="h-4 w-10 animate-pulse rounded bg-muted" />
+      </div>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-3 border-b border-border px-4 py-3 last:border-b-0">
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <div className="h-4 w-1/3 animate-pulse rounded bg-muted" />
+            <div className="h-3 w-2/3 animate-pulse rounded bg-muted" />
+          </div>
+          <div className="h-8 w-8 shrink-0 animate-pulse rounded-md bg-muted" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 /** 相对时间：非法日期兜底，避免 "Invalid Date" 英文报错式文案（PG-13） */
 function formatRelativeTime(iso: string): string {
   const date = new Date(iso)
@@ -47,6 +77,8 @@ export function HistoryList({ categories }: HistoryListProps) {
     return () => window.clearInterval(id)
   }, [])
 
+  // HG-01：挂载前渲染骨架，避免 SSR 空态（"暂无访问记录"）在刷新时闪现后跳变
+  const mounted = useSyncExternalStore(noopSubscribe, mountedSnapshot, notMountedSnapshot)
   const raw = useSyncExternalStore(subscribeHistory, getHistorySnapshot, () => "[]")
   const [query, setQuery] = useState("")
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
@@ -91,6 +123,8 @@ export function HistoryList({ categories }: HistoryListProps) {
   const hasMore = visibleCount < filtered.length
   // 按访问时间分组（今天/昨天/本周/更早），仅对已加载部分分组
   const groups = groupHistoryByPeriod(visible)
+
+  if (!mounted) return <HistorySkeleton />
 
   if (items.length === 0) {
     return (

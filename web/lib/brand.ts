@@ -23,3 +23,15 @@ export const BRAND_FOREGROUND = {
   light: "#ffffff",
   dark: "#0f1115"
 } as const
+
+/** 页面背景色（浅色白 / 深色炭黑）。 */
+export const BRAND_PAGE = {
+  light: "#ffffff",
+  dark: "#151517"
+} as const
+
+/** 辅助文本色（OG 图等场景）。 */
+export const BRAND_MUTED = {
+  light: "#61666b",
+  dark: "#adb2b8"
+} as const

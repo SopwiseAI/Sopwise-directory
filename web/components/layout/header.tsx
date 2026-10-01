@@ -4,14 +4,19 @@ import { useState } from "react"
 import Link from "next/link"
 import { Search, Settings, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Suspense } from "react"
+import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import ThemeToggle from "./theme-toggle"
 import { Wordmark } from "@/components/brand/wordmark"
 
-function MobileSearchInput({ defaultValue, onClose }: { defaultValue: string; onClose: () => void }) {
-  const [value, setValue] = useState(defaultValue)
+/** 读取初始查询：仅在用户展开搜索框（客户端）时调用，避免 useSearchParams 使整条 header 退化为客户端渲染 */
+function initialQuery(): string {
+  if (typeof window === "undefined") return ""
+  return new URLSearchParams(window.location.search).get("q") ?? ""
+}
+
+function MobileSearchInput({ onClose }: { onClose: () => void }) {
+  const [value, setValue] = useState(initialQuery)
   const router = useRouter()
 
   const handleSearch = () => {
@@ -56,8 +61,6 @@ function MobileSearchInput({ defaultValue, onClose }: { defaultValue: string; on
 function HeaderInner({ className }: { className?: string }) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchResetKey, setSearchResetKey] = useState(0)
-  const searchParams = useSearchParams()
-  const urlQuery = searchParams.get("q") ?? ""
 
   const handleSearchClose = () => {
     setSearchOpen(false)
@@ -83,11 +86,7 @@ function HeaderInner({ className }: { className?: string }) {
         <div className="flex flex-1 items-center justify-end gap-2">
           {searchOpen ? (
             <div id="mobile-search" className="w-full max-w-xs">
-              <MobileSearchInput
-                key={`${urlQuery}-${searchResetKey}`}
-                defaultValue={urlQuery}
-                onClose={handleSearchClose}
-              />
+              <MobileSearchInput key={searchResetKey} onClose={handleSearchClose} />
             </div>
           ) : (
             <Button
@@ -124,9 +123,5 @@ function HeaderInner({ className }: { className?: string }) {
 }
 
 export default function Header({ className }: { className?: string }) {
-  return (
-    <Suspense>
-      <HeaderInner className={className} />
-    </Suspense>
-  )
+  return <HeaderInner className={className} />
 }

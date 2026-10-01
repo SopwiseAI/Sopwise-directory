@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og"
-import { BRAND_FOREGROUND, BRAND_TILE, BRAND_GLYPH_PATH, BRAND_GLYPH_VIEWBOX } from "@/lib/brand"
+import { BRAND_FOREGROUND, BRAND_GLYPH_PATH, BRAND_GLYPH_VIEWBOX, BRAND_TILE } from "@/lib/brand"
 
 export const size = { width: 180, height: 180 }
 export const contentType = "image/png"
@@ -17,7 +17,7 @@ export default function AppleIcon() {
         backgroundColor: BRAND_TILE.light
       }}
     >
-      <svg width={126} height={126} viewBox={BRAND_GLYPH_VIEWBOX} fill={BRAND_FOREGROUND.light}>
+      <svg width="70%" height="70%" viewBox={BRAND_GLYPH_VIEWBOX} fill={BRAND_FOREGROUND.light}>
         <path d={BRAND_GLYPH_PATH} />
       </svg>
     </div>,

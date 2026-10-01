@@ -304,37 +304,85 @@
 }
 
 /* ============================================================
-   侧边栏首帧引导（SB-01：折叠偏好 hydration 前生效，避免展开→折叠闪烁）
-   由 sidebar-init 脚本在首帧前设置 <html data-sidebar>；
-   data-sidebar-hydrated 由 CategorySidebar 挂载后设置，用于关闭首帧规则。
+   侧栏首帧引导（SB-01：折叠偏好 hydration 前生效，避免展开→折叠闪烁）
+   prefsScript 在首绘前写 <html data-sidebar>；CategorySidebar 挂载后写
+   data-sidebar-hydrated，用于关闭「首帧专用」规则（否则 display:none 会盖过 sr-only）。
    ============================================================ */
 html[data-sidebar="collapsed"] #category-sidebar {
   width: 3.5rem; /* 56px，与 React 折叠态一致 */
 }
 
-/* 折叠态首帧：隐藏导航文字/计数/角标（图标保留）。
-   仅在 hydration 前生效——否则 display:none 会盖过 React 的 sr-only，
-   导致折叠态链接失去无障碍名称（图标为 aria-hidden）。 */
-html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #category-sidebar nav a span,
-html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #category-sidebar nav p {
+/* 折叠首帧：所有入口（含底部「设置」）图标居中，去掉左右内边距 */
+html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #category-sidebar a {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* 折叠首帧：隐藏文字/计数/分组标题（图标为 svg，保留；[data-collapse-hide] 为稳定钩子） */
+html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #category-sidebar [data-collapse-hide] {
   display: none;
 }
 
-/* 折叠态首帧品牌区：隐藏 XiGee 文字与"收起侧边栏"按钮，仅保留品牌方块并居中
-   （hydration 后 React 渲染 rail 按钮接管；此规则只影响首帧展开态结构） */
+/* 折叠首帧品牌区：居中，仅留品牌方块；隐藏 XiGee 文字（保留星芒）与「收起侧边栏」按钮 */
 html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #category-sidebar > div:first-child {
   justify-content: center;
   padding: 0.5rem 0 0;
 }
-html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #category-sidebar > div:first-child a span.text-2xl {
-  display: none;
-}
 html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #category-sidebar > div:first-child a {
   padding: 0;
 }
+html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #category-sidebar [data-wordmark-text],
 html[data-sidebar="collapsed"]:not([data-sidebar-hydrated])
   #category-sidebar
   > div:first-child
   button[aria-label="收起侧边栏"] {
   display: none;
+}
+
+/* ============================================================
+   产品区首帧门控（PB-01：排序/视图/tab 与默认不一致时先隐藏，hydration 后由
+   React 揭示，避免「默认顺序/布局 → 目标顺序/布局」跳变；默认偏好下不隐藏、零成本）
+   ============================================================ */
+html[data-prefs="pending"] #product-browser {
+  visibility: hidden;
+}
+
+/* ============================================================
+   主题模式首帧（TH-01：prefsScript 写 <html data-theme>，主题卡片/切换图标
+   在 hydration 前即按已存模式选中，避免「跟随系统高亮 → 目标模式」闪烁。
+   data-theme 由 applyTheme 持续同步，hydration 后 CSS 与 React 状态一致）。
+   ============================================================ */
+html[data-theme="light"] #theme-light,
+html[data-theme="dark"] #theme-dark,
+html[data-theme="system"] #theme-system {
+  border-color: color-mix(in oklab, var(--primary) 40%, transparent);
+  background-color: var(--secondary);
+  color: var(--foreground);
+}
+html[data-theme="light"] #theme-light svg,
+html[data-theme="dark"] #theme-dark svg,
+html[data-theme="system"] #theme-system svg {
+  color: var(--primary);
+}
+
+/* 主题切换按钮（折叠/移动端）：三个图标叠放，仅显示与 data-theme 匹配者；无 JS 时回退系统图标 */
+.theme-i-light,
+.theme-i-dark,
+.theme-i-system {
+  display: none;
+}
+html[data-theme="light"] .theme-i-light,
+html[data-theme="dark"] .theme-i-dark,
+html[data-theme="system"] .theme-i-system,
+html:not([data-theme]) .theme-i-system {
+  display: block;
+}
+
+/* ============================================================
+   侧栏历史计数首帧门控（HG-02：历史计数仅在客户端可得，SSR 为 0；有历史时
+   挂载前隐藏该计数，避免「0 → N」跳动。SidebarLink 以 data-sidebar-count 标记）。
+   ============================================================ */
+html[data-history="has"]:not([data-sidebar-hydrated]) #category-sidebar a[href="/history"] [data-sidebar-count] {
+  visibility: hidden;
 }

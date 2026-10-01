@@ -12,12 +12,31 @@ const allProducts = getAllProducts()
 const featured = getFeaturedProducts()
 const suggestions = featured.slice(0, 5).map((p) => p.name)
 
+/** 搜索结果为客户端计算（query 来自 URL），SSR 呈现同构骨架，避免「加载中…→结果」突兀跳变。 */
+function ResultsSkeleton() {
+  return (
+    <div className="space-y-3" aria-busy="true" aria-live="polite">
+      <div className="h-5 w-44 animate-pulse rounded bg-muted" />
+      <div className="overflow-hidden rounded-lg border bg-card">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-3 border-b border-border px-4 py-3.5 last:border-b-0">
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <div className="h-4 w-1/4 animate-pulse rounded bg-muted" />
+              <div className="h-3 w-3/4 animate-pulse rounded bg-muted" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function SearchPage() {
   return (
     <>
       {/* h1：页面语义主题（PG-04） */}
       <h1 className="sr-only">搜索 AI 产品</h1>
-      <Suspense fallback={<p className="text-center text-muted-foreground py-12">加载中…</p>}>
+      <Suspense fallback={<ResultsSkeleton />}>
         <SearchResults products={allProducts} featured={featured} suggestions={suggestions} />
       </Suspense>
     </>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useSyncExternalStore, useEffect, useRef, useState, type ReactNode } from "react"
+import { useSyncExternalStore, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { LayoutGrid, History, Settings } from "lucide-react"
@@ -126,7 +126,8 @@ export function CategorySidebar({ categories, categoryCounts, totalProducts }: C
   const [scrollable, setScrollable] = useState(false)
 
   // 标记 hydration 完成，关闭首帧引导 CSS（否则 display:none 会盖过 sr-only）
-  useEffect(() => {
+  // 用 useLayoutEffect 在 paint 前同步设置，消除无障碍盲窗
+  useLayoutEffect(() => {
     document.documentElement.setAttribute("data-sidebar-hydrated", "")
   }, [])
 
@@ -205,6 +206,7 @@ export function CategorySidebar({ categories, categoryCounts, totalProducts }: C
           />
 
           <p
+            data-collapse-hide
             className={cn(
               "border-t border-border px-3 pb-1.5 pt-3 font-data text-muted-foreground",
               collapsed && "sr-only"
@@ -275,9 +277,13 @@ function SidebarLink({ href, active, collapsed, label, icon, count }: SidebarLin
         )}
       />
       {icon}
-      <span className={cn("min-w-0 flex-1 truncate", collapsed && "sr-only")}>{label}</span>
+      <span data-collapse-hide className={cn("min-w-0 flex-1 truncate", collapsed && "sr-only")}>
+        {label}
+      </span>
       {count !== undefined && (
         <span
+          data-collapse-hide
+          data-sidebar-count
           className={cn(
             "font-data tabular-nums transition-colors",
             collapsed ? "sr-only" : active ? "text-accent-foreground/70" : "text-muted-foreground"

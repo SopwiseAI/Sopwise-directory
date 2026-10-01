@@ -20,7 +20,9 @@ export function FilterTabs({ tab, onTabChange }: FilterTabsProps) {
     const currentIndex = PRODUCT_TABS.findIndex((t) => t.key === tab)
     let nextIndex: number | null = null
     if (e.key === "ArrowRight") nextIndex = (currentIndex + 1) % PRODUCT_TABS.length
-    if (e.key === "ArrowLeft") nextIndex = (currentIndex - 1 + PRODUCT_TABS.length) % PRODUCT_TABS.length
+    else if (e.key === "ArrowLeft") nextIndex = (currentIndex - 1 + PRODUCT_TABS.length) % PRODUCT_TABS.length
+    else if (e.key === "Home") nextIndex = 0
+    else if (e.key === "End") nextIndex = PRODUCT_TABS.length - 1
     if (nextIndex !== null) {
       e.preventDefault()
       const next = PRODUCT_TABS[nextIndex].key

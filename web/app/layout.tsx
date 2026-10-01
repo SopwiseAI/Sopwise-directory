@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next"
-import Script from "next/script"
 import { GeistMono } from "geist/font/mono"
 import "@fontsource-variable/outfit"
 import { getAllCategories, getCategoryCounts, getStats } from "@/lib/data"
@@ -54,11 +53,40 @@ export const metadata: Metadata = {
   }
 }
 
-/** 首屏前执行：主题 class + 浏览器主题色。避免闪烁，同步 dark 状态。 */
-const themeScript = `(function(){try{const t=localStorage.getItem("theme")||"system";const m=window.matchMedia("(prefers-color-scheme:dark)");const dark=t==="dark"||(t==="system"&&m.matches);document.documentElement.classList.toggle("dark",dark);const meta=document.querySelector('meta[name="theme-color"]');if(meta){meta.setAttribute("content",dark?"#151517":"#ffffff")}}catch(e){}})()`
-
-/** 首帧前读取侧栏折叠偏好写入 <html data-sidebar>，CSS 据此先行渲染折叠态（SB-01，避免展开→折叠闪烁）。 */
-const sidebarScript = `(function(){try{const c=localStorage.getItem("xigee:sidebar-collapsed")==="true";document.documentElement.setAttribute("data-sidebar",c?"collapsed":"expanded")}catch(e){document.documentElement.setAttribute("data-sidebar","expanded")}})()`
+/**
+ * 首帧偏好引导脚本（必须内联在 <head> 且同步执行，早于首次绘制）。
+ *
+ * 曾经用 next/script beforeInteractive，但它会被塞进 `self.__next_s` 队列、
+ * 等 Next 运行时 chunk 加载后才执行 —— 首绘已发生，于是出现「先默认、后跳变」闪烁。
+ * 改为 <head> 内联 <script> 后，浏览器解析到即执行，先于 body 解析与首绘。
+ *
+ * 只做「读偏好 → 写 <html> 属性」，具体渲染交给 CSS（首帧）与 React（hydration 后接管）。
+ */
+const prefsScript = `(function(){try{
+var d=document.documentElement;
+var t=localStorage.getItem("theme")||"system";
+var m=window.matchMedia("(prefers-color-scheme:dark)");
+var dark=t==="dark"||(t==="system"&&m.matches);
+d.classList.toggle("dark",dark);
+d.setAttribute("data-theme",t==="light"||t==="dark"||t==="system"?t:"system");
+var meta=document.querySelector('meta[name="theme-color"]');
+if(meta)meta.setAttribute("content",dark?"#151517":"#ffffff");
+var sb=localStorage.getItem("xigee:sidebar-collapsed")==="true";
+d.setAttribute("data-sidebar",sb?"collapsed":"expanded");
+try{var h=JSON.parse(localStorage.getItem("xigee:history")||"[]");var arr=Array.isArray(h)?h:(h&&Array.isArray(h.items)?h.items:[]);if(arr.length)d.setAttribute("data-history","has")}catch(e){}
+var p=new URLSearchParams(location.search);
+var view=p.get("view")||localStorage.getItem("xigee:default-view")||"";
+var sort=p.get("sort")||localStorage.getItem("xigee:default-sort")||"";
+var tab=p.get("tab")||"";
+if(view)d.setAttribute("data-view",view);
+if(sort)d.setAttribute("data-sort",sort);
+if(tab)d.setAttribute("data-tab",tab);
+var pending=(view&&view!=="grid")||(sort&&sort!=="latest")||(tab&&tab!=="all");
+if(pending){
+d.setAttribute("data-prefs","pending");
+setTimeout(function(){d.removeAttribute("data-prefs")},2000)
+}
+}catch(e){}})()`
 
 export default function RootLayout({
   children
@@ -69,6 +97,8 @@ export default function RootLayout({
     <html lang="zh-CN" className={`${GeistMono.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#ffffff" />
+        {/* 必须最先执行：同步内联脚本，早于首绘应用主题 / 侧栏 / 产品偏好的首帧状态 */}
+        <script dangerouslySetInnerHTML={{ __html: prefsScript }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString }} />
       </head>
       <body className="min-h-full flex flex-col md:h-[100dvh] md:overflow-hidden">
@@ -81,9 +111,7 @@ export default function RootLayout({
           >
             跳到主要内容
           </a>
-          {/* beforeInteractive：注入 <head> 且由 Next 管理执行时机（hydration 之前），避免 FOUC */}
-          <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeScript }} />
-          <Script id="sidebar-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: sidebarScript }} />
+          {/* 首帧偏好由 <head> 内联 prefsScript 在首绘前写入 <html>，此处不再使用 next/script */}
           <Header className="md:hidden" />
           <SubNav className="md:hidden" categories={allCategories} categoryCounts={categoryCounts} />
           {/* DSH 双表面骨架：左栏灰（sidebar）/ 右区白（main） */}

@@ -33,6 +33,8 @@ function applyMetaThemeColor(dark: boolean): void {
 function applyTheme(theme: ThemeMode): void {
   const dark = theme === "dark" || (theme === "system" && mediaDark())
   document.documentElement.classList.toggle("dark", dark)
+  // 与 prefsScript 首帧引导同源：data-theme 驱动主题卡片/图标的 CSS 选中态（TH-01）
+  document.documentElement.setAttribute("data-theme", theme)
   applyMetaThemeColor(dark)
   try {
     localStorage.setItem(STORAGE_KEY, theme)

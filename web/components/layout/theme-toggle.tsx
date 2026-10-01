@@ -39,13 +39,12 @@ export default function ThemeToggle() {
       aria-label={`当前：${labels[theme]}模式，点击切换${labels[nextMode]}`}
       title={`当前：${labels[theme]}模式`}
     >
-      {theme === "light" ? (
-        <Sun className="size-4" />
-      ) : theme === "dark" ? (
-        <Moon className="size-4" />
-      ) : (
-        <Monitor className="size-4" />
-      )}
+      {/* TH-01：三个图标叠放，由 <html data-theme> 驱动 CSS 显示，首帧即为正确图标 */}
+      <span className="relative inline-flex size-4">
+        <Sun className="theme-i-light absolute inset-0 size-4" aria-hidden />
+        <Moon className="theme-i-dark absolute inset-0 size-4" aria-hidden />
+        <Monitor className="theme-i-system absolute inset-0 size-4" aria-hidden />
+      </span>
     </Button>
   )
 }

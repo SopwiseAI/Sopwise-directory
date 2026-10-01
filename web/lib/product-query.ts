@@ -23,6 +23,10 @@ export function isValidSort(value: string): value is SortMode {
   return VALID_SORTS.has(value)
 }
 
+export function isValidTab(value: string): value is TabMode {
+  return VALID_TABS.has(value)
+}
+
 /** 解析 URL 查询为 tab/view/sort；非法值与旧别名均归一化。 */
 export function readUrlParams(search: string): UrlState {
   const qs = new URLSearchParams(search)

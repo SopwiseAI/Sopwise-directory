@@ -1,7 +1,6 @@
 "use client"
 
 import { Monitor, Moon, Sun } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { setTheme, useTheme, type ThemeMode } from "@/components/layout/theme-toggle"
 
 const options: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
@@ -46,14 +45,9 @@ export function ThemeSwitch() {
             aria-label={label}
             tabIndex={active ? 0 : -1}
             onClick={() => setTheme(value)}
-            className={cn(
-              "flex flex-col items-center gap-1.5 rounded-lg border px-2 py-3 text-xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              active
-                ? "border-primary/40 bg-secondary text-foreground"
-                : "border-border text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-            )}
+            className="flex flex-col items-center gap-1.5 rounded-lg border border-border px-2 py-3 text-xs text-muted-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-secondary/50 hover:text-foreground"
           >
-            <Icon className={cn("size-5", active && "text-primary")} aria-hidden />
+            <Icon className="size-5" aria-hidden />
             {label}
           </button>
         )
