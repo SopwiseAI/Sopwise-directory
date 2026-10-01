@@ -13,11 +13,7 @@ function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
 
 function DropdownMenuTrigger({ className, ...props }: MenuPrimitive.Trigger.Props) {
   return (
-    <MenuPrimitive.Trigger
-      data-slot="dropdown-menu-trigger"
-      className={cn("outline-none focus-visible:ring-2 focus-visible:ring-ring", className)}
-      {...props}
-    />
+    <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" className={cn("outline-none", className)} {...props} />
   )
 }
 
@@ -42,8 +38,8 @@ function DropdownMenuContent({
         <MenuPrimitive.Popup
           data-slot="dropdown-menu-content"
           className={cn(
-            "z-50 min-w-[10rem] origin-(--transform-origin) overflow-hidden rounded-lg border bg-popover p-1 text-popover-foreground shadow-md",
-            "data-[starting-style]:animate-in data-[starting-style]:fade-in-0 data-[starting-style]:zoom-in-95 data-[ending-style]:animate-out data-[ending-style]:fade-out-0 data-[ending-style]:zoom-out-95",
+            "z-50 max-h-(--available-height) min-w-[10rem] origin-(--transform-origin) overflow-y-auto overflow-x-hidden rounded-lg border bg-popover p-1 text-popover-foreground shadow-md",
+            "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
             className
           )}
           {...props}
@@ -77,7 +73,7 @@ function DropdownMenuRadioItem({ className, children, ...props }: MenuPrimitive.
     <MenuPrimitive.RadioItem
       data-slot="dropdown-menu-radio-item"
       className={cn(
-        "relative flex cursor-default select-none items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[checked]:font-medium data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "relative flex cursor-default select-none items-center gap-2 rounded-md py-1.5 pl-2 pr-8 text-sm outline-none transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[checked]:font-medium data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className
       )}
       {...props}
@@ -91,7 +87,10 @@ function DropdownMenuRadioItemIndicator({ className, ...props }: MenuPrimitive.R
   return (
     <MenuPrimitive.RadioItemIndicator
       data-slot="dropdown-menu-radio-item-indicator"
-      className={cn("ml-auto", className)}
+      className={cn(
+        "pointer-events-none absolute right-2 top-1/2 inline-flex size-4 -translate-y-1/2 items-center justify-center",
+        className
+      )}
       {...props}
     >
       <Check className="size-4" />
