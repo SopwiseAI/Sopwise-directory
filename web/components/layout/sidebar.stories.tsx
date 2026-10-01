@@ -1,12 +1,12 @@
 import { useEffect } from "react"
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
-import { CategorySidebar } from "@/components/category/category-sidebar"
+import { Sidebar } from "@/components/layout/sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { mockCategories, mockCategoryCounts } from "@/.storybook/fixtures"
 
 const meta = {
-  title: "Category/CategorySidebar",
-  component: CategorySidebar,
+  title: "Layout/Sidebar",
+  component: Sidebar,
   tags: ["autodocs"],
   args: { categories: mockCategories, categoryCounts: mockCategoryCounts, totalProducts: 85 },
   parameters: { layout: "fullscreen" },
@@ -17,7 +17,7 @@ const meta = {
       </TooltipProvider>
     )
   ]
-} satisfies Meta<typeof CategorySidebar>
+} satisfies Meta<typeof Sidebar>
 
 export default meta
 type Story = StoryObj<typeof meta>
@@ -39,7 +39,7 @@ function Clean({ children }: { children: React.ReactNode }) {
 export const Expanded: Story = {
   render: (args) => (
     <Clean>
-      <CategorySidebar {...args} />
+      <Sidebar {...args} />
     </Clean>
   )
 }
@@ -47,7 +47,7 @@ export const Expanded: Story = {
 export const Collapsed: Story = {
   render: (args) => (
     <Clean>
-      <CategorySidebar {...args} />
+      <Sidebar {...args} />
     </Clean>
   ),
   play: async () => {

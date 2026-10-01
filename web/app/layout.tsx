@@ -5,7 +5,7 @@ import { getAllCategories, getCategoryCounts, getStats } from "@/lib/data"
 import { getBaseUrl } from "@/lib/utils"
 import Header from "@/components/layout/header"
 import { SubNav } from "@/components/layout/sub-nav"
-import { CategorySidebar } from "@/components/category/category-sidebar"
+import { Sidebar } from "@/components/layout/sidebar"
 import { MainHeader } from "@/components/layout/main-header"
 import { HistoryTracker } from "@/components/runtime/history-tracker"
 import { WebVitals } from "@/components/runtime/web-vitals"
@@ -116,7 +116,7 @@ export default function RootLayout({
           <SubNav className="md:hidden" categories={allCategories} categoryCounts={categoryCounts} />
           {/* DSH 双表面骨架：左栏灰（sidebar）/ 右区白（main） */}
           <div className="flex flex-1 md:overflow-hidden">
-            <CategorySidebar categories={allCategories} categoryCounts={categoryCounts} totalProducts={totalProducts} />
+            <Sidebar categories={allCategories} categoryCounts={categoryCounts} totalProducts={totalProducts} />
             <div className="flex min-w-0 flex-1 flex-col bg-background md:overflow-hidden">
               <MainHeader className="hidden md:flex" categories={allCategories} />
               <div className="flex flex-1 flex-col md:min-h-0 md:overflow-y-auto">

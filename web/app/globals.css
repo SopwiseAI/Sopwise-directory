@@ -321,36 +321,36 @@
 
 /* ============================================================
    侧栏首帧引导（SB-01：折叠偏好 hydration 前生效，避免展开→折叠闪烁）
-   prefsScript 在首绘前写 <html data-sidebar>；CategorySidebar 挂载后写
+   prefsScript 在首绘前写 <html data-sidebar>；Sidebar 挂载后写
    data-sidebar-hydrated，用于关闭「首帧专用」规则（否则 display:none 会盖过 sr-only）。
    ============================================================ */
-html[data-sidebar="collapsed"] #category-sidebar {
+html[data-sidebar="collapsed"] #site-sidebar {
   width: 3.5rem; /* 56px，与 React 折叠态一致 */
 }
 
 /* 折叠首帧：所有入口（含底部「设置」）图标居中，去掉左右内边距 */
-html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #category-sidebar a {
+html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #site-sidebar a {
   justify-content: center;
   padding-left: 0;
   padding-right: 0;
 }
 
 /* 折叠首帧：隐藏文字/计数/分组标题（图标为 svg，保留；[data-collapse-hide] 为稳定钩子） */
-html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #category-sidebar [data-collapse-hide] {
+html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #site-sidebar [data-collapse-hide] {
   display: none;
 }
 
 /* 折叠首帧品牌区：居中，仅留品牌方块；隐藏 XiGee 文字（保留星芒）与「收起侧边栏」按钮 */
-html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #category-sidebar > div:first-child {
+html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #site-sidebar > div:first-child {
   justify-content: center;
   padding: 0.5rem 0 0;
 }
-html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #category-sidebar > div:first-child a {
+html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #site-sidebar > div:first-child a {
   padding: 0;
 }
-html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #category-sidebar [data-wordmark-text],
+html[data-sidebar="collapsed"]:not([data-sidebar-hydrated]) #site-sidebar [data-wordmark-text],
 html[data-sidebar="collapsed"]:not([data-sidebar-hydrated])
-  #category-sidebar
+  #site-sidebar
   > div:first-child
   button[aria-label="收起侧边栏"] {
   display: none;
@@ -399,6 +399,6 @@ html:not([data-theme]) .theme-i-system {
    侧栏历史计数首帧门控（HG-02：历史计数仅在客户端可得，SSR 为 0；有历史时
    挂载前隐藏该计数，避免「0 → N」跳动。SidebarLink 以 data-sidebar-count 标记）。
    ============================================================ */
-html[data-history="has"]:not([data-sidebar-hydrated]) #category-sidebar a[href="/history"] [data-sidebar-count] {
+html[data-history="has"]:not([data-sidebar-hydrated]) #site-sidebar a[href="/history"] [data-sidebar-count] {
   visibility: hidden;
 }

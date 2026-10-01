@@ -112,13 +112,13 @@ function CollapseToggle() {
   )
 }
 
-interface CategorySidebarProps {
+interface SidebarProps {
   categories: readonly Category[]
   categoryCounts: Record<string, number>
   totalProducts: number
 }
 
-export function CategorySidebar({ categories, categoryCounts, totalProducts }: CategorySidebarProps) {
+export function Sidebar({ categories, categoryCounts, totalProducts }: SidebarProps) {
   const pathname = usePathname()
   const collapsed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
   const historyCount = useHistoryCount()
@@ -149,8 +149,8 @@ export function CategorySidebar({ categories, categoryCounts, totalProducts }: C
 
   return (
     <aside
-      aria-label="分类导航"
-      id="category-sidebar"
+      aria-label="主导航"
+      id="site-sidebar"
       className={cn(
         "hidden shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex",
         collapsed ? "w-14" : "w-[280px]",
