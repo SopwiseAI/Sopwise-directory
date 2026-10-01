@@ -13,7 +13,16 @@ import {
 } from "@/lib/history"
 import { formatCount } from "@/lib/format"
 import { PricingBadge } from "@/components/product/pricing-badge"
-import { Button } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog"
 import type { Category } from "@/lib/types"
 
 /** 分页步长：初始渲染 + 每次触底加载的条数（避免 200 条一次性渲染） */
@@ -177,66 +186,25 @@ export function HistoryList({ categories }: HistoryListProps) {
         </button>
       </div>
 
-      {showClearConfirm && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-          onClick={() => setShowClearConfirm(false)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="clear-confirm-title"
-            className="rounded-lg border bg-card p-6 shadow-lg max-w-sm mx-auto"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                setShowClearConfirm(false)
-              }
-              if (e.key === "Tab") {
-                const dialog = e.currentTarget
-                const focusable = dialog.querySelectorAll<HTMLElement>(
-                  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-                )
-                if (focusable.length === 0) return
-                const first = focusable[0]
-                const last = focusable[focusable.length - 1]
-                if (e.shiftKey && document.activeElement === first) {
-                  e.preventDefault()
-                  last.focus()
-                } else if (!e.shiftKey && document.activeElement === last) {
-                  e.preventDefault()
-                  first.focus()
-                }
-              }
-            }}
-            ref={(el) => {
-              if (el && !el.contains(document.activeElement)) {
-                el.focus()
-              }
-            }}
-            tabIndex={-1}
-          >
-            <h3 id="clear-confirm-title" className="text-base font-semibold">
-              确认清空所有历史记录？
-            </h3>
-            <p className="mt-2 text-sm text-muted-foreground">此操作不可恢复，共 {items.length} 条记录</p>
-            <div className="mt-4 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowClearConfirm(false)}>
-                取消
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  clearHistory()
-                  setShowClearConfirm(false)
-                }}
-              >
-                确定清空
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认清空所有历史记录？</AlertDialogTitle>
+            <AlertDialogDescription>此操作不可恢复，共 {items.length} 条记录</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                clearHistory()
+              }}
+            >
+              确定清空
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* 搜索无结果 */}
       {query && filtered.length === 0 ? (
