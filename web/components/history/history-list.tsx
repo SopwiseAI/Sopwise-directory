@@ -13,6 +13,7 @@ import {
 } from "@/lib/history"
 import { formatCount } from "@/lib/format"
 import { PricingBadge } from "@/components/product/pricing-badge"
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -155,12 +156,11 @@ export function HistoryList({ categories }: HistoryListProps) {
     <div className="overflow-hidden rounded-lg border bg-card">
       {/* 工具条：搜索 + 计数 + 清空 */}
       <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
-        <div className="relative min-w-0 flex-1">
-          <Search
-            className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60"
-            aria-hidden
-          />
-          <input
+        <InputGroup className="min-w-0 flex-1">
+          <InputGroupAddon>
+            <Search className="text-muted-foreground/60" />
+          </InputGroupAddon>
+          <InputGroupInput
             type="search"
             enterKeyHint="search"
             aria-label="搜索历史记录"
@@ -171,9 +171,8 @@ export function HistoryList({ categories }: HistoryListProps) {
               setQuery(e.target.value)
               setVisibleCount(PAGE_SIZE)
             }}
-            className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
           />
-        </div>
+        </InputGroup>
         <span className="font-data text-muted-foreground">
           {query ? `${formatCount(filtered.length)} 条匹配` : `共 ${formatCount(filtered.length)} 条`}
         </span>

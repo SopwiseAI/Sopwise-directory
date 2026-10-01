@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Search } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import type { Category } from "@/lib/types"
 
 /**
@@ -52,12 +53,11 @@ function SearchField() {
   }
 
   return (
-    <div className="group relative w-full max-w-xs">
-      <Search
-        className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60 transition-colors group-focus-within:text-muted-foreground"
-        aria-hidden
-      />
-      <input
+    <InputGroup className={cn("group w-full max-w-xs", fade && "opacity-50")}>
+      <InputGroupAddon>
+        <Search className="text-muted-foreground/60 transition-colors group-focus-within:text-muted-foreground" />
+      </InputGroupAddon>
+      <InputGroupInput
         ref={inputRef}
         type="search"
         enterKeyHint="search"
@@ -78,15 +78,13 @@ function SearchField() {
           }
         }}
         placeholder="搜索 AI 产品…"
-        className={cn(
-          "h-9 w-full rounded-md border border-border bg-secondary/70 pl-9 pr-12 text-sm outline-none transition-colors placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-ring/30",
-          fade && "opacity-50"
-        )}
       />
-      <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" aria-hidden>
-        <span className="kbd">/</span>
-      </span>
-    </div>
+      <InputGroupAddon align="inline-end">
+        <span className="kbd" aria-hidden>
+          /
+        </span>
+      </InputGroupAddon>
+    </InputGroup>
   )
 }
 

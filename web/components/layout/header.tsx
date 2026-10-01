@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { Search, Settings, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import ThemeToggle from "./theme-toggle"
@@ -33,12 +34,11 @@ function MobileSearchInput({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="flex items-center gap-1">
-      <div className="relative w-full">
-        <Search
-          className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60"
-          aria-hidden
-        />
-        <input
+      <InputGroup className="w-full">
+        <InputGroupAddon>
+          <Search className="text-muted-foreground/60" />
+        </InputGroupAddon>
+        <InputGroupInput
           autoFocus
           type="search"
           enterKeyHint="search"
@@ -48,9 +48,8 @@ function MobileSearchInput({ onClose }: { onClose: () => void }) {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="h-8 w-full rounded-md border border-border bg-card pl-8 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
         />
-      </div>
+      </InputGroup>
       <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="关闭搜索">
         <X className="size-4" />
       </Button>
