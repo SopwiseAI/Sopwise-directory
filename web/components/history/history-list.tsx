@@ -14,6 +14,8 @@ import {
 import { formatCount } from "@/lib/format"
 import { PricingBadge } from "@/components/product/pricing-badge"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
+import { Button } from "@/components/ui/button"
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -138,17 +140,20 @@ export function HistoryList({ categories }: HistoryListProps) {
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-lg border bg-card py-14 text-center">
-        <Clock className="size-8 text-muted-foreground/60" />
-        <p className="text-sm text-muted-foreground">暂无访问记录</p>
-        <p className="text-xs text-muted-foreground">浏览产品时自动记录，方便下次快速回到这里</p>
-        <Link
-          href="/"
-          className="mt-1 rounded-md border px-3 py-1.5 text-sm transition-colors hover:bg-secondary outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          去逛逛
-        </Link>
-      </div>
+      <Empty className="rounded-lg border bg-card py-14">
+        <EmptyMedia variant="icon">
+          <Clock />
+        </EmptyMedia>
+        <EmptyHeader>
+          <EmptyTitle>暂无访问记录</EmptyTitle>
+          <EmptyDescription>浏览产品时自动记录，方便下次快速回到这里</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button variant="outline" render={<Link href="/" />}>
+            去逛逛
+          </Button>
+        </EmptyContent>
+      </Empty>
     )
   }
 

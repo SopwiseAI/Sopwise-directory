@@ -7,6 +7,8 @@ import { getProductDate } from "@/lib/product"
 import { ProductRow } from "@/components/product/product-row"
 import { ProductCard } from "@/components/product/product-card"
 import { ProductToolbar } from "@/components/product/toolbar"
+import { Button } from "@/components/ui/button"
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import {
   isValidSort,
   isValidView,
@@ -177,19 +179,20 @@ export function ProductBrowser({
         <UrlStateSync onChange={applyUrlState} />
       </Suspense>
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-12 text-center">
-          <PackageOpen className="size-10 text-muted-foreground/60" />
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">{emptyTitle ?? "暂无产品"}</p>
-            {emptyDescription && <p className="mt-1 text-xs text-muted-foreground">{emptyDescription}</p>}
-          </div>
-          <Link
-            href="/"
-            className="mt-1 inline-flex items-center justify-center rounded-md border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            浏览全部产品
-          </Link>
-        </div>
+        <Empty className="py-12">
+          <EmptyMedia variant="icon">
+            <PackageOpen />
+          </EmptyMedia>
+          <EmptyHeader>
+            <EmptyTitle>{emptyTitle ?? "暂无产品"}</EmptyTitle>
+            {emptyDescription && <EmptyDescription>{emptyDescription}</EmptyDescription>}
+          </EmptyHeader>
+          <EmptyContent>
+            <Button variant="outline" render={<Link href="/" />}>
+              浏览全部产品
+            </Button>
+          </EmptyContent>
+        </Empty>
       ) : (
         <div className="space-y-4">
           <ProductToolbar

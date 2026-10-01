@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { SearchX } from "lucide-react"
 import { createSearchIndex } from "@/lib/search"
 import { ProductRow } from "@/components/product/product-row"
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia } from "@/components/ui/empty"
 import { formatCount } from "@/lib/format"
 import type { Product } from "@/lib/types"
 
@@ -31,54 +32,60 @@ export function SearchResults({ products, featured, suggestions }: SearchResults
 
   if (!query.trim()) {
     return (
-      <div className="flex flex-col items-center gap-4 py-16 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-xl border bg-card">
-          <SearchX className="size-7 text-muted-foreground/60" />
-        </div>
-        <p className="text-sm text-muted-foreground">
-          输入关键词开始搜索，或使用顶栏命令搜索框（按{" "}
-          <span className="kbd" aria-hidden>
-            /
-          </span>{" "}
-          聚焦）
-        </p>
-      </div>
+      <Empty className="py-16">
+        <EmptyMedia variant="icon" className="size-16 rounded-xl border [&_svg:not([class*='size-'])]:size-7">
+          <SearchX />
+        </EmptyMedia>
+        <EmptyHeader>
+          <EmptyDescription>
+            输入关键词开始搜索，或使用顶栏命令搜索框（按{" "}
+            <span className="kbd" aria-hidden>
+              /
+            </span>{" "}
+            聚焦）
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     )
   }
 
   if (results.length === 0) {
     return (
       <div className="space-y-8">
-        <div className="flex flex-col items-center gap-3 py-8 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-xl border bg-card">
-            <SearchX className="size-6 text-muted-foreground/60" />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            未找到与 <span className="font-medium text-foreground">「{query}」</span> 相关的产品
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
-            <span className="text-xs text-muted-foreground">试试搜索：</span>
-            {suggestions.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => {
-                  setPendingQuery(s)
-                  startTransition(() => {
-                    router.push(`/search?q=${encodeURIComponent(s)}`)
-                  })
-                }}
-                className={
-                  "rounded-md px-2 py-0.5 text-xs text-primary hover:bg-primary/10 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring" +
-                  (isPending && pendingQuery === s ? " opacity-70" : "")
-                }
-                disabled={isPending && pendingQuery === s}
-              >
-                {isPending && pendingQuery === s ? "搜索中..." : s}
-              </button>
-            ))}
-          </div>
-        </div>
+        <Empty className="py-8">
+          <EmptyMedia variant="icon" className="size-14 rounded-xl border [&_svg:not([class*='size-'])]:size-6">
+            <SearchX />
+          </EmptyMedia>
+          <EmptyHeader>
+            <EmptyDescription>
+              未找到与 <span className="font-medium text-foreground">「{query}」</span> 相关的产品
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
+              <span className="text-xs text-muted-foreground">试试搜索：</span>
+              {suggestions.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => {
+                    setPendingQuery(s)
+                    startTransition(() => {
+                      router.push(`/search?q=${encodeURIComponent(s)}`)
+                    })
+                  }}
+                  className={
+                    "rounded-md px-2 py-0.5 text-xs text-primary hover:bg-primary/10 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring" +
+                    (isPending && pendingQuery === s ? " opacity-70" : "")
+                  }
+                  disabled={isPending && pendingQuery === s}
+                >
+                  {isPending && pendingQuery === s ? "搜索中..." : s}
+                </button>
+              ))}
+            </div>
+          </EmptyContent>
+        </Empty>
 
         {featured.length > 0 && (
           <div className="space-y-2">
