@@ -5,7 +5,8 @@ import "../app/globals.css"
 const preview: Preview = {
   parameters: {
     controls: { matchers: { color: /(background|color)$/i, date: /Date$/i } },
-    backgrounds: { disable: true }
+    backgrounds: { disable: true },
+    nextjs: { appDirectory: true }
   },
   decorators: [
     withThemeByClassName({
