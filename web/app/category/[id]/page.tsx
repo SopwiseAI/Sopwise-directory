@@ -1,5 +1,4 @@
 import { type Metadata } from "next"
-import Link from "next/link"
 import { notFound } from "next/navigation"
 import { getAllCategories, getCategoryById, getProductsByCategory } from "@/lib/data"
 import { getProductDate } from "@/lib/product"
@@ -68,13 +67,6 @@ export default async function CategoryPage({ params }: Props) {
     <div className="space-y-4">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld(breadcrumbLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld(itemListLd) }} />
-      <nav aria-label="面包屑" className="font-data text-sm text-muted-foreground">
-        <Link href="/" className="hover:text-foreground transition-colors">
-          全部产品
-        </Link>
-        <span className="mx-1.5">/</span>
-        <span>{category.name}</span>
-      </nav>
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-md border bg-card">
           {categoryIconNode(category.icon, "size-4.5 text-foreground")}

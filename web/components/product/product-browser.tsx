@@ -1,11 +1,21 @@
 "use client"
 
-import { useMemo, useState, useEffect, useSyncExternalStore } from "react"
+import { Suspense, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react"
+import { useSearchParams } from "next/navigation"
 import type { Product } from "@/lib/types"
 import { getProductDate } from "@/lib/product"
 import { ProductRow } from "@/components/product/product-row"
 import { ProductCard } from "@/components/product/product-card"
-import { ProductToolbar, type TabMode, type SortMode, type ViewMode } from "@/components/product/product-toolbar"
+import { ProductToolbar } from "@/components/product/toolbar"
+import {
+  isValidSort,
+  isValidView,
+  readUrlParams,
+  type SortMode,
+  type TabMode,
+  type UrlState,
+  type ViewMode
+} from "@/lib/product-query"
 import { PackageOpen } from "lucide-react"
 import Link from "next/link"
 
@@ -14,42 +24,53 @@ interface ProductBrowserProps {
   emptyTitle?: string
   emptyDescription?: string
   defaultView?: ViewMode
+  defaultSort?: SortMode
   showTabs?: boolean
   defaultTab?: TabMode
 }
 
-function readUrlParams(search: string) {
-  const qs = new URLSearchParams(search)
-  const tabParam = qs.get("tab")
-  const filterParam = qs.get("filter")
-  const viewParam = qs.get("view")
+/**
+ * 订阅 URL 查询（含同路由软导航，如首页「探索精选」→ /?tab=featured）并同步进组件状态。
+ * useSearchParams 需在 Suspense 边界内；该子组件不渲染内容，故不影响页面 SSR。
+ */
+function UrlStateSync({ onChange }: { onChange: (state: UrlState) => void }) {
+  const searchParams = useSearchParams()
+  const search = searchParams.toString()
 
-  const validTabs: Record<string, TabMode> = { all: "all", latest: "latest", featured: "featured" }
-  const validViews: Record<string, ViewMode> = { list: "list", grid: "grid" }
-  const filterToTab: Record<string, TabMode> = { featured: "featured", latest: "all" }
+  useEffect(() => {
+    onChange(readUrlParams(search))
+  }, [search, onChange])
 
-  const tab =
-    tabParam && tabParam in validTabs
-      ? validTabs[tabParam]
-      : filterParam && filterParam in filterToTab
-        ? filterToTab[filterParam]
-        : null
-  const view = viewParam && viewParam in validViews ? validViews[viewParam] : null
-
-  return { tab, view }
+  return null
 }
 
 const noopSubscribe = () => () => {}
 const emptyString = ""
 
-function getStoredView(): string {
+function readStore(key: string): string {
   if (typeof window === "undefined") return emptyString
-  return localStorage.getItem("xigee:default-view") ?? emptyString
+  try {
+    return localStorage.getItem(key) ?? emptyString
+  } catch {
+    return emptyString
+  }
 }
+
+const getStoredView = () => readStore("xigee:default-view")
+const getStoredSort = () => readStore("xigee:default-sort")
 
 function getUrlSearch(): string {
   if (typeof window === "undefined") return emptyString
   return window.location.search
+}
+
+/** 持久化展示偏好，忽略隐私模式/配额失败（当前会话仍然生效）。 */
+function persist(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    /* noop */
+  }
 }
 
 export function ProductBrowser({
@@ -57,56 +78,66 @@ export function ProductBrowser({
   emptyTitle,
   emptyDescription,
   defaultView = "grid",
+  defaultSort = "latest",
   showTabs = true,
   defaultTab = "all"
 }: ProductBrowserProps) {
   const storedView = useSyncExternalStore(noopSubscribe, getStoredView, () => emptyString)
+  const storedSort = useSyncExternalStore(noopSubscribe, getStoredSort, () => emptyString)
   const urlSearch = useSyncExternalStore(noopSubscribe, getUrlSearch, () => emptyString)
 
-  const urlParams = useMemo(() => readUrlParams(urlSearch), [urlSearch])
-  const initialView =
-    urlParams.view ?? (storedView === "list" || storedView === "grid" ? (storedView as ViewMode) : defaultView)
-  const initialTab = urlParams.tab ?? defaultTab
+  const initial = useMemo(() => readUrlParams(urlSearch), [urlSearch])
+  const initialView = initial.view ?? (isValidView(storedView) ? storedView : defaultView)
+  const initialSort = initial.sort ?? (isValidSort(storedSort) ? storedSort : defaultSort)
+  const initialTab = initial.tab ?? defaultTab
 
   const [viewOverride, setViewOverride] = useState<ViewMode | null>(null)
+  const [sortOverride, setSortOverride] = useState<SortMode | null>(null)
   const [tabOverride, setTabOverride] = useState<TabMode | null>(null)
-  const [sort, setSort] = useState<SortMode>("latest")
 
   const view = viewOverride ?? initialView
+  const sort = sortOverride ?? initialSort
   const tab = tabOverride ?? initialTab
 
+  const applyUrlState = useCallback((state: UrlState) => {
+    setTabOverride(state.tab)
+    setViewOverride(state.view)
+    setSortOverride(state.sort)
+  }, [])
+
+  // tab/view/sort 三者在 URL 上保持一致（tab 仅在有 tabs 的页面写入）
   useEffect(() => {
-    if (!showTabs) return
     const params = new URLSearchParams(window.location.search)
     params.delete("filter") // 旧版别名，统一由 tab 表达
-    if (tab !== defaultTab) params.set("tab", tab)
+    if (showTabs && tab !== defaultTab) params.set("tab", tab)
     else params.delete("tab")
     if (view !== defaultView) params.set("view", view)
     else params.delete("view")
+    if (sort !== defaultSort) params.set("sort", sort)
+    else params.delete("sort")
 
     const qs = params.toString()
     const next = qs ? `${window.location.pathname}?${qs}` : window.location.pathname
     const current = `${window.location.pathname}${window.location.search}`
     if (next !== current) window.history.replaceState(null, "", next)
-  }, [tab, view, defaultTab, defaultView, showTabs])
+  }, [tab, view, sort, defaultTab, defaultView, defaultSort, showTabs])
 
   const isLatestTab = tab === "latest"
   const resolvedSort: SortMode = isLatestTab ? "latest" : sort
 
   const setView = (v: ViewMode) => {
-    try {
-      localStorage.setItem("xigee:default-view", v)
-    } catch {
-      /* 隐私模式/配额不足时忽略持久化失败，当前会话视图仍然生效 */
-    }
+    persist("xigee:default-view", v)
     setViewOverride(v)
   }
 
+  const setSort = (s: SortMode) => {
+    persist("xigee:default-sort", s)
+    setSortOverride(s)
+  }
+
+  // 切换 tab 不再重置排序：排序为用户独立偏好（最新 tab 由 resolvedSort 强制最新）
   const setTab = (t: TabMode) => {
     setTabOverride(t)
-    if (t !== "latest") {
-      setSort("latest")
-    }
   }
 
   const filtered = useMemo(() => {
@@ -125,59 +156,73 @@ export function ProductBrowser({
     return list
   }, [products, tab, resolvedSort])
 
-  if (filtered.length === 0) {
-    return (
-      <div className="flex flex-col items-center gap-3 py-12 text-center">
-        <PackageOpen className="size-10 text-muted-foreground/60" />
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">{emptyTitle ?? "暂无产品"}</p>
-          {emptyDescription && <p className="mt-1 text-xs text-muted-foreground">{emptyDescription}</p>}
+  return (
+    <>
+      <Suspense fallback={null}>
+        <UrlStateSync onChange={applyUrlState} />
+      </Suspense>
+      {filtered.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 py-12 text-center">
+          <PackageOpen className="size-10 text-muted-foreground/60" />
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">{emptyTitle ?? "暂无产品"}</p>
+            {emptyDescription && <p className="mt-1 text-xs text-muted-foreground">{emptyDescription}</p>}
+          </div>
+          <Link
+            href="/"
+            className="mt-1 inline-flex items-center justify-center rounded-md border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            浏览全部产品
+          </Link>
         </div>
-        <Link
-          href="/"
-          className="mt-1 inline-flex items-center justify-center rounded-md border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          浏览全部产品
-        </Link>
+      ) : (
+        <div className="space-y-4">
+          <ProductToolbar
+            view={view}
+            tab={tab}
+            sort={sort}
+            showTabs={showTabs}
+            onViewChange={setView}
+            onTabChange={setTab}
+            onSortChange={setSort}
+          />
+
+          {showTabs ? (
+            <div role="tabpanel" id="product-tabpanel" aria-labelledby={`product-tab-${tab}`} tabIndex={0}>
+              <BrowserContent view={view} products={filtered} showDate={resolvedSort === "latest"} />
+            </div>
+          ) : (
+            <BrowserContent view={view} products={filtered} showDate={resolvedSort === "latest"} />
+          )}
+        </div>
+      )}
+    </>
+  )
+}
+
+function BrowserContent({
+  view,
+  products,
+  showDate
+}: {
+  view: ViewMode
+  products: readonly Product[]
+  showDate: boolean
+}) {
+  if (view === "grid") {
+    return (
+      <div className="product-card-grid">
+        {products.map((product) => (
+          <ProductCard key={product.id} product={product} showDate={showDate} />
+        ))}
       </div>
     )
   }
-
-  const content =
-    view === "grid" ? (
-      <div className="product-card-grid">
-        {filtered.map((product) => (
-          <ProductCard key={product.id} product={product} showDate={isLatestTab} />
-        ))}
-      </div>
-    ) : (
-      <div className="rounded-lg border bg-card">
-        {filtered.map((product, i) => (
-          <ProductRow key={product.id} product={product} last={i === filtered.length - 1} showDate={isLatestTab} />
-        ))}
-      </div>
-    )
-
   return (
-    <div className="space-y-4">
-      <ProductToolbar
-        count={filtered.length}
-        view={view}
-        tab={tab}
-        sort={sort}
-        showTabs={showTabs}
-        onViewChange={setView}
-        onTabChange={setTab}
-        onSortChange={setSort}
-      />
-
-      {showTabs ? (
-        <div role="tabpanel" id="product-tabpanel" aria-labelledby={`product-tab-${tab}`} tabIndex={0}>
-          {content}
-        </div>
-      ) : (
-        content
-      )}
+    <div className="rounded-lg border bg-card">
+      {products.map((product, i) => (
+        <ProductRow key={product.id} product={product} last={i === products.length - 1} showDate={showDate} />
+      ))}
     </div>
   )
 }

@@ -14,7 +14,7 @@ const stats = getStats()
 export default function SettingsPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-lg font-semibold tracking-tight">设置</h1>
+      <h1 className="sr-only">设置</h1>
 
       <section className="space-y-2">
         <h2 className="text-sm text-muted-foreground relative pl-3 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-3.5 before:w-0.5 before:rounded-full before:bg-brand/40">

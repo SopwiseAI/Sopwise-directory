@@ -2,13 +2,13 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Search, X } from "lucide-react"
+import { Search, Settings, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense } from "react"
 import { cn } from "@/lib/utils"
 import ThemeToggle from "./theme-toggle"
-import { BrandMark } from "@/components/brand/brand-mark"
+import { Wordmark } from "@/components/brand/wordmark"
 
 function MobileSearchInput({ defaultValue, onClose }: { defaultValue: string; onClose: () => void }) {
   const [value, setValue] = useState(defaultValue)
@@ -72,9 +72,12 @@ function HeaderInner({ className }: { className?: string }) {
       )}
     >
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link href="/" className="flex shrink-0 items-center gap-2">
-          <BrandMark size="sm" />
-          <span className="text-lg font-semibold tracking-tight text-brand">XiGee</span>
+        <Link
+          href="/"
+          aria-label="XiGee.net 首页"
+          className="shrink-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Wordmark size="md" tone="brand" />
         </Link>
 
         <div className="flex flex-1 items-center justify-end gap-2">
@@ -103,6 +106,15 @@ function HeaderInner({ className }: { className?: string }) {
               </span>
             </Button>
           )}
+
+          <Link
+            href="/settings"
+            aria-label="设置"
+            title="设置"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Settings className="size-4" />
+          </Link>
 
           <ThemeToggle />
         </div>

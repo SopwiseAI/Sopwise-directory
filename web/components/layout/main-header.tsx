@@ -1,18 +1,16 @@
 "use client"
 
 import { Suspense, useEffect, useRef, useState } from "react"
-import { Search, Settings } from "lucide-react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { Search } from "lucide-react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
-import Link from "next/link"
+import type { Category } from "@/lib/types"
 
 /**
- * 统一命令搜索条：
- * - 全站按 `/` 聚焦（非输入态时）
- * - 右侧 kbd 提示（⌘K 语义提示为 "/"）
- * - Enter 跳转 /search?q=...
+ * DSH 式主区搜索框：全站按 `/` 聚焦（非输入态），Enter 跳转 /search?q=…。
+ * 放在主区顶栏右侧，取代原先横跨整行的搜索条。
  */
-function CommandSearchInput({ defaultValue }: { defaultValue: string }) {
+function SearchField({ defaultValue }: { defaultValue: string }) {
   const [value, setValue] = useState(defaultValue)
   const [fade, setFade] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -46,7 +44,7 @@ function CommandSearchInput({ defaultValue }: { defaultValue: string }) {
   }
 
   return (
-    <div className="group relative w-full">
+    <div className="group relative w-full max-w-xs">
       <Search
         className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60 transition-colors group-focus-within:text-muted-foreground"
         aria-hidden
@@ -74,7 +72,7 @@ function CommandSearchInput({ defaultValue }: { defaultValue: string }) {
         }}
         placeholder="搜索 AI 产品…"
         className={cn(
-          "h-9 w-full rounded-md border border-border bg-card pl-9 pr-14 text-sm outline-none transition-colors placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30",
+          "h-9 w-full rounded-md border border-border bg-secondary/70 pl-9 pr-12 text-sm outline-none transition-colors placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-ring/30",
           fade && "opacity-50"
         )}
       />
@@ -85,46 +83,48 @@ function CommandSearchInput({ defaultValue }: { defaultValue: string }) {
   )
 }
 
-function CommandSearchBarInner({ className }: { className?: string }) {
+/** 用 key 随 URL query 重挂载 SearchField，避免在 effect 中同步 setState。 */
+function SearchWithParams() {
   const searchParams = useSearchParams()
-  const urlQuery = searchParams.get("q") ?? ""
-
-  return (
-    <div
-      className={cn(
-        "sticky top-0 z-40 border-b bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70",
-        className
-      )}
-    >
-      <div className="mx-auto w-full max-w-6xl px-4 py-2.5 sm:px-6 flex items-center gap-2">
-        <div className="flex-1">
-          <CommandSearchInput key={urlQuery} defaultValue={urlQuery} />
-        </div>
-        <Link
-          href="/settings"
-          className="flex shrink-0 items-center justify-center rounded-md border border-border bg-card p-2 text-muted-foreground transition-colors hover:text-foreground hover:border-foreground/20 outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          aria-label="设置"
-          title="设置"
-        >
-          <Settings className="size-4" />
-        </Link>
-      </div>
-    </div>
-  )
+  const q = searchParams.get("q") ?? ""
+  return <SearchField key={q} defaultValue={q} />
 }
 
-export function CommandSearchBar({ className }: { className?: string }) {
+function resolveCrumbs(pathname: string, categories: readonly Category[]): string[] {
+  if (pathname.startsWith("/category/")) {
+    const id = pathname.slice("/category/".length)
+    const name = categories.find((c) => c.id === id)?.name
+    return name ? ["全部产品", name] : ["全部产品"]
+  }
+  if (pathname === "/search") return ["搜索"]
+  if (pathname === "/history") return ["历史记录"]
+  if (pathname === "/settings") return ["设置"]
+  return ["全部产品"]
+}
+
+interface MainHeaderProps {
+  className?: string
+  categories: readonly Category[]
+}
+
+/** 主区顶栏：左侧路由面包屑，右侧搜索。 */
+export function MainHeader({ className, categories }: MainHeaderProps) {
+  const pathname = usePathname()
+  const crumbs = resolveCrumbs(pathname, categories)
+
   return (
-    <Suspense
-      fallback={
-        <div className={cn("sticky top-0 z-40 border-b bg-background/85 backdrop-blur", className)}>
-          <div className="mx-auto w-full max-w-6xl px-4 py-2.5 sm:px-6">
-            <div className="h-9 rounded-md border border-border bg-card" />
-          </div>
-        </div>
-      }
-    >
-      <CommandSearchBarInner className={className} />
-    </Suspense>
+    <header className={cn("h-14 shrink-0 items-center gap-3 border-b border-sidebar-border px-4 sm:px-6", className)}>
+      <nav aria-label="面包屑" className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+        {crumbs.map((seg, i) => (
+          <span key={seg}>
+            {i > 0 && <span className="mx-1.5 text-muted-foreground/50">/</span>}
+            <span className={i === crumbs.length - 1 ? "font-medium text-foreground" : undefined}>{seg}</span>
+          </span>
+        ))}
+      </nav>
+      <Suspense fallback={<div className="h-9 w-full max-w-xs rounded-md border border-border bg-secondary/70" />}>
+        <SearchWithParams />
+      </Suspense>
+    </header>
   )
 }

@@ -1,18 +1,17 @@
 "use client"
 
-import { useMemo, useSyncExternalStore } from "react"
+import { useSyncExternalStore } from "react"
 import { getHistorySnapshot, parseHistorySnapshot, subscribeHistory } from "@/lib/history"
 
-/** 侧栏历史记录角标：订阅本地历史条数，动态更新（带紧凑动画） */
-export function HistoryCount() {
-  const raw = useSyncExternalStore(subscribeHistory, getHistorySnapshot, () => "[]")
-  const count = useMemo(() => parseHistorySnapshot(raw).length, [raw])
+/** 稳定的计数值快照（返回数字，按值比较，避免 useSyncExternalStore 反复重渲染）。 */
+function getHistoryCount(): number {
+  return parseHistorySnapshot(getHistorySnapshot()).length
+}
 
-  if (count === 0) return null
-
-  return (
-    <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/10 px-1.5 font-data tabular-nums text-primary">
-      {count > 99 ? "99+" : count}
-    </span>
-  )
+/**
+ * 订阅本地历史条数。
+ * 始终返回数字（含 0），与侧栏其它计数（产品/分类数）保持同一口径。
+ */
+export function useHistoryCount(): number {
+  return useSyncExternalStore(subscribeHistory, getHistoryCount, () => 0)
 }

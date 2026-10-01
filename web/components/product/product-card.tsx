@@ -20,7 +20,7 @@ export function ProductCard({ product, showDate }: ProductCardProps) {
       target="_blank"
       rel="noopener noreferrer"
       {...productHistoryAttrs(product)}
-      className="group flex flex-col gap-2.5 rounded-lg border bg-card p-4 outline-none transition-all hover:bg-brand/[0.03] hover:border-foreground/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className="group flex flex-col gap-2.5 rounded-lg border border-border bg-card p-4 outline-none transition-colors hover:bg-secondary/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <div className="space-y-1.5">
         <h3 className="truncate text-base font-medium tracking-tight text-foreground">{product.name}</h3>

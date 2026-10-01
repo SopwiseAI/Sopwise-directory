@@ -26,7 +26,8 @@ export function getTheme(): ThemeMode {
 
 function applyMetaThemeColor(dark: boolean): void {
   const meta = document.querySelector('meta[name="theme-color"]')
-  if (meta) meta.setAttribute("content", dark ? "#0f1114" : "#fafafb")
+  // 与 layout themeScript、globals.css token 保持一致（浅色 #ffffff / 深色 #151517）
+  if (meta) meta.setAttribute("content", dark ? "#151517" : "#ffffff")
 }
 
 function applyTheme(theme: ThemeMode): void {

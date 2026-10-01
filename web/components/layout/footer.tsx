@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { getStats } from "@/lib/data"
-import { BrandMark } from "@/components/brand/brand-mark"
+import { Wordmark } from "@/components/brand/wordmark"
 import { CopyrightYear } from "@/components/layout/copyright-year"
 import { formatCount } from "@/lib/format"
 import pkg from "@/package.json"
@@ -13,11 +13,12 @@ export default function Footer() {
     <footer className="mt-12 border-t">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-6 sm:px-6">
         <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2">
-            <BrandMark size="sm" />
-            <span className="text-sm font-semibold tracking-tight">
-              XiGee<span className="text-xs font-normal text-muted-foreground">.net</span>
-            </span>
+          <Link
+            href="/"
+            aria-label="XiGee.net 首页"
+            className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Wordmark size="sm" />
           </Link>
         </div>
 

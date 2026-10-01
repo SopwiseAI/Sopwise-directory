@@ -3,15 +3,16 @@
 import { useSyncExternalStore, useEffect, useRef, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutGrid, History } from "lucide-react"
+import { LayoutGrid, History, Settings } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { BrandMark } from "@/components/brand/brand-mark"
+import { Wordmark } from "@/components/brand/wordmark"
 import { PanelIcon } from "@/components/brand/panel-icon"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { categoryIconNode } from "@/lib/category-icon-node"
-import { HistoryCount } from "@/components/history/history-count"
+import { useHistoryCount } from "@/components/history/history-count"
 import { formatCount } from "@/lib/format"
 import type { Category } from "@/lib/types"
 
@@ -72,21 +73,19 @@ function BrandRailToggle() {
   return (
     <Button
       variant="ghost"
-      size="icon-lg"
+      size="icon"
       onClick={toggle}
       aria-label="打开侧边栏"
       title="打开侧边栏"
-      className="group mx-auto rounded-lg p-0"
+      className="group relative mx-auto size-8 shrink-0 overflow-hidden rounded-[9px] border-0 p-0 hover:bg-transparent dark:hover:bg-transparent"
     >
-      <span className="relative">
-        <BrandMark size="md" />
-        {/* hover 时方块内换成实心 panel 图标 */}
-        <span
-          aria-hidden
-          className="absolute inset-0 hidden items-center justify-center rounded-lg bg-sidebar group-hover:flex"
-        >
-          <PanelIcon className="size-4.5 text-primary" />
-        </span>
+      {/* hover 时瓦片淡出、面板图标淡入 —— 单层渲染，避免两层圆角抗锯齿叠加出暗边 */}
+      <BrandMark size="md" className="transition-opacity duration-150 group-hover:opacity-0" />
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 grid place-items-center opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+      >
+        <PanelIcon className="size-4 text-primary" />
       </span>
     </Button>
   )
@@ -101,6 +100,7 @@ function CollapseToggle() {
   return (
     <Button
       variant="ghost"
+      size="icon-sm"
       onClick={toggle}
       aria-label="收起侧边栏"
       title="收起侧边栏"
@@ -120,6 +120,7 @@ interface CategorySidebarProps {
 export function CategorySidebar({ categories, categoryCounts, totalProducts }: CategorySidebarProps) {
   const pathname = usePathname()
   const collapsed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  const historyCount = useHistoryCount()
   const navRef = useRef<HTMLElement>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
   const [scrollable, setScrollable] = useState(false)
@@ -149,7 +150,7 @@ export function CategorySidebar({ categories, categoryCounts, totalProducts }: C
       aria-label="分类导航"
       id="category-sidebar"
       className={cn(
-        "hidden shrink-0 flex-col border-r bg-sidebar md:flex",
+        "hidden shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex",
         collapsed ? "w-14" : "w-[280px]",
         "transition-[width] duration-200"
       )}
@@ -164,11 +165,10 @@ export function CategorySidebar({ categories, categoryCounts, totalProducts }: C
           <>
             <Link
               href="/"
-              className="flex min-w-0 items-center gap-2.5 rounded-lg px-1 py-1.5 transition-colors hover:bg-secondary/60"
-              title="XiGee 首页"
+              className="flex min-w-0 items-center rounded-lg px-1 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              title="XiGee.net 首页"
             >
-              <BrandMark size="lg" />
-              <span className="text-2xl font-semibold tracking-tight">XiGee</span>
+              <Wordmark size="lg" />
             </Link>
             <CollapseToggle />
           </>
@@ -201,7 +201,7 @@ export function CategorySidebar({ categories, categoryCounts, totalProducts }: C
             collapsed={collapsed}
             label="历史记录"
             icon={<History className="size-4 shrink-0" />}
-            badge={<HistoryCount />}
+            count={formatCount(historyCount)}
           />
 
           <p
@@ -229,6 +229,17 @@ export function CategorySidebar({ categories, categoryCounts, totalProducts }: C
           <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-sidebar to-transparent" />
         )}
       </div>
+
+      {/* DSH 底部固定座：设置（与导航区解耦，导航滚动时保持可见） */}
+      <div className="shrink-0 border-t border-sidebar-border p-1.5">
+        <SidebarLink
+          href="/settings"
+          active={pathname === "/settings"}
+          collapsed={collapsed}
+          label="设置"
+          icon={<Settings className="size-4 shrink-0" />}
+        />
+      </div>
     </aside>
   )
 }
@@ -240,10 +251,9 @@ interface SidebarLinkProps {
   label: string
   icon: ReactNode
   count?: string
-  badge?: ReactNode
 }
 
-function SidebarLink({ href, active, collapsed, label, icon, count, badge }: SidebarLinkProps) {
+function SidebarLink({ href, active, collapsed, label, icon, count }: SidebarLinkProps) {
   const link = (
     <Link
       href={href}
@@ -252,8 +262,8 @@ function SidebarLink({ href, active, collapsed, label, icon, count, badge }: Sid
         "group relative flex w-full items-center gap-3 rounded-md py-1.5 pl-3 pr-2 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
         collapsed && "justify-center px-0 py-2.5 [&_svg]:size-5",
         active
-          ? "bg-brand/8 dark:bg-brand/10 font-medium text-brand dark:text-brand"
-          : "text-muted-foreground hover:bg-brand/5 dark:hover:bg-brand/10 hover:text-brand dark:hover:text-brand"
+          ? "bg-sidebar-accent font-medium text-foreground"
+          : "text-muted-foreground hover:bg-sidebar-accent/70 hover:text-foreground"
       )}
     >
       {/* 活跃指示条 */}
@@ -276,7 +286,6 @@ function SidebarLink({ href, active, collapsed, label, icon, count, badge }: Sid
           {count}
         </span>
       )}
-      {badge && <span className={cn(collapsed && "sr-only")}>{badge}</span>}
     </Link>
   )
 

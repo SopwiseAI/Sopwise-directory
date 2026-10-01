@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import { getStats } from "@/lib/data"
-import { BrandMark } from "@/components/brand/brand-mark"
+import { Wordmark } from "@/components/brand/wordmark"
 import { StatItem } from "@/components/ui/stat-item"
 
 const stats = getStats()
@@ -13,15 +13,10 @@ export function BrandShowcase() {
       <div className="space-y-6">
         <div className="space-y-3">
           <p className="font-data uppercase tracking-[0.2em] text-muted-foreground">AI Discovery Engine</p>
-          <div className="flex items-start gap-3">
-            <BrandMark size="lg" className="size-12 rounded-xl shrink-0" />
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-              XiGee
-              <span className="ml-2 text-base font-normal text-muted-foreground sm:ml-3 sm:text-xl">
-                你的 AI 发现引擎
-              </span>
-            </h1>
-          </div>
+          <h1 className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <Wordmark size="xl" />
+            <span className="text-base font-normal text-muted-foreground sm:text-xl">你的 AI 发现引擎</span>
+          </h1>
           <div className="flex items-center gap-1.5">
             <span className="size-1.5 rounded-full bg-brand/30" aria-hidden />
             <span className="size-1.5 rounded-full bg-brand/20" aria-hidden />

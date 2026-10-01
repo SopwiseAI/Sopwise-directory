@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from "next"
 import Script from "next/script"
 import { GeistMono } from "geist/font/mono"
-import { GeistSans } from "geist/font/sans"
+import "@fontsource-variable/outfit"
 import { getAllCategories, getCategoryCounts, getStats } from "@/lib/data"
 import { getBaseUrl } from "@/lib/utils"
 import Header from "@/components/layout/header"
 import { SubNav } from "@/components/layout/sub-nav"
 import { CategorySidebar } from "@/components/category/category-sidebar"
-import { CommandSearchBar } from "@/components/layout/command-search-bar"
+import { MainHeader } from "@/components/layout/main-header"
 import { HistoryTracker } from "@/components/runtime/history-tracker"
 import { WebVitals } from "@/components/runtime/web-vitals"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
 }
 
 /** 首屏前执行：主题 class + 浏览器主题色。避免闪烁，同步 dark 状态。 */
-const themeScript = `(function(){try{const t=localStorage.getItem("theme")||"system";const m=window.matchMedia("(prefers-color-scheme:dark)");const dark=t==="dark"||(t==="system"&&m.matches);document.documentElement.classList.toggle("dark",dark);const meta=document.querySelector('meta[name="theme-color"]');if(meta){meta.setAttribute("content",dark?"#0f1114":"#fafafb")}}catch(e){}})()`
+const themeScript = `(function(){try{const t=localStorage.getItem("theme")||"system";const m=window.matchMedia("(prefers-color-scheme:dark)");const dark=t==="dark"||(t==="system"&&m.matches);document.documentElement.classList.toggle("dark",dark);const meta=document.querySelector('meta[name="theme-color"]');if(meta){meta.setAttribute("content",dark?"#151517":"#ffffff")}}catch(e){}})()`
 
 /** 首帧前读取侧栏折叠偏好写入 <html data-sidebar>，CSS 据此先行渲染折叠态（SB-01，避免展开→折叠闪烁）。 */
 const sidebarScript = `(function(){try{const c=localStorage.getItem("xigee:sidebar-collapsed")==="true";document.documentElement.setAttribute("data-sidebar",c?"collapsed":"expanded")}catch(e){document.documentElement.setAttribute("data-sidebar","expanded")}})()`
@@ -66,13 +66,9 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html
-      lang="zh-CN"
-      className={`${GeistSans.variable} ${GeistMono.variable} h-full antialiased`}
-      suppressHydrationWarning
-    >
+    <html lang="zh-CN" className={`${GeistMono.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
-        <meta name="theme-color" content="#fafafb" />
+        <meta name="theme-color" content="#ffffff" />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString }} />
       </head>
       <body className="min-h-full flex flex-col md:h-[100dvh] md:overflow-hidden">
@@ -90,14 +86,17 @@ export default function RootLayout({
           <Script id="sidebar-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: sidebarScript }} />
           <Header className="md:hidden" />
           <SubNav className="md:hidden" categories={allCategories} categoryCounts={categoryCounts} />
+          {/* DSH 双表面骨架：左栏灰（sidebar）/ 右区白（main） */}
           <div className="flex flex-1 md:overflow-hidden">
             <CategorySidebar categories={allCategories} categoryCounts={categoryCounts} totalProducts={totalProducts} />
-            <div className="min-w-0 flex-1 md:overflow-y-auto flex flex-col">
-              <CommandSearchBar className="hidden md:block" />
-              <main id="main" className="mx-auto w-full max-w-7xl scroll-mt-16 px-4 py-6 sm:px-6 flex-1">
-                {children}
-              </main>
-              <Footer />
+            <div className="flex min-w-0 flex-1 flex-col bg-background md:overflow-hidden">
+              <MainHeader className="hidden md:flex" categories={allCategories} />
+              <div className="flex flex-1 flex-col md:min-h-0 md:overflow-y-auto">
+                <main id="main" className="mx-auto w-full max-w-7xl scroll-mt-16 px-4 py-6 sm:px-6 flex-1">
+                  {children}
+                </main>
+                <Footer />
+              </div>
             </div>
           </div>
         </TooltipProvider>

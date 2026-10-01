@@ -15,9 +15,13 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-geist-sans);
+  /* 品牌字标专用：Outfit（几何无衬线，自托管 woff2），与正文系统字体形成品牌区分 */
+  --font-brand: "Outfit Variable", var(--font-sans);
+  --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -61,86 +65,93 @@
 }
 
 /* ============================================================
-   浅色主题 —— 冷调混凝土：（bg < card < popover 分层）
+   浅色主题 —— DSH 双表面：左栏灰（sidebar #F9FAFB）/ 右区白（background #FFFFFF）
+   发丝边框用低透明黑，raised 面靠 0.5px 描边 + 极轻阴影分层。
    ============================================================ */
 :root {
-  --background: oklch(0.978 0.003 240);
-  --foreground: oklch(0.16 0.008 245);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.16 0.008 245);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.16 0.008 245);
-  --primary: oklch(0.205 0.01 245);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.956 0.004 240);
-  --secondary-foreground: oklch(0.205 0.01 245);
-  --muted: oklch(0.956 0.004 240);
-  --muted-foreground: oklch(0.51 0.012 250);
-  --accent: oklch(0.95 0.005 240);
-  --accent-foreground: oklch(0.205 0.01 245);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.86 0.008 240);
-  --input: oklch(0.86 0.008 240);
-  --ring: oklch(0.62 0.03 250);
-  --chart-1: oklch(0.55 0.12 250);
-  --chart-2: oklch(0.6 0.1 200);
-  --chart-3: oklch(0.55 0.09 150);
-  --chart-4: oklch(0.6 0.16 280);
-  --chart-5: oklch(0.6 0.14 30);
-  --radius: 0.6rem;
-  --sidebar: oklch(0.968 0.004 240);
-  --sidebar-foreground: oklch(0.16 0.008 245);
-  --sidebar-primary: oklch(0.205 0.01 245);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.945 0.006 240);
-  --sidebar-accent-foreground: oklch(0.205 0.01 245);
-  --sidebar-border: oklch(0.85 0.008 240);
-  --sidebar-ring: oklch(0.62 0.03 250);
-  --success: oklch(0.5 0.13 155);
-  --success-foreground: oklch(0.985 0 0);
-  --brand: oklch(0.55 0.2 265);
-  --brand-foreground: oklch(0.985 0 0);
+  --background: #ffffff;
+  --foreground: #0f1115;
+  --card: #ffffff;
+  --card-foreground: #0f1115;
+  --popover: #ffffff;
+  --popover-foreground: #0f1115;
+  --primary: #0f1115;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f3f5;
+  --secondary-foreground: #0f1115;
+  --muted: #f1f3f5;
+  --muted-foreground: #61666b;
+  --accent: #ebeef2;
+  --accent-foreground: #0f1115;
+  --destructive: #ec1313;
+  --border: rgba(0, 0, 0, 0.1);
+  --input: rgba(0, 0, 0, 0.1);
+  --ring: var(--primary);
+  --chart-1: var(--primary);
+  --chart-2: #22c55e;
+  --chart-3: #f59e0b;
+  --chart-4: #8b5cf6;
+  --chart-5: #ef4444;
+  --radius: 0.75rem;
+  --sidebar: #f7f8fa;
+  --sidebar-foreground: #0f1115;
+  --sidebar-primary: #0f1115;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eceff3;
+  --sidebar-accent-foreground: #0f1115;
+  --sidebar-border: rgba(0, 0, 0, 0.07);
+  --sidebar-ring: var(--primary);
+  --success: #22c55e;
+  --success-foreground: #ffffff;
+  /* 品牌 = 站点墨色（近黑/近白），单色，无渐变 */
+  --brand: var(--primary);
+  --brand-foreground: var(--primary-foreground);
+  --elevation-stroke: rgba(0, 0, 0, 0.08);
+  --scrollbar-thumb: #d4d4d4;
 }
 
 /* ============================================================
-   深色主题 —— 炭黑分层：（bg 0.14 < sidebar 0.16 < card 0.19 < popover 0.22）
+   深色主题 —— DSH：右区 base #151517 < 左栏 sidebar #1B1B1C < card #232324
    ============================================================ */
 .dark {
-  --background: oklch(0.145 0.005 245);
-  --foreground: oklch(0.96 0.003 240);
-  --card: oklch(0.19 0.006 245);
-  --card-foreground: oklch(0.96 0.003 240);
-  --popover: oklch(0.22 0.007 245);
-  --popover-foreground: oklch(0.96 0.003 240);
-  --primary: oklch(0.922 0.003 240);
-  --primary-foreground: oklch(0.19 0.01 245);
-  --secondary: oklch(0.26 0.008 245);
-  --secondary-foreground: oklch(0.96 0.003 240);
-  --muted: oklch(0.26 0.008 245);
-  --muted-foreground: oklch(0.78 0.01 240);
-  --accent: oklch(0.27 0.009 245);
-  --accent-foreground: oklch(0.96 0.003 240);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 9%);
-  --input: oklch(1 0 0 / 13%);
-  --ring: oklch(0.6 0.04 250);
-  --chart-1: oklch(0.72 0.09 250);
-  --chart-2: oklch(0.72 0.08 200);
-  --chart-3: oklch(0.7 0.07 150);
-  --chart-4: oklch(0.72 0.11 280);
-  --chart-5: oklch(0.72 0.1 30);
-  --sidebar: oklch(0.165 0.006 245);
-  --sidebar-foreground: oklch(0.96 0.003 240);
-  --sidebar-primary: oklch(0.922 0.003 240);
-  --sidebar-primary-foreground: oklch(0.19 0.01 245);
-  --sidebar-accent: oklch(0.245 0.008 245);
-  --sidebar-accent-foreground: oklch(0.96 0.003 240);
-  --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: oklch(0.6 0.04 250);
-  --success: oklch(0.66 0.15 155);
-  --success-foreground: oklch(0.145 0.005 245);
-  --brand: oklch(0.65 0.18 265);
-  --brand-foreground: oklch(0.985 0 0);
+  --background: #151517;
+  --foreground: #f9fafb;
+  --card: #232324;
+  --card-foreground: #f9fafb;
+  --popover: #2c2c2e;
+  --popover-foreground: #f9fafb;
+  --primary: #f9fafb;
+  --primary-foreground: #0f1115;
+  --secondary: #2c2c2e;
+  --secondary-foreground: #f9fafb;
+  --muted: #2c2c2e;
+  --muted-foreground: #adb2b8;
+  --accent: #43454a;
+  --accent-foreground: #f9fafb;
+  --destructive: #f25a5a;
+  --border: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.16);
+  --ring: var(--primary);
+  --chart-1: var(--primary);
+  --chart-2: #22c55e;
+  --chart-3: #f59e0b;
+  --chart-4: #a78bfa;
+  --chart-5: #f87171;
+  --sidebar: #1b1b1c;
+  --sidebar-foreground: #f9fafb;
+  --sidebar-primary: #f9fafb;
+  --sidebar-primary-foreground: #0f1115;
+  --sidebar-accent: #2c2c2e;
+  --sidebar-accent-foreground: #f9fafb;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: var(--primary);
+  --success: #22c55e;
+  --success-foreground: #0f1115;
+  /* 品牌 = 站点墨色；深色下反相为近白方块 + 黑星芒 */
+  --brand: var(--primary);
+  --brand-foreground: var(--primary-foreground);
+  --elevation-stroke: rgba(255, 255, 255, 0.1);
+  --scrollbar-thumb: #3c3c3d;
 }
 
 @layer base {
@@ -179,23 +190,30 @@
     background-color: color-mix(in oklch, var(--primary) 16%, transparent);
   }
 
-  /* 细滚动条：控制台质感 */
+  /* 细滚动条 —— DSH 指针提示：滑块默认透明，指针进入滚动容器时才显形 */
   * {
     scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
+    scrollbar-color: transparent transparent;
+  }
+  *:hover {
+    scrollbar-color: var(--scrollbar-thumb) transparent;
   }
   *::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
   }
   *::-webkit-scrollbar-thumb {
-    background-color: color-mix(in oklch, var(--foreground) 18%, transparent);
+    background-color: transparent;
     border-radius: 8px;
-    border: 2px solid transparent;
+    border: 3px solid transparent;
     background-clip: content-box;
+    transition: background-color 0.15s ease;
+  }
+  *:hover::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
   }
   *::-webkit-scrollbar-thumb:hover {
-    background-color: color-mix(in oklch, var(--foreground) 30%, transparent);
+    background-color: color-mix(in oklab, var(--scrollbar-thumb) 75%, var(--foreground));
   }
   *::-webkit-scrollbar-track {
     background: transparent;
@@ -249,6 +267,28 @@
   @media (min-width: 1024px) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+/* ============================================================
+   DSH elevated surface：0.5px 发丝描边 + 两层极轻阴影（border: 0）
+   ============================================================ */
+@utility surface-raised {
+  border: 0;
+  box-shadow:
+    0 0 0 0.5px var(--elevation-stroke),
+    0 1px 2px -1px color-mix(in oklab, var(--foreground) 6%, transparent),
+    0 6px 18px -6px color-mix(in oklab, var(--foreground) 8%, transparent);
+}
+
+/* DSH hairline：0.5px 中性描边，用于分隔与卡片描边 */
+@utility hairline {
+  border: 0.5px solid var(--border);
+}
+
+/* 品牌标记容器：纯色墨块 + 顶部内高光（无底部暗边，无投影，克制） */
+@utility brand-tile {
+  background-color: var(--brand);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white 20%, transparent);
 }
 
 /* 动效：尊重系统减弱动效偏好 */

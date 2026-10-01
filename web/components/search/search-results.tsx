@@ -100,8 +100,8 @@ export function SearchResults({ products, featured, suggestions }: SearchResults
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        找到 <span className="font-mono font-medium tabular-nums text-foreground">{formatCount(results.length)}</span>{" "}
-        个与 <span className="font-medium text-foreground">「{query}」</span> 相关的结果
+        找到 <span className="font-data font-medium text-foreground">{formatCount(results.length)}</span> 个与{" "}
+        <span className="font-medium text-foreground">「{query}」</span> 相关的结果
       </p>
       <div className="rounded-lg border bg-card">
         {results.map((product, i) => (
