@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
-import { HeroBackdrop, HeroEyebrow } from "@/components/hero/hero-primitives"
+import { HeroBackdrop } from "@/components/hero/hero-primitives"
 
 const meta = {
   title: "Hero/HeroBackdrop",
@@ -18,9 +18,6 @@ function Frame({ align }: { align: "left" | "center" }) {
   return (
     <div className="relative h-64 overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-b from-secondary/50 to-background">
       <HeroBackdrop align={align} />
-      <div className="relative flex h-full items-center justify-center">
-        <HeroEyebrow>AI Discovery Engine</HeroEyebrow>
-      </div>
     </div>
   )
 }
@@ -31,17 +28,4 @@ export const Left: Story = {
 
 export const Center: Story = {
   render: () => <Frame align="center" />
-}
-
-export const Playground: Story = {
-  render: () => <Frame align="left" />
-}
-
-export const Eyebrow: Story = {
-  render: () => (
-    <div className="flex flex-col gap-3">
-      <HeroEyebrow>AI Discovery Engine</HeroEyebrow>
-      <HeroEyebrow className="text-foreground">Custom Color</HeroEyebrow>
-    </div>
-  )
 }

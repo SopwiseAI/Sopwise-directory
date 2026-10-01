@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
 import { SubNav } from "@/components/layout/sub-nav"
-import { mockCategories, mockCategoryCounts } from "../../.storybook/fixtures"
+import { mockCategories, mockCategoryCounts } from "@/.storybook/fixtures"
 
 const meta = {
   title: "Layout/SubNav",

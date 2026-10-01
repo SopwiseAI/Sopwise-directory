@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
 import { MainHeader } from "@/components/layout/main-header"
-import { mockCategories } from "../../.storybook/fixtures"
+import { mockCategories } from "@/.storybook/fixtures"
 
 const meta = {
   title: "Layout/MainHeader",

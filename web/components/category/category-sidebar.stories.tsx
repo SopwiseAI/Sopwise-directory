@@ -1,20 +1,28 @@
 import { useEffect } from "react"
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
 import { CategorySidebar } from "@/components/category/category-sidebar"
-import { mockCategories, mockCategoryCounts } from "../../.storybook/fixtures"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { mockCategories, mockCategoryCounts } from "@/.storybook/fixtures"
 
 const meta = {
   title: "Category/CategorySidebar",
   component: CategorySidebar,
   tags: ["autodocs"],
   args: { categories: mockCategories, categoryCounts: mockCategoryCounts, totalProducts: 85 },
-  parameters: { layout: "fullscreen" }
+  parameters: { layout: "fullscreen" },
+  decorators: [
+    (Story) => (
+      <TooltipProvider>
+        <Story />
+      </TooltipProvider>
+    )
+  ]
 } satisfies Meta<typeof CategorySidebar>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
-/** 清理折叠状态，保证 story 初始为展开（根元素 hidden md:flex，需 ≥768px 视口） */
+/** 清理折叠状态并在渲染前派发事件，保证同文档切换 story 时状态同步 */
 function Clean({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
@@ -23,6 +31,7 @@ function Clean({ children }: { children: React.ReactNode }) {
       /* noop */
     }
     document.documentElement.setAttribute("data-sidebar", "expanded")
+    window.dispatchEvent(new Event("xigee:sidebar-collapse"))
   }, [])
   return <div className="flex h-[600px] bg-background">{children}</div>
 }

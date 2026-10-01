@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
 import { SearchResults } from "@/components/search/search-results"
-import { mockProducts, mockSuggestions } from "../../.storybook/fixtures"
+import { mockProducts, mockSuggestions } from "@/.storybook/fixtures"
 
 const featured = mockProducts.filter((p) => p.featured)
 

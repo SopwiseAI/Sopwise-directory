@@ -1,10 +1,12 @@
 import { useEffect } from "react"
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
 import { HistoryList } from "@/components/history/history-list"
-import { mockCategories } from "../../.storybook/fixtures"
+import { mockCategories } from "@/.storybook/fixtures"
 import type { HistoryItem } from "@/lib/history"
 
 const STORAGE_KEY = "xigee:history"
+
+const NO_ITEMS: HistoryItem[] = []
 
 function seed(items: HistoryItem[]) {
   try {
@@ -25,8 +27,7 @@ function Seed({ items, children }: { items: HistoryItem[]; children: React.React
         /* noop */
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [items])
   return <>{children}</>
 }
 
@@ -93,7 +94,7 @@ type Story = StoryObj<typeof meta>
 export const Empty: Story = {
   decorators: [
     (Story) => (
-      <Seed items={[]}>
+      <Seed items={NO_ITEMS}>
         <Story />
       </Seed>
     )

@@ -27,8 +27,8 @@ export const Interactive: Story = {
   )
 }
 
-export const All: Story = {
-  render: () => <ControlledFilterTabs initial="all" />
+export const Latest: Story = {
+  render: () => <ControlledFilterTabs initial="latest" />
 }
 
 export const Featured: Story = {

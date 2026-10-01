@@ -36,6 +36,7 @@
   },
   "devDependencies": {
     "@next/bundle-analyzer": "16.2.10",
+    "@storybook/addon-docs": "10.6.1",
     "@storybook/addon-themes": "10.6.1",
     "@storybook/nextjs-vite": "10.6.1",
     "@tailwindcss/postcss": "^4",
