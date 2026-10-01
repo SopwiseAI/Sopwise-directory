@@ -15,7 +15,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "analyze": "ANALYZE=true next build --webpack"
+    "analyze": "ANALYZE=true next build --webpack",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -34,6 +36,8 @@
   },
   "devDependencies": {
     "@next/bundle-analyzer": "16.2.10",
+    "@storybook/addon-themes": "10.6.1",
+    "@storybook/nextjs-vite": "10.6.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
@@ -45,6 +49,7 @@
     "eslint-config-next": "16.2.10",
     "jsdom": "^30.1.1",
     "shadcn": "^4.13.0",
+    "storybook": "10.6.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^5.0.2"
