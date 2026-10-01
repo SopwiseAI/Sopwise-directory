@@ -38,11 +38,7 @@ export function SearchResults({ products, featured, suggestions }: SearchResults
         </EmptyMedia>
         <EmptyHeader>
           <EmptyDescription>
-            输入关键词开始搜索，或使用顶栏命令搜索框（按{" "}
-            <span className="kbd" aria-hidden>
-              /
-            </span>{" "}
-            聚焦）
+            输入关键词开始搜索，或使用顶栏命令搜索框（按 <span className="kbd">/</span> 聚焦）
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
@@ -80,7 +76,7 @@ export function SearchResults({ products, featured, suggestions }: SearchResults
                   }
                   disabled={isPending && pendingQuery === s}
                 >
-                  {isPending && pendingQuery === s ? "搜索中..." : s}
+                  {isPending && pendingQuery === s ? "搜索中…" : s}
                 </button>
               ))}
             </div>

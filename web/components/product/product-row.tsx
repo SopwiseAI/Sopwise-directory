@@ -26,14 +26,14 @@ export function ProductRow({
       rel="noopener noreferrer"
       {...productHistoryAttrs(product)}
       className={cn(
-        "group flex items-center gap-3 px-4 py-3.5 transition-all hover:bg-brand/[0.02] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+        "group flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-brand/[0.02] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
         !last && "border-b border-border"
       )}
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
           <span className="shrink-0 truncate text-base font-medium">{product.name}</span>
-          <span className="hidden shrink-0 font-mono text-xs text-muted-foreground sm:inline">{domain}</span>
+          <span className="hidden shrink-0 font-data text-muted-foreground sm:inline">{domain}</span>
           {date && (
             <span className="hidden shrink-0 font-data text-muted-foreground/60 sm:inline">{formatDate(date)}</span>
           )}
@@ -52,7 +52,7 @@ export function ProductRow({
           </div>
         )}
         {product.pricing && <PricingBadge pricing={product.pricing} />}
-        <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60 transition-all group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+        <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60 transition group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
       </div>
     </a>
   )

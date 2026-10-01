@@ -4,6 +4,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { HeroBackdrop, HeroEyebrow } from "@/components/hero/hero-primitives"
 import { HeroStatsBar } from "@/components/hero/hero-stats-bar"
+import { formatCount } from "@/lib/format"
 import { getStats } from "@/lib/data"
 
 /**
@@ -39,7 +40,7 @@ export function Hero() {
         </h2>
 
         <p className="mt-3 max-w-xl text-sm leading-[1.65] text-muted-foreground sm:text-[0.9375rem]">
-          精选 {stats.products} 款 AI 工具与应用，按分类探索，或直接搜索你需要的能力。
+          精选 {formatCount(stats.products)} 款 AI 工具与应用，按分类探索，或直接搜索你需要的能力。
         </p>
 
         <div className="mt-5 flex flex-wrap items-center gap-2.5">

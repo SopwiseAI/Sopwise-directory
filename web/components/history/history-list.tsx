@@ -185,7 +185,7 @@ export function HistoryList({ categories }: HistoryListProps) {
         <button
           type="button"
           onClick={() => setShowClearConfirm(true)}
-          className="rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+          className="rounded-md px-2 py-1 text-xs text-muted-foreground outline-none transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring"
         >
           清空全部
         </button>
@@ -258,7 +258,7 @@ export function HistoryList({ categories }: HistoryListProps) {
                       aria-label={`删除 ${item.name} 的历史记录`}
                       title="删除"
                       onClick={() => removeFromHistory(item.id)}
-                      className="shrink-0 rounded-md p-2.5 text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      className="shrink-0 rounded-md p-2.5 text-muted-foreground/60 outline-none transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <Trash2 className="size-4" />
                     </button>

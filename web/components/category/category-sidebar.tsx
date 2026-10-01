@@ -285,7 +285,7 @@ function SidebarLink({ href, active, collapsed, label, icon, count }: SidebarLin
           data-sidebar-count
           className={cn(
             "font-data tabular-nums transition-colors",
-            collapsed ? "sr-only" : active ? "text-accent-foreground/70" : "text-muted-foreground"
+            collapsed ? "sr-only" : active ? "text-sidebar-accent-foreground/70" : "text-muted-foreground"
           )}
         >
           {count}

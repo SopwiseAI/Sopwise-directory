@@ -174,7 +174,7 @@ export function ProductBrowser({
   }, [products, tab, resolvedSort])
 
   return (
-    <div id="product-browser">
+    <div id="product-browser" className="scroll-mt-28 md:scroll-mt-6">
       <Suspense fallback={null}>
         <UrlStateSync onChange={applyUrlState} />
       </Suspense>
