@@ -1,4 +1,4 @@
-import { PRICINGS, type Pricing, type Product } from "@/lib/types"
+import { PRICINGS, type Pricing } from "@/lib/types"
 import { getDomain } from "@/lib/url"
 
 export interface HistoryItem {
@@ -19,6 +19,15 @@ export interface HistoryItem {
 export interface HistoryGroup {
   label: string
   items: HistoryItem[]
+}
+
+/** 记录历史所需的最小产品信息：避免调用方为满足完整 Product 而填充无关字段（如 description）。 */
+export interface HistorySource {
+  id: string
+  name: string
+  url: string
+  categories: readonly string[]
+  pricing?: Pricing
 }
 
 const PREFIX = process.env.NEXT_PUBLIC_STORAGE_PREFIX || "xigee"
@@ -176,7 +185,7 @@ export function getHistory(): HistoryItem[] {
  * 访问产品时记录：同产品置顶去重并递增访问次数，保留首次访问时间；
  * 超出上限裁剪最旧条目（切片）。
  */
-export function addToHistory(product: Product): HistoryItem[] {
+export function addToHistory(product: HistorySource): HistoryItem[] {
   if (!isBrowser()) return getHistory()
   const now = new Date().toISOString()
   const list = getHistory()

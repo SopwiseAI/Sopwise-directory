@@ -225,45 +225,54 @@ export function HistoryList({ categories }: HistoryListProps) {
                 {group.label}
               </div>
               <ul>
-                {group.items.map((item) => (
-                  <li
-                    key={item.id}
-                    className="group flex items-center gap-3 border-b border-border px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/40"
-                  >
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex min-w-0 flex-1 items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                {group.items.map((item) => {
+                  // 分类可能已被删除（categoryName 返回空串），避免留下悬空的 " · "
+                  const categoryLabel = item.categoryId ? categoryName(item.categoryId) : ""
+                  return (
+                    <li
+                      key={item.id}
+                      className="group flex items-center gap-3 border-b border-border px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/40"
                     >
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-base font-medium">{item.name}</p>
-                        <p className="truncate font-data text-muted-foreground">
-                          {item.domain}
-                          {item.categoryId && ` · ${categoryName(item.categoryId)}`}
-                          {item.visitCount > 1 && ` · 访问 ${item.visitCount} 次`}
-                        </p>
-                      </div>
-                      <span className="hidden shrink-0 font-data text-muted-foreground sm:inline">
-                        {formatRelativeTime(item.lastVisitedAt)}
-                      </span>
-                      {item.pricing ? (
-                        <span className="hidden shrink-0 md:inline">
-                          <PricingBadge pricing={item.pricing} />
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        data-history-id={item.id}
+                        data-history-name={item.name}
+                        data-history-url={item.url}
+                        data-history-category={item.categoryId}
+                        data-history-pricing={item.pricing ?? ""}
+                        className="flex min-w-0 flex-1 items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-base font-medium">{item.name}</p>
+                          <p className="truncate font-data text-muted-foreground">
+                            {item.domain}
+                            {categoryLabel && ` · ${categoryLabel}`}
+                            {item.visitCount > 1 && ` · 访问 ${formatCount(item.visitCount)} 次`}
+                          </p>
+                        </div>
+                        <span className="hidden shrink-0 font-data text-muted-foreground sm:inline">
+                          {formatRelativeTime(item.lastVisitedAt)}
                         </span>
-                      ) : null}
-                    </a>
-                    <button
-                      type="button"
-                      aria-label={`删除 ${item.name} 的历史记录`}
-                      title="删除"
-                      onClick={() => removeFromHistory(item.id)}
-                      className="shrink-0 rounded-md p-2.5 text-muted-foreground/60 outline-none transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </li>
-                ))}
+                        {item.pricing ? (
+                          <span className="hidden shrink-0 md:inline">
+                            <PricingBadge pricing={item.pricing} />
+                          </span>
+                        ) : null}
+                      </a>
+                      <button
+                        type="button"
+                        aria-label={`删除 ${item.name} 的历史记录`}
+                        title="删除"
+                        onClick={() => removeFromHistory(item.id)}
+                        className="shrink-0 rounded-md p-2.5 text-muted-foreground/60 outline-none transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </li>
+                  )
+                })}
               </ul>
             </div>
           ))}

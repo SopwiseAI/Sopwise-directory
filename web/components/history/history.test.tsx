@@ -48,4 +48,17 @@ describe("HistoryList", () => {
     expect(screen.getByText("Test Product")).toBeInTheDocument()
     expect(screen.getByText("今天")).toBeInTheDocument()
   })
+
+  it("历史条目携带 data-history-* 属性（供回访时回写）", () => {
+    addToHistory(mockProduct)
+    const { container } = render(<HistoryList categories={[]} />)
+    expect(container.querySelector('a[data-history-id="test-1"]')).not.toBeNull()
+  })
+
+  it("分类已被删除时不渲染悬空分隔符", () => {
+    addToHistory(mockProduct)
+    const { container } = render(<HistoryList categories={[]} />)
+    const link = container.querySelector('a[data-history-id="test-1"]') as HTMLElement
+    expect(link.querySelector("p.font-data")?.textContent).toBe("test.com")
+  })
 })
