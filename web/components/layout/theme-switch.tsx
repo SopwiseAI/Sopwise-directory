@@ -1,6 +1,7 @@
 "use client"
 
 import { Monitor, Moon, Sun } from "lucide-react"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { setTheme, useTheme, type ThemeMode } from "@/components/layout/theme-toggle"
 
 const options: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
@@ -9,49 +10,31 @@ const options: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
   { value: "system", label: "跟随系统", icon: Monitor }
 ]
 
-/** 设置页主题选择：三张选项卡片，选中态边框高亮 */
+/** 设置页主题选择：基于 shadcn ToggleGroup 的三选一卡片。 */
 export function ThemeSwitch() {
   const theme = useTheme()
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    const currentIndex = options.findIndex((o) => o.value === theme)
-    let nextIndex: number | null = null
-    if (e.key === "ArrowRight" || e.key === "ArrowDown") nextIndex = (currentIndex + 1) % options.length
-    if (e.key === "ArrowLeft" || e.key === "ArrowUp") nextIndex = (currentIndex - 1 + options.length) % options.length
-    if (nextIndex !== null) {
-      e.preventDefault()
-      const next = options[nextIndex].value
-      setTheme(next)
-      document.getElementById(`theme-${next}`)?.focus()
-    }
-  }
-
   return (
-    <div
-      className="grid grid-cols-1 gap-2 sm:grid-cols-3"
-      role="radiogroup"
+    <ToggleGroup
+      value={[theme]}
+      onValueChange={(value) => {
+        if (value[0]) setTheme(value[0] as ThemeMode)
+      }}
       aria-label="主题模式"
-      onKeyDown={handleKeyDown}
+      className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3"
     >
-      {options.map(({ value, label, icon: Icon }) => {
-        const active = theme === value
-        return (
-          <button
-            key={value}
-            type="button"
-            id={`theme-${value}`}
-            role="radio"
-            aria-checked={active}
-            aria-label={label}
-            tabIndex={active ? 0 : -1}
-            onClick={() => setTheme(value)}
-            className="flex flex-col items-center gap-1.5 rounded-lg border border-border px-2 py-3 text-xs text-muted-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-secondary/50 hover:text-foreground"
-          >
-            <Icon className="size-5" aria-hidden />
-            {label}
-          </button>
-        )
-      })}
-    </div>
+      {options.map(({ value, label, icon: Icon }) => (
+        <ToggleGroupItem
+          key={value}
+          value={value}
+          variant="outline"
+          aria-label={label}
+          className="h-auto flex-col gap-1.5 py-3 text-xs text-muted-foreground data-[pressed]:border-ring data-[pressed]:text-foreground"
+        >
+          <Icon className="size-5" aria-hidden />
+          {label}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
   )
 }
