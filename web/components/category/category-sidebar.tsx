@@ -10,6 +10,7 @@ import { BrandMark } from "@/components/brand/brand-mark"
 import { Wordmark } from "@/components/brand/wordmark"
 import { PanelIcon } from "@/components/brand/panel-icon"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { categoryIconNode } from "@/lib/category-icon-node"
 import { useHistoryCount } from "@/components/history/history-count"
@@ -205,12 +206,10 @@ export function CategorySidebar({ categories, categoryCounts, totalProducts }: C
             count={formatCount(historyCount)}
           />
 
+          <Separator data-collapse-hide className={cn(collapsed && "sr-only")} />
           <p
             data-collapse-hide
-            className={cn(
-              "border-t border-border px-3 pb-1.5 pt-3 font-data text-muted-foreground",
-              collapsed && "sr-only"
-            )}
+            className={cn("px-3 pb-1.5 pt-3 font-data text-muted-foreground", collapsed && "sr-only")}
           >
             分类
           </p>

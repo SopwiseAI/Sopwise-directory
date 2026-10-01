@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { ArrowRight, Sparkles } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
 import { HeroBackdrop, HeroEyebrow } from "@/components/hero/hero-primitives"
 import { HeroStatsBar } from "@/components/hero/hero-stats-bar"
 import { getStats } from "@/lib/data"
@@ -61,7 +62,8 @@ export function Hero() {
           </Link>
         </div>
 
-        <HeroStatsBar stats={stats} className="mt-7 border-t border-border/70 pt-4" />
+        <Separator className="mt-7" />
+        <HeroStatsBar stats={stats} className="pt-4" />
       </div>
     </section>
   )
