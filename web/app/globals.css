@@ -291,6 +291,22 @@
   box-shadow: inset 0 1px 0 color-mix(in oklab, white 20%, transparent);
 }
 
+/* Hero 入场：一次性上移淡入（仅动 opacity/transform，无 SSR 值差 → 零 FOUC）。
+   减弱动效偏好下由下方 reduced-motion 规则统一禁用。 */
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@utility hero-rise {
+  animation: hero-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* 动效：尊重系统减弱动效偏好 */
 @media (prefers-reduced-motion: reduce) {
   *,

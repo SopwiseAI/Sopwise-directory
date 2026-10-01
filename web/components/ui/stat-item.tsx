@@ -8,7 +8,7 @@ export interface StatItemProps {
   className?: string
 }
 
-/** 统计数字 + 标签，供 brand-showcase / settings 共用。 */
+/** 统计数字 + 标签，供设置页等复用。 */
 export function StatItem({ label, value, size = "sm", className }: StatItemProps) {
   return (
     <div className={cn("flex items-baseline gap-2", className)}>
