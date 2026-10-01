@@ -21,10 +21,10 @@ export function HeroStatsBar({ stats, className }: { stats: HeroStats; className
               "relative pl-8 before:absolute before:left-0 before:top-[0.1em] before:h-[1.1em] before:w-px before:bg-border/80"
           )}
         >
-          <dd className="font-mono text-xl leading-none font-medium tabular-nums tracking-tight text-foreground">
+          <dt className="text-xs tracking-wide text-muted-foreground">{label}</dt>
+          <dd className="order-first font-mono text-xl leading-none font-medium tabular-nums tracking-tight text-foreground">
             {formatCount(value)}
           </dd>
-          <dt className="text-xs tracking-wide text-muted-foreground">{label}</dt>
         </div>
       ))}
     </dl>

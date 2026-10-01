@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og"
-import { BRAND_FOREGROUND, BRAND_GLYPH_PATH, BRAND_GLYPH_VIEWBOX, BRAND_TILE } from "@/lib/brand"
+import { BrandGlyphSvg } from "@/components/brand/brand-glyph-svg"
+import { BRAND_FOREGROUND, BRAND_TILE } from "@/lib/brand"
 
 export const contentType = "image/png"
 
@@ -15,7 +16,9 @@ export function generateImageMetadata() {
 
 /** 站点 favicon：近黑底 + 白色星芒。 */
 export default async function Icon({ id }: { id: Promise<string | number> }) {
-  const iconId = String(await id)
+  const rawId = await id
+  const dimension = Number(rawId)
+  if (!Number.isFinite(dimension) || dimension <= 0) throw new Error(`Invalid icon id: ${rawId}`)
   return new ImageResponse(
     <div
       style={{
@@ -27,10 +30,8 @@ export default async function Icon({ id }: { id: Promise<string | number> }) {
         backgroundColor: BRAND_TILE.light
       }}
     >
-      <svg width="70%" height="70%" viewBox={BRAND_GLYPH_VIEWBOX} fill={BRAND_FOREGROUND.light}>
-        <path d={BRAND_GLYPH_PATH} />
-      </svg>
+      <BrandGlyphSvg size="70%" color={BRAND_FOREGROUND.light} />
     </div>,
-    { width: Number(iconId), height: Number(iconId) }
+    { width: dimension, height: dimension }
   )
 }
