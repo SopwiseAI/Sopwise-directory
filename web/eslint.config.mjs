@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Storybook build output
+    "storybook-static/**",
     // Test config
     "vitest.config.mts",
     "vitest.setup.ts",

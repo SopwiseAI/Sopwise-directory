@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
-import { BrandGlyph, BrandMark } from "@/components/brand/brand-mark"
+import { BrandMark } from "@/components/brand/brand-mark"
 
 const meta = {
   title: "Brand/BrandMark",
@@ -28,12 +28,10 @@ export const Sizes: Story = {
 
 export const Playground: Story = {}
 
-export const Glyph: Story = {
-  render: () => (
-    <div className="flex items-center gap-4 text-foreground">
-      {(["size-3", "size-6", "size-8", "size-12", "size-16"] as const).map((s) => (
-        <BrandGlyph key={s} className={s} />
-      ))}
-    </div>
-  )
+export const GlyphOverride: Story = {
+  render: () => <BrandMark size="lg" glyphClassName="size-3" />
+}
+
+export const RoundedFull: Story = {
+  render: () => <BrandMark size="lg" className="rounded-full" />
 }
