@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useState, u
 import { useSearchParams } from "next/navigation"
 import type { Product } from "@/lib/types"
 import { getProductDate } from "@/lib/product"
+import { storageKey } from "@/lib/storage"
 import { ProductRow } from "@/components/product/product-row"
 import { ProductCard } from "@/components/product/product-card"
 import { ProductToolbar } from "@/components/product/toolbar"
@@ -63,8 +64,8 @@ function readStore(key: string): string {
   }
 }
 
-const getStoredView = () => readStore("xigee:default-view")
-const getStoredSort = () => readStore("xigee:default-sort")
+const getStoredView = () => readStore(storageKey("default-view"))
+const getStoredSort = () => readStore(storageKey("default-sort"))
 
 function getUrlSearch(): string {
   if (typeof window === "undefined") return emptyString
@@ -143,12 +144,12 @@ export function ProductBrowser({
   const resolvedSort: SortMode = isLatestTab ? "latest" : sort
 
   const setView = (v: ViewMode) => {
-    persist("xigee:default-view", v)
+    persist(storageKey("default-view"), v)
     setViewOverride(v)
   }
 
   const setSort = (s: SortMode) => {
-    persist("xigee:default-sort", s)
+    persist(storageKey("default-sort"), s)
     setSortOverride(s)
   }
 

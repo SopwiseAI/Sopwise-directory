@@ -1,6 +1,11 @@
+import type { Metadata } from "next"
 import { getAllProducts } from "@/lib/data"
 import { ProductBrowser } from "@/components/product/product-browser"
 import { Hero } from "@/components/hero/hero"
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" }
+}
 
 const products = getAllProducts()
 

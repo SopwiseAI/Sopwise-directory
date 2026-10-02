@@ -22,9 +22,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
   const category = getCategoryById(id)
   if (!category) return { title: "分类未找到" }
+  const description = `发现和浏览${category.name}类别的 AI 产品，XiGee 为你精选最佳工具`
   return {
     title: `${category.name}`,
-    description: `发现和浏览${category.name}类别的 AI 产品，XiGee 为你精选最佳工具`
+    description,
+    alternates: { canonical: `/category/${id}` },
+    openGraph: { title: `${category.name} — XiGee`, description }
   }
 }
 

@@ -12,12 +12,13 @@ import { PanelIcon } from "@/components/brand/panel-icon"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
+import { storageKey } from "@/lib/storage"
 import { categoryIconNode } from "@/lib/category-icon-node"
 import { useHistoryCount } from "@/components/history/history-count"
 import { formatCount } from "@/lib/format"
 import type { Category } from "@/lib/types"
 
-const STORAGE_KEY = "xigee:sidebar-collapsed"
+const STORAGE_KEY = storageKey("sidebar-collapsed")
 const COLLAPSE_EVENT = "xigee:sidebar-collapse"
 
 function getSnapshot() {
@@ -149,7 +150,7 @@ export function Sidebar({ categories, categoryCounts, totalProducts }: SidebarPr
 
   return (
     <aside
-      aria-label="主导航"
+      aria-label="侧边栏"
       id="site-sidebar"
       className={cn(
         "hidden shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex",
@@ -181,6 +182,7 @@ export function Sidebar({ categories, categoryCounts, totalProducts }: SidebarPr
       <div className="relative flex-1 min-h-0">
         <nav
           ref={navRef}
+          aria-label="主导航"
           className={cn(
             "flex h-full flex-col overflow-y-auto",
             collapsed ? "gap-1.5 px-2.5 pt-3" : "gap-0.5 px-1.5 pt-1"

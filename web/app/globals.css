@@ -65,7 +65,7 @@
 }
 
 /* ============================================================
-   浅色主题 —— DSH 双表面：左栏灰（sidebar #F9FAFB）/ 右区白（background #FFFFFF）
+   浅色主题 —— DSH 双表面：左栏灰（sidebar #F7F8FA）/ 右区白（background #FFFFFF）
    发丝边框用低透明黑，raised 面靠 0.5px 描边 + 极轻阴影分层。
    ============================================================ */
 :root {
@@ -102,7 +102,7 @@
   --sidebar-border: rgba(0, 0, 0, 0.07);
   --sidebar-ring: var(--primary);
   --success: #22c55e;
-  --success-foreground: #ffffff;
+  --success-foreground: #0f1115;
   /* 品牌 = 站点墨色（近黑/近白），单色，无渐变 */
   --brand: var(--primary);
   --brand-foreground: var(--primary-foreground);
@@ -224,7 +224,7 @@
    数据型文本（mono + 等宽数字）
    ============================================================ */
 @utility font-data {
-  font-family: var(--font-geist-mono);
+  font-family: var(--font-mono);
   font-size: 0.75rem;
   line-height: 1rem;
   letter-spacing: -0.01em;
@@ -242,7 +242,7 @@
   border: 1px solid var(--border);
   border-bottom-width: 2px;
   background-color: var(--card);
-  font-family: var(--font-geist-mono);
+  font-family: var(--font-mono);
   font-size: 0.65625rem;
   line-height: 1;
   color: var(--muted-foreground);
@@ -256,9 +256,11 @@
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
   gap: 0.625rem;
-  /* 长列表滚动性能：视口外区块跳过渲染 */
-  content-visibility: auto;
-  contain-intrinsic-size: auto 280px;
+  /* 长列表滚动性能：视口外卡片跳过渲染 */
+  & > * {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 280px;
+  }
 
   @media (min-width: 640px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));

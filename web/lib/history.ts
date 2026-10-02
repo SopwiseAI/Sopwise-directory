@@ -1,4 +1,5 @@
 import { PRICINGS, type Pricing } from "@/lib/types"
+import { STORAGE_PREFIX, storageKey } from "@/lib/storage"
 import { getDomain } from "@/lib/url"
 
 export interface HistoryItem {
@@ -30,10 +31,9 @@ export interface HistorySource {
   pricing?: Pricing
 }
 
-const PREFIX = process.env.NEXT_PUBLIC_STORAGE_PREFIX || "xigee"
-const STORAGE_KEY = `${PREFIX}:history`
+const STORAGE_KEY = storageKey("history")
 const SCHEMA_VERSION = 2
-const NAV_EVENT = `${PREFIX}:history-change`
+const NAV_EVENT = `${STORAGE_PREFIX}:history-change`
 const VALID_PRICING: ReadonlySet<string> = new Set(PRICINGS)
 const DEFAULT_MAX_ITEMS = 500
 

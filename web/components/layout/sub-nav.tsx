@@ -30,8 +30,9 @@ export function SubNav({ className, categories, categoryCounts }: SubNavProps) {
 
   return (
     <nav
+      aria-label="分类导航"
       className={cn(
-        "sticky top-14 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+        "sticky top-[calc(3.5rem_+_env(safe-area-inset-top))] z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
         className
       )}
     >

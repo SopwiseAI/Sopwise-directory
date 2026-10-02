@@ -1,5 +1,7 @@
 "use client"
 
+import { BRAND_PAGE } from "@/lib/brand"
+
 export type ThemeMode = "light" | "dark" | "system"
 
 const STORAGE_KEY = "theme"
@@ -26,8 +28,8 @@ export function getTheme(): ThemeMode {
 
 function applyMetaThemeColor(dark: boolean): void {
   const meta = document.querySelector('meta[name="theme-color"]')
-  // 与 layout themeScript、globals.css token 保持一致（浅色 #ffffff / 深色 #151517）
-  if (meta) meta.setAttribute("content", dark ? "#151517" : "#ffffff")
+  // 与 layout prefsScript、globals.css token 同源（brand.ts）
+  if (meta) meta.setAttribute("content", dark ? BRAND_PAGE.dark : BRAND_PAGE.light)
 }
 
 function applyTheme(theme: ThemeMode): void {

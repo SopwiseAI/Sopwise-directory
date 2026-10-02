@@ -125,7 +125,9 @@ export function MainHeader({ className, categories }: MainHeaderProps) {
               <li key={i} className="flex min-w-0 items-center">
                 {i > 0 && <span className="mx-1.5 text-muted-foreground/50">/</span>}
                 {isLast || !crumb.href ? (
-                  <span className="truncate font-medium text-foreground">{crumb.label}</span>
+                  <span aria-current={isLast ? "page" : undefined} className="truncate font-medium text-foreground">
+                    {crumb.label}
+                  </span>
                 ) : (
                   <Link href={crumb.href} className="truncate transition-colors hover:text-foreground">
                     {crumb.label}

@@ -3,6 +3,8 @@ import { GeistMono } from "geist/font/mono"
 import "@fontsource-variable/outfit"
 import { getAllCategories, getCategoryCounts, getStats } from "@/lib/data"
 import { getBaseUrl } from "@/lib/utils"
+import { BRAND_PAGE } from "@/lib/brand"
+import { STORAGE_PREFIX } from "@/lib/storage"
 import Header from "@/components/layout/header"
 import { SubNav } from "@/components/layout/sub-nav"
 import { Sidebar } from "@/components/layout/sidebar"
@@ -63,24 +65,22 @@ export const metadata: Metadata = {
  * 只做「读偏好 → 写 <html> 属性」，具体渲染交给 CSS（首帧）与 React（hydration 后接管）。
  */
 const prefsScript = `(function(){try{
-var d=document.documentElement;
-var t=localStorage.getItem("theme")||"system";
+var d=document.documentElement,P=${JSON.stringify(STORAGE_PREFIX)};
+var g=function(k){try{return localStorage.getItem(k)}catch(e){return null}};
+var t=g("theme")||"system";
 var m=window.matchMedia("(prefers-color-scheme:dark)");
 var dark=t==="dark"||(t==="system"&&m.matches);
 d.classList.toggle("dark",dark);
 d.setAttribute("data-theme",t==="light"||t==="dark"||t==="system"?t:"system");
 var meta=document.querySelector('meta[name="theme-color"]');
-if(meta)meta.setAttribute("content",dark?"#151517":"#ffffff");
-var sb=localStorage.getItem("xigee:sidebar-collapsed")==="true";
+if(meta)meta.setAttribute("content",dark?${JSON.stringify(BRAND_PAGE.dark)}:${JSON.stringify(BRAND_PAGE.light)});
+var sb=g(P+":sidebar-collapsed")==="true";
 d.setAttribute("data-sidebar",sb?"collapsed":"expanded");
-try{var h=JSON.parse(localStorage.getItem("xigee:history")||"[]");var arr=Array.isArray(h)?h:(h&&Array.isArray(h.items)?h.items:[]);if(arr.length)d.setAttribute("data-history","has")}catch(e){}
+try{var h=JSON.parse(g(P+":history")||"[]");var arr=Array.isArray(h)?h:(h&&Array.isArray(h.items)?h.items:[]);if(arr.length)d.setAttribute("data-history","has")}catch(e){}
 var p=new URLSearchParams(location.search);
-var view=p.get("view")||localStorage.getItem("xigee:default-view")||"";
-var sort=p.get("sort")||localStorage.getItem("xigee:default-sort")||"";
+var view=p.get("view")||g(P+":default-view")||"";
+var sort=p.get("sort")||g(P+":default-sort")||"";
 var tab=p.get("tab")||"";
-if(view)d.setAttribute("data-view",view);
-if(sort)d.setAttribute("data-sort",sort);
-if(tab)d.setAttribute("data-tab",tab);
 var pending=(view&&view!=="grid")||(sort&&sort!=="latest")||(tab&&tab!=="all");
 if(pending){
 d.setAttribute("data-prefs","pending");
@@ -96,12 +96,12 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" className={`${GeistMono.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
-        <meta name="theme-color" content="#ffffff" />
+        <meta name="theme-color" content={BRAND_PAGE.light} />
         {/* 必须最先执行：同步内联脚本，早于首绘应用主题 / 侧栏 / 产品偏好的首帧状态 */}
         <script dangerouslySetInnerHTML={{ __html: prefsScript }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString }} />
       </head>
-      <body className="min-h-full flex flex-col md:h-[100dvh] md:overflow-hidden">
+      <body className="min-h-full flex flex-col pb-[env(safe-area-inset-bottom)] md:h-[100dvh] md:overflow-hidden">
         <HistoryTracker />
         <WebVitals />
         <TooltipProvider>
