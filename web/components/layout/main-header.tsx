@@ -1,20 +1,34 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { Suspense, useEffect, useRef, useState, type RefObject } from "react"
 import Link from "next/link"
 import { Search } from "lucide-react"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import type { Category } from "@/lib/types"
 
 /**
+ * 查询回填：隔离在 Suspense 内读取 useSearchParams，使输入框本身仍可 SSR（不随查询串退化为客户端渲染）；
+ * 依赖 query 而非 pathname，覆盖「同路径仅查询串变化」（如点击推荐词）。
+ */
+function QuerySync({ inputRef }: { inputRef: RefObject<HTMLInputElement | null> }) {
+  const searchParams = useSearchParams()
+  const query = searchParams.get("q") ?? ""
+
+  useEffect(() => {
+    const el = inputRef.current
+    if (el && el.value !== query) el.value = query
+  }, [inputRef, query])
+
+  return null
+}
+
+/**
  * DSH 式主区搜索框：全站按 `/` 聚焦（非输入态），Enter 跳转 /search?q=…。
- * 输入框为**非受控**且不依赖 useSearchParams，使其可被 SSR（避免首帧只剩骨架盒、占位符后补的闪烁）；
- * URL 查询经 pathname 变化时用 ref 回填，不触发 effect 内 setState。
+ * 输入框为非受控，URL 查询经 QuerySync 回填。
  */
 function SearchField() {
-  const pathname = usePathname()
   const [fade, setFade] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const fadeTimer = useRef<number | null>(null)
@@ -40,12 +54,6 @@ function SearchField() {
     }
   }, [])
 
-  // 从 URL 回填查询（客户端；不订阅 useSearchParams 以保 SSR）
-  useEffect(() => {
-    const el = inputRef.current
-    if (el) el.value = new URLSearchParams(window.location.search).get("q") ?? ""
-  }, [pathname])
-
   const handleSearch = () => {
     const trimmed = inputRef.current?.value.trim() ?? ""
     if (!trimmed) return
@@ -54,6 +62,9 @@ function SearchField() {
 
   return (
     <InputGroup className={cn("group w-full max-w-xs", fade && "opacity-50")}>
+      <Suspense fallback={null}>
+        <QuerySync inputRef={inputRef} />
+      </Suspense>
       <InputGroupAddon>
         <Search className="text-muted-foreground/60 transition-colors group-focus-within:text-muted-foreground" />
       </InputGroupAddon>

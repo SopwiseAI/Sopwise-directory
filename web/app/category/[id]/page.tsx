@@ -18,16 +18,20 @@ export async function generateStaticParams() {
   }))
 }
 
+export const dynamicParams = false
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
   const category = getCategoryById(id)
-  if (!category) return { title: "分类未找到" }
+  if (!category) return { title: "分类未找到", robots: { index: false, follow: true } }
   const description = `发现和浏览${category.name}类别的 AI 产品，XiGee 为你精选最佳工具`
+  const empty = getProductsByCategory(id).length === 0
   return {
     title: `${category.name}`,
     description,
     alternates: { canonical: `/category/${id}` },
-    openGraph: { title: `${category.name} — XiGee`, description }
+    openGraph: { title: `${category.name} — XiGee`, description },
+    ...(empty ? { robots: { index: false, follow: true } } : {})
   }
 }
 
@@ -69,7 +73,9 @@ export default async function CategoryPage({ params }: Props) {
   return (
     <div className="space-y-4">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld(breadcrumbLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld(itemListLd) }} />
+      {products.length > 0 && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld(itemListLd) }} />
+      )}
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-md border bg-card">
           {categoryIconNode(category.icon, "size-4.5 text-foreground")}

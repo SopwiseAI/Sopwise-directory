@@ -12,13 +12,41 @@ import type { Product } from "@/lib/types"
 interface SearchResultsProps {
   products: readonly Product[]
   featured: readonly Product[]
-  suggestions: string[]
 }
 
-export function SearchResults({ products, featured, suggestions }: SearchResultsProps) {
+/** FNV-1a 32 位哈希：把查询串映射为洗牌种子。 */
+function hashString(input: string): number {
+  let h = 2166136261
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return h >>> 0
+}
+
+/**
+ * Fisher–Yates 洗牌（确定性：同一种子同结果，返回新数组）。
+ * 种子取自查询串哈希，服务端与客户端算出同一顺序 —— 不产生水合不一致，也不会有「先原序后乱序」的闪烁。
+ */
+function shuffleWithSeed<T>(items: readonly T[], seed: number): T[] {
+  const arr = [...items]
+  let s = seed || 1
+  for (let i = arr.length - 1; i > 0; i--) {
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0
+    const j = Math.floor((s / 4294967296) * (i + 1))
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr
+}
+
+export function SearchResults({ products, featured }: SearchResultsProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const query = searchParams.get("q") || ""
+
+  // 不同搜索词 → 不同推荐；同 URL 稳定。种子两端一致，故无重排闪烁。
+  const displayedFeatured = useMemo(() => shuffleWithSeed(featured, hashString(query)), [featured, query])
+  const suggestions = useMemo(() => displayedFeatured.slice(0, 5).map((p) => p.name), [displayedFeatured])
 
   const searchIndex = useMemo(() => createSearchIndex(products), [products])
 
@@ -83,15 +111,15 @@ export function SearchResults({ products, featured, suggestions }: SearchResults
           </EmptyContent>
         </Empty>
 
-        {featured.length > 0 && (
+        {displayedFeatured.length > 0 && (
           <div className="space-y-2">
             <h2 className="flex items-baseline gap-2 text-base font-semibold tracking-tight">
               精选推荐
               <span className="font-data font-normal text-muted-foreground">FEATURED</span>
             </h2>
             <div className="rounded-lg border bg-card">
-              {featured.map((product, i) => (
-                <ProductRow key={product.id} product={product} last={i === featured.length - 1} />
+              {displayedFeatured.map((product, i) => (
+                <ProductRow key={product.id} product={product} last={i === displayedFeatured.length - 1} />
               ))}
             </div>
           </div>
@@ -102,7 +130,7 @@ export function SearchResults({ products, featured, suggestions }: SearchResults
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">
+      <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
         找到 <span className="font-data font-medium text-foreground">{formatCount(results.length)}</span> 个与{" "}
         <span className="font-medium text-foreground">「{query}」</span> 相关的结果
       </p>

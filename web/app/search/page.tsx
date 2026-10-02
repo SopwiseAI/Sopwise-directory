@@ -6,17 +6,18 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export const metadata: Metadata = {
   title: "搜索",
+  alternates: { canonical: "/search" },
+  openGraph: { title: "搜索" },
   robots: { index: false, follow: true }
 }
 
 const allProducts = getAllProducts()
 const featured = getFeaturedProducts()
-const suggestions = featured.slice(0, 5).map((p) => p.name)
 
 /** 搜索结果为客户端计算（query 来自 URL），SSR 呈现同构骨架，避免「加载中…→结果」突兀跳变。 */
 function ResultsSkeleton() {
   return (
-    <div className="space-y-3" aria-busy="true" aria-live="polite">
+    <div className="space-y-3" aria-busy="true">
       <Skeleton className="h-5 w-44 rounded" />
       <div className="overflow-hidden rounded-lg border bg-card">
         {Array.from({ length: 12 }).map((_, i) => (
@@ -38,7 +39,7 @@ export default function SearchPage() {
       {/* h1：页面语义主题（PG-04） */}
       <h1 className="sr-only">搜索 AI 产品</h1>
       <Suspense fallback={<ResultsSkeleton />}>
-        <SearchResults products={allProducts} featured={featured} suggestions={suggestions} />
+        <SearchResults products={allProducts} featured={featured} />
       </Suspense>
     </>
   )
