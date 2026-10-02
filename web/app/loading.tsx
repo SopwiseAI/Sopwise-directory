@@ -2,7 +2,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export default function Loading() {
   return (
-    <div className="space-y-4" aria-busy="true" aria-live="polite">
+    <div role="status" className="space-y-4" aria-busy="true">
+      <span className="sr-only">正在加载…</span>
       <Skeleton className="h-8 w-48 rounded-md" />
       <div className="product-card-grid">
         {Array.from({ length: 12 }).map((_, i) => (

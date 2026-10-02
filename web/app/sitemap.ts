@@ -1,23 +1,28 @@
 import type { MetadataRoute } from "next"
-import { getAllCategories, getAllProducts } from "@/lib/data"
+import { getAllCategories, getAllProducts, getCategoryCounts, getProductsByCategory } from "@/lib/data"
 import { getProductDate } from "@/lib/product"
+import type { Product } from "@/lib/types"
 import { getBaseUrl } from "@/lib/utils"
+
+/** 取一组产品中最新的发布日期（无日期则回落到 epoch）。 */
+function latestDate(products: readonly Product[]): string {
+  return products.reduce((max, p) => {
+    const date = getProductDate(p)
+    return date > max ? date : max
+  }, "1970-01-01")
+}
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = getBaseUrl()
   const categories = getAllCategories()
-  const products = getAllProducts()
+  const countMap = getCategoryCounts()
 
-  const lastModified = products.reduce((max, p) => {
-    const date = getProductDate(p)
-    return date && date > max ? date : max
-  }, "1970-01-01")
-  const lastModifiedDate = new Date(lastModified)
+  const categoryUrls = categories
+    .filter((cat) => (countMap[cat.id] ?? 0) > 0)
+    .map((cat) => ({
+      url: `${baseUrl}/category/${cat.id}`,
+      lastModified: new Date(latestDate(getProductsByCategory(cat.id)))
+    }))
 
-  const categoryUrls = categories.map((cat) => ({
-    url: `${baseUrl}/category/${cat.id}`,
-    lastModified: lastModifiedDate
-  }))
-
-  return [{ url: baseUrl, lastModified: lastModifiedDate }, ...categoryUrls]
+  return [{ url: baseUrl, lastModified: new Date(latestDate(getAllProducts())) }, ...categoryUrls]
 }

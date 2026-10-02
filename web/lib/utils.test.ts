@@ -37,4 +37,9 @@ describe("getBaseUrl", () => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", undefined as unknown as string)
     expect(getBaseUrl()).toBe("https://www.xigee.net")
   })
+
+  it("strips trailing slashes", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://test.example.com///")
+    expect(getBaseUrl()).toBe("https://test.example.com")
+  })
 })
