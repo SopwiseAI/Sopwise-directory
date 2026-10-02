@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { InfoShell, InfoSection } from "@/components/info/info-shell"
+import { InfoLayout, InfoSection } from "@/components/info/info-shell"
 
 export const metadata: Metadata = {
   title: "隐私政策",
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <InfoShell
+    <InfoLayout
       title="隐私政策"
       description="简短版：XiGee 无账号、无追踪，你的偏好与历史只保存在本机浏览器。"
       updated="2026-10-02"
@@ -65,6 +65,6 @@ export default function PrivacyPage() {
       <InfoSection title="政策变更">
         <p>本政策如有更新，将在此页公示并同步更新「最后更新」日期。</p>
       </InfoSection>
-    </InfoShell>
+    </InfoLayout>
   )
 }

@@ -3,7 +3,7 @@
 import type { ReactNode } from "react"
 import { useSyncExternalStore } from "react"
 import Link from "next/link"
-import { InfoNav } from "@/components/info/info-nav"
+import { InfoLayout } from "@/components/info/info-shell"
 import { ThemeSwitch } from "@/components/layout/theme-switch"
 import { StatItem } from "@/components/ui/stat-item"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -30,17 +30,6 @@ const noopSubscribe = () => () => {}
 const mountedSnapshot = () => true
 const notMountedSnapshot = () => false
 
-/** 主题卡片骨架：与 ThemeSwitch 的 3 列卡片同构，避免首帧选中态跳变。 */
-function ThemeSwitchSkeleton() {
-  return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" aria-hidden>
-      {[0, 1, 2].map((i) => (
-        <Skeleton key={i} className="h-[66px] rounded-lg" />
-      ))}
-    </div>
-  )
-}
-
 function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-2">
@@ -49,6 +38,17 @@ function SettingsSection({ title, children }: { title: string; children: ReactNo
       </h2>
       <div className="space-y-3 rounded-lg border bg-card px-4 py-3.5">{children}</div>
     </section>
+  )
+}
+
+/** 主题卡片骨架：与 ThemeSwitch 的 3 列卡片同构，避免首帧选中态跳变。 */
+function ThemeSwitchSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" aria-hidden>
+      {[0, 1, 2].map((i) => (
+        <Skeleton key={i} className="h-[66px] rounded-lg" />
+      ))}
+    </div>
   )
 }
 
@@ -65,10 +65,7 @@ export function SettingsView({ version, stats }: SettingsViewProps) {
   const mounted = useSyncExternalStore(noopSubscribe, mountedSnapshot, notMountedSnapshot)
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6">
-      <h1 className="text-2xl font-semibold tracking-tight">设置</h1>
-      <InfoNav className="-mt-3" />
-
+    <InfoLayout title="设置" description="外观、浏览偏好、数据与隐私、关于与版本、快捷键。">
       <SettingsSection title="外观">
         <p className="text-xs text-muted-foreground">选择外观模式，跟随系统会自动适配深浅色。</p>
         {mounted ? <ThemeSwitch /> : <ThemeSwitchSkeleton />}
@@ -120,6 +117,6 @@ export function SettingsView({ version, stats }: SettingsViewProps) {
       <SettingsSection title="快捷键">
         <Shortcuts />
       </SettingsSection>
-    </div>
+    </InfoLayout>
   )
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { getStats } from "@/lib/data"
-import { InfoShell, InfoSection } from "@/components/info/info-shell"
+import { InfoLayout, InfoSection } from "@/components/info/info-shell"
 import { StatItem } from "@/components/ui/stat-item"
 import { getBaseUrl } from "@/lib/utils"
 import pkg from "@/package.json"
@@ -17,7 +17,7 @@ const stats = getStats()
 
 export default function AboutPage() {
   return (
-    <InfoShell
+    <InfoLayout
       title="关于 XiGee"
       description="你的 AI 发现引擎 —— 精选并分类收录各类 AI 工具与应用。"
       updated="2026-10-02"
@@ -63,6 +63,6 @@ export default function AboutPage() {
           当前版本 v{pkg.version} · {getBaseUrl().replace(/^https?:\/\//, "")}
         </p>
       </InfoSection>
-    </InfoShell>
+    </InfoLayout>
   )
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { InfoShell, InfoSection } from "@/components/info/info-shell"
+import { InfoLayout, InfoSection } from "@/components/info/info-shell"
 
 export const metadata: Metadata = {
   title: "服务条款",
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <InfoShell title="服务条款" description="使用 XiGee 即表示你理解并接受以下条款。" updated="2026-10-02">
+    <InfoLayout title="服务条款" description="使用 XiGee 即表示你理解并接受以下条款。" updated="2026-10-02">
       <InfoSection title="内容性质">
         <p>
           XiGee 是一个 AI
@@ -51,6 +51,6 @@ export default function TermsPage() {
           。
         </p>
       </InfoSection>
-    </InfoShell>
+    </InfoLayout>
   )
 }
