@@ -4,9 +4,11 @@ import {
   removeFromHistory,
   clearHistory,
   getHistory,
+  getHistoryExport,
   getHistoryItem,
   getHistorySnapshot,
   groupHistoryByPeriod,
+  importHistory,
   parseHistorySnapshot,
   resolveMaxItems,
   subscribeHistory,
@@ -213,6 +215,85 @@ describe("配额降级", () => {
     addToHistory({ ...mockProduct, id: "test-2" })
     spy.mockRestore()
     expect(getHistory().map((i) => i.id)).toContain("test-2")
+  })
+})
+
+describe("导出与导入", () => {
+  beforeEach(() => localStorage.clear())
+
+  it("导出为 v2 信封且可被解析", () => {
+    addToHistory(mockProduct)
+    const raw = getHistoryExport()
+    expect(JSON.parse(raw)).toMatchObject({ v: 2 })
+    expect(parseHistorySnapshot(raw).map((i) => i.id)).toEqual(["test-1"])
+  })
+
+  it("导入到空历史：计入 imported", () => {
+    const file = JSON.stringify({
+      v: 2,
+      items: [
+        { id: "a", name: "A", url: "https://a.com", visitCount: 2, lastVisitedAt: "2024-02-01T00:00:00.000Z" },
+        { id: "b", name: "B", url: "https://b.com", lastVisitedAt: "2024-03-01T00:00:00.000Z" }
+      ]
+    })
+    const res = importHistory(file)
+    expect(res).toMatchObject({ imported: 2, skipped: 0, total: 2 })
+    expect(getHistory().map((i) => i.id)).toEqual(["b", "a"])
+  })
+
+  it("接受旧版裸数组", () => {
+    const res = importHistory(JSON.stringify([{ id: "x", name: "X", url: "https://x.com" }]))
+    expect(res.imported).toBe(1)
+    expect(getHistory()[0].id).toBe("x")
+  })
+
+  it("合并去重：取较大 visitCount、较新 lastVisitedAt、较早 firstVisitedAt", () => {
+    addToHistory({ ...mockProduct, id: "a" })
+    const first = getHistory()[0].firstVisitedAt
+    const file = JSON.stringify({
+      v: 2,
+      items: [
+        {
+          id: "a",
+          name: "A",
+          url: "https://a.com",
+          visitCount: 7,
+          lastVisitedAt: "2099-01-01T00:00:00.000Z",
+          firstVisitedAt: "2000-01-01T00:00:00.000Z"
+        }
+      ]
+    })
+    const res = importHistory(file)
+    expect(res.imported).toBe(1)
+    const item = getHistory()[0]
+    expect(item.visitCount).toBe(7)
+    expect(item.lastVisitedAt).toBe("2099-01-01T00:00:00.000Z")
+    expect(item.firstVisitedAt).toBe("2000-01-01T00:00:00.000Z")
+    expect(first).not.toBe(item.firstVisitedAt)
+  })
+
+  it("丢弃缺 id/url 与文件内重复项", () => {
+    const file = JSON.stringify([
+      { id: "", url: "https://x.com", name: "bad" },
+      { id: "a", name: "A", url: "https://a.com" },
+      { id: "a", name: "A dup", url: "https://a.com" },
+      { id: "b", name: "B", url: "https://b.com" }
+    ])
+    const res = importHistory(file)
+    expect(res.imported).toBe(2)
+    expect(res.skipped).toBe(2)
+  })
+
+  it("非法 JSON 返回错误且不写入", () => {
+    const res = importHistory("{not json")
+    expect(res.error).toBeTruthy()
+    expect(getHistory()).toEqual([])
+  })
+
+  it("格式不符返回错误", () => {
+    const res = importHistory(JSON.stringify({ foo: 1 }))
+    expect(res.error).toBeTruthy()
+    expect(getHistory()).toEqual([])
   })
 })
 

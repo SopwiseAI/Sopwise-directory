@@ -80,7 +80,7 @@ try{var h=JSON.parse(g(P+":history")||"[]");var arr=Array.isArray(h)?h:(h&&Array
 var p=new URLSearchParams(location.search);
 var view=p.get("view")||g(P+":default-view")||"";
 var sort=p.get("sort")||g(P+":default-sort")||"";
-var tab=p.get("tab")||"";
+var tab=p.get("tab")||g(P+":default-tab")||"";
 var pending=(view&&view!=="grid")||(sort&&sort!=="latest")||(tab&&tab!=="all");
 if(pending){
 d.setAttribute("data-prefs","pending");

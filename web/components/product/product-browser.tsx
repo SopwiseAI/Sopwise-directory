@@ -4,21 +4,20 @@ import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useState, u
 import { useSearchParams } from "next/navigation"
 import type { Product } from "@/lib/types"
 import { getProductDate } from "@/lib/product"
-import { storageKey } from "@/lib/storage"
+import {
+  getSort,
+  getTab,
+  getView,
+  setSort as persistSort,
+  setView as persistView,
+  subscribePreferences
+} from "@/lib/preferences"
 import { ProductRow } from "@/components/product/product-row"
 import { ProductCard } from "@/components/product/product-card"
 import { ProductToolbar } from "@/components/product/toolbar"
 import { Button } from "@/components/ui/button"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
-import {
-  isValidSort,
-  isValidView,
-  readUrlParams,
-  type SortMode,
-  type TabMode,
-  type UrlState,
-  type ViewMode
-} from "@/lib/product-query"
+import { readUrlParams, type SortMode, type TabMode, type UrlState, type ViewMode } from "@/lib/product-query"
 import { PackageOpen } from "lucide-react"
 import Link from "next/link"
 
@@ -55,30 +54,9 @@ const notMountedSnapshot = () => false
 /** SSR 期退化为 useEffect，客户端用 useLayoutEffect 在首绘帧前揭示（避免中介帧闪烁）。 */
 const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect
 
-function readStore(key: string): string {
-  if (typeof window === "undefined") return emptyString
-  try {
-    return localStorage.getItem(key) ?? emptyString
-  } catch {
-    return emptyString
-  }
-}
-
-const getStoredView = () => readStore(storageKey("default-view"))
-const getStoredSort = () => readStore(storageKey("default-sort"))
-
 function getUrlSearch(): string {
   if (typeof window === "undefined") return emptyString
   return window.location.search
-}
-
-/** 持久化展示偏好，忽略隐私模式/配额失败（当前会话仍然生效）。 */
-function persist(key: string, value: string): void {
-  try {
-    localStorage.setItem(key, value)
-  } catch {
-    /* noop */
-  }
 }
 
 export function ProductBrowser({
@@ -90,15 +68,17 @@ export function ProductBrowser({
   showTabs = true,
   defaultTab = "all"
 }: ProductBrowserProps) {
-  const storedView = useSyncExternalStore(noopSubscribe, getStoredView, () => emptyString)
-  const storedSort = useSyncExternalStore(noopSubscribe, getStoredSort, () => emptyString)
+  const storedView = useSyncExternalStore(subscribePreferences, getView, () => null)
+  const storedSort = useSyncExternalStore(subscribePreferences, getSort, () => null)
+  const storedTab = useSyncExternalStore(subscribePreferences, getTab, () => null)
   const urlSearch = useSyncExternalStore(noopSubscribe, getUrlSearch, () => emptyString)
   const mounted = useSyncExternalStore(noopSubscribe, mountedSnapshot, notMountedSnapshot)
 
   const initial = useMemo(() => readUrlParams(urlSearch), [urlSearch])
-  const initialView = initial.view ?? (isValidView(storedView) ? storedView : defaultView)
-  const initialSort = initial.sort ?? (isValidSort(storedSort) ? storedSort : defaultSort)
-  const initialTab = initial.tab ?? defaultTab
+  const initialView = initial.view ?? storedView ?? defaultView
+  const initialSort = initial.sort ?? storedSort ?? defaultSort
+  // 默认 Tab 仅在展示 Tab 的页面生效：否则（如分类页）会静默过滤产品却无切换入口
+  const initialTab = initial.tab ?? (showTabs ? (storedTab ?? defaultTab) : defaultTab)
 
   const [viewOverride, setViewOverride] = useState<ViewMode | null>(null)
   const [sortOverride, setSortOverride] = useState<SortMode | null>(null)
@@ -144,16 +124,16 @@ export function ProductBrowser({
   const resolvedSort: SortMode = isLatestTab ? "latest" : sort
 
   const setView = (v: ViewMode) => {
-    persist(storageKey("default-view"), v)
+    persistView(v)
     setViewOverride(v)
   }
 
   const setSort = (s: SortMode) => {
-    persist(storageKey("default-sort"), s)
+    persistSort(s)
     setSortOverride(s)
   }
 
-  // 切换 tab 不再重置排序：排序为用户独立偏好（最新 tab 由 resolvedSort 强制最新）
+  // 切换 tab 不写入默认偏好：Tab 为会话级筛选（体现在 URL），「默认 Tab」仅在设置页修改
   const setTab = (t: TabMode) => {
     setTabOverride(t)
   }

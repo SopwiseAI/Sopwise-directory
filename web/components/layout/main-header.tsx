@@ -113,6 +113,9 @@ function resolveCrumbs(pathname: string, categories: readonly Category[]): Crumb
   if (pathname === "/search") return [{ label: "搜索" }]
   if (pathname === "/history") return [{ label: "历史记录" }]
   if (pathname === "/settings") return [{ label: "设置" }]
+  if (pathname === "/about") return [{ label: "关于" }]
+  if (pathname === "/privacy") return [{ label: "隐私政策" }]
+  if (pathname === "/terms") return [{ label: "服务条款" }]
   return [{ label: "全部产品" }]
 }
 

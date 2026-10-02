@@ -24,5 +24,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(latestDate(getProductsByCategory(cat.id)))
     }))
 
-  return [{ url: baseUrl, lastModified: new Date(latestDate(getAllProducts())) }, ...categoryUrls]
+  const infoUrls = ["/about", "/privacy", "/terms"].map((path) => ({
+    url: `${baseUrl}${path}`
+  }))
+
+  return [{ url: baseUrl, lastModified: new Date(latestDate(getAllProducts())) }, ...categoryUrls, ...infoUrls]
 }

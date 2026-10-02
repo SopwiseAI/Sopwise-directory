@@ -236,6 +236,85 @@ export function clearHistory(): HistoryItem[] {
   return []
 }
 
+/** 导出为可读的 v2 信封 JSON 字符串，供「导出到文件」。 */
+export function getHistoryExport(): string {
+  return JSON.stringify({ v: SCHEMA_VERSION, items: getHistory() } satisfies Envelope, null, 2)
+}
+
+export interface ImportResult {
+  /** 文件中有效且并入的记录数。 */
+  imported: number
+  /** 被丢弃的条目数（缺 id/url、文件内重复）。 */
+  skipped: number
+  /** 合并后的最终记录总数。 */
+  total: number
+  /** 失败原因；成功时为 undefined。 */
+  error?: string
+}
+
+/**
+ * 从 JSON 导入历史并与现有记录合并：
+ * 同 id 保留较新的 lastVisitedAt 与较大的 visitCount、较早的 firstVisitedAt；
+ * 非法 JSON / 格式不符返回 error 且不写入；成功按 lastVisitedAt 倒序持久化并通知订阅者。
+ */
+export function importHistory(raw: string): ImportResult {
+  if (!isBrowser()) return { imported: 0, skipped: 0, total: 0, error: "当前环境不支持导入" }
+
+  let data: unknown
+  try {
+    data = JSON.parse(raw)
+  } catch {
+    return { imported: 0, skipped: 0, total: 0, error: "JSON 解析失败" }
+  }
+
+  const source: unknown[] | null = Array.isArray(data)
+    ? data
+    : data && typeof data === "object" && Array.isArray((data as Envelope).items)
+      ? (data as Envelope).items
+      : null
+  if (!source) {
+    return { imported: 0, skipped: 0, total: 0, error: "格式不正确：应为历史数组或 { v, items } 信封" }
+  }
+
+  const incoming: HistoryItem[] = []
+  const seen = new Set<string>()
+  let skipped = 0
+  for (const entry of source) {
+    const item = normalizeItem(entry)
+    if (!item || seen.has(item.id)) {
+      skipped++
+      continue
+    }
+    seen.add(item.id)
+    incoming.push(item)
+  }
+
+  const merged = new Map<string, HistoryItem>(getHistory().map((i) => [i.id, i]))
+  for (const item of incoming) {
+    const current = merged.get(item.id)
+    if (!current) {
+      merged.set(item.id, item)
+      continue
+    }
+    const newer = Date.parse(item.lastVisitedAt) >= Date.parse(current.lastVisitedAt) ? item : current
+    const older = newer === item ? current : item
+    merged.set(item.id, {
+      ...newer,
+      firstVisitedAt:
+        Date.parse(older.firstVisitedAt) < Date.parse(newer.firstVisitedAt)
+          ? older.firstVisitedAt
+          : newer.firstVisitedAt,
+      visitCount: Math.max(current.visitCount, item.visitCount)
+    })
+  }
+
+  const ordered = [...merged.values()].sort((a, b) => Date.parse(b.lastVisitedAt) - Date.parse(a.lastVisitedAt))
+  const saved = persist(ordered)
+  if (!saved) return { imported: 0, skipped, total: 0, error: "写入失败：本地存储不可用" }
+  notify()
+  return { imported: incoming.length, skipped, total: saved.length }
+}
+
 /** 按 id 查询单条历史 */
 export function getHistoryItem(id: string): HistoryItem | undefined {
   if (!isBrowser()) return undefined
