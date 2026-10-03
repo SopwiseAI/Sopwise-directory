@@ -2,8 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Search, Settings, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Search, Settings } from "lucide-react"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -16,6 +15,10 @@ function initialQuery(): string {
   return new URLSearchParams(window.location.search).get("q") ?? ""
 }
 
+/**
+ * 移动端搜索：展开后为受控输入框，失焦或按 Esc 收起（无独立关闭按钮，节省窄屏空间）。
+ * 有内容时按 Esc 先清空，再次 Esc 才收起——与常见命令栏一致。
+ */
 function MobileSearchInput({ onClose }: { onClose: () => void }) {
   const [value, setValue] = useState(initialQuery)
   const router = useRouter()
@@ -28,32 +31,32 @@ function MobileSearchInput({ onClose }: { onClose: () => void }) {
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") handleSearch()
-    if (e.key === "Escape") onClose()
+    if (e.key === "Enter") {
+      handleSearch()
+    } else if (e.key === "Escape") {
+      if (value) setValue("")
+      else onClose()
+    }
   }
 
   return (
-    <div className="flex items-center gap-1">
-      <InputGroup className="w-full">
-        <InputGroupAddon>
-          <Search className="text-muted-foreground/60" />
-        </InputGroupAddon>
-        <InputGroupInput
-          autoFocus
-          type="search"
-          enterKeyHint="search"
-          aria-label="搜索 AI 产品"
-          autoComplete="off"
-          placeholder="搜索 AI 产品…"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-        />
-      </InputGroup>
-      <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="关闭搜索">
-        <X className="size-4" />
-      </Button>
-    </div>
+    <InputGroup className="w-full">
+      <InputGroupAddon>
+        <Search className="text-muted-foreground/60" />
+      </InputGroupAddon>
+      <InputGroupInput
+        autoFocus
+        type="search"
+        enterKeyHint="search"
+        aria-label="搜索 AI 产品"
+        autoComplete="off"
+        placeholder="搜索 AI 产品…"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onBlur={onClose}
+      />
+    </InputGroup>
   )
 }
 
@@ -84,25 +87,21 @@ function HeaderInner({ className }: { className?: string }) {
 
         <div className="flex flex-1 items-center justify-end gap-2">
           {searchOpen ? (
-            <div id="mobile-search" className="w-full max-w-xs">
+            <div id="mobile-search" className="w-full">
               <MobileSearchInput key={searchResetKey} onClose={handleSearchClose} />
             </div>
           ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 gap-2 rounded-md pr-1.5 text-xs text-muted-foreground"
+            <button
+              type="button"
+              aria-label="搜索产品"
+              title="搜索"
               aria-expanded={false}
               aria-controls="mobile-search"
               onClick={() => setSearchOpen(true)}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <Search className="size-3.5" />
-              <span className="hidden sm:inline">搜索产品</span>
-              <span className="sm:hidden">搜索</span>
-              <span className="kbd" aria-hidden>
-                /
-              </span>
-            </Button>
+              <Search className="size-4" />
+            </button>
           )}
 
           <Link

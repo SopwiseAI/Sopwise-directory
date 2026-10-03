@@ -1,17 +1,8 @@
 "use client"
 
-import { useSyncExternalStore } from "react"
 import { Monitor, Moon, Sun } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { getTheme, setTheme, subscribeTheme, type ThemeMode } from "@/lib/theme"
-
-export type { ThemeMode }
-
-export function useTheme(): ThemeMode {
-  return useSyncExternalStore(subscribeTheme, getTheme, () => "system" as ThemeMode)
-}
-
-export { setTheme }
+import { setTheme, useTheme, type ThemeMode } from "@/lib/theme"
 
 /** 单按钮循环切换（亮 → 暗 → 系统 → 亮），折叠态使用 */
 export default function ThemeToggle() {

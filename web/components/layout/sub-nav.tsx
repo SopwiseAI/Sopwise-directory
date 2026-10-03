@@ -4,16 +4,14 @@ import { useEffect, useRef } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { formatCount } from "@/lib/format"
 import type { Category } from "@/lib/types"
 
 interface SubNavProps {
   className?: string
   categories: readonly Category[]
-  categoryCounts: Record<string, number>
 }
 
-export function SubNav({ className, categories, categoryCounts }: SubNavProps) {
+export function SubNav({ className, categories }: SubNavProps) {
   const pathname = usePathname()
   const firstRun = useRef(true)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -58,14 +56,13 @@ export function SubNav({ className, categories, categoryCounts }: SubNavProps) {
                 href={`/category/${category.id}`}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "flex shrink-0 items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "shrink-0 rounded-md px-3 py-1.5 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   isActive
                     ? "bg-brand/10 font-medium text-brand"
                     : "text-muted-foreground hover:bg-brand/5 hover:text-brand"
                 )}
               >
                 {category.name}
-                <span className="font-data text-muted-foreground">{formatCount(categoryCounts[category.id] ?? 0)}</span>
               </Link>
             )
           })}

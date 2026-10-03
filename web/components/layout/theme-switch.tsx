@@ -2,7 +2,7 @@
 
 import { Monitor, Moon, Sun } from "lucide-react"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { setTheme, useTheme, type ThemeMode } from "@/components/layout/theme-toggle"
+import { setTheme, useTheme, type ThemeMode } from "@/lib/theme"
 
 const options: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
   { value: "light", label: "亮色", icon: Sun },

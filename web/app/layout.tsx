@@ -113,7 +113,7 @@ export default function RootLayout({
           </a>
           {/* 首帧偏好由 <head> 内联 prefsScript 在首绘前写入 <html>，此处不再使用 next/script */}
           <Header className="md:hidden" />
-          <SubNav className="md:hidden" categories={allCategories} categoryCounts={categoryCounts} />
+          <SubNav className="md:hidden" categories={allCategories} />
           {/* DSH 双表面骨架：左栏灰（sidebar）/ 右区白（main） */}
           <div className="flex flex-1 md:overflow-hidden">
             <Sidebar categories={allCategories} categoryCounts={categoryCounts} totalProducts={totalProducts} />

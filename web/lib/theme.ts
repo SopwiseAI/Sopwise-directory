@@ -1,5 +1,6 @@
 "use client"
 
+import { useSyncExternalStore } from "react"
 import { BRAND_PAGE } from "@/lib/brand"
 
 export type ThemeMode = "light" | "dark" | "system"
@@ -73,4 +74,9 @@ export function subscribeTheme(callback: () => void): () => void {
 export function setTheme(theme: ThemeMode): void {
   applyTheme(theme)
   notify()
+}
+
+/** 订阅当前主题（供组件使用）；服务端快照回退 "system"，首帧由 <html data-theme> 兜底。 */
+export function useTheme(): ThemeMode {
+  return useSyncExternalStore(subscribeTheme, getTheme, () => "system" as ThemeMode)
 }

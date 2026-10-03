@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useHistoryCount } from "@/components/history/history-count"
 import { Skeleton } from "@/components/ui/skeleton"
-import { setTheme } from "@/components/layout/theme-toggle"
+import { setTheme } from "@/lib/theme"
 import { clearHistory, getHistoryExport, importHistory } from "@/lib/history"
 import { resetPreferences } from "@/lib/preferences"
 import { formatCount } from "@/lib/format"
