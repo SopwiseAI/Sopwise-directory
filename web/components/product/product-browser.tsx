@@ -13,7 +13,7 @@ import {
 } from "react"
 import { useSearchParams } from "next/navigation"
 import type { Category, Product } from "@/lib/types"
-import { compareRecommended, getProductDate } from "@/lib/product"
+import { compareName, compareRecommended, getProductDate } from "@/lib/product"
 import {
   getSort,
   getTab,
@@ -171,10 +171,10 @@ export function ProductBrowser({
     const list = tab === "featured" ? products.filter((p) => p.featured) : [...products]
     switch (resolvedSort) {
       case "name-asc":
-        list.sort((a, b) => a.name.localeCompare(b.name))
+        list.sort(compareName)
         break
       case "name-desc":
-        list.sort((a, b) => b.name.localeCompare(a.name))
+        list.sort((a, b) => compareName(b, a))
         break
       case "latest":
         list.sort((a, b) => getProductDate(b).localeCompare(getProductDate(a)))

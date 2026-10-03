@@ -81,4 +81,14 @@ describe("compareRecommended", () => {
     list.sort(compareRecommended)
     expect(list[0].id).toBe("a")
   })
+
+  it("中英混排名称排序确定性（回归：localeCompare 导致 hydration mismatch）", () => {
+    const en = mk("poe", "2024-01-01")
+    const zh = mk("沉浸式翻译", "2024-01-01")
+    const list1 = [en, zh]
+    const list2 = [zh, en]
+    list1.sort(compareRecommended)
+    list2.sort(compareRecommended)
+    expect(list1.map((p) => p.id)).toEqual(list2.map((p) => p.id))
+  })
 })
