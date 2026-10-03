@@ -206,6 +206,13 @@
     background-color: color-mix(in oklch, var(--primary) 16%, transparent);
   }
 
+  /* 隐藏 type="search" 的原生清除按钮：避免与自定义清除按钮重复出现（进入 WebKit 清除按钮） */
+  input[type="search"]::-webkit-search-cancel-button,
+  input[type="search"]::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
   /* 细滚动条 —— DSH 指针提示：滑块默认透明，指针进入滚动容器时才显形 */
   * {
     scrollbar-width: thin;

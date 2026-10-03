@@ -3,14 +3,13 @@
 import { useSyncExternalStore, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutGrid, History, Settings } from "lucide-react"
+import { LayoutGrid, History } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { BrandMark } from "@/components/brand/brand-mark"
 import { Wordmark } from "@/components/brand/wordmark"
 import { PanelIcon } from "@/components/brand/panel-icon"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { storageKey } from "@/lib/storage"
 import { categoryIconNode } from "@/lib/category-icon-node"
@@ -21,7 +20,7 @@ import type { Category } from "@/lib/types"
 const STORAGE_KEY = storageKey("sidebar-collapsed")
 const COLLAPSE_EVENT = "xigee:sidebar-collapse"
 
-function getSnapshot() {
+function getSidebarSnapshot() {
   try {
     return localStorage.getItem(STORAGE_KEY) === "true"
   } catch {
@@ -29,11 +28,11 @@ function getSnapshot() {
   }
 }
 
-function getServerSnapshot() {
+function getSidebarServerSnapshot() {
   return false
 }
 
-function subscribe(callback: () => void) {
+function subscribeSidebar(callback: () => void) {
   const storageHandler = (e: StorageEvent) => {
     if (e.key !== STORAGE_KEY) return
     // 其他 tab 折叠变化时同步 data-sidebar，保持 CSS 引导一致（SB-01）
@@ -58,17 +57,17 @@ function toggleCollapsed(collapsed: boolean) {
   const next = !collapsed
   try {
     localStorage.setItem(STORAGE_KEY, String(next))
-    document.documentElement.setAttribute("data-sidebar", next ? "collapsed" : "expanded")
   } catch {
-    return
+    // 隐私模式/配额不足：持久化失败不阻断切换，仅本会话生效
   }
+  document.documentElement.setAttribute("data-sidebar", next ? "collapsed" : "expanded")
   window.dispatchEvent(new Event(COLLAPSE_EVENT))
 }
 
 /** 折叠态品牌竖轨：居中品牌方块即"打开侧边栏"按钮。
     方块常驻，hover 时方块内浮现实心 panel 图标（对齐 DSH railMark 交互）。 */
 function BrandRailToggle() {
-  const collapsed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  const collapsed = useSyncExternalStore(subscribeSidebar, getSidebarSnapshot, getSidebarServerSnapshot)
 
   const toggle = () => toggleCollapsed(collapsed)
 
@@ -95,7 +94,7 @@ function BrandRailToggle() {
 
 /** 展开态顶部收起按钮：28px 圆形 + 实心 panel 图标（对齐 DSH） */
 function CollapseToggle() {
-  const collapsed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  const collapsed = useSyncExternalStore(subscribeSidebar, getSidebarSnapshot, getSidebarServerSnapshot)
 
   const toggle = () => toggleCollapsed(collapsed)
 
@@ -121,11 +120,12 @@ interface SidebarProps {
 
 export function Sidebar({ categories, categoryCounts, totalProducts }: SidebarProps) {
   const pathname = usePathname()
-  const collapsed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  const collapsed = useSyncExternalStore(subscribeSidebar, getSidebarSnapshot, getSidebarServerSnapshot)
   const historyCount = useHistoryCount()
   const navRef = useRef<HTMLElement>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
-  const [scrollable, setScrollable] = useState(false)
+  const [atBottom, setAtBottom] = useState(true)
+  const [scrolled, setScrolled] = useState(false)
 
   // 标记 hydration 完成，关闭首帧引导 CSS（否则 display:none 会盖过 sr-only）
   // 用 useLayoutEffect 在 paint 前同步设置，消除无障碍盲窗
@@ -133,18 +133,27 @@ export function Sidebar({ categories, categoryCounts, totalProducts }: SidebarPr
     document.documentElement.setAttribute("data-sidebar-hydrated", "")
   }, [])
 
+  // 底部哨兵：内容未滚到底时显示底部渐隐阴影（scrollable）
   useEffect(() => {
     const nav = navRef.current
     const sentinel = sentinelRef.current
     if (!nav || !sentinel) return
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setScrollable(!entry.isIntersecting)
-      },
-      { root: nav, threshold: 0 }
-    )
+    const observer = new IntersectionObserver(([entry]) => setAtBottom(entry.isIntersecting), {
+      root: nav,
+      threshold: 0
+    })
     observer.observe(sentinel)
     return () => observer.disconnect()
+  }, [collapsed])
+
+  // 顶部阴影：向下滚动后，品牌行下方浮出阴影，暗示上方还有内容
+  useEffect(() => {
+    const nav = navRef.current
+    if (!nav) return
+    const onScroll = () => setScrolled(nav.scrollTop > 4)
+    onScroll()
+    nav.addEventListener("scroll", onScroll, { passive: true })
+    return () => nav.removeEventListener("scroll", onScroll)
   }, [collapsed])
   // 折叠态 tooltip 由 shadcn Tooltip 组件统一管理（Portal + 定位 + ARIA）
 
@@ -160,8 +169,14 @@ export function Sidebar({ categories, categoryCounts, totalProducts }: SidebarPr
     >
       {/* 品牌区：折叠控制恒在品牌行（DSH 式）。
        展开态：mark + XiGee | 收起按钮。
-       折叠态：整个品牌区即"打开侧边栏"按钮 —— 仅见 logo，hover LOGO 时浮现展开图标，点击展开。 */}
-      <div className={cn("flex shrink-0 items-center", collapsed ? "pt-2" : "h-16 justify-between px-3")}>
+       折叠态：整个品牌区即"打开侧边栏"按钮 —— 仅见 logo，hover LOGO 时浮现展开图标，点击展开。
+       下方留出间距，避免与首项图标「连在一起」。 */}
+      <div
+        className={cn(
+          "relative z-10 flex shrink-0 items-center bg-sidebar",
+          collapsed ? "justify-center py-2.5" : "h-16 justify-between px-3"
+        )}
+      >
         {collapsed ? (
           <BrandRailToggle />
         ) : (
@@ -185,7 +200,7 @@ export function Sidebar({ categories, categoryCounts, totalProducts }: SidebarPr
           aria-label="主导航"
           className={cn(
             "flex h-full flex-col overflow-y-auto",
-            collapsed ? "gap-1.5 px-2.5 pt-3" : "gap-0.5 px-1.5 pt-1"
+            collapsed ? "gap-1.5 px-2.5 pb-3 pt-3" : "gap-0.5 px-1.5 pb-3 pt-2"
           )}
         >
           {/* 全部产品（核心主功能，首位） */}
@@ -208,11 +223,14 @@ export function Sidebar({ categories, categoryCounts, totalProducts }: SidebarPr
             count={formatCount(historyCount)}
           />
 
-          <Separator data-collapse-hide className={cn(collapsed && "sr-only")} />
-          <p
-            data-collapse-hide
-            className={cn("px-3 pb-1.5 pt-3 font-data text-muted-foreground", collapsed && "sr-only")}
-          >
+          {/* 分组：主导航（全部/历史）与「分类」之间留出呼吸间隔。
+              展开态：间距 +「分类」小标题分组；折叠态：极淡居中断线区分两段。 */}
+          {collapsed ? (
+            <div className="mx-auto my-1.5 h-px w-4 shrink-0 bg-sidebar-border/70" aria-hidden />
+          ) : (
+            <div className="h-2 shrink-0" aria-hidden />
+          )}
+          <p data-collapse-hide className={cn("px-3 pb-1.5 font-data text-muted-foreground", collapsed && "sr-only")}>
             分类
           </p>
           {categories.map((category) => (
@@ -228,19 +246,21 @@ export function Sidebar({ categories, categoryCounts, totalProducts }: SidebarPr
           ))}
           <div ref={sentinelRef} className="h-px" />
         </nav>
-        {scrollable && (
-          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-sidebar to-transparent" />
-        )}
-      </div>
-
-      {/* DSH 底部固定座：设置（与导航区解耦，导航滚动时保持可见） */}
-      <div className="shrink-0 border-t border-sidebar-border p-1.5">
-        <SidebarLink
-          href="/settings"
-          active={pathname === "/settings"}
-          collapsed={collapsed}
-          label="设置"
-          icon={<Settings className="size-4 shrink-0" />}
+        {/* 底部渐隐：未滚到底时暗示下方还有内容 */}
+        <div
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-sidebar via-sidebar/70 to-transparent transition-opacity duration-200",
+            atBottom ? "opacity-0" : "opacity-100"
+          )}
+        />
+        {/* 顶部柔和渐隐：向下滚动后浮出，暗示上方还有内容（无边框，仅靠渐变分层） */}
+        <div
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute inset-x-0 top-0 h-4 bg-gradient-to-b from-sidebar to-transparent transition-opacity duration-200",
+            scrolled ? "opacity-100" : "opacity-0"
+          )}
         />
       </div>
     </aside>
@@ -303,7 +323,6 @@ function SidebarLink({ href, active, collapsed, label, icon, count }: SidebarLin
         <TooltipTrigger render={link} />
         <TooltipContent side="right" sideOffset={10} align="center" alignOffset={4}>
           {label}
-          {count !== undefined && <span className="ml-1.5 font-data text-inherit opacity-70">{count}</span>}
         </TooltipContent>
       </Tooltip>
     )

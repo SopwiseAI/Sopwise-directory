@@ -1,38 +1,47 @@
 "use client"
 
-import { Suspense, useEffect, useRef, useState, type RefObject } from "react"
+import { Suspense, useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import Link from "next/link"
-import { Search } from "lucide-react"
+import { Search, Settings, X } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
+import ThemeToggle from "@/components/layout/theme-toggle"
 import type { Category } from "@/lib/types"
 
 /**
  * 查询回填：隔离在 Suspense 内读取 useSearchParams，使输入框本身仍可 SSR（不随查询串退化为客户端渲染）；
  * 依赖 query 而非 pathname，覆盖「同路径仅查询串变化」（如点击推荐词）。
  */
-function QuerySync({ inputRef }: { inputRef: RefObject<HTMLInputElement | null> }) {
+function QuerySync({
+  inputRef,
+  onQueryChange
+}: {
+  inputRef: RefObject<HTMLInputElement | null>
+  onQueryChange: (value: string) => void
+}) {
   const searchParams = useSearchParams()
   const query = searchParams.get("q") ?? ""
 
   useEffect(() => {
     const el = inputRef.current
     if (el && el.value !== query) el.value = query
-  }, [inputRef, query])
+    onQueryChange(query)
+  }, [inputRef, query, onQueryChange])
 
   return null
 }
 
 /**
- * DSH 式主区搜索框：全站按 `/` 聚焦（非输入态），Enter 跳转 /search?q=…。
- * 输入框为非受控，URL 查询经 QuerySync 回填。
+ * 主区顶栏搜索框：全站按 `/` 聚焦（非输入态），Enter 跳转 /search?q=…。
+ * 输入框为非受控，失焦/清空时同步 URL（router.replace，不写历史）。
  */
 function SearchField() {
-  const [fade, setFade] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const fadeTimer = useRef<number | null>(null)
   const router = useRouter()
+  const [hasValue, setHasValue] = useState(false)
+
+  const syncValueFlag = useCallback((value: string) => setHasValue(value.length > 0), [])
 
   const isTypingTarget = (el: EventTarget | null) => {
     if (!(el instanceof HTMLElement)) return false
@@ -48,25 +57,38 @@ function SearchField() {
       inputRef.current?.focus()
     }
     window.addEventListener("keydown", onKey)
-    return () => {
-      window.removeEventListener("keydown", onKey)
-      if (fadeTimer.current !== null) window.clearTimeout(fadeTimer.current)
-    }
+    return () => window.removeEventListener("keydown", onKey)
   }, [])
 
+  /** 提交搜索：仅在有内容时跳转，并采用 push 以保留「返回」语义 */
   const handleSearch = () => {
     const trimmed = inputRef.current?.value.trim() ?? ""
     if (!trimmed) return
     router.push(`/search?q=${encodeURIComponent(trimmed)}`)
   }
 
+  /** 清空输入并同步移除 URL 上的 q（replaceState 不写历史、不触发导航），保留其它查询参数 */
+  const handleClear = () => {
+    const el = inputRef.current
+    if (!el) return
+    el.value = ""
+    setHasValue(false)
+    const params = new URLSearchParams(window.location.search)
+    if (params.has("q")) {
+      params.delete("q")
+      const qs = params.toString()
+      window.history.replaceState(null, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname)
+    }
+    el.focus()
+  }
+
   return (
-    <InputGroup className={cn("group w-full max-w-xs", fade && "opacity-50")}>
+    <InputGroup className="group w-full max-w-sm">
       <Suspense fallback={null}>
-        <QuerySync inputRef={inputRef} />
+        <QuerySync inputRef={inputRef} onQueryChange={syncValueFlag} />
       </Suspense>
       <InputGroupAddon>
-        <Search className="text-muted-foreground/60 transition-colors group-focus-within:text-muted-foreground" />
+        <Search className="text-muted-foreground/60 transition-colors group-focus-within/input-group:text-muted-foreground" />
       </InputGroupAddon>
       <InputGroupInput
         ref={inputRef}
@@ -74,26 +96,32 @@ function SearchField() {
         enterKeyHint="search"
         aria-label="搜索 AI 产品"
         autoComplete="off"
+        onChange={(e) => setHasValue(e.currentTarget.value.length > 0)}
         onKeyDown={(e) => {
           if (e.key === "Enter") handleSearch()
           if (e.key === "Escape") {
-            const el = inputRef.current
-            if (el && el.value) {
-              el.value = ""
-              setFade(true)
-              if (fadeTimer.current !== null) window.clearTimeout(fadeTimer.current)
-              fadeTimer.current = window.setTimeout(() => setFade(false), 200)
-            } else {
-              el?.blur()
-            }
+            if (e.currentTarget.value) handleClear()
+            else e.currentTarget.blur()
           }
         }}
         placeholder="搜索 AI 产品…"
       />
       <InputGroupAddon align="inline-end">
-        <span className="kbd" aria-hidden>
-          /
-        </span>
+        {hasValue ? (
+          <InputGroupButton
+            size="icon-xs"
+            aria-label="清除搜索"
+            title="清除"
+            className="text-muted-foreground hover:text-foreground"
+            onClick={handleClear}
+          >
+            <X />
+          </InputGroupButton>
+        ) : (
+          <span className="kbd" aria-hidden>
+            /
+          </span>
+        )}
       </InputGroupAddon>
     </InputGroup>
   )
@@ -119,12 +147,15 @@ function resolveCrumbs(pathname: string, categories: readonly Category[]): Crumb
   return [{ label: "全部产品" }]
 }
 
+const iconButton =
+  "flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+
 interface MainHeaderProps {
   className?: string
   categories: readonly Category[]
 }
 
-/** 主区顶栏：左侧路由面包屑，右侧搜索。 */
+/** 主区顶栏：左侧路由面包屑，右侧搜索 + 设置/主题入口。 */
 export function MainHeader({ className, categories }: MainHeaderProps) {
   const pathname = usePathname()
   const crumbs = resolveCrumbs(pathname, categories)
@@ -153,6 +184,10 @@ export function MainHeader({ className, categories }: MainHeaderProps) {
         </ol>
       </nav>
       <SearchField />
+      <Link href="/settings" aria-label="设置" title="设置" className={iconButton}>
+        <Settings className="size-4" />
+      </Link>
+      <ThemeToggle />
     </header>
   )
 }
