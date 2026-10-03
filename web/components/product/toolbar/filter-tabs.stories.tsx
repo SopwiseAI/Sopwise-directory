@@ -20,11 +20,7 @@ function ControlledFilterTabs({ initial = "all" }: { initial?: TabMode }) {
 }
 
 export const Interactive: Story = {
-  render: () => (
-    <div className="inline-block border-b border-border">
-      <ControlledFilterTabs />
-    </div>
-  )
+  render: () => <ControlledFilterTabs />
 }
 
 export const Latest: Story = {

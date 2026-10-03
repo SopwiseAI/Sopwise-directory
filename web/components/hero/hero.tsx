@@ -45,7 +45,7 @@ export function Hero() {
 
         <div className="mt-5 flex flex-wrap items-center gap-2.5">
           <Link
-            href="#product-browser"
+            href="/?tab=all#product-browser"
             className={buttonVariants({
               size: "lg",
               className: "shadow-sm transition-shadow hover:shadow-md"
@@ -55,7 +55,7 @@ export function Hero() {
             <ArrowRight className="size-4" />
           </Link>
           <Link
-            href="/?tab=featured"
+            href="/?tab=featured#product-browser"
             className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-background px-3.5 text-sm font-medium text-foreground transition-colors hover:border-brand/30 hover:bg-secondary/60 outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Sparkles className="size-4 text-muted-foreground" />

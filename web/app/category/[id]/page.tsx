@@ -76,25 +76,40 @@ export default async function CategoryPage({ params }: Props) {
       {products.length > 0 && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld(itemListLd) }} />
       )}
-      <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-md border bg-card">
-          {categoryIconNode(category.icon, "size-4.5 text-foreground")}
-        </div>
-        <div className="min-w-0">
-          <h1 className="flex items-baseline gap-2 text-lg font-semibold tracking-tight">
-            {category.name}
-            <span className="font-data font-normal text-muted-foreground">{formatCount(products.length)} 个产品</span>
-          </h1>
-          {latestDate && <p className="font-data text-muted-foreground">最近更新 {formatDate(latestDate)}</p>}
-        </div>
-      </div>
+
+      <h1 className="sr-only">{category.name}</h1>
 
       <ProductBrowser
         products={products}
+        categories={getAllCategories()}
         defaultView="grid"
         showTabs={false}
         emptyTitle={`「${category.name}」分类暂无产品收录`}
         emptyDescription="你可以浏览其他分类发现更多 AI 产品"
+        title={
+          <div className="flex min-w-0 items-center gap-3">
+            <span
+              key="icon"
+              className="flex size-8 shrink-0 items-center justify-center rounded-md border bg-card text-foreground"
+            >
+              {categoryIconNode(category.icon, "size-4")}
+            </span>
+            <span key="name" className="min-w-0 truncate text-base font-semibold tracking-tight">
+              {category.name}
+            </span>
+            <span key="count" className="shrink-0 font-data text-xs font-normal text-muted-foreground">
+              {formatCount(products.length)} 个产品
+            </span>
+            {latestDate && (
+              <span
+                key="date"
+                className="hidden shrink-0 font-data text-xs font-normal text-muted-foreground/70 sm:inline"
+              >
+                · 最近更新 {formatDate(latestDate)}
+              </span>
+            )}
+          </div>
+        }
       />
     </div>
   )

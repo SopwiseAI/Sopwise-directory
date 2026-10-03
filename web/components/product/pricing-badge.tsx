@@ -1,4 +1,5 @@
 import type { Pricing } from "@/lib/types"
+import { cn } from "@/lib/utils"
 
 export interface PricingStyle {
   label: string
@@ -6,27 +7,27 @@ export interface PricingStyle {
   dotClass: string
 }
 
-/** 价格 → 状态徽章（mono 语义色） */
+/** 价格 → 状态徽章（语义色：免费绿 / 免费+付费蓝 / 付费琥珀 / 开源紫） */
 export const pricingStyles: Record<Pricing, PricingStyle> = {
   free: {
     label: "免费",
-    className: "bg-chart-3/10 text-chart-3 border-chart-3/20",
-    dotClass: "bg-chart-3"
+    className: "bg-price-free/10 text-price-free border-price-free/20",
+    dotClass: "bg-price-free"
   },
   freemium: {
     label: "免费+付费",
-    className: "bg-chart-1/10 text-chart-1 border-chart-1/20",
-    dotClass: "bg-chart-1"
+    className: "bg-price-freemium/10 text-price-freemium border-price-freemium/20",
+    dotClass: "bg-price-freemium"
   },
   paid: {
     label: "付费",
-    className: "bg-chart-5/10 text-chart-5 border-chart-5/20",
-    dotClass: "bg-chart-5"
+    className: "bg-price-paid/10 text-price-paid border-price-paid/20",
+    dotClass: "bg-price-paid"
   },
   opensource: {
     label: "开源",
-    className: "bg-chart-4/10 text-chart-4 border-chart-4/20",
-    dotClass: "bg-chart-4"
+    className: "bg-price-opensource/10 text-price-opensource border-price-opensource/20",
+    dotClass: "bg-price-opensource"
   }
 }
 
@@ -34,9 +35,13 @@ export function PricingBadge({ pricing }: { pricing: Pricing }) {
   const style = pricingStyles[pricing]
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono text-xs font-medium tracking-wide ${style.className}`}
+      data-slot="pricing-badge"
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono text-xs font-medium tracking-wide",
+        style.className
+      )}
     >
-      <span className={`size-1.5 rounded-full ${style.dotClass}`} aria-hidden />
+      <span className={cn("size-1.5 rounded-full", style.dotClass)} aria-hidden />
       {style.label}
     </span>
   )

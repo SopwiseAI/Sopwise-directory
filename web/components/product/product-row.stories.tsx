@@ -8,7 +8,6 @@ const meta = {
   tags: ["autodocs"],
   args: { product: mockProduct },
   argTypes: {
-    showDate: { control: "boolean" },
     last: { control: "boolean" }
   }
 } satisfies Meta<typeof ProductRow>
@@ -18,15 +17,15 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {}
 
-export const WithDate: Story = {
-  args: { showDate: true }
+export const WithCategory: Story = {
+  args: { categoryLabel: "对话助手", categoryIcon: "message-square" }
 }
 
 export const List: Story = {
   render: () => (
     <div className="max-w-3xl overflow-hidden rounded-lg border border-border">
       {mockProducts.slice(0, 3).map((p, i) => (
-        <ProductRow key={p.id} product={p} showDate last={i === 2} />
+        <ProductRow key={p.id} product={p} categoryLabel="对话助手" categoryIcon="message-square" last={i === 2} />
       ))}
     </div>
   )

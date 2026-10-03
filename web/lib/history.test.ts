@@ -3,7 +3,9 @@ import {
   addToHistory,
   removeFromHistory,
   clearHistory,
+  filterHistory,
   getHistory,
+  getHistoryCategoryIds,
   getHistoryExport,
   getHistoryItem,
   getHistorySnapshot,
@@ -294,6 +296,74 @@ describe("导出与导入", () => {
     const res = importHistory(JSON.stringify({ foo: 1 }))
     expect(res.error).toBeTruthy()
     expect(getHistory()).toEqual([])
+  })
+})
+
+describe("filterHistory", () => {
+  const mk = (id: string, categoryId: string, iso: string): HistoryItem => ({
+    id,
+    name: id,
+    url: `https://${id}.com`,
+    domain: `${id}.com`,
+    categoryId,
+    lastVisitedAt: iso,
+    firstVisitedAt: iso,
+    visitCount: 1
+  })
+  const now = new Date("2026-03-10T12:00:00")
+  const items = [
+    mk("today", "chat", "2026-03-10T09:00:00"),
+    mk("yesterday", "code", "2026-03-09T09:00:00"),
+    mk("week", "chat", "2026-03-05T09:00:00"),
+    mk("old", "code", "2026-01-01T09:00:00")
+  ]
+
+  it("period=all 返回全部", () => {
+    expect(filterHistory(items, {}, now).map((i) => i.id)).toEqual(["today", "yesterday", "week", "old"])
+  })
+
+  it("period=today 仅今天", () => {
+    expect(filterHistory(items, { period: "today" }, now).map((i) => i.id)).toEqual(["today"])
+  })
+
+  it("period=week 含今天共 7 天", () => {
+    expect(filterHistory(items, { period: "week" }, now).map((i) => i.id)).toEqual(["today", "yesterday", "week"])
+  })
+
+  it("period=month 含今天共 30 天", () => {
+    expect(filterHistory(items, { period: "month" }, now).map((i) => i.id)).toEqual(["today", "yesterday", "week"])
+  })
+
+  it("categoryId 过滤", () => {
+    expect(filterHistory(items, { categoryId: "chat" }, now).map((i) => i.id)).toEqual(["today", "week"])
+  })
+
+  it("分类 + 时间联合过滤", () => {
+    expect(filterHistory(items, { categoryId: "chat", period: "today" }, now).map((i) => i.id)).toEqual(["today"])
+  })
+
+  it("非法日期在时间窗下被排除", () => {
+    const bad = mk("bad", "chat", "not-a-date")
+    expect(filterHistory([bad], { period: "week" }, now)).toEqual([])
+  })
+})
+
+describe("getHistoryCategoryIds", () => {
+  it("按首次出现顺序去重、忽略空分类", () => {
+    const mk = (id: string, categoryId: string): HistoryItem => ({
+      id,
+      name: id,
+      url: `https://${id}.com`,
+      domain: `${id}.com`,
+      categoryId,
+      lastVisitedAt: "2026-03-10T09:00:00",
+      firstVisitedAt: "2026-03-10T09:00:00",
+      visitCount: 1
+    })
+    expect(getHistoryCategoryIds([mk("a", "chat"), mk("b", ""), mk("c", "code"), mk("d", "chat")])).toEqual([
+      "chat",
+      "code"
+    ])
   })
 })
 

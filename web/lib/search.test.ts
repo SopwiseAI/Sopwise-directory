@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from "vitest"
-import { createSearchIndex, resolveThreshold } from "./search"
+import { buildSearchDocs, createSearchIndex, highlightSegments, resolveThreshold } from "./search"
 import type { Product } from "./types"
 
 const mockProducts: Product[] = [
@@ -62,6 +62,66 @@ describe("createSearchIndex", () => {
   it("returns empty for no match", () => {
     const results = index.search("zzznomatch")
     expect(results.length).toBe(0)
+  })
+
+  it("finds products by category name", () => {
+    const idx = createSearchIndex(mockProducts, {
+      "chat-assistant": "对话助手",
+      "image-generation": "图像生成",
+      "code-tools": "代码工具"
+    })
+    const results = idx.search("对话助手")
+    expect(results.length).toBeGreaterThan(0)
+    expect(results[0].item.id).toBe("1")
+    expect(results[0].item.categoryNames).toContain("对话助手")
+  })
+
+  it("buildSearchDocs 展开分类名并过滤未知分类", () => {
+    const docs = buildSearchDocs(mockProducts, { "chat-assistant": "对话助手" })
+    expect(docs[0].categoryNames).toEqual(["对话助手"])
+    expect(docs[1].categoryNames).toEqual([])
+    expect(docs[0].name).toBe("ChatGPT")
+  })
+})
+
+describe("highlightSegments", () => {
+  it("无查询词返回整段未命中", () => {
+    expect(highlightSegments("ChatGPT", "")).toEqual([{ text: "ChatGPT", match: false }])
+    expect(highlightSegments("ChatGPT", "   ")).toEqual([{ text: "ChatGPT", match: false }])
+  })
+
+  it("大小写不敏感命中并分段", () => {
+    expect(highlightSegments("ChatGPT", "chat")).toEqual([
+      { text: "Chat", match: true },
+      { text: "GPT", match: false }
+    ])
+  })
+
+  it("命中段落中间", () => {
+    expect(highlightSegments("AI 图像生成工具", "图像")).toEqual([
+      { text: "AI ", match: false },
+      { text: "图像", match: true },
+      { text: "生成工具", match: false }
+    ])
+  })
+
+  it("多点命中全部标记", () => {
+    const segs = highlightSegments("aXaXa", "a")
+    expect(segs.filter((s) => s.match).map((s) => s.text)).toEqual(["a", "a", "a"])
+  })
+
+  it("多词查询合并区间", () => {
+    const segs = highlightSegments("hello world", "hello world")
+    expect(segs.filter((s) => s.match).length).toBeGreaterThanOrEqual(2)
+    expect(segs.some((s) => s.text === " " && !s.match)).toBe(true)
+  })
+
+  it("无命中返回整段", () => {
+    expect(highlightSegments("ChatGPT", "zzz")).toEqual([{ text: "ChatGPT", match: false }])
+  })
+
+  it("空文本安全", () => {
+    expect(highlightSegments("", "a")).toEqual([{ text: "", match: false }])
   })
 })
 

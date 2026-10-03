@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
 import { SearchResults } from "@/components/search/search-results"
-import { mockProducts } from "@/.storybook/fixtures"
+import { mockCategoryCounts, mockCategories, mockProducts } from "@/.storybook/fixtures"
 
 const featured = mockProducts.filter((p) => p.featured)
 
@@ -9,7 +9,7 @@ const meta = {
   title: "Search/SearchResults",
   component: SearchResults,
   tags: ["autodocs"],
-  args: { products: mockProducts, featured },
+  args: { products: mockProducts, featured, categories: mockCategories, categoryCounts: mockCategoryCounts },
   decorators: [
     (Story) => (
       <Suspense fallback={<div className="text-sm text-muted-foreground">加载中…</div>}>

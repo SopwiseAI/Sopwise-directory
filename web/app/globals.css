@@ -35,6 +35,10 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-price-free: var(--price-free);
+  --color-price-freemium: var(--price-freemium);
+  --color-price-paid: var(--price-paid);
+  --color-price-opensource: var(--price-opensource);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -92,6 +96,11 @@
   --chart-3: #f59e0b;
   --chart-4: #8b5cf6;
   --chart-5: #ef4444;
+  /* 价格语义色：免费=绿 / 免费+付费=蓝 / 付费=琥珀 / 开源=紫 */
+  --price-free: #16a34a;
+  --price-freemium: #2563eb;
+  --price-paid: #d97706;
+  --price-opensource: #7c3aed;
   --radius: 0.75rem;
   --sidebar: #f7f8fa;
   --sidebar-foreground: #0f1115;
@@ -137,6 +146,11 @@
   --chart-3: #f59e0b;
   --chart-4: #a78bfa;
   --chart-5: #f87171;
+  /* 价格语义色（深色主题提亮，保证对比度） */
+  --price-free: #4ade80;
+  --price-freemium: #60a5fa;
+  --price-paid: #fbbf24;
+  --price-opensource: #a78bfa;
   --sidebar: #1b1b1c;
   --sidebar-foreground: #f9fafb;
   --sidebar-primary: #f9fafb;
@@ -163,7 +177,9 @@
   }
   html {
     @apply font-sans;
-    scroll-padding-top: 3.5rem;
+    scroll-behavior: smooth;
+    /* 锚点定位预留 sticky 顶栏高度（移动端顶栏 + 分类子导航） */
+    scroll-padding-top: 7rem;
   }
   /* 标题自动平衡换行，避免孤行 */
   h1,

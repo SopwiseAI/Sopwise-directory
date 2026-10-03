@@ -1,7 +1,7 @@
 "use client"
 
 import type { LucideIcon } from "lucide-react"
-import { ArrowDownAZ, ArrowUpZA, Clock, LayoutGrid, List, Star } from "lucide-react"
+import { ArrowDownAZ, ArrowUpZA, Clock, LayoutGrid, List, Sparkles, Star } from "lucide-react"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Skeleton } from "@/components/ui/skeleton"
 import { setSort, setTab, setView } from "@/lib/preferences"
@@ -19,6 +19,7 @@ const VIEW_OPTIONS: Option<ViewMode>[] = [
 ]
 
 const SORT_OPTIONS: Option<SortMode>[] = [
+  { value: "recommended", label: "综合", icon: Sparkles },
   { value: "latest", label: "最新", icon: Clock },
   { value: "name-asc", label: "名称 A-Z", icon: ArrowDownAZ },
   { value: "name-desc", label: "名称 Z-A", icon: ArrowUpZA }

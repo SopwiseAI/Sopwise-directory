@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
-import { getAllProducts, getFeaturedProducts } from "@/lib/data"
+import { getAllCategories, getAllProducts, getCategoryCounts, getFeaturedProducts } from "@/lib/data"
 import { SearchResults } from "@/components/search/search-results"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -13,6 +13,8 @@ export const metadata: Metadata = {
 
 const allProducts = getAllProducts()
 const featured = getFeaturedProducts()
+const categories = getAllCategories()
+const categoryCounts = getCategoryCounts()
 
 /** 搜索结果为客户端计算（query 来自 URL），SSR 呈现同构骨架，避免「加载中…→结果」突兀跳变。 */
 function ResultsSkeleton() {
@@ -35,12 +37,16 @@ function ResultsSkeleton() {
 
 export default function SearchPage() {
   return (
-    <>
-      {/* h1：页面语义主题（PG-04） */}
-      <h1 className="sr-only">搜索 AI 产品</h1>
+    <div className="mx-auto w-full max-w-4xl space-y-4">
+      <h1 className="text-2xl font-semibold tracking-tight">搜索</h1>
       <Suspense fallback={<ResultsSkeleton />}>
-        <SearchResults products={allProducts} featured={featured} />
+        <SearchResults
+          products={allProducts}
+          featured={featured}
+          categories={categories}
+          categoryCounts={categoryCounts}
+        />
       </Suspense>
-    </>
+    </div>
   )
 }

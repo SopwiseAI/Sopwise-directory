@@ -42,11 +42,11 @@ describe("HistoryList", () => {
     expect(screen.getByText("暂无访问记录")).toBeInTheDocument()
   })
 
-  it("从版本化信封快照渲染条目与时间分组（回归：信封非裸数组）", () => {
+  it("从版本化信封快照渲染条目（回归：信封非裸数组）", () => {
     addToHistory(mockProduct)
     render(<HistoryList categories={[]} />)
     expect(screen.getByText("Test Product")).toBeInTheDocument()
-    expect(screen.getByText("今天")).toBeInTheDocument()
+    expect(screen.getByText("test.com")).toBeInTheDocument()
   })
 
   it("历史条目携带 data-history-* 属性（供回访时回写）", () => {
@@ -59,6 +59,8 @@ describe("HistoryList", () => {
     addToHistory(mockProduct)
     const { container } = render(<HistoryList categories={[]} />)
     const link = container.querySelector('a[data-history-id="test-1"]') as HTMLElement
-    expect(link.querySelector("p.font-data")?.textContent).toBe("test.com")
+    const meta = link.querySelector("p.font-data")?.textContent ?? ""
+    expect(meta.startsWith("test.com")).toBe(true)
+    expect(meta).not.toContain("· ·")
   })
 })

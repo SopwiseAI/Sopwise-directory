@@ -81,7 +81,7 @@ var p=new URLSearchParams(location.search);
 var view=p.get("view")||g(P+":default-view")||"";
 var sort=p.get("sort")||g(P+":default-sort")||"";
 var tab=p.get("tab")||g(P+":default-tab")||"";
-var pending=(view&&view!=="grid")||(sort&&sort!=="latest")||(tab&&tab!=="all");
+var pending=(view&&view!=="grid")||(sort&&sort!=="recommended")||(tab&&tab!=="all");
 if(pending){
 d.setAttribute("data-prefs","pending");
 setTimeout(function(){d.removeAttribute("data-prefs")},2000)
@@ -119,7 +119,10 @@ export default function RootLayout({
             <Sidebar categories={allCategories} categoryCounts={categoryCounts} totalProducts={totalProducts} />
             <div className="flex min-w-0 flex-1 flex-col bg-background md:overflow-hidden">
               <MainHeader className="hidden md:flex" categories={allCategories} />
-              <div className="flex flex-1 flex-col md:min-h-0 md:overflow-y-auto">
+              <div
+                id="scroll-container"
+                className="flex flex-1 scroll-smooth flex-col scroll-pt-28 md:min-h-0 md:overflow-y-auto"
+              >
                 <main id="main" className="mx-auto w-full max-w-7xl scroll-mt-16 px-4 py-6 sm:px-6 flex-1">
                   {children}
                 </main>

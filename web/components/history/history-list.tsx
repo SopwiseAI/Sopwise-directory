@@ -2,17 +2,22 @@
 
 import { useCallback, useEffect, useMemo, useReducer, useState, useSyncExternalStore, useRef } from "react"
 import Link from "next/link"
-import { Clock, Search, Trash2 } from "lucide-react"
+import { Clock, ListFilter, Search, Trash2, X } from "lucide-react"
 import {
   clearHistory,
+  filterHistory,
+  getHistoryCategoryIds,
   getHistorySnapshot,
-  groupHistoryByPeriod,
+  HISTORY_PERIODS,
   parseHistorySnapshot,
   removeFromHistory,
-  subscribeHistory
+  subscribeHistory,
+  type HistoryItem,
+  type HistoryPeriod
 } from "@/lib/history"
 import { formatCount } from "@/lib/format"
 import { PricingBadge } from "@/components/product/pricing-badge"
+import { FilterSelect, type FilterOption } from "@/components/history/filter-select"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Button } from "@/components/ui/button"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
@@ -29,35 +34,33 @@ import {
 } from "@/components/ui/alert-dialog"
 import type { Category } from "@/lib/types"
 
-/** 分页步长：初始渲染 + 每次触底加载的条数（避免 200 条一次性渲染） */
-const PAGE_SIZE = 30
+/** 分页步长：初始渲染 + 每次触底加载的条数（避免一次性渲染过多） */
+const PAGE_SIZE = 40
 
 const noopSubscribe = () => () => {}
 const mountedSnapshot = () => true
 const notMountedSnapshot = () => false
 
-/**
- * 首帧骨架：历史数据只在客户端（localStorage）可得，SSR 无从渲染真实内容。
- * 若直接渲染空态会在刷新时闪现「暂无访问记录」再跳成列表（HG-01）。
- * 故挂载前渲染与真实卡片同构的骨架，既消除错误内容闪烁，又稳定布局高度。
- */
+/** 首帧骨架：历史数据仅在客户端（localStorage）可得，挂载前渲染同构骨架避免空态闪现（HG-01）。 */
 function HistorySkeleton() {
   return (
-    <div className="overflow-hidden rounded-lg border bg-card" aria-hidden>
-      <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
-        <Skeleton className="h-8 min-w-0 flex-1 rounded-md" />
-        <Skeleton className="h-4 w-12 rounded" />
-        <Skeleton className="h-4 w-10 rounded" />
+    <div className="space-y-3" aria-hidden>
+      <div className="flex flex-wrap items-center gap-2">
+        <Skeleton className="h-8 min-w-48 flex-1 rounded-md" />
+        <Skeleton className="h-8 w-24 rounded-lg" />
+        <Skeleton className="h-8 w-24 rounded-lg" />
       </div>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 border-b border-border px-4 py-3 last:border-b-0">
-          <div className="min-w-0 flex-1 space-y-1.5">
-            <Skeleton className="h-4 w-1/3 rounded" />
-            <Skeleton className="h-3 w-2/3 rounded" />
+      <div className="overflow-hidden rounded-lg border bg-card">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-3 border-b border-border px-4 py-2.5 last:border-b-0">
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <Skeleton className="h-4 w-1/4 rounded" />
+              <Skeleton className="h-3 w-1/2 rounded" />
+            </div>
+            <Skeleton className="size-8 shrink-0 rounded-md" />
           </div>
-          <Skeleton className="size-8 shrink-0 rounded-md" />
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   )
 }
@@ -77,11 +80,66 @@ function formatRelativeTime(iso: string): string {
   return date.toLocaleDateString("zh-CN", { month: "short", day: "numeric" })
 }
 
+/** 一条历史行：名称 + 时间（右）；副行 域名 · 分类 · 次数；右侧删除。 */
+function HistoryRow({ item, categoryLabel, last }: { item: HistoryItem; categoryLabel: string; last: boolean }) {
+  const meta = [item.domain, categoryLabel, item.visitCount > 1 ? `访问 ${formatCount(item.visitCount)} 次` : ""]
+    .filter(Boolean)
+    .join(" · ")
+  const time = formatRelativeTime(item.lastVisitedAt)
+
+  return (
+    <li
+      className={
+        "group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-secondary/40" +
+        (last ? "" : " border-b border-border")
+      }
+    >
+      <a
+        href={item.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        data-history-id={item.id}
+        data-history-name={item.name}
+        data-history-url={item.url}
+        data-history-category={item.categoryId}
+        data-history-pricing={item.pricing ?? ""}
+        className="flex min-w-0 flex-1 items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+      >
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{item.name}</p>
+          <p className="truncate font-data text-xs text-muted-foreground">
+            {meta}
+            {/* 窄屏：时间并入副行，避免时间列隐藏后信息丢失 */}
+            <span className="sm:hidden"> · {time}</span>
+          </p>
+        </div>
+        {item.pricing ? (
+          <span className="hidden shrink-0 sm:inline">
+            <PricingBadge pricing={item.pricing} />
+          </span>
+        ) : null}
+        <span className="hidden w-20 shrink-0 text-right font-data text-xs text-muted-foreground sm:inline">
+          {time}
+        </span>
+      </a>
+      <button
+        type="button"
+        aria-label={`删除 ${item.name} 的历史记录`}
+        title="删除"
+        onClick={() => removeFromHistory(item.id)}
+        className="shrink-0 rounded-md p-2 text-muted-foreground/60 outline-none transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <Trash2 className="size-4" />
+      </button>
+    </li>
+  )
+}
+
 interface HistoryListProps {
   categories: readonly Category[]
 }
 
-/** 历史记录列表：hover 统一、无限滚动分页、搜索过滤、单条删除与清空 */
+/** 历史记录列表：平铺（不分组）、搜索 + 分类/时间筛选、无限滚动分页、单条删除与清空。 */
 export function HistoryList({ categories }: HistoryListProps) {
   // 相对时间每分钟刷新（PG-13）
   const [, forceTick] = useReducer((n: number) => n + 1, 0)
@@ -90,29 +148,46 @@ export function HistoryList({ categories }: HistoryListProps) {
     return () => window.clearInterval(id)
   }, [])
 
-  // HG-01：挂载前渲染骨架，避免 SSR 空态（"暂无访问记录"）在刷新时闪现后跳变
   const mounted = useSyncExternalStore(noopSubscribe, mountedSnapshot, notMountedSnapshot)
   const raw = useSyncExternalStore(subscribeHistory, getHistorySnapshot, () => "[]")
   const [query, setQuery] = useState("")
+  const [categoryId, setCategoryId] = useState("")
+  const [period, setPeriod] = useState<HistoryPeriod>("all")
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
 
-  // 分类名查找：需在使用（filtered）之前定义（TDZ 防护）
   const categoryName = useCallback((id: string) => categories.find((c) => c.id === id)?.name ?? "", [categories])
 
   const items = useMemo(() => parseHistorySnapshot(raw), [raw])
 
-  // 搜索过滤（名称/域名/分类）
+  // 筛选器可选项：分类按「全站分类顺序」排列（而非历史出现顺序），下拉更稳定
+  const categoryOptions = useMemo<FilterOption[]>(() => {
+    const used = new Set(getHistoryCategoryIds(items))
+    const ordered = categories.filter((c) => used.has(c.id)).map((c) => ({ value: c.id, label: c.name }))
+    // 兜底：历史中引用了已不存在于 categories 的 id，仍列出以免无法筛选
+    for (const id of used) {
+      if (!categories.some((c) => c.id === id)) ordered.push({ value: id, label: categoryName(id) || id })
+    }
+    return [{ value: "", label: "全部分类" }, ...ordered]
+  }, [items, categories, categoryName])
+
+  const periodOptions = useMemo<FilterOption[]>(
+    () => HISTORY_PERIODS.map((p) => ({ value: p.value, label: p.label })),
+    []
+  )
+
+  // 搜索（名称/域名/分类）→ 分类 + 时间筛选
   const filtered = useMemo(() => {
+    const base = filterHistory(items, { categoryId, period })
     const q = query.trim().toLowerCase()
-    if (!q) return items
-    return items.filter((it) => {
+    if (!q) return base
+    return base.filter((it) => {
       const name = (it.name ?? "").toLowerCase()
       const domain = (it.domain ?? "").toLowerCase()
       const cat = categoryName(it.categoryId).toLowerCase()
       return name.includes(q) || domain.includes(q) || cat.includes(q)
     })
-  }, [items, query, categoryName])
+  }, [items, query, categoryId, period, categoryName])
 
   // 触底加载更多（无限滚动）
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -129,20 +204,26 @@ export function HistoryList({ categories }: HistoryListProps) {
     )
     observer.observe(el)
     return () => observer.disconnect()
-  }, [filtered.length, query])
+  }, [filtered.length, query, categoryId, period])
 
-  // visibleCount 可能超过当前 filtered 长度（存储变化时），slice 自动安全
   const visible = filtered.slice(0, visibleCount)
   const hasMore = visibleCount < filtered.length
-  // 按访问时间分组（今天/昨天/本周/更早），仅对已加载部分分组
-  const groups = groupHistoryByPeriod(visible)
+  const isFiltered = query.trim() !== "" || categoryId !== "" || period !== "all"
+
+  const resetVisible = () => setVisibleCount(PAGE_SIZE)
+  const resetFilters = () => {
+    setQuery("")
+    setCategoryId("")
+    setPeriod("all")
+    resetVisible()
+  }
 
   if (!mounted) return <HistorySkeleton />
 
   if (items.length === 0) {
     return (
-      <Empty className="rounded-lg border bg-card py-14">
-        <EmptyMedia variant="icon">
+      <Empty className="rounded-lg border bg-card py-8">
+        <EmptyMedia variant="icon" className="size-12 rounded-xl border [&_svg:not([class*='size-'])]:size-6">
           <Clock />
         </EmptyMedia>
         <EmptyHeader>
@@ -159,10 +240,10 @@ export function HistoryList({ categories }: HistoryListProps) {
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border bg-card">
-      {/* 工具条：搜索 + 计数 + 清空 */}
-      <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
-        <InputGroup className="min-w-0 flex-1">
+    <div className="space-y-3">
+      {/* 工具条：搜索 + 分类筛选 + 时间筛选 + 计数 + 清空 */}
+      <div className="flex flex-wrap items-center gap-2">
+        <InputGroup className="min-w-48 flex-1">
           <InputGroupAddon>
             <Search className="text-muted-foreground/60" />
           </InputGroupAddon>
@@ -175,13 +256,49 @@ export function HistoryList({ categories }: HistoryListProps) {
             value={query}
             onChange={(e) => {
               setQuery(e.target.value)
-              setVisibleCount(PAGE_SIZE)
+              resetVisible()
             }}
           />
         </InputGroup>
-        <span className="font-data text-muted-foreground">
-          {query ? `${formatCount(filtered.length)} 条匹配` : `共 ${formatCount(filtered.length)} 条`}
+
+        <FilterSelect
+          label="按分类筛选"
+          icon={ListFilter}
+          value={categoryId}
+          options={categoryOptions}
+          onChange={(v) => {
+            setCategoryId(v)
+            resetVisible()
+          }}
+          active={categoryId !== ""}
+        />
+        <FilterSelect
+          label="按时间筛选"
+          icon={Clock}
+          value={period}
+          options={periodOptions}
+          onChange={(v) => {
+            setPeriod(v as HistoryPeriod)
+            resetVisible()
+          }}
+          active={period !== "all"}
+        />
+
+        <span role="status" aria-live="polite" className="font-data text-xs text-muted-foreground">
+          {isFiltered
+            ? `${formatCount(filtered.length)} / ${formatCount(items.length)} 条`
+            : `共 ${formatCount(items.length)} 条`}
         </span>
+        {isFiltered && (
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <X className="size-3" aria-hidden />
+            清除筛选
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setShowClearConfirm(true)}
@@ -211,83 +328,36 @@ export function HistoryList({ categories }: HistoryListProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 搜索无结果 */}
-      {query && filtered.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 py-10 text-center">
-          <Search className="size-6 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">未找到与「{query}」匹配的记录</p>
+      {/* 筛选/搜索无结果 */}
+      {filtered.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed py-8 text-center">
+          <Search className="size-6 text-muted-foreground/40" aria-hidden />
+          <p className="text-sm text-muted-foreground">
+            {query.trim() ? `未找到与「${query.trim()}」匹配的记录` : "当前筛选条件下没有记录"}
+          </p>
+          <Button variant="outline" size="sm" onClick={resetFilters}>
+            <X className="size-3.5" aria-hidden />
+            清除筛选
+          </Button>
         </div>
       ) : (
         <>
-          {groups.map((group) => (
-            <div key={group.label}>
-              <div className="sticky top-0 z-10 border-b border-border bg-card/95 px-4 py-1.5 font-data text-xs font-medium text-muted-foreground backdrop-blur">
-                {group.label}
-              </div>
-              <ul>
-                {group.items.map((item) => {
-                  // 分类可能已被删除（categoryName 返回空串），避免留下悬空的 " · "
-                  const categoryLabel = item.categoryId ? categoryName(item.categoryId) : ""
-                  return (
-                    <li
-                      key={item.id}
-                      className="group flex items-center gap-3 border-b border-border px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/40"
-                    >
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        data-history-id={item.id}
-                        data-history-name={item.name}
-                        data-history-url={item.url}
-                        data-history-category={item.categoryId}
-                        data-history-pricing={item.pricing ?? ""}
-                        className="flex min-w-0 flex-1 items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-base font-medium">{item.name}</p>
-                          <p className="truncate font-data text-muted-foreground">
-                            {item.domain}
-                            {categoryLabel && ` · ${categoryLabel}`}
-                            {item.visitCount > 1 && ` · 访问 ${formatCount(item.visitCount)} 次`}
-                          </p>
-                        </div>
-                        <span className="hidden shrink-0 font-data text-muted-foreground sm:inline">
-                          {formatRelativeTime(item.lastVisitedAt)}
-                        </span>
-                        {item.pricing ? (
-                          <span className="hidden shrink-0 md:inline">
-                            <PricingBadge pricing={item.pricing} />
-                          </span>
-                        ) : null}
-                      </a>
-                      <button
-                        type="button"
-                        aria-label={`删除 ${item.name} 的历史记录`}
-                        title="删除"
-                        onClick={() => removeFromHistory(item.id)}
-                        className="shrink-0 rounded-md p-2.5 text-muted-foreground/60 outline-none transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring"
-                      >
-                        <Trash2 className="size-4" />
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
-          ))}
+          <ul className="overflow-hidden rounded-lg border bg-card">
+            {visible.map((item, i) => (
+              <HistoryRow
+                key={item.id}
+                item={item}
+                categoryLabel={item.categoryId ? categoryName(item.categoryId) : ""}
+                last={i === visible.length - 1 && !hasMore}
+              />
+            ))}
+          </ul>
 
-          {/* 触底哨兵：滚动到此处自动加载更多 */}
           {hasMore && (
-            <div ref={sentinelRef} className="flex items-center justify-center border-t py-3">
-              <span className="font-data text-muted-foreground/80">
+            <div ref={sentinelRef} className="flex items-center justify-center py-2">
+              <span className="font-data text-xs text-muted-foreground/80">
                 已加载 {formatCount(visible.length)} / {formatCount(filtered.length)} · 滚动加载更多
               </span>
-            </div>
-          )}
-          {!hasMore && filtered.length > PAGE_SIZE && (
-            <div className="border-t py-2 text-center font-data text-muted-foreground/60">
-              已全部加载（{formatCount(filtered.length)} 条）
             </div>
           )}
         </>

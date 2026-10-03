@@ -353,7 +353,8 @@ function shiftDays(ts: number, days: number): number {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() + days).getTime()
 }
 
-/** 按本地日期分组：今天 / 昨天 / 近 7 天 / 更早，组内保持原顺序（最近访问在前）。 */
+/** 按本地日期分组：今天 / 昨天 / 近 7 天 / 更早。
+ *  @deprecated 历史页已改为平铺 + 筛选，不再使用分组；保留供兼容与测试。 */
 export function groupHistoryByPeriod(items: HistoryItem[] = getHistory(), now?: Date): HistoryGroup[] {
   const effectiveNow = now ?? new Date()
   const todayStart = startOfDay(effectiveNow)
@@ -371,4 +372,61 @@ export function groupHistoryByPeriod(items: HistoryItem[] = getHistory(), now?: 
   return Object.entries(bucket)
     .filter(([, list]) => list.length > 0)
     .map(([label, list]) => ({ label, items: list }))
+}
+
+/** 时间筛选维度：全部 / 今天 / 近 7 天 / 近 30 天。 */
+export type HistoryPeriod = "all" | "today" | "week" | "month"
+
+export const HISTORY_PERIODS: readonly { value: HistoryPeriod; label: string }[] = [
+  { value: "all", label: "全部时间" },
+  { value: "today", label: "今天" },
+  { value: "week", label: "近 7 天" },
+  { value: "month", label: "近 30 天" }
+]
+
+export interface HistoryFilter {
+  /** 分类 id；空串/undefined 表示全部分类。 */
+  categoryId?: string
+  period?: HistoryPeriod
+}
+
+/**
+ * 按分类与时间窗过滤历史（不做分组，由 UI 平铺展示）。
+ * 时间窗基于本地自然日边界：今天从 00:00 起，近 7 天含今天共 7 天，近 30 天含今天共 30 天。
+ */
+export function filterHistory(
+  items: readonly HistoryItem[],
+  { categoryId, period = "all" }: HistoryFilter = {},
+  now: Date = new Date()
+): HistoryItem[] {
+  const todayStart = startOfDay(now)
+  const lowerBound =
+    period === "today"
+      ? todayStart
+      : period === "week"
+        ? shiftDays(todayStart, -6)
+        : period === "month"
+          ? shiftDays(todayStart, -29)
+          : null
+
+  return items.filter((item) => {
+    if (categoryId && item.categoryId !== categoryId) return false
+    if (lowerBound === null) return true
+    const t = Date.parse(item.lastVisitedAt)
+    if (Number.isNaN(t)) return false
+    return t >= lowerBound
+  })
+}
+
+/** 从历史中提取出现过的分类 id（去重，保持首次出现顺序），供筛选下拉使用。 */
+export function getHistoryCategoryIds(items: readonly HistoryItem[]): string[] {
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const item of items) {
+    if (item.categoryId && !seen.has(item.categoryId)) {
+      seen.add(item.categoryId)
+      out.push(item.categoryId)
+    }
+  }
+  return out
 }

@@ -14,8 +14,8 @@ const categories = getAllCategories()
 
 export default function HistoryPage() {
   return (
-    <div className="space-y-4">
-      <h1 className="sr-only">历史记录</h1>
+    <div className="mx-auto w-full max-w-3xl space-y-4">
+      <h1 className="text-2xl font-semibold tracking-tight">历史记录</h1>
       <HistoryList categories={categories} />
     </div>
   )

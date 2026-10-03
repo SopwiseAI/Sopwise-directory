@@ -4,7 +4,7 @@ import { STORAGE_PREFIX, storageKey } from "@/lib/storage"
 import { isValidSort, isValidTab, isValidView, type SortMode, type TabMode, type ViewMode } from "@/lib/product-query"
 
 export const DEFAULT_VIEW: ViewMode = "grid"
-export const DEFAULT_SORT: SortMode = "latest"
+export const DEFAULT_SORT: SortMode = "recommended"
 export const DEFAULT_TAB: TabMode = "all"
 
 const KEYS = {
