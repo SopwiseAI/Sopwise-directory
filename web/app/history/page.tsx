@@ -4,7 +4,7 @@ import { HistoryList } from "@/components/history/history-list"
 
 export const metadata: Metadata = {
   title: "历史记录",
-  description: "XiGee 访问历史：快速回到之前浏览过的 AI 产品",
+  description: "XiGee 访问历史：快速回到之前浏览过的 AI 工具",
   alternates: { canonical: "/history" },
   openGraph: { title: "历史记录" },
   robots: { index: false, follow: true }

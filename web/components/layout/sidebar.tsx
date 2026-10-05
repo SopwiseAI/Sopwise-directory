@@ -34,8 +34,9 @@ function getSidebarServerSnapshot() {
 
 function subscribeSidebar(callback: () => void) {
   const storageHandler = (e: StorageEvent) => {
-    if (e.key !== STORAGE_KEY) return
-    // 其他 tab 折叠变化时同步 data-sidebar，保持 CSS 引导一致（SB-01）
+    // e.key 为 null 表示 localStorage.clear()，此时也需重新读取
+    if (e.key !== null && e.key !== STORAGE_KEY) return
+    // 其他 tab 折叠变化或清空存储时同步 data-sidebar，保持 CSS 引导一致（SB-01）
     try {
       const next = localStorage.getItem(STORAGE_KEY) === "true"
       document.documentElement.setAttribute("data-sidebar", next ? "collapsed" : "expanded")
@@ -203,12 +204,12 @@ export function Sidebar({ categories, categoryCounts, totalProducts }: SidebarPr
             collapsed ? "gap-1.5 px-2.5 pb-3 pt-3" : "gap-0.5 px-1.5 pb-3 pt-2"
           )}
         >
-          {/* 全部产品（核心主功能，首位） */}
+          {/* 全部工具（核心主功能，首位） */}
           <SidebarLink
             href="/"
             active={pathname === "/"}
             collapsed={collapsed}
-            label="全部产品"
+            label="全部工具"
             icon={<LayoutGrid className="size-4 shrink-0" />}
             count={formatCount(totalProducts)}
           />

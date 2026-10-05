@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowDownAZ, ArrowUpZA, ChevronDown, Clock, Sparkles, type LucideIcon } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 
 import {
   DropdownMenu,
@@ -12,14 +12,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import { toolbarControl } from "@/components/product/toolbar/styles"
+import { SORT_OPTIONS } from "@/lib/product-options"
 import type { SortMode } from "@/lib/product-query"
-
-const SORT_OPTIONS: { key: SortMode; label: string; icon: LucideIcon }[] = [
-  { key: "recommended", label: "综合", icon: Sparkles },
-  { key: "latest", label: "最新", icon: Clock },
-  { key: "name-asc", label: "名称 A-Z", icon: ArrowDownAZ },
-  { key: "name-desc", label: "名称 Z-A", icon: ArrowUpZA }
-]
 
 interface SortMenuProps {
   sort: SortMode
@@ -28,7 +22,7 @@ interface SortMenuProps {
 
 /** 排序下拉：触发按钮为胶囊，与 tabs / 视图切换同高同圆角。 */
 export function SortMenu({ sort, onSortChange }: SortMenuProps) {
-  const current = SORT_OPTIONS.find((o) => o.key === sort) ?? SORT_OPTIONS[0]
+  const current = SORT_OPTIONS.find((o) => o.value === sort) ?? SORT_OPTIONS[0]
   const CurrentIcon = current.icon
 
   return (
@@ -41,7 +35,7 @@ export function SortMenu({ sort, onSortChange }: SortMenuProps) {
       <DropdownMenuContent align="end">
         <DropdownMenuRadioGroup value={sort} onValueChange={(value) => onSortChange(value as SortMode)}>
           {SORT_OPTIONS.map((o) => (
-            <DropdownMenuRadioItem key={o.key} value={o.key}>
+            <DropdownMenuRadioItem key={o.value} value={o.value}>
               <o.icon className="size-4 text-muted-foreground" aria-hidden />
               <span>{o.label}</span>
               <DropdownMenuRadioItemIndicator />

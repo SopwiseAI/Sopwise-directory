@@ -62,9 +62,16 @@ function assertSiteData(raw: unknown): SiteData {
   const catIds = new Set(categories.map((c) => c.id))
   if (catIds.size !== categories.length) throw new Error("[data] 存在重复的 category id")
   const productIds = new Set<string>()
+  const urlKeys = new Map<string, string>()
   for (const p of products) {
     if (productIds.has(p.id)) throw new Error(`[data] 存在重复的 product id: ${p.id}`)
     productIds.add(p.id)
+    const urlKey = p.url.replace(/\/+$/, "").toLowerCase()
+    const dup = urlKeys.get(urlKey)
+    if (dup) {
+      console.warn(`[data] 产品 "${p.id}" 与 "${dup}" 的 URL 重复: ${p.url}`)
+    }
+    urlKeys.set(urlKey, p.id)
     for (const cid of p.categories) {
       if (!catIds.has(cid)) {
         throw new Error(`[data] 产品 "${p.id}" 引用了不存在的 categoryId "${cid}"`)

@@ -1,7 +1,7 @@
 import { type Metadata } from "next"
 import { notFound } from "next/navigation"
 import { getAllCategories, getCategoryById, getProductsByCategory } from "@/lib/data"
-import { getProductDate } from "@/lib/product"
+import { latestProductDate } from "@/lib/product"
 import { categoryIconNode } from "@/lib/category-icon-node"
 import { formatCount, formatDate } from "@/lib/format"
 import { getBaseUrl } from "@/lib/utils"
@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
   const category = getCategoryById(id)
   if (!category) return { title: "分类未找到", robots: { index: false, follow: true } }
-  const description = `发现和浏览${category.name}类别的 AI 产品，XiGee 为你精选最佳工具`
+  const description = `发现和浏览${category.name}类别的 AI 工具，XiGee 为你精选最佳选择`
   const empty = getProductsByCategory(id).length === 0
   return {
     title: `${category.name}`,
@@ -41,18 +41,14 @@ export default async function CategoryPage({ params }: Props) {
   if (!category) notFound()
 
   const products = getProductsByCategory(id)
-  const latestDate = products.reduce<string | null>((max, p) => {
-    const date = getProductDate(p)
-    if (!date) return max
-    return max === null || date > max ? date : max
-  }, null)
+  const latestDate = latestProductDate(products)
 
   const baseUrl = getBaseUrl()
   const breadcrumbLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "全部产品", item: baseUrl },
+      { "@type": "ListItem", position: 1, name: "全部工具", item: baseUrl },
       { "@type": "ListItem", position: 2, name: category.name, item: `${baseUrl}/category/${id}` }
     ]
   }
@@ -84,8 +80,8 @@ export default async function CategoryPage({ params }: Props) {
         categories={getAllCategories()}
         defaultView="grid"
         showTabs={false}
-        emptyTitle={`「${category.name}」分类暂无产品收录`}
-        emptyDescription="你可以浏览其他分类发现更多 AI 产品"
+        emptyTitle={`「${category.name}」分类暂无工具收录`}
+        emptyDescription="你可以浏览其他分类发现更多 AI 工具"
         title={
           <div className="flex min-w-0 items-center gap-3">
             <span
@@ -98,7 +94,7 @@ export default async function CategoryPage({ params }: Props) {
               {category.name}
             </span>
             <span key="count" className="shrink-0 font-data text-xs font-normal text-muted-foreground">
-              {formatCount(products.length)} 个产品
+              {formatCount(products.length)} 个工具
             </span>
             {latestDate && (
               <span

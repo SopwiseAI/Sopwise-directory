@@ -3,6 +3,7 @@
 import type { ReactNode } from "react"
 import { useSyncExternalStore } from "react"
 import Link from "next/link"
+import { useMounted } from "@/hooks/use-mounted"
 import { InfoLayout } from "@/components/info/info-shell"
 import { ThemeSwitch } from "@/components/layout/theme-switch"
 import { StatItem } from "@/components/ui/stat-item"
@@ -25,10 +26,6 @@ interface SettingsViewProps {
   version: string
   stats: { products: number; categories: number; featured: number }
 }
-
-const noopSubscribe = () => () => {}
-const mountedSnapshot = () => true
-const notMountedSnapshot = () => false
 
 function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -62,7 +59,7 @@ function useBrowsePreferences(): { view: ViewMode; sort: SortMode; tab: TabMode 
 /** 设置页编排：外观 / 浏览偏好 / 数据与隐私 / 关于与版本 / 快捷键。 */
 export function SettingsView({ version, stats }: SettingsViewProps) {
   const { view, sort, tab } = useBrowsePreferences()
-  const mounted = useSyncExternalStore(noopSubscribe, mountedSnapshot, notMountedSnapshot)
+  const mounted = useMounted()
 
   return (
     <InfoLayout title="设置" description="外观、浏览偏好、数据与隐私、关于与版本、快捷键。">
@@ -81,13 +78,13 @@ export function SettingsView({ version, stats }: SettingsViewProps) {
 
       <SettingsSection title="关于与版本">
         <div className="space-y-1">
-          <p className="text-sm text-foreground">XiGee — 你的 AI 发现引擎</p>
+          <p className="text-sm text-foreground">XiGee — 精选 AI 工具目录</p>
           <p className="text-xs text-muted-foreground">
-            发现和探索优秀的 AI 产品。数据驱动、纯静态构建，从 XiGee 直达官方网站。
+            精选值得用的 AI 工具，每一款都经过人工筛选，从 XiGee 直达官方网站。
           </p>
         </div>
         <div className="flex flex-wrap gap-x-10 gap-y-4">
-          <StatItem label="产品" value={stats.products} size="lg" />
+          <StatItem label="工具" value={stats.products} size="lg" />
           <StatItem label="分类" value={stats.categories} size="lg" />
           <StatItem label="精选" value={stats.featured} size="lg" />
         </div>

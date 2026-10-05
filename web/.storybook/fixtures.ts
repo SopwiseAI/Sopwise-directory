@@ -3,19 +3,19 @@ import type { Category, Product } from "@/lib/types"
 /** Storybook 共享 mock 数据（仅用于 stories，不参与生产构建）。 */
 
 export const mockCategories: Category[] = [
-  { id: "chat-assistant", name: "对话助手", icon: "message-square" },
-  { id: "image-generation", name: "图像生成", icon: "image" },
-  { id: "code-tools", name: "代码工具", icon: "code" },
-  { id: "writing", name: "写作工具", icon: "pen-tool" },
-  { id: "video", name: "视频工具", icon: "video" }
+  { id: "chat-assistant", name: "对话助手", icon: "MessageSquare" },
+  { id: "image-generation", name: "图像生成", icon: "Image" },
+  { id: "code-tools", name: "代码工具", icon: "Code" },
+  { id: "writing-tools", name: "写作工具", icon: "PenTool" },
+  { id: "video-tools", name: "视频工具", icon: "Video" }
 ]
 
 export const mockCategoryCounts: Record<string, number> = {
   "chat-assistant": 7,
   "image-generation": 7,
   "code-tools": 7,
-  writing: 5,
-  video: 5
+  "writing-tools": 5,
+  "video-tools": 5
 }
 
 export const mockProduct: Product = {

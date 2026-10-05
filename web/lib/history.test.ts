@@ -7,9 +7,7 @@ import {
   getHistory,
   getHistoryCategoryIds,
   getHistoryExport,
-  getHistoryItem,
   getHistorySnapshot,
-  groupHistoryByPeriod,
   importHistory,
   parseHistorySnapshot,
   resolveMaxItems,
@@ -146,7 +144,7 @@ describe("数据模型与迁移", () => {
   })
 })
 
-describe("remove/clear/getHistoryItem", () => {
+describe("remove/clear", () => {
   beforeEach(() => localStorage.clear())
 
   it("removeFromHistory 删除指定项", () => {
@@ -162,12 +160,6 @@ describe("remove/clear/getHistoryItem", () => {
     removeFromHistory("nope")
     expect(cb).not.toHaveBeenCalled()
     unsub()
-  })
-
-  it("getHistoryItem 按 id 取单条", () => {
-    addToHistory({ ...mockProduct, id: "a" })
-    expect(getHistoryItem("a")?.id).toBe("a")
-    expect(getHistoryItem("x")).toBeUndefined()
   })
 
   it("clearHistory 清空", () => {
@@ -364,40 +356,6 @@ describe("getHistoryCategoryIds", () => {
       "chat",
       "code"
     ])
-  })
-})
-
-describe("groupHistoryByPeriod", () => {
-  const mk = (id: string, iso: string): HistoryItem => ({
-    id,
-    name: id,
-    url: `https://${id}.com`,
-    domain: `${id}.com`,
-    categoryId: "",
-    lastVisitedAt: iso,
-    firstVisitedAt: iso,
-    visitCount: 1
-  })
-
-  it("按 今天/昨天/本周/更早 分组", () => {
-    const now = new Date("2026-03-10T12:00:00")
-    const groups = groupHistoryByPeriod(
-      [
-        mk("today", "2026-03-10T09:00:00"),
-        mk("yesterday", "2026-03-09T22:00:00"),
-        mk("week", "2026-03-06T10:00:00"),
-        mk("old", "2026-01-01T10:00:00")
-      ],
-      now
-    )
-    expect(groups.map((g) => g.label)).toEqual(["今天", "昨天", "近 7 天", "更早"])
-    expect(groups[0].items.map((i) => i.id)).toEqual(["today"])
-    expect(groups[3].items.map((i) => i.id)).toEqual(["old"])
-  })
-
-  it("空分组不输出", () => {
-    const now = new Date("2026-03-10T12:00:00")
-    expect(groupHistoryByPeriod([mk("old", "2026-01-01T10:00:00")], now).map((g) => g.label)).toEqual(["更早"])
   })
 })
 

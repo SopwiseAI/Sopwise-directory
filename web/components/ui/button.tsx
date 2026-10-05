@@ -46,6 +46,7 @@ function Button({
   isLoading,
   children,
   disabled,
+  render,
   ...props
 }: ButtonPrimitive.Props & VariantProps<typeof buttonVariants> & { isLoading?: boolean }) {
   return (
@@ -54,6 +55,8 @@ function Button({
       className={cn(buttonVariants({ variant, size, className }))}
       disabled={disabled || isLoading}
       aria-busy={isLoading || undefined}
+      nativeButton={!render}
+      render={render}
       {...props}
     >
       {isLoading ? (

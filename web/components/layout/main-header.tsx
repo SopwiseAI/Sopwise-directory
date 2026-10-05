@@ -94,7 +94,7 @@ function SearchField() {
         ref={inputRef}
         type="search"
         enterKeyHint="search"
-        aria-label="搜索 AI 产品"
+        aria-label="搜索 AI 工具"
         autoComplete="off"
         onChange={(e) => setHasValue(e.currentTarget.value.length > 0)}
         onKeyDown={(e) => {
@@ -104,7 +104,7 @@ function SearchField() {
             else e.currentTarget.blur()
           }
         }}
-        placeholder="搜索 AI 产品…"
+        placeholder="搜索 AI 工具…"
       />
       <InputGroupAddon align="inline-end">
         {hasValue ? (
@@ -136,7 +136,7 @@ function resolveCrumbs(pathname: string, categories: readonly Category[]): Crumb
   if (pathname.startsWith("/category/")) {
     const id = pathname.slice("/category/".length)
     const name = categories.find((c) => c.id === id)?.name
-    return name ? [{ label: "全部产品", href: "/" }, { label: name }] : [{ label: "全部产品", href: "/" }]
+    return name ? [{ label: "全部工具", href: "/" }, { label: name }] : [{ label: "全部工具", href: "/" }]
   }
   if (pathname === "/search") return [{ label: "搜索" }]
   if (pathname === "/history") return [{ label: "历史记录" }]
@@ -144,7 +144,7 @@ function resolveCrumbs(pathname: string, categories: readonly Category[]): Crumb
   if (pathname === "/about") return [{ label: "关于" }]
   if (pathname === "/privacy") return [{ label: "隐私政策" }]
   if (pathname === "/terms") return [{ label: "服务条款" }]
-  return [{ label: "全部产品" }]
+  return [{ label: "全部工具" }]
 }
 
 const iconButton =

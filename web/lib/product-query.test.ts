@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { isValidSort, isValidView, readUrlParams } from "./product-query"
+import { isValidSort, isValidView, readUrlParams, resolveInitialTab } from "./product-query"
 
 describe("readUrlParams", () => {
   it("空查询返回全 null", () => {
@@ -30,6 +30,13 @@ describe("readUrlParams", () => {
       sort: null
     })
   })
+
+  it("filter 命中 Object.prototype 属性时归一化为 null（不走原型链）", () => {
+    expect(readUrlParams("?filter=constructor").tab).toBeNull()
+    expect(readUrlParams("?filter=toString").tab).toBeNull()
+    expect(readUrlParams("?filter=__proto__").tab).toBeNull()
+    expect(readUrlParams("?filter=hasOwnProperty").tab).toBeNull()
+  })
 })
 
 describe("isValidView / isValidSort", () => {
@@ -40,5 +47,23 @@ describe("isValidView / isValidSort", () => {
     expect(isValidSort("latest")).toBe(true)
     expect(isValidSort("name-desc")).toBe(true)
     expect(isValidSort("bogus")).toBe(false)
+  })
+})
+
+describe("resolveInitialTab", () => {
+  const base = { urlTab: null, storedTab: null, defaultTab: "all", showTabs: true } as const
+
+  it("展示 Tab 的页面：URL > 本地偏好 > 默认", () => {
+    expect(resolveInitialTab({ ...base, urlTab: "featured" })).toBe("featured")
+    expect(resolveInitialTab({ ...base, storedTab: "latest" })).toBe("latest")
+    expect(resolveInitialTab({ ...base })).toBe("all")
+    expect(resolveInitialTab({ ...base, urlTab: "featured", storedTab: "latest" })).toBe("featured")
+  })
+
+  it("不展示 Tab 的页面（分类页）：忽略 URL 与本地偏好，恒为默认", () => {
+    expect(resolveInitialTab({ ...base, showTabs: false, urlTab: "featured" })).toBe("all")
+    expect(resolveInitialTab({ ...base, showTabs: false, storedTab: "latest" })).toBe("all")
+    expect(resolveInitialTab({ ...base, showTabs: false, urlTab: "featured", storedTab: "latest" })).toBe("all")
+    expect(resolveInitialTab({ ...base, showTabs: false, defaultTab: "featured" })).toBe("featured")
   })
 })

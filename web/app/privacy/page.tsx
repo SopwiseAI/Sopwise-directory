@@ -36,7 +36,7 @@ export default function PrivacyPage() {
             <span className="text-foreground">浏览偏好</span>：默认视图、排序与 Tab。
           </li>
           <li>
-            <span className="text-foreground">访问历史</span>：你在站内点击过的产品名称、链接与访问时间。
+            <span className="text-foreground">访问历史</span>：你在站内点击过的工具名称、链接与访问时间。
           </li>
         </ul>
       </InfoSection>
@@ -48,7 +48,7 @@ export default function PrivacyPage() {
       <InfoSection title="第三方链接">
         <p>
           XiGee
-          收录的产品均指向第三方网站。离开本站后，你对目标网站的使用受其各自的隐私政策与条款约束，本站无法控制也不承担责任。
+          收录的工具均指向第三方网站。离开本站后，你对目标网站的使用受其各自的隐私政策与条款约束，本站无法控制也不承担责任。
         </p>
       </InfoSection>
 

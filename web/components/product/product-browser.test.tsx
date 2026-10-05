@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
-import { render } from "@testing-library/react"
+import { render, act, screen, fireEvent } from "@testing-library/react"
 import { ProductBrowser } from "./product-browser"
 import type { Product } from "@/lib/types"
 
 vi.mock("next/navigation", () => ({
-  useSearchParams: () => new URLSearchParams(""),
+  useSearchParams: () => new URLSearchParams(window.location.search),
   useRouter: () => ({ push: () => {}, replace: () => {} }),
   usePathname: () => "/"
 }))
@@ -54,5 +54,44 @@ describe("ProductBrowser a11y ids", () => {
     const allTabs = [...container.querySelectorAll<HTMLElement>('[role="tab"]')]
     expect(allTabs.filter((t) => t.getAttribute("aria-controls") === panels[0].id).length).toBe(3)
     expect(allTabs.filter((t) => t.getAttribute("aria-controls") === panels[1].id).length).toBe(3)
+  })
+})
+
+describe("ProductBrowser URL sort 同步", () => {
+  beforeEach(() => {
+    localStorage.clear()
+    window.history.replaceState(null, "", "/")
+  })
+
+  it("latest tab 不应把隐式排序写入 URL（避免污染 sort 状态）", () => {
+    window.history.replaceState(null, "", "/?tab=latest")
+    render(<ProductBrowser products={products} />)
+    expect(new URLSearchParams(window.location.search).get("sort")).toBeNull()
+  })
+
+  it("从 latest tab 切到全部后，不应残留 sort=latest", () => {
+    window.history.replaceState(null, "", "/?tab=latest")
+    render(<ProductBrowser products={products} />)
+    act(() => {
+      fireEvent.click(screen.getByRole("tab", { name: "全部" }))
+    })
+    expect(new URLSearchParams(window.location.search).get("sort")).toBeNull()
+  })
+})
+
+describe("ProductBrowser 无 Tab 页面", () => {
+  beforeEach(() => {
+    localStorage.clear()
+    window.history.replaceState(null, "", "/")
+  })
+
+  it("showTabs=false 时忽略 URL 的 tab，不静默过滤产品", () => {
+    // 产品 b 为精选；?tab=featured 若生效会导致只显示 b
+    const withFeatured = [makeProduct("a"), { ...makeProduct("b"), featured: true }]
+    window.history.replaceState(null, "", "/?tab=featured")
+    render(<ProductBrowser products={withFeatured} showTabs={false} />)
+    // 两个产品都应显示（tab 被忽略），且 URL 上的 tab 被清理
+    expect(screen.getAllByText(/Product [ab]/).length).toBe(2)
+    expect(new URLSearchParams(window.location.search).get("tab")).toBeNull()
   })
 })

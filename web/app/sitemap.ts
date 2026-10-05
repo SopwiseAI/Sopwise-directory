@@ -1,15 +1,12 @@
 import type { MetadataRoute } from "next"
 import { getAllCategories, getAllProducts, getCategoryCounts, getProductsByCategory } from "@/lib/data"
-import { getProductDate } from "@/lib/product"
+import { latestProductDate } from "@/lib/product"
 import type { Product } from "@/lib/types"
 import { getBaseUrl } from "@/lib/utils"
 
 /** 取一组产品中最新的发布日期（无日期则回落到 epoch）。 */
 function latestDate(products: readonly Product[]): string {
-  return products.reduce((max, p) => {
-    const date = getProductDate(p)
-    return date > max ? date : max
-  }, "1970-01-01")
+  return latestProductDate(products) ?? "1970-01-01"
 }
 
 export default function sitemap(): MetadataRoute.Sitemap {

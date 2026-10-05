@@ -62,7 +62,8 @@ export function DataControls({ mounted }: { mounted: boolean }) {
       document.body.appendChild(a)
       a.click()
       a.remove()
-      URL.revokeObjectURL(url)
+      // 延迟释放：部分浏览器（Firefox/Safari）在同步 revoke 时可能尚未取用 blob，导致下载被取消
+      setTimeout(() => URL.revokeObjectURL(url), 0)
       setStatus(`已导出 ${formatCount(count)} 条记录`)
     } catch {
       setStatus("导出失败：当前浏览器不支持下载")

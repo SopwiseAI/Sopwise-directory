@@ -35,6 +35,7 @@ export function HistoryTracker() {
     // 主键激活：左键 / 键盘回车，含 ctrl/cmd/shift 新标签、新窗口
     const onClick = (e: MouseEvent) => {
       if (e.button !== 0) return
+      if (e.defaultPrevented) return
       record(e.target)
     }
     // 中键「在新标签打开」不触发 click，走 auxclick；仅记录 button===1

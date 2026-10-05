@@ -44,7 +44,7 @@ export function ProductToolbar({
       {showTabs ? (
         <FilterTabs tab={tab} onTabChange={onTabChange} panelId={panelId} />
       ) : (
-        (title ?? <span className="text-sm font-medium text-muted-foreground">产品</span>)
+        (title ?? <span className="text-sm font-medium text-muted-foreground">工具</span>)
       )}
 
       <div className="flex shrink-0 items-center gap-2">

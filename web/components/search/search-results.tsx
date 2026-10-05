@@ -250,7 +250,7 @@ export function SearchResults({ products, featured, categories, categoryCounts }
           </EmptyMedia>
           <EmptyHeader>
             <EmptyDescription>
-              未找到与 <span className="font-medium text-foreground">「{query}」</span> 相关的产品
+              未找到与 <span className="font-medium text-foreground">「{query}」</span> 相关的工具
             </EmptyDescription>
           </EmptyHeader>
           {suggestions.length > 0 && (
@@ -300,7 +300,7 @@ export function SearchResults({ products, featured, categories, categoryCounts }
           <Sparkles className="size-3.5" aria-hidden />
           没有想要的？试试
           <Link href="/" className="text-foreground underline-offset-4 hover:underline">
-            浏览全部产品
+            浏览全部工具
           </Link>
         </p>
       )}

@@ -18,6 +18,7 @@ import {
 import { formatCount } from "@/lib/format"
 import { PricingBadge } from "@/components/product/pricing-badge"
 import { FilterSelect, type FilterOption } from "@/components/history/filter-select"
+import { useMounted } from "@/hooks/use-mounted"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Button } from "@/components/ui/button"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
@@ -36,10 +37,6 @@ import type { Category } from "@/lib/types"
 
 /** 分页步长：初始渲染 + 每次触底加载的条数（避免一次性渲染过多） */
 const PAGE_SIZE = 40
-
-const noopSubscribe = () => () => {}
-const mountedSnapshot = () => true
-const notMountedSnapshot = () => false
 
 /** 首帧骨架：历史数据仅在客户端（localStorage）可得，挂载前渲染同构骨架避免空态闪现（HG-01）。 */
 function HistorySkeleton() {
@@ -148,7 +145,7 @@ export function HistoryList({ categories }: HistoryListProps) {
     return () => window.clearInterval(id)
   }, [])
 
-  const mounted = useSyncExternalStore(noopSubscribe, mountedSnapshot, notMountedSnapshot)
+  const mounted = useMounted()
   const raw = useSyncExternalStore(subscribeHistory, getHistorySnapshot, () => "[]")
   const [query, setQuery] = useState("")
   const [categoryId, setCategoryId] = useState("")
@@ -191,6 +188,11 @@ export function HistoryList({ categories }: HistoryListProps) {
 
   // 触底加载更多（无限滚动）
   const sentinelRef = useRef<HTMLDivElement>(null)
+
+  const visible = filtered.slice(0, visibleCount)
+  const hasMore = visibleCount < filtered.length
+  const isFiltered = query.trim() !== "" || categoryId !== "" || period !== "all"
+
   useEffect(() => {
     const el = sentinelRef.current
     if (!el) return
@@ -204,11 +206,7 @@ export function HistoryList({ categories }: HistoryListProps) {
     )
     observer.observe(el)
     return () => observer.disconnect()
-  }, [filtered.length, query, categoryId, period])
-
-  const visible = filtered.slice(0, visibleCount)
-  const hasMore = visibleCount < filtered.length
-  const isFiltered = query.trim() !== "" || categoryId !== "" || period !== "all"
+  }, [filtered.length, query, categoryId, period, hasMore])
 
   const resetVisible = () => setVisibleCount(PAGE_SIZE)
   const resetFilters = () => {
@@ -228,7 +226,7 @@ export function HistoryList({ categories }: HistoryListProps) {
         </EmptyMedia>
         <EmptyHeader>
           <EmptyTitle>暂无访问记录</EmptyTitle>
-          <EmptyDescription>浏览产品时自动记录，方便下次快速回到这里</EmptyDescription>
+          <EmptyDescription>浏览工具时自动记录，方便下次快速回到这里</EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
           <Button variant="outline" render={<Link href="/" />}>

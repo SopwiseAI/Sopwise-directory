@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Search, Settings } from "lucide-react"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
@@ -48,9 +48,9 @@ function MobileSearchInput({ onClose }: { onClose: () => void }) {
         autoFocus
         type="search"
         enterKeyHint="search"
-        aria-label="搜索 AI 产品"
+        aria-label="搜索 AI 工具"
         autoComplete="off"
-        placeholder="搜索 AI 产品…"
+        placeholder="搜索 AI 工具…"
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
@@ -68,6 +68,22 @@ function HeaderInner({ className }: { className?: string }) {
     setSearchOpen(false)
     setSearchResetKey((k) => k + 1)
   }
+
+  // 移动端「/」聚焦搜索：仅在本 header 实际可见（<768px）时接管，
+  // 桌面端由 MainHeader 处理，避免两个 header 同时挂载造成重复/吞键。
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return
+      const el = e.target
+      if (el instanceof HTMLElement && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable))
+        return
+      if (window.matchMedia("(min-width: 768px)").matches) return
+      e.preventDefault()
+      setSearchOpen(true)
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [])
 
   return (
     <header
@@ -93,9 +109,9 @@ function HeaderInner({ className }: { className?: string }) {
           ) : (
             <button
               type="button"
-              aria-label="搜索产品"
+              aria-label="搜索工具"
               title="搜索"
-              aria-expanded={false}
+              aria-haspopup="dialog"
               aria-controls="mobile-search"
               onClick={() => setSearchOpen(true)}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"

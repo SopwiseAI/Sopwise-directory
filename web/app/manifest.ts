@@ -3,9 +3,9 @@ import { BRAND_PAGE } from "@/lib/brand"
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "XiGee — AI 发现引擎",
+    name: "XiGee — 精选 AI 工具目录",
     short_name: "XiGee",
-    description: "精选各类 AI 工具与应用，按分类浏览或直接搜索你需要的能力",
+    description: "精选值得用的 AI 工具，每一款都经过人工筛选，点击直达官方网站。",
     lang: "zh-CN",
     start_url: "/",
     scope: "/",
