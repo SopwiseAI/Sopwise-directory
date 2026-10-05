@@ -17,11 +17,6 @@ export interface HistoryItem {
   visitCount: number
 }
 
-export interface HistoryGroup {
-  label: string
-  items: HistoryItem[]
-}
-
 /** 记录历史所需的最小产品信息：避免调用方为满足完整 Product 而填充无关字段（如 description）。 */
 export interface HistorySource {
   id: string
@@ -315,12 +310,6 @@ export function importHistory(raw: string): ImportResult {
   return { imported: incoming.length, skipped, total: saved.length }
 }
 
-/** 按 id 查询单条历史 */
-export function getHistoryItem(id: string): HistoryItem | undefined {
-  if (!isBrowser()) return undefined
-  return getHistory().find((i) => i.id === id)
-}
-
 export function subscribeHistory(callback: () => void) {
   if (!isBrowser()) return () => {}
   const storageHandler = (e: StorageEvent) => {
@@ -351,27 +340,6 @@ function startOfDay(date: Date): number {
 function shiftDays(ts: number, days: number): number {
   const d = new Date(ts)
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() + days).getTime()
-}
-
-/** 按本地日期分组：今天 / 昨天 / 近 7 天 / 更早。
- *  @deprecated 历史页已改为平铺 + 筛选，不再使用分组；保留供兼容与测试。 */
-export function groupHistoryByPeriod(items: HistoryItem[] = getHistory(), now?: Date): HistoryGroup[] {
-  const effectiveNow = now ?? new Date()
-  const todayStart = startOfDay(effectiveNow)
-  const yesterdayStart = shiftDays(todayStart, -1)
-  const weekStart = shiftDays(todayStart, -6)
-  const bucket: Record<string, HistoryItem[]> = { 今天: [], 昨天: [], "近 7 天": [], 更早: [] }
-  for (const item of items) {
-    const t = Date.parse(item.lastVisitedAt)
-    const dayStart = startOfDay(new Date(Number.isNaN(t) ? 0 : t))
-    if (dayStart >= todayStart) bucket["今天"].push(item)
-    else if (dayStart >= yesterdayStart) bucket["昨天"].push(item)
-    else if (dayStart >= weekStart) bucket["近 7 天"].push(item)
-    else bucket["更早"].push(item)
-  }
-  return Object.entries(bucket)
-    .filter(([, list]) => list.length > 0)
-    .map(([label, list]) => ({ label, items: list }))
 }
 
 /** 时间筛选维度：全部 / 今天 / 近 7 天 / 近 30 天。 */

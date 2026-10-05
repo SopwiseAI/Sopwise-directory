@@ -5,7 +5,7 @@ const meta = {
   title: "Hero/HeroEyebrow",
   component: HeroEyebrow,
   tags: ["autodocs"],
-  args: { children: "AI Discovery Engine" },
+  args: { children: "Curated AI Directory" },
   argTypes: { className: { control: "text" } }
 } satisfies Meta<typeof HeroEyebrow>
 

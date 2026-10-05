@@ -38,7 +38,7 @@ export function readUrlParams(search: string): UrlState {
   const tab: TabMode | null =
     tabParam && VALID_TABS.has(tabParam)
       ? (tabParam as TabMode)
-      : filterParam && filterParam in FILTER_TO_TAB
+      : filterParam && Object.hasOwn(FILTER_TO_TAB, filterParam)
         ? FILTER_TO_TAB[filterParam]
         : null
 
@@ -47,4 +47,23 @@ export function readUrlParams(search: string): UrlState {
     view: viewParam && isValidView(viewParam) ? viewParam : null,
     sort: sortParam && isValidSort(sortParam) ? sortParam : null
   }
+}
+
+/**
+ * 解析初始 Tab。展示 Tab 的页面按 URL > 本地偏好 > 默认；不展示 Tab 的页面
+ * （如分类页）完全忽略 URL 与本地偏好，恒用 defaultTab，避免「无切换入口却被静默过滤」。
+ */
+export function resolveInitialTab({
+  urlTab,
+  storedTab,
+  defaultTab,
+  showTabs
+}: {
+  urlTab: TabMode | null
+  storedTab: TabMode | null
+  defaultTab: TabMode
+  showTabs: boolean
+}): TabMode {
+  if (!showTabs) return defaultTab
+  return urlTab ?? storedTab ?? defaultTab
 }

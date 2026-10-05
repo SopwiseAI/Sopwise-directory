@@ -23,7 +23,7 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: "XiGee",
-  alternateName: "XiGee — AI 发现引擎",
+  alternateName: "XiGee — 精选 AI 工具目录",
   url: getBaseUrl(),
   potentialAction: {
     "@type": "SearchAction",
@@ -43,12 +43,12 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(getBaseUrl()),
-  title: { default: "XiGee — 你的 AI 发现引擎", template: "%s — XiGee" },
-  description: "XiGee 是你的 AI 发现引擎，精选各类 AI 工具与应用，按分类浏览或直接搜索你需要的能力",
-  keywords: ["AI", "AI产品", "AI工具", "人工智能", "AI导航", "AI发现引擎", "XiGee"],
+  title: { default: "XiGee — 精选 AI 工具目录", template: "%s — XiGee" },
+  description: "XiGee 精选值得用的 AI 工具，人工筛选、分类清晰，点击直达官方网站。",
+  keywords: ["AI", "AI产品", "AI工具", "人工智能", "AI导航", "AI目录", "AI工具目录", "XiGee"],
   openGraph: {
-    title: "XiGee — 你的 AI 发现引擎",
-    description: "精选各类 AI 工具与应用，XiGee 为你发现最好的 AI 产品",
+    title: "XiGee — 精选 AI 工具目录",
+    description: "精选值得用的 AI 工具，每一款都经过人工筛选，点击直达官方网站。",
     siteName: "XiGee",
     locale: "zh_CN",
     type: "website"

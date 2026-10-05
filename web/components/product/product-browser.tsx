@@ -13,7 +13,7 @@ import {
 } from "react"
 import { useSearchParams } from "next/navigation"
 import type { Category, Product } from "@/lib/types"
-import { compareName, compareRecommended, getProductDate } from "@/lib/product"
+import { compareDateDesc, compareName, compareRecommended, getProductDate } from "@/lib/product"
 import {
   getSort,
   getTab,
@@ -27,7 +27,15 @@ import { ProductCard } from "@/components/product/product-card"
 import { ProductToolbar } from "@/components/product/toolbar"
 import { Button } from "@/components/ui/button"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
-import { readUrlParams, type SortMode, type TabMode, type UrlState, type ViewMode } from "@/lib/product-query"
+import {
+  readUrlParams,
+  resolveInitialTab,
+  type SortMode,
+  type TabMode,
+  type UrlState,
+  type ViewMode
+} from "@/lib/product-query"
+import { useMounted } from "@/hooks/use-mounted"
 import { PackageOpen } from "lucide-react"
 import Link from "next/link"
 
@@ -62,8 +70,6 @@ function UrlStateSync({ onChange }: { onChange: (state: UrlState) => void }) {
 
 const noopSubscribe = () => () => {}
 const emptyString = ""
-const mountedSnapshot = () => true
-const notMountedSnapshot = () => false
 
 /** SSR 期退化为 useEffect，客户端用 useLayoutEffect 在首绘帧前揭示（避免中介帧闪烁）。 */
 const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect
@@ -92,7 +98,7 @@ export function ProductBrowser({
   const storedSortRaw = useSyncExternalStore(subscribePreferences, getSort, () => null)
   const storedTabRaw = useSyncExternalStore(subscribePreferences, getTab, () => null)
   const urlSearch = useSyncExternalStore(noopSubscribe, getUrlSearch, () => emptyString)
-  const mounted = useSyncExternalStore(noopSubscribe, mountedSnapshot, notMountedSnapshot)
+  const mounted = useMounted()
 
   // 挂载前一律忽略本地偏好：SSG 服务端读不到 localStorage，若客户端首次渲染就用偏好值
   // 会导致排序/视图与 SSR 不一致（hydration mismatch）。故挂载后才应用。
@@ -104,7 +110,7 @@ export function ProductBrowser({
   const initialView = initial.view ?? storedView ?? defaultView
   const initialSort = initial.sort ?? storedSort ?? defaultSort
   // 默认 Tab 仅在展示 Tab 的页面生效：否则（如分类页）会静默过滤产品却无切换入口
-  const initialTab = initial.tab ?? (showTabs ? (storedTab ?? defaultTab) : defaultTab)
+  const initialTab = resolveInitialTab({ urlTab: initial.tab, storedTab, defaultTab, showTabs })
 
   const [viewOverride, setViewOverride] = useState<ViewMode | null>(null)
   const [sortOverride, setSortOverride] = useState<SortMode | null>(null)
@@ -138,9 +144,8 @@ export function ProductBrowser({
     else params.delete("tab")
     if (view !== defaultView) params.set("view", view)
     else params.delete("view")
-    // latest tab 隐含时间排序，URL 不写 sort 以免误导
-    const effectiveSort = tab === "latest" ? "latest" : sort
-    if (effectiveSort !== defaultSort) params.set("sort", effectiveSort)
+    // latest tab 隐含时间排序，URL 不写 sort 以免污染用户排序偏好
+    if (tab !== "latest" && sort !== defaultSort) params.set("sort", sort)
     else params.delete("sort")
 
     const qs = params.toString()
@@ -177,7 +182,7 @@ export function ProductBrowser({
         list.sort((a, b) => compareName(b, a))
         break
       case "latest":
-        list.sort((a, b) => getProductDate(b).localeCompare(getProductDate(a)))
+        list.sort((a, b) => compareDateDesc(getProductDate(a), getProductDate(b)))
         break
       case "recommended":
         list.sort(compareRecommended)
@@ -186,14 +191,15 @@ export function ProductBrowser({
     return list
   }, [products, tab, resolvedSort])
 
-  // 分类 id→名称/图标 查找（供卡片/列表展示分类）；缺 categories 时返回空
+  // 分类 id→名称/图标 查找表（O(1)/次）；缺 categories 时返回空
+  const categoryMap = useMemo(() => new Map((categories ?? []).map((c) => [c.id, c])), [categories])
   const categoryOf = useCallback(
     (product: Product) => {
       const id = product.categories[0]
-      const cat = id ? categories?.find((c) => c.id === id) : undefined
+      const cat = id ? categoryMap.get(id) : undefined
       return { label: cat?.name ?? "", icon: cat?.icon }
     },
-    [categories]
+    [categoryMap]
   )
 
   return (
@@ -226,12 +232,12 @@ export function ProductBrowser({
             </EmptyHeader>
             <EmptyContent>
               <Button variant="outline" render={<Link href="/" />}>
-                浏览全部产品
+                浏览全部工具
               </Button>
             </EmptyContent>
           </Empty>
         ) : showTabs ? (
-          <div role="tabpanel" id={panelId} aria-label="产品列表">
+          <div role="tabpanel" id={panelId} aria-label="工具列表">
             <BrowserContent view={view} products={filtered} categoryOf={categoryOf} />
           </div>
         ) : (

@@ -58,7 +58,8 @@ export function subscribeTheme(callback: () => void): () => void {
     if (e.key === STORAGE_KEY) callback()
   }
   const mediaHandler = () => {
-    if (readStoredTheme() === "system") applyMetaThemeColor(media.matches)
+    // 系统模式：OS 深浅色切换时同步类与 meta；非系统模式保持不变
+    if (readStoredTheme() === "system") applyTheme("system")
     callback()
   }
   media.addEventListener("change", mediaHandler)

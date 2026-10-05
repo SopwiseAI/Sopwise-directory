@@ -36,7 +36,7 @@ export default function NotFound() {
           <InputGroupAddon align="inline-start">
             <Search />
           </InputGroupAddon>
-          <InputGroupInput name="q" aria-label="搜索 AI 产品" placeholder="搜索 AI 产品…" />
+          <InputGroupInput name="q" aria-label="搜索 AI 工具" placeholder="搜索 AI 工具…" />
           <InputGroupAddon align="inline-end">
             <InputGroupButton type="submit">搜索</InputGroupButton>
           </InputGroupAddon>

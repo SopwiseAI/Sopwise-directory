@@ -7,7 +7,7 @@ import { getBaseUrl } from "@/lib/utils"
 
 export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
-export const alt = "XiGee — 你的 AI 发现引擎"
+export const alt = "XiGee — 精选 AI 工具目录"
 
 const SITE_HOST = getBaseUrl()
   .replace(/^https?:\/\//, "")
@@ -46,7 +46,7 @@ export default function OpengraphImage() {
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ fontSize: 44, fontWeight: 700, letterSpacing: -1 }}>XiGee</div>
-          <div style={{ fontSize: 26, color: BRAND_MUTED.dark, marginTop: 4 }}>你的 AI 发现引擎</div>
+          <div style={{ fontSize: 26, color: BRAND_MUTED.dark, marginTop: 4 }}>精选 AI 工具目录</div>
         </div>
       </div>
 
@@ -60,7 +60,7 @@ export default function OpengraphImage() {
           letterSpacing: -1
         }}
       >
-        发现最好的 AI 工具与应用
+        精选值得用的 AI 工具
       </div>
 
       <div
@@ -68,7 +68,7 @@ export default function OpengraphImage() {
       >
         <span>{stats.categories} 个分类</span>
         <span>·</span>
-        <span>{stats.products} 款精选产品</span>
+        <span>{stats.products} 款精选</span>
         <span>·</span>
         <span>持续更新</span>
       </div>

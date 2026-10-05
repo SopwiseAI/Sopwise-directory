@@ -1,35 +1,10 @@
 "use client"
 
-import type { LucideIcon } from "lucide-react"
-import { ArrowDownAZ, ArrowUpZA, Clock, LayoutGrid, List, Sparkles, Star } from "lucide-react"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Skeleton } from "@/components/ui/skeleton"
 import { setSort, setTab, setView } from "@/lib/preferences"
+import { SORT_OPTIONS, TAB_OPTIONS, VIEW_OPTIONS, type ProductOption } from "@/lib/product-options"
 import type { SortMode, TabMode, ViewMode } from "@/lib/product-query"
-
-interface Option<T extends string> {
-  value: T
-  label: string
-  icon: LucideIcon
-}
-
-const VIEW_OPTIONS: Option<ViewMode>[] = [
-  { value: "grid", label: "宫格", icon: LayoutGrid },
-  { value: "list", label: "列表", icon: List }
-]
-
-const SORT_OPTIONS: Option<SortMode>[] = [
-  { value: "recommended", label: "综合", icon: Sparkles },
-  { value: "latest", label: "最新", icon: Clock },
-  { value: "name-asc", label: "名称 A-Z", icon: ArrowDownAZ },
-  { value: "name-desc", label: "名称 Z-A", icon: ArrowUpZA }
-]
-
-const TAB_OPTIONS: Option<TabMode>[] = [
-  { value: "all", label: "全部", icon: LayoutGrid },
-  { value: "latest", label: "最新", icon: Clock },
-  { value: "featured", label: "精选", icon: Star }
-]
 
 function PrefGroup<T extends string>({
   label,
@@ -40,7 +15,7 @@ function PrefGroup<T extends string>({
 }: {
   label: string
   hint: string
-  options: Option<T>[]
+  options: readonly ProductOption<T>[]
   value: T
   onChange: (value: T) => void
 }) {
@@ -111,19 +86,19 @@ export function BrowsePreferences({ view, sort, tab, mounted }: BrowsePreference
     <div className="space-y-5">
       <PrefGroup
         label="默认视图"
-        hint="打开产品列表时使用的布局"
+        hint="打开工具列表时使用的布局"
         options={VIEW_OPTIONS}
         value={view}
         onChange={setView}
       />
       <PrefGroup
         label="默认排序"
-        hint="产品列表的默认排序方式"
+        hint="工具列表的默认排序方式"
         options={SORT_OPTIONS}
         value={sort}
         onChange={setSort}
       />
-      <PrefGroup label="默认 Tab" hint="首页默认展示的产品范围" options={TAB_OPTIONS} value={tab} onChange={setTab} />
+      <PrefGroup label="默认 Tab" hint="首页默认展示的工具范围" options={TAB_OPTIONS} value={tab} onChange={setTab} />
       <p className="text-xs text-muted-foreground/80">URL 参数（如 ?view=list）优先于这里的默认值。</p>
     </div>
   )

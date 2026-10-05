@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { compareRecommended, getProductDate, productHistoryAttrs } from "./product"
+import { compareDateDesc, compareRecommended, getProductDate, latestProductDate, productHistoryAttrs } from "./product"
 import type { Product } from "./types"
 
 const mockProduct: Product = {
@@ -90,5 +90,52 @@ describe("compareRecommended", () => {
     list1.sort(compareRecommended)
     list2.sort(compareRecommended)
     expect(list1.map((p) => p.id)).toEqual(list2.map((p) => p.id))
+  })
+})
+
+describe("compareDateDesc（确定性日期排序）", () => {
+  const mk = (id: string, date: string): Product => ({ ...mockProduct, id, name: id, createdAt: date })
+
+  it("纯日期按时间倒序", () => {
+    const list = [mk("old", "2020-01-01"), mk("new", "2024-06-01"), mk("mid", "2022-03-03")]
+    list.sort((a, b) => compareDateDesc(getProductDate(a), getProductDate(b)))
+    expect(list.map((p) => p.id)).toEqual(["new", "mid", "old"])
+  })
+
+  it("日期部分相同但带时间的串，与纯日期判定为同一时刻（不因格式反转）", () => {
+    const dateOnly = mk("d", "2024-01-15")
+    const withTime = mk("t", "2024-01-15T10:00:00Z")
+    const list = [withTime, dateOnly]
+    list.sort((a, b) => compareDateDesc(getProductDate(a), getProductDate(b)))
+    // 两者日期部分相同 → 视为相等（返回 0），不应把带时间的排在纯日期之前
+    expect(compareDateDesc(getProductDate(withTime), getProductDate(dateOnly))).toBe(0)
+  })
+
+  it("空日期排在最后", () => {
+    const empty = { ...mockProduct, id: "e", name: "e", createdAt: undefined }
+    const dated = mk("d", "2024-01-01")
+    expect(compareDateDesc(getProductDate(empty), getProductDate(dated))).toBeGreaterThan(0)
+  })
+})
+
+describe("latestProductDate", () => {
+  const mk = (id: string, date?: string): Product => ({ ...mockProduct, id, name: id, createdAt: date })
+
+  it("返回最新日期", () => {
+    const list = [mk("a", "2020-01-01"), mk("b", "2024-06-01"), mk("c", "2022-03-03")]
+    expect(latestProductDate(list)).toBe("2024-06-01")
+  })
+
+  it("混入带时间的 ISO 串时按日期部分取最新（不因格式反转）", () => {
+    const list = [mk("a", "2024-01-15"), mk("b", "2024-01-16T09:00:00Z")]
+    expect(latestProductDate(list)).toBe("2024-01-16T09:00:00Z")
+  })
+
+  it("全部无日期时返回 null", () => {
+    expect(latestProductDate([mk("a"), mk("b")])).toBeNull()
+  })
+
+  it("空数组返回 null", () => {
+    expect(latestProductDate([])).toBeNull()
   })
 })

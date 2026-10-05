@@ -4,7 +4,6 @@ import { buttonVariants } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { HeroBackdrop, HeroEyebrow } from "@/components/hero/hero-primitives"
 import { HeroStatsBar } from "@/components/hero/hero-stats-bar"
-import { formatCount } from "@/lib/format"
 import { getStats } from "@/lib/data"
 
 /**
@@ -26,21 +25,21 @@ export function Hero() {
       <HeroBackdrop align="left" />
 
       <div className="hero-rise relative max-w-2xl">
-        <HeroEyebrow>AI Discovery Engine</HeroEyebrow>
+        <HeroEyebrow>Curated AI Directory</HeroEyebrow>
 
         {/* 页面一级标题仅屏幕阅读器可见，视觉标题用 h2，避免与产品卡片 h3 跨级 */}
-        <h1 className="sr-only">XiGee — 你的 AI 发现引擎</h1>
+        <h1 className="sr-only">XiGee — 精选 AI 工具目录</h1>
         <h2
           id="hero-title"
           className="mt-3.5 font-brand text-[1.875rem] font-semibold leading-[1.05] tracking-[-0.03em] text-balance sm:text-[2.625rem]"
         >
           <span className="bg-gradient-to-r from-foreground via-foreground/90 to-foreground/65 bg-clip-text text-transparent">
-            发现值得用的 AI 产品
+            发现值得用的 AI 工具
           </span>
         </h2>
 
         <p className="mt-3 max-w-xl text-sm leading-[1.65] text-muted-foreground sm:text-[0.9375rem]">
-          精选 {formatCount(stats.products)} 款 AI 工具与应用，按分类探索，或直接搜索你需要的能力。
+          精选值得用的 AI 工具，每一款都经过人工筛选——按分类浏览，或直接搜索。
         </p>
 
         <div className="mt-5 flex flex-wrap items-center gap-2.5">
@@ -51,7 +50,7 @@ export function Hero() {
               className: "shadow-sm transition-shadow hover:shadow-md"
             })}
           >
-            浏览全部产品
+            浏览全部工具
             <ArrowRight className="size-4" />
           </Link>
           <Link

@@ -4,7 +4,7 @@ import { InfoLayout, InfoSection } from "@/components/info/info-shell"
 
 export const metadata: Metadata = {
   title: "服务条款",
-  description: "XiGee 服务条款：本站内容仅供参考，收录产品与链接由第三方提供，使用风险自负。",
+  description: "XiGee 服务条款：本站内容仅供参考，收录工具与链接由第三方提供，使用风险自负。",
   alternates: { canonical: "/terms" },
   openGraph: { title: "服务条款", description: "使用 XiGee 前请阅读的条款与免责声明" }
 }
@@ -15,13 +15,13 @@ export default function TermsPage() {
       <InfoSection title="内容性质">
         <p>
           XiGee 是一个 AI
-          产品导航与发现站点，所展示的产品信息（名称、简介、分类、价格标注等）来自公开数据与整理，仅供参考，不构成任何专业建议或推荐担保。
+          工具导航与发现站点，所展示的工具信息（名称、简介、分类、价格标注等）来自公开数据与整理，仅供参考，不构成任何专业建议或推荐担保。
         </p>
       </InfoSection>
 
       <InfoSection title="第三方链接与内容">
         <p>
-          本站收录的产品均直接跳转第三方网站。我们无法控制这些网站的内容、可用性、安全性或合法性，也不对其提供的服务与产品负责。你与第三方之间的任何交互与风险，由你自行承担。
+          本站收录的工具均直接跳转第三方网站。我们无法控制这些网站的内容、可用性、安全性或合法性，也不对其提供的服务与工具负责。你与第三方之间的任何交互与风险，由你自行承担。
         </p>
       </InfoSection>
 
@@ -34,7 +34,7 @@ export default function TermsPage() {
       <InfoSection title="知识产权">
         <p>
           本站的名称、标识与页面设计归 XiGee
-          所有。被收录产品的名称、图标与商标归各自所有者所有，本站仅用于识别与说明用途。
+          所有。被收录工具的名称、图标与商标归各自所有者所有，本站仅用于识别与说明用途。
         </p>
       </InfoSection>
 

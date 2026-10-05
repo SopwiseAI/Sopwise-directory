@@ -1,15 +1,9 @@
 "use client"
 
-import type { LucideIcon } from "lucide-react"
-import { LayoutGrid, Clock, Sparkles } from "lucide-react"
+import type { KeyboardEvent } from "react"
 import { cn } from "@/lib/utils"
+import { TAB_OPTIONS } from "@/lib/product-options"
 import type { TabMode } from "@/lib/product-query"
-
-export const PRODUCT_TABS: { key: TabMode; label: string; icon: LucideIcon }[] = [
-  { key: "all", label: "全部", icon: LayoutGrid },
-  { key: "latest", label: "最新", icon: Clock },
-  { key: "featured", label: "精选", icon: Sparkles }
-]
 
 interface FilterTabsProps {
   tab: TabMode
@@ -21,25 +15,57 @@ interface FilterTabsProps {
 /**
  * 产品筛选：全部 / 最新 / 精选，胶囊分段控件（对齐信息区子导航的视觉语言）。
  * 每项为 button 而非 link（会话级筛选，体现在 URL query），选中态 bg-brand/10 + 品牌色。
+ * 遵循 WAI-ARIA tabs 键盘约定：←/→/Home/End 在选项间移动焦点并选中。
  */
 export function FilterTabs({ tab, onTabChange, panelId }: FilterTabsProps) {
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const index = TAB_OPTIONS.findIndex((o) => o.value === tab)
+    if (index === -1) return
+
+    let nextIndex: number | null = null
+    switch (event.key) {
+      case "ArrowRight":
+        nextIndex = (index + 1) % TAB_OPTIONS.length
+        break
+      case "ArrowLeft":
+        nextIndex = (index - 1 + TAB_OPTIONS.length) % TAB_OPTIONS.length
+        break
+      case "Home":
+        nextIndex = 0
+        break
+      case "End":
+        nextIndex = TAB_OPTIONS.length - 1
+        break
+      default:
+        return
+    }
+
+    event.preventDefault()
+    const next = TAB_OPTIONS[nextIndex]
+    onTabChange(next.value)
+    const buttons = event.currentTarget.querySelectorAll<HTMLButtonElement>("[role='tab']")
+    buttons[nextIndex]?.focus()
+  }
+
   return (
     <div
       role="tablist"
       aria-label="产品筛选"
       aria-controls={panelId}
+      onKeyDown={handleKeyDown}
       className="no-scrollbar flex items-center gap-1 overflow-x-auto"
     >
-      {PRODUCT_TABS.map(({ key, label, icon: Icon }) => {
-        const active = key === tab
+      {TAB_OPTIONS.map(({ value, label, icon: Icon }) => {
+        const active = value === tab
         return (
           <button
-            key={key}
+            key={value}
             type="button"
             role="tab"
             aria-selected={active}
             aria-controls={panelId}
-            onClick={() => onTabChange(key)}
+            tabIndex={active ? 0 : -1}
+            onClick={() => onTabChange(value)}
             className={cn(
               "flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
               active ? "bg-brand/10 font-medium text-brand" : "text-muted-foreground hover:bg-brand/5 hover:text-brand"

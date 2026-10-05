@@ -3,9 +3,18 @@
 import { useSyncExternalStore } from "react"
 import { getHistorySnapshot, parseHistorySnapshot, subscribeHistory } from "@/lib/history"
 
-/** 稳定的计数值快照（返回数字，按值比较，避免 useSyncExternalStore 反复重渲染）。 */
+/** 稳定的计数值快照（返回数字，按值比较，避免 useSyncExternalStore 反复重渲染）。
+ *  以 raw 字符串为键缓存解析结果：同一条快照多次读取不再重复 JSON.parse。 */
+let cachedRaw: string | null = null
+let cachedCount = 0
+
 function getHistoryCount(): number {
-  return parseHistorySnapshot(getHistorySnapshot()).length
+  const raw = getHistorySnapshot()
+  if (raw !== cachedRaw) {
+    cachedRaw = raw
+    cachedCount = parseHistorySnapshot(raw).length
+  }
+  return cachedCount
 }
 
 /**
