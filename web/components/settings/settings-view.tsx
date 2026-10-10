@@ -5,6 +5,8 @@ import { useSyncExternalStore } from "react"
 import { useMounted } from "@/hooks/use-mounted"
 import { InfoLayout, type InfoSectionDef } from "@/components/info/info-shell"
 import { ThemeSwitch } from "@/components/layout/theme-switch"
+import { Button } from "@/components/ui/button"
+import { Field, FieldContent, FieldDescription, FieldGroup, FieldTitle } from "@/components/ui/field"
 import { StatItem } from "@/components/ui/stat-item"
 import { Skeleton } from "@/components/ui/skeleton"
 import { BrowsePreferences } from "@/components/settings/browse-preferences"
@@ -26,16 +28,11 @@ interface SettingsViewProps {
   stats: { products: number; categories: number; featured: number }
 }
 
-/** 主题卡片骨架：与 ThemeSwitch 的 3 列卡片同构，避免首帧选中态跳变。 */
-function ThemeSwitchSkeleton() {
-  return (
-    <div className="grid grid-cols-1 gap-2 @xl:grid-cols-3" aria-hidden>
-      {[0, 1, 2].map((i) => (
-        <Skeleton key={i} className="h-[66px] rounded-lg" />
-      ))}
-    </div>
-  )
-}
+const DOC_LINKS = [
+  { href: "/about", label: "关于" },
+  { href: "/privacy", label: "隐私政策" },
+  { href: "/terms", label: "服务条款" }
+]
 
 function useBrowsePreferences(): { view: ViewMode; sort: SortMode; tab: TabMode } {
   const view = useSyncExternalStore(subscribePreferences, getView, () => null)
@@ -44,7 +41,12 @@ function useBrowsePreferences(): { view: ViewMode; sort: SortMode; tab: TabMode 
   return { view: view ?? DEFAULT_VIEW, sort: sort ?? DEFAULT_SORT, tab: tab ?? DEFAULT_TAB }
 }
 
-/** 设置页编排：外观 / 浏览偏好 / 数据与隐私 / 关于与版本 / 快捷键。 */
+/**
+ * 设置页编排：外观 / 浏览偏好 / 数据与隐私 / 关于与版本 / 快捷键。
+ *
+ * 每节都是一组 shadcn `Field`「标题+说明在左，控件在右」的行，节标题由 InfoLayout 放在
+ * 左列 —— 全页不再有「卡片套控件」的两层方框；节内靠行距分隔，快捷键一节用发丝线。
+ */
 export function SettingsView({ version, stats }: SettingsViewProps) {
   const { view, sort, tab } = useBrowsePreferences()
   const mounted = useMounted()
@@ -53,74 +55,72 @@ export function SettingsView({ version, stats }: SettingsViewProps) {
     {
       id: "appearance",
       title: "外观",
-      card: true,
       body: (
-        <>
-          <p className="text-xs text-muted-foreground">选择外观模式，跟随系统会自动适配深浅色。</p>
-          {mounted ? <ThemeSwitch /> : <ThemeSwitchSkeleton />}
-        </>
+        <FieldGroup>
+          <Field orientation="responsive">
+            <FieldContent>
+              <FieldTitle>主题</FieldTitle>
+              <FieldDescription>选择外观模式，跟随系统会自动适配深浅色。</FieldDescription>
+            </FieldContent>
+            {mounted ? <ThemeSwitch /> : <Skeleton className="h-8 w-56 rounded-lg" />}
+          </Field>
+        </FieldGroup>
       )
     },
     {
       id: "browsing",
       title: "浏览偏好",
-      card: true,
       body: <BrowsePreferences view={view} sort={sort} tab={tab} mounted={mounted} />
     },
     {
       id: "data-privacy",
       title: "数据与隐私",
-      card: true,
       body: <DataControls mounted={mounted} />
     },
     {
       id: "about",
       title: "关于与版本",
-      card: true,
       body: (
-        // 宽卡片下切成「左：品牌与链接 / 右：数据规模」，两侧都占住，不把内容堆在左半边
-        <div className="@3xl:grid @3xl:grid-cols-2 @3xl:items-start @3xl:gap-8">
-          <div className="space-y-2">
-            <div className="space-y-1">
-              <p className="text-sm text-foreground">XiGee — 精选 AI 工具目录</p>
-              <p className="text-xs text-muted-foreground">
-                精选值得用的 AI 工具，每一款都经过人工筛选，从 XiGee 直达官方网站。
-              </p>
+        <FieldGroup>
+          <Field orientation="responsive">
+            <FieldContent>
+              <FieldTitle>版本</FieldTitle>
+              <FieldDescription>当前部署的 XiGee 版本号</FieldDescription>
+            </FieldContent>
+            <span className="font-data text-muted-foreground">v{version}</span>
+          </Field>
+
+          <Field orientation="responsive">
+            <FieldContent>
+              <FieldTitle>数据规模</FieldTitle>
+              <FieldDescription>收录工具、分类与精选的实时数量</FieldDescription>
+            </FieldContent>
+            <div className="flex flex-wrap gap-x-8 gap-y-3 @2xl:grid @2xl:grid-cols-3 @2xl:gap-x-6">
+              <StatItem label="工具" value={stats.products} size="lg" />
+              <StatItem label="分类" value={stats.categories} size="lg" />
+              <StatItem label="精选" value={stats.featured} size="lg" />
             </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-              <span className="font-data text-muted-foreground/70">v{version}</span>
-              <Link
-                href="/about"
-                className="text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
-              >
-                关于
-              </Link>
-              <Link
-                href="/privacy"
-                className="text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
-              >
-                隐私政策
-              </Link>
-              <Link
-                href="/terms"
-                className="text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
-              >
-                服务条款
-              </Link>
+          </Field>
+
+          <Field orientation="responsive">
+            <FieldContent>
+              <FieldTitle>相关文档</FieldTitle>
+              <FieldDescription>甄选理念、数据处理方式与使用条款</FieldDescription>
+            </FieldContent>
+            <div className="flex flex-wrap items-center gap-2">
+              {DOC_LINKS.map(({ href, label }) => (
+                <Button key={href} variant="outline" size="sm" render={<Link href={href} />}>
+                  {label}
+                </Button>
+              ))}
             </div>
-          </div>
-          <div className="@2xl:grid @2xl:grid-cols-3 @2xl:gap-4 flex flex-wrap gap-x-10 gap-y-4">
-            <StatItem label="工具" value={stats.products} size="lg" />
-            <StatItem label="分类" value={stats.categories} size="lg" />
-            <StatItem label="精选" value={stats.featured} size="lg" />
-          </div>
-        </div>
+          </Field>
+        </FieldGroup>
       )
     },
     {
       id: "shortcuts",
       title: "快捷键",
-      card: true,
       body: <Shortcuts />
     }
   ]

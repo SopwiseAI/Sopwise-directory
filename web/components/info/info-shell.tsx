@@ -7,8 +7,6 @@ export interface InfoSectionDef {
   /** 小节锚点 id：正文章节保留 id，方便从站内其它位置深链到具体条款 */
   id: string
   title: string
-  /** 卡片式小节（设置页控件组）：标题带品牌竖条，内容包一层卡片 */
-  card?: boolean
   body: ReactNode
 }
 
@@ -61,27 +59,12 @@ export function InfoLayout({ title, description, updated, sections }: InfoLayout
 }
 
 /** 正文小节：宽屏左列放小节标签，右列放内容；窄屏标题在上、内容在下。 */
-function InfoSection({ id, title, card, body }: InfoSectionDef) {
+function InfoSection({ id, title, body }: InfoSectionDef) {
   return (
     <section id={id} className={cn("scroll-mt-28 space-y-2 @4xl:space-y-0", SECTION_GRID)}>
-      <h2
-        className={cn(
-          card
-            ? "relative pl-3 text-sm text-muted-foreground before:absolute before:left-0 before:top-1/2 before:h-3.5 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-brand/40"
-            : "text-base font-semibold tracking-tight text-foreground"
-        )}
-      >
-        {title}
-      </h2>
-      <div
-        className={cn(
-          // 内容列自成容器：内部控件栅格按列宽（而非视口）决定排几列
-          "@container",
-          card
-            ? "space-y-3 rounded-lg border bg-card px-4 py-3.5"
-            : "space-y-2 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5"
-        )}
-      >
+      <h2 className="text-base font-semibold tracking-tight text-foreground">{title}</h2>
+      {/* 内容列自成容器：内部控件栅格按列宽（而非视口）决定排几列 */}
+      <div className="@container flex flex-col gap-2 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5">
         {body}
       </div>
     </section>

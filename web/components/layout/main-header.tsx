@@ -6,6 +6,7 @@ import { Search, Settings, X } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
+import { Kbd } from "@/components/ui/kbd"
 import ThemeToggle from "@/components/layout/theme-toggle"
 import type { Category } from "@/lib/types"
 
@@ -118,9 +119,7 @@ function SearchField() {
             <X />
           </InputGroupButton>
         ) : (
-          <span className="kbd" aria-hidden>
-            /
-          </span>
+          <Kbd aria-hidden>/</Kbd>
         )}
       </InputGroupAddon>
     </InputGroup>

@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { History, Palette, PanelLeft, SlidersHorizontal, type LucideIcon } from "lucide-react"
 import { InfoLayout, type InfoSectionDef } from "@/components/info/info-shell"
+import { Item, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item"
 
 export const metadata: Metadata = {
   title: "隐私政策",
@@ -8,6 +10,14 @@ export const metadata: Metadata = {
   alternates: { canonical: "/privacy" },
   openGraph: { title: "隐私政策", description: "XiGee 如何处理（以及不处理）你的数据" }
 }
+
+/** 仅存于本机浏览器、永不上传的数据清单 */
+const LOCAL_DATA: { icon: LucideIcon; title: string; description: string }[] = [
+  { icon: Palette, title: "主题", description: "亮色 / 暗色 / 跟随系统" },
+  { icon: PanelLeft, title: "侧边栏折叠状态", description: "左栏是展开还是收起" },
+  { icon: SlidersHorizontal, title: "浏览偏好", description: "默认视图、排序与 Tab" },
+  { icon: History, title: "访问历史", description: "你在站内点击过的工具名称、链接与访问时间" }
+]
 
 const sections: InfoSectionDef[] = [
   {
@@ -26,20 +36,19 @@ const sections: InfoSectionDef[] = [
     body: (
       <>
         <p>下列数据仅写入你设备的 localStorage，不会发送到任何服务器；清除浏览器数据即会消失：</p>
-        <ul>
-          <li>
-            <span className="text-foreground">主题</span>：亮色 / 暗色 / 跟随系统。
-          </li>
-          <li>
-            <span className="text-foreground">侧边栏折叠状态</span>。
-          </li>
-          <li>
-            <span className="text-foreground">浏览偏好</span>：默认视图、排序与 Tab。
-          </li>
-          <li>
-            <span className="text-foreground">访问历史</span>：你在站内点击过的工具名称、链接与访问时间。
-          </li>
-        </ul>
+        <ItemGroup className="gap-0.5">
+          {LOCAL_DATA.map(({ icon: Icon, title, description }) => (
+            <Item key={title} className="px-0">
+              <ItemMedia variant="icon">
+                <Icon aria-hidden />
+              </ItemMedia>
+              <ItemContent>
+                <ItemTitle>{title}</ItemTitle>
+                <ItemDescription>{description}</ItemDescription>
+              </ItemContent>
+            </Item>
+          ))}
+        </ItemGroup>
       </>
     )
   },

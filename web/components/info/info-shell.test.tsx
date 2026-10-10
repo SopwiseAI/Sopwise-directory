@@ -40,9 +40,10 @@ describe("InfoLayout", () => {
     expect(section?.querySelector("h2 + div")).toHaveClass("@container")
   })
 
-  it("卡片式小节（设置页控件组）内容包一层卡片", () => {
-    const { container } = render(<InfoLayout title="设置" sections={[{ ...sections[0], card: true }]} />)
-    expect(container.querySelector("section#collect > div")).toHaveClass("bg-card")
+  it("正文列不再包卡片：内容直接落在页面上，避免「卡片套控件」的两层方框", () => {
+    const { container } = render(<InfoLayout title="设置" sections={sections} />)
+    expect(container.querySelector("section#collect > div")).not.toHaveClass("bg-card")
+    expect(container.querySelector("section#collect > div")).not.toHaveClass("border")
   })
 
   it("保留最后更新日期，并与内容列对齐", () => {

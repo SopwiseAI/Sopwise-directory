@@ -1,7 +1,9 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { Database, ExternalLink, HardDrive, Zap, type LucideIcon } from "lucide-react"
 import { getStats } from "@/lib/data"
 import { InfoLayout, type InfoSectionDef } from "@/components/info/info-shell"
+import { Item, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item"
 import { StatItem } from "@/components/ui/stat-item"
 import { getBaseUrl } from "@/lib/utils"
 import pkg from "@/package.json"
@@ -12,6 +14,14 @@ export const metadata: Metadata = {
   alternates: { canonical: "/about" },
   openGraph: { title: "关于", description: "了解 XiGee 的甄选理念、数据规模与工作方式" }
 }
+
+/** 站点的四条工作原则 */
+const PRINCIPLES: { icon: LucideIcon; title: string; description: string }[] = [
+  { icon: Database, title: "数据驱动", description: "工具与分类来自结构化数据源，数据更新后站点重新构建。" },
+  { icon: Zap, title: "纯静态", description: "页面预渲染为静态文件，加载快、可离线缓存，也能被搜索引擎收录。" },
+  { icon: HardDrive, title: "本地优先", description: "主题、浏览偏好与访问历史只保存在你的浏览器里，不上传服务器。" },
+  { icon: ExternalLink, title: "直达官网", description: "工具卡片直接跳转外部官网，不在站内中转过一道。" }
+]
 
 const stats = getStats()
 
@@ -43,12 +53,19 @@ const sections: InfoSectionDef[] = [
     id: "how-it-works",
     title: "如何工作",
     body: (
-      <ul>
-        <li>数据驱动：工具与分类来自结构化数据源，更新即重新构建。</li>
-        <li>纯静态：站点预渲染为静态页面，加载快、可离线缓存、可被搜索引擎收录。</li>
-        <li>本地优先：你的主题、浏览偏好与访问历史仅保存在本机浏览器。</li>
-        <li>直达官网：工具卡片直接跳转外部官网，不在站内中转。</li>
-      </ul>
+      <ItemGroup className="gap-0.5">
+        {PRINCIPLES.map(({ icon: Icon, title, description }) => (
+          <Item key={title} className="px-0">
+            <ItemMedia variant="icon">
+              <Icon aria-hidden />
+            </ItemMedia>
+            <ItemContent>
+              <ItemTitle>{title}</ItemTitle>
+              <ItemDescription>{description}</ItemDescription>
+            </ItemContent>
+          </Item>
+        ))}
+      </ItemGroup>
     )
   },
   {

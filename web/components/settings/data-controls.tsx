@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react"
 import { Download, RotateCcw, Trash2, Upload } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
@@ -13,6 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog"
+import { Field, FieldContent, FieldDescription, FieldGroup, FieldTitle } from "@/components/ui/field"
 import { useHistoryCount } from "@/components/history/history-count"
 import { Skeleton } from "@/components/ui/skeleton"
 import { setTheme } from "@/lib/theme"
@@ -20,24 +22,30 @@ import { clearHistory, getHistoryExport, importHistory } from "@/lib/history"
 import { resetPreferences } from "@/lib/preferences"
 import { formatCount } from "@/lib/format"
 
+/** 挂载前骨架：文案是静态的照常渲染，只把数量与按钮换成骨架，避免首帧跳动。 */
 function DataControlsSkeleton() {
   return (
-    <div className="space-y-5" aria-hidden>
-      <div className="space-y-2">
-        <Skeleton className="h-3.5 w-16 rounded" />
-        <Skeleton className="h-3 w-52 rounded" />
-        <div className="flex flex-wrap gap-2">
+    <FieldGroup aria-hidden>
+      <Field orientation="responsive">
+        <FieldContent>
+          <FieldTitle>历史记录</FieldTitle>
+          {/* FieldDescription 是 <p>，里面不能放 Skeleton（div）—— 骨架直接替换整行说明 */}
+          <Skeleton className="h-3.5 w-64 rounded" />
+        </FieldContent>
+        <div className="flex flex-wrap items-center gap-2">
           <Skeleton className="h-7 w-24 rounded-lg" />
           <Skeleton className="h-7 w-24 rounded-lg" />
-          <Skeleton className="h-7 w-24 rounded-lg" />
+          <Skeleton className="h-7 w-20 rounded-lg" />
         </div>
-      </div>
-      <div className="space-y-2 border-t border-border pt-4">
-        <Skeleton className="h-3.5 w-16 rounded" />
-        <Skeleton className="h-3 w-44 rounded" />
-        <Skeleton className="h-7 w-24 rounded-lg" />
-      </div>
-    </div>
+      </Field>
+      <Field orientation="responsive">
+        <FieldContent>
+          <FieldTitle>重置偏好</FieldTitle>
+          <FieldDescription>将外观与浏览偏好恢复默认，不影响历史记录。</FieldDescription>
+        </FieldContent>
+        <Skeleton className="h-7 w-20 rounded-lg" />
+      </Field>
+    </FieldGroup>
   )
 }
 
@@ -94,62 +102,54 @@ export function DataControls({ mounted }: { mounted: boolean }) {
   }
 
   return (
-    <div className="space-y-5">
-      {/* 容器够宽时两块并排铺满卡片，避免右侧留一大片空白；窄屏仍是上下堆叠 */}
-      <div className="@3xl:grid @3xl:grid-cols-2 @3xl:items-start @3xl:gap-8">
-        <div className="space-y-2">
-          <div className="space-y-0.5">
-            <p className="text-xs font-medium text-foreground">历史记录</p>
-            <p className="text-xs text-muted-foreground">
-              当前 {formatCount(count)} 条，仅保存在本机浏览器，不会上传。
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleExport} disabled={count === 0}>
-              <Download />
-              导出 JSON
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
-              <Upload />
-              导入 JSON
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setClearOpen(true)}
-              disabled={count === 0}
-              className="text-destructive hover:text-destructive"
-            >
-              <Trash2 />
-              清空历史
-            </Button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="application/json,.json"
-              className="sr-only"
-              tabIndex={-1}
-              aria-label="选择要导入的历史 JSON 文件"
-              onChange={(e) => handleImport(e.target.files?.[0])}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2 border-t border-border pt-4 @3xl:border-l @3xl:border-t-0 @3xl:pl-8 @3xl:pt-0">
-          <div className="space-y-0.5">
-            <p className="text-xs font-medium text-foreground">重置偏好</p>
-            <p className="text-xs text-muted-foreground">将外观与浏览偏好恢复默认，不影响历史记录。</p>
-          </div>
-          <Button variant="outline" size="sm" onClick={() => setResetOpen(true)}>
-            <RotateCcw />
-            恢复默认
+    <FieldGroup>
+      <Field orientation="responsive">
+        <FieldContent>
+          <FieldTitle>历史记录</FieldTitle>
+          <FieldDescription>当前 {formatCount(count)} 条，仅保存在本机浏览器，不会上传。</FieldDescription>
+        </FieldContent>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={count === 0}>
+            <Download data-icon="inline-start" />
+            导出 JSON
           </Button>
+          <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+            <Upload data-icon="inline-start" />
+            导入 JSON
+          </Button>
+          <Button variant="destructive" size="sm" onClick={() => setClearOpen(true)} disabled={count === 0}>
+            <Trash2 data-icon="inline-start" />
+            清空历史
+          </Button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            className="sr-only"
+            tabIndex={-1}
+            aria-label="选择要导入的历史 JSON 文件"
+            onChange={(e) => handleImport(e.target.files?.[0])}
+          />
         </div>
-      </div>
+      </Field>
 
-      <p role="status" aria-live="polite" className="min-h-4 font-data text-xs text-muted-foreground">
-        {status}
-      </p>
+      <Field orientation="responsive">
+        <FieldContent>
+          <FieldTitle>重置偏好</FieldTitle>
+          <FieldDescription>将外观与浏览偏好恢复默认，不影响历史记录。</FieldDescription>
+        </FieldContent>
+        <Button variant="outline" size="sm" onClick={() => setResetOpen(true)}>
+          <RotateCcw data-icon="inline-start" />
+          恢复默认
+        </Button>
+      </Field>
+
+      {/* 操作结果就地反馈（role=status 而非 alert：非紧急、不抢焦点） */}
+      {status && (
+        <Alert role="status" aria-live="polite">
+          <AlertDescription>{status}</AlertDescription>
+        </Alert>
+      )}
 
       <AlertDialog open={clearOpen} onOpenChange={setClearOpen}>
         <AlertDialogContent>
@@ -186,6 +186,6 @@ export function DataControls({ mounted }: { mounted: boolean }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </FieldGroup>
   )
 }

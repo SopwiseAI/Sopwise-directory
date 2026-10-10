@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
 import { Input } from "@/components/ui/input"
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group"
+import { Kbd } from "@/components/ui/kbd"
 import { Search } from "lucide-react"
 
 const meta = {
@@ -28,7 +29,7 @@ export const WithInputGroup: Story = {
       <InputGroupInput placeholder="搜索 AI 产品…" aria-label="搜索 AI 产品" />
       <InputGroupAddon align="inline-end">
         <InputGroupText>
-          <span className="kbd">/</span>
+          <Kbd>/</Kbd>
         </InputGroupText>
       </InputGroupAddon>
     </InputGroup>
