@@ -4,9 +4,10 @@ import { latestProductDate } from "@/lib/product"
 import type { Product } from "@/lib/types"
 import { getBaseUrl } from "@/lib/utils"
 
-/** 取一组产品中最新的发布日期（无日期则回落到 epoch）。 */
-function latestDate(products: readonly Product[]): string {
-  return latestProductDate(products) ?? "1970-01-01"
+/** 附带该组产品中最新的发布日期；无日期时省略 lastModified（不写 epoch 回落值，避免误导爬虫）。 */
+function withLastModified(url: string, products: readonly Product[]): MetadataRoute.Sitemap[number] {
+  const latest = latestProductDate(products)
+  return latest ? { url, lastModified: new Date(latest) } : { url }
 }
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -16,14 +17,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const categoryUrls = categories
     .filter((cat) => (countMap[cat.id] ?? 0) > 0)
-    .map((cat) => ({
-      url: `${baseUrl}/category/${cat.id}`,
-      lastModified: new Date(latestDate(getProductsByCategory(cat.id)))
-    }))
+    .map((cat) => withLastModified(`${baseUrl}/category/${cat.id}`, getProductsByCategory(cat.id)))
 
   const infoUrls = ["/about", "/privacy", "/terms"].map((path) => ({
     url: `${baseUrl}${path}`
   }))
 
-  return [{ url: baseUrl, lastModified: new Date(latestDate(getAllProducts())) }, ...categoryUrls, ...infoUrls]
+  return [withLastModified(baseUrl, getAllProducts()), ...categoryUrls, ...infoUrls]
 }

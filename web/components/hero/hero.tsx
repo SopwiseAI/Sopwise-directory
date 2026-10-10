@@ -27,16 +27,16 @@ export function Hero() {
       <div className="hero-rise relative max-w-2xl">
         <HeroEyebrow>Curated AI Directory</HeroEyebrow>
 
-        {/* 页面一级标题仅屏幕阅读器可见，视觉标题用 h2，避免与产品卡片 h3 跨级 */}
-        <h1 className="sr-only">XiGee — 精选 AI 工具目录</h1>
-        <h2
+        {/* 视觉大标题即页面 h1（原来 h1 藏在 sr-only、视觉标题用 h2，屏幕阅读器与视觉各说一套）；
+            产品卡片相应为 h2，层级 h1 → h2 连续不跨级 */}
+        <h1
           id="hero-title"
           className="mt-3.5 font-brand text-[1.875rem] font-semibold leading-[1.05] tracking-[-0.03em] text-balance sm:text-[2.625rem]"
         >
           <span className="bg-gradient-to-r from-foreground via-foreground/90 to-foreground/65 bg-clip-text text-transparent">
             发现值得用的 AI 工具
           </span>
-        </h2>
+        </h1>
 
         <p className="mt-3 max-w-xl text-sm leading-[1.65] text-muted-foreground sm:text-[0.9375rem]">
           精选值得用的 AI 工具，每一款都经过人工筛选——按分类浏览，或直接搜索。

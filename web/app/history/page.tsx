@@ -7,7 +7,6 @@ import { HistoryList } from "@/components/history/history-list"
 export const metadata: Metadata = {
   title: "历史记录",
   description: "XiGee 历史记录：快速回到之前浏览过的 AI 工具；记录只保存在本机浏览器，不会上传。",
-  alternates: { canonical: "/history" },
   openGraph: { title: "历史记录" },
   robots: { index: false, follow: true }
 }
