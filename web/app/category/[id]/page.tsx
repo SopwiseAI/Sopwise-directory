@@ -20,6 +20,10 @@ export async function generateStaticParams() {
 
 export const dynamicParams = false
 
+// 注：dynamicParams=false 时，未在 generateStaticParams 中列出的 id 由 Next 直接 404，
+// 下面 generateMetadata 的「分类未找到」分支与页面里的 notFound() 实际不会执行
+// —— 仅作类型收窄与数据意外缺失时的防御保留。
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
   const category = getCategoryById(id)
@@ -73,8 +77,6 @@ export default async function CategoryPage({ params }: Props) {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld(itemListLd) }} />
       )}
 
-      <h1 className="sr-only">{category.name}</h1>
-
       <ProductBrowser
         products={products}
         categories={getAllCategories()}
@@ -90,9 +92,10 @@ export default async function CategoryPage({ params }: Props) {
             >
               {categoryIconNode(category.icon, "size-4")}
             </span>
-            <span key="name" className="min-w-0 truncate text-base font-semibold tracking-tight">
+            {/* 分类名即本页 h1（放进二级栏视觉标题位，不再另设 sr-only h1）；数量/日期为附属信息 */}
+            <h1 key="name" className="min-w-0 truncate text-base font-semibold tracking-tight">
               {category.name}
-            </span>
+            </h1>
             {/* 窄屏二级栏空间有限：数量让位给分类名（分类条里本来就带数量） */}
             <span key="count" className="hidden shrink-0 font-data text-xs font-normal text-muted-foreground sm:inline">
               {formatCount(products.length)} 个工具

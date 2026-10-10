@@ -32,7 +32,7 @@ export function ProductCard({ product, categoryLabel, categoryIcon }: ProductCar
     >
       <div className="min-w-0">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="truncate text-lg font-semibold tracking-tight text-foreground">{product.name}</h3>
+          <h2 className="truncate text-lg font-semibold tracking-tight text-foreground">{product.name}</h2>
           <ArrowUpRight
             className="mt-1 size-4 shrink-0 text-muted-foreground/50 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-foreground"
             aria-hidden
