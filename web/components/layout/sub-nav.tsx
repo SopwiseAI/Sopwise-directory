@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { isInfoRoute } from "@/components/info/info-nav"
 import type { Category } from "@/lib/types"
 
 interface SubNavProps {
@@ -26,6 +27,9 @@ export function SubNav({ className, categories }: SubNavProps) {
     firstRun.current = false
   }, [pathname])
 
+  // 信息页在移动端有自己的二级栏：不再叠一条分类条，避免两条横栏堆在顶栏下
+  if (isInfoRoute(pathname)) return null
+
   return (
     <nav
       aria-label="分类导航"
@@ -35,7 +39,7 @@ export function SubNav({ className, categories }: SubNavProps) {
       )}
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 relative">
-        <div ref={scrollRef} className="no-scrollbar flex items-center gap-1 overflow-x-auto py-2 pr-8">
+        <div ref={scrollRef} className="no-scrollbar -ml-1 flex items-center gap-1 overflow-x-auto py-2 pr-8 pl-1">
           <Link
             href="/"
             aria-current={pathname === "/" ? "page" : undefined}

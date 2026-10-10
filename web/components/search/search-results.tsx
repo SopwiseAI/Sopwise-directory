@@ -9,6 +9,7 @@ import { ProductRow } from "@/components/product/product-row"
 import { PricingBadge } from "@/components/product/pricing-badge"
 import { Badge } from "@/components/ui/badge"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia } from "@/components/ui/empty"
+import { Kbd } from "@/components/ui/kbd"
 import { categoryIconNode } from "@/lib/category-icon-node"
 import { productHistoryAttrs } from "@/lib/product"
 import { getDomain } from "@/lib/url"
@@ -221,7 +222,7 @@ export function SearchResults({ products, featured, categories, categoryCounts }
           </EmptyMedia>
           <EmptyHeader>
             <EmptyDescription>
-              输入关键词开始搜索，或使用顶栏搜索框（按 <span className="kbd">/</span> 聚焦）
+              输入关键词开始搜索，或使用顶栏搜索框（按 <Kbd>/</Kbd> 聚焦）
             </EmptyDescription>
           </EmptyHeader>
           {suggestions.length > 0 && (

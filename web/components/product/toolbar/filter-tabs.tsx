@@ -1,6 +1,6 @@
 "use client"
 
-import type { KeyboardEvent } from "react"
+import { useEffect, useRef, type KeyboardEvent } from "react"
 import { cn } from "@/lib/utils"
 import { TAB_OPTIONS } from "@/lib/product-options"
 import type { TabMode } from "@/lib/product-query"
@@ -16,8 +16,17 @@ interface FilterTabsProps {
  * 产品筛选：全部 / 最新 / 精选，胶囊分段控件（对齐信息区子导航的视觉语言）。
  * 每项为 button 而非 link（会话级筛选，体现在 URL query），选中态 bg-brand/10 + 品牌色。
  * 遵循 WAI-ARIA tabs 键盘约定：←/→/Home/End 在选项间移动焦点并选中。
+ * 窄屏放不下时横向滚动，并把选中项自动滚入可视区（否则「精选」可能在屏幕外，看不到当前位置）。
  */
 export function FilterTabs({ tab, onTabChange, panelId }: FilterTabsProps) {
+  const listRef = useRef<HTMLDivElement>(null)
+
+  // 用瞬时滚动而非 smooth：切 tab 会同时触发列表重排，平滑动画会被浏览器中断，位置就不准了
+  useEffect(() => {
+    const el = listRef.current?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')
+    el?.scrollIntoView({ inline: "center", block: "nearest" })
+  }, [tab])
+
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     const index = TAB_OPTIONS.findIndex((o) => o.value === tab)
     if (index === -1) return
@@ -49,11 +58,13 @@ export function FilterTabs({ tab, onTabChange, panelId }: FilterTabsProps) {
 
   return (
     <div
+      ref={listRef}
       role="tablist"
       aria-label="产品筛选"
       aria-controls={panelId}
       onKeyDown={handleKeyDown}
-      className="no-scrollbar flex items-center gap-1 overflow-x-auto"
+      // 不自己做滚动容器：滚动交给外层二级栏的槽，避免两层 overflow 裁掉焦点环
+      className="flex items-center gap-1"
     >
       {TAB_OPTIONS.map(({ value, label, icon: Icon }) => {
         const active = value === tab

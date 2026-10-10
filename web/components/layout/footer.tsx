@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { pageShell } from "@/lib/layout"
 import { Wordmark } from "@/components/brand/wordmark"
 import { CopyrightYear } from "@/components/layout/copyright-year"
 import pkg from "@/package.json"
@@ -8,7 +9,12 @@ const appVersion = pkg.version
 export default function Footer() {
   return (
     <footer className="mt-12 border-t">
-      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <div
+        className={pageShell(
+          "browse",
+          "flex flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-6"
+        )}
+      >
         <Link
           href="/"
           aria-label="XiGee.net 首页"

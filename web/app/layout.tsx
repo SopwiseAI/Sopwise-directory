@@ -3,6 +3,7 @@ import { GeistMono } from "geist/font/mono"
 import "@fontsource-variable/outfit"
 import { getAllCategories, getCategoryCounts, getStats } from "@/lib/data"
 import { getBaseUrl } from "@/lib/utils"
+import { pageShell } from "@/lib/layout"
 import { BRAND_PAGE } from "@/lib/brand"
 import { STORAGE_PREFIX } from "@/lib/storage"
 import Header from "@/components/layout/header"
@@ -12,6 +13,7 @@ import { MainHeader } from "@/components/layout/main-header"
 import { HistoryTracker } from "@/components/runtime/history-tracker"
 import { WebVitals } from "@/components/runtime/web-vitals"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { Toaster } from "@/components/ui/sonner"
 import Footer from "@/components/layout/footer"
 import "./globals.css"
 
@@ -123,7 +125,7 @@ export default function RootLayout({
                 id="scroll-container"
                 className="flex flex-1 scroll-smooth flex-col scroll-pt-28 md:min-h-0 md:overflow-y-auto"
               >
-                <main id="main" className="mx-auto w-full max-w-7xl scroll-mt-16 px-4 py-6 sm:px-6 flex-1">
+                <main id="main" className={pageShell("browse", "scroll-mt-16 px-4 py-6 sm:px-6 flex-1")}>
                   {children}
                 </main>
                 <Footer />
@@ -131,6 +133,8 @@ export default function RootLayout({
             </div>
           </div>
         </TooltipProvider>
+        {/* 全局 Toast 出口（sonner）：设置页导出/导入等一次性操作结果走这里 */}
+        <Toaster />
       </body>
     </html>
   )

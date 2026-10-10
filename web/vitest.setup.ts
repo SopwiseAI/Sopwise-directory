@@ -26,6 +26,11 @@ if (!("ResizeObserver" in globalThis)) {
   globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver
 }
 
+// jsdom 未实现 Element.scrollIntoView（二级栏用它把当前项滚入可视区），补一个空实现
+if (typeof Element !== "undefined" && typeof Element.prototype.scrollIntoView !== "function") {
+  Element.prototype.scrollIntoView = () => {}
+}
+
 // jsdom 未实现 matchMedia，测试中补一个始终不匹配的实现
 if (!("matchMedia" in globalThis)) {
   globalThis.matchMedia = ((query: string) => ({

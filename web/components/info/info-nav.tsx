@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { FileText, Info, Settings, ShieldCheck, type LucideIcon } from "lucide-react"
@@ -12,15 +13,34 @@ const ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/terms", label: "服务条款", icon: FileText }
 ]
 
+/** 信息区路由：供全站判断「这是信息页」（如移动端不显示分类条）。 */
+export const INFO_ROUTES: readonly string[] = ITEMS.map((item) => item.href)
+
+export function isInfoRoute(pathname: string): boolean {
+  return INFO_ROUTES.includes(pathname)
+}
+
 /**
- * 信息区子导航：顶部水平排列，窄屏横向滚动。
- * 选中态沿用既有子导航语言（bg-brand/10 + 品牌色文字 + 左侧竖条），与全站一致。
+ * 信息区导航：放在二级栏（PageBar）左槽里，窄屏横向滚动。
+ * 选中态沿用全站既有的切换器语言（bg-brand/10 + 品牌色文字），与产品筛选、分类条一致。
  */
 export function InfoNav({ className }: { className?: string }) {
   const pathname = usePathname()
+  const navRef = useRef<HTMLElement>(null)
+
+  // 窄屏放不下时横向滚动：把当前页自动滚入可视区，用户一眼看到自己在哪一项
+  useEffect(() => {
+    const el = navRef.current?.querySelector<HTMLElement>('[aria-current="page"]')
+    el?.scrollIntoView({ behavior: "auto", inline: "center", block: "nearest" })
+  }, [pathname])
 
   return (
-    <nav aria-label="信息导航" className={cn("no-scrollbar flex items-center gap-1 overflow-x-auto", className)}>
+    <nav
+      ref={navRef}
+      aria-label="信息导航"
+      // 不自己做滚动容器：滚动交给外层二级栏的槽（两层 overflow 会把焦点环裁两次）
+      className={cn("flex items-center gap-1", className)}
+    >
       {ITEMS.map(({ href, label, icon: Icon }) => {
         const active = pathname === href
         return (
