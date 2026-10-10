@@ -16,8 +16,8 @@ const categories = getAllCategories()
 
 export default function HistoryPage() {
   return (
-    <div className={pageShell("content", "space-y-4")}>
-      <div className="space-y-1.5">
+    <div className={pageShell("content", "flex flex-col gap-4")}>
+      <div className="flex flex-col gap-1.5">
         <h1 className="text-2xl font-semibold tracking-tight">历史记录</h1>
         {/* 有记录时也要说清「只在本机」，并给出去设置里导出/清空的入口 */}
         <p className="text-sm text-muted-foreground">

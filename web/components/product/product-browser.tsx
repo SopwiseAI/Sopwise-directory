@@ -207,7 +207,7 @@ export function ProductBrowser({
       <Suspense fallback={null}>
         <UrlStateSync onChange={applyUrlState} />
       </Suspense>
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         {/* 空结果时仍展示工具栏，保住分类图标/名称等页面身份信息 */}
         <ProductToolbar
           view={view}

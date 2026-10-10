@@ -20,12 +20,12 @@ const categoryCounts = getCategoryCounts()
 /** 搜索结果为客户端计算（query 来自 URL），SSR 呈现同构骨架，避免「加载中…→结果」突兀跳变。 */
 function ResultsSkeleton() {
   return (
-    <div className="space-y-3" aria-busy="true">
+    <div className="flex flex-col gap-3" aria-busy="true">
       <Skeleton className="h-5 w-44 rounded" />
       <div className="overflow-hidden rounded-lg border bg-card">
         {Array.from({ length: 12 }).map((_, i) => (
           <div key={i} className="flex items-center gap-3 border-b border-border px-4 py-3.5 last:border-b-0">
-            <div className="min-w-0 flex-1 space-y-1.5">
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
               <Skeleton className="h-4 w-1/4 rounded" />
               <Skeleton className="h-3 w-3/4 rounded" />
             </div>
@@ -38,7 +38,7 @@ function ResultsSkeleton() {
 
 export default function SearchPage() {
   return (
-    <div className={pageShell("content", "space-y-4")}>
+    <div className={pageShell("content", "flex flex-col gap-4")}>
       <h1 className="text-2xl font-semibold tracking-tight">搜索</h1>
       <Suspense fallback={<ResultsSkeleton />}>
         <SearchResults

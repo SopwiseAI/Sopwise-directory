@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Search, Settings, X } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
 import { Kbd } from "@/components/ui/kbd"
 import ThemeToggle from "@/components/layout/theme-toggle"
@@ -146,9 +147,6 @@ function resolveCrumbs(pathname: string, categories: readonly Category[]): Crumb
   return [{ label: "全部工具" }]
 }
 
-const iconButton =
-  "flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
-
 interface MainHeaderProps {
   className?: string
   categories: readonly Category[]
@@ -160,33 +158,37 @@ export function MainHeader({ className, categories }: MainHeaderProps) {
   const crumbs = resolveCrumbs(pathname, categories)
 
   return (
-    <header className={cn("h-14 shrink-0 items-center gap-3 border-b border-sidebar-border px-4 sm:px-6", className)}>
-      <nav aria-label="面包屑" className="flex min-w-0 flex-1 items-center text-sm text-muted-foreground">
-        <ol className="flex min-w-0 items-center">
-          {crumbs.map((crumb, i) => {
-            const isLast = i === crumbs.length - 1
-            return (
-              <li key={i} className="flex min-w-0 items-center">
-                {i > 0 && <span className="mx-1.5 text-muted-foreground/50">/</span>}
-                {isLast || !crumb.href ? (
-                  <span aria-current={isLast ? "page" : undefined} className="truncate font-medium text-foreground">
-                    {crumb.label}
-                  </span>
-                ) : (
-                  <Link href={crumb.href} className="truncate transition-colors hover:text-foreground">
-                    {crumb.label}
-                  </Link>
-                )}
-              </li>
-            )
-          })}
-        </ol>
-      </nav>
-      <SearchField />
-      <Link href="/settings" aria-label="设置" title="设置" className={iconButton}>
-        <Settings className="size-4" />
-      </Link>
-      <ThemeToggle />
+    // 顶栏刻意通栏：面包屑贴主区左缘、搜索与右侧入口贴右缘，不跟居中的正文同宽。
+    // 底色与分隔线本来就铺满主区，这里是让内容也横跨整条栏。
+    <header className={cn("h-14 shrink-0 border-b border-sidebar-border", className)}>
+      <div className="flex h-full items-center gap-3 px-4 sm:px-6">
+        <nav aria-label="面包屑" className="flex min-w-0 flex-1 items-center text-sm text-muted-foreground">
+          <ol className="flex min-w-0 items-center">
+            {crumbs.map((crumb, i) => {
+              const isLast = i === crumbs.length - 1
+              return (
+                <li key={i} className="flex min-w-0 items-center">
+                  {i > 0 && <span className="mx-1.5 text-muted-foreground/50">/</span>}
+                  {isLast || !crumb.href ? (
+                    <span aria-current={isLast ? "page" : undefined} className="truncate font-medium text-foreground">
+                      {crumb.label}
+                    </span>
+                  ) : (
+                    <Link href={crumb.href} className="truncate transition-colors hover:text-foreground">
+                      {crumb.label}
+                    </Link>
+                  )}
+                </li>
+              )
+            })}
+          </ol>
+        </nav>
+        <SearchField />
+        <Button variant="outline" size="icon" aria-label="设置" title="设置" render={<Link href="/settings" />}>
+          <Settings />
+        </Button>
+        <ThemeToggle />
+      </div>
     </header>
   )
 }

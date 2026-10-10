@@ -8,6 +8,7 @@ import { createSearchIndex, highlightSegments } from "@/lib/search"
 import { ProductRow } from "@/components/product/product-row"
 import { PricingBadge } from "@/components/product/pricing-badge"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia } from "@/components/ui/empty"
 import { Kbd } from "@/components/ui/kbd"
 import { categoryIconNode } from "@/lib/category-icon-node"
@@ -68,15 +69,19 @@ function SuggestionChips({
       {suggestions.map((s) => {
         const busy = isPending && pendingQuery === s
         return (
-          <button
+          // aria-label 固定为建议词：等待态只换可见文案，可访问名不跟着变（否则读屏会丢失"点了哪个"）
+          <Button
             key={s}
-            type="button"
+            variant="ghost"
+            size="xs"
+            aria-label={s}
+            aria-busy={busy || undefined}
             onClick={() => onPick(s)}
             disabled={busy}
-            className="rounded-md px-2 py-0.5 text-xs text-primary outline-none transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-70"
+            className="rounded-md px-2 text-primary hover:bg-primary/10 hover:text-primary"
           >
             {busy ? "搜索中…" : s}
-          </button>
+          </Button>
         )
       })}
     </div>
@@ -157,7 +162,7 @@ function CategoryBrowse({
   const list = categories.filter((c) => (categoryCounts[c.id] ?? 0) > 0)
   if (list.length === 0) return null
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col gap-2">
       <h2 className="flex items-baseline gap-2 text-base font-semibold tracking-tight">
         按分类浏览
         <span className="font-data font-normal text-muted-foreground">CATEGORIES</span>
@@ -215,7 +220,7 @@ export function SearchResults({ products, featured, categories, categoryCounts }
 
   if (!query.trim()) {
     return (
-      <div className="space-y-8">
+      <div className="flex flex-col gap-8">
         <Empty className="py-10">
           <EmptyMedia variant="icon" className="size-14 rounded-xl border [&_svg:not([class*='size-'])]:size-6">
             <SearchX />
@@ -244,7 +249,7 @@ export function SearchResults({ products, featured, categories, categoryCounts }
 
   if (results.length === 0) {
     return (
-      <div className="space-y-8">
+      <div className="flex flex-col gap-8">
         <Empty className="py-8">
           <EmptyMedia variant="icon" className="size-14 rounded-xl border [&_svg:not([class*='size-'])]:size-6">
             <SearchX />
@@ -269,7 +274,7 @@ export function SearchResults({ products, featured, categories, categoryCounts }
         <CategoryBrowse categories={categories} categoryCounts={categoryCounts} />
 
         {displayedFeatured.length > 0 && (
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <h2 className="flex items-baseline gap-2 text-base font-semibold tracking-tight">
               精选推荐
               <span className="font-data font-normal text-muted-foreground">FEATURED</span>
@@ -286,7 +291,7 @@ export function SearchResults({ products, featured, categories, categoryCounts }
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
         找到 <span className="font-data font-medium text-foreground">{formatCount(results.length)}</span> 个与{" "}
         <span className="font-medium text-foreground">「{query}」</span> 相关的结果

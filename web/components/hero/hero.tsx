@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { ArrowRight, Sparkles } from "lucide-react"
-import { buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { HeroBackdrop, HeroEyebrow } from "@/components/hero/hero-primitives"
 import { HeroStatsBar } from "@/components/hero/hero-stats-bar"
@@ -43,23 +43,18 @@ export function Hero() {
         </p>
 
         <div className="mt-5 flex flex-wrap items-center gap-2.5">
-          <Link
-            href="/?tab=all#product-browser"
-            className={buttonVariants({
-              size: "lg",
-              className: "shadow-sm transition-shadow hover:shadow-md"
-            })}
+          <Button
+            size="lg"
+            className="shadow-sm transition-shadow hover:shadow-md"
+            render={<Link href="/?tab=all#product-browser" />}
           >
             浏览全部工具
-            <ArrowRight className="size-4" />
-          </Link>
-          <Link
-            href="/?tab=featured#product-browser"
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-background px-3.5 text-sm font-medium text-foreground transition-colors hover:border-brand/30 hover:bg-secondary/60 outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <Sparkles className="size-4 text-muted-foreground" />
+            <ArrowRight data-icon="inline-end" />
+          </Button>
+          <Button variant="outline" size="lg" render={<Link href="/?tab=featured#product-browser" />}>
+            <Sparkles data-icon="inline-start" className="text-muted-foreground" />
             探索精选
-          </Link>
+          </Button>
         </div>
 
         <Separator className="mt-7" />

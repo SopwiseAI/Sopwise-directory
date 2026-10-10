@@ -60,6 +60,25 @@ data/         # 产品数据 (data.json)
 - `useSearchParams()` 须包裹 `<Suspense>`
 - 页面宽度统一走 `lib/layout.ts` 的 `PAGE_WIDTH` / `pageShell()`（浏览型 `max-w-7xl`、
   内容型 `max-w-6xl`），不要在页面里写 `max-w-*` 字面量
+- 外壳 chrome 的宽度：**主区顶栏 `MainHeader` 刻意通栏** —— 面包屑贴主区左缘、搜索与右侧入口
+  贴右缘，**不**跟居中的正文同宽。试过收进 `pageShell()` 与正文对齐：宽屏下顶栏内容被压成
+  窄窄一条（1920px 下缩进 180px、2560px 下 500px），观感反而更差，已回退。顶栏自身的底色与
+  分隔线本来就铺满主区，所以只有内容横跨整条栏。其余外壳照常走 `pageShell()`：`Footer` 与正文
+  同宽；移动端顶栏 `Header`、分类条 `SubNav` 只在 <768px 出现（该区间 `max-w-*` 不生效），
+  沿用 `pageShell("browse")` 与外壳写法统一即可
+- 控件一律用 `components/ui/` 的组件 + 变体（`Button variant="outline"`、`ToggleGroup variant="outline"`…），
+  不要手写 `inline-flex h-8 rounded-md border px-2.5 …` 这类与变体等价的类名：全站曾出现
+  `toolbarControl`、`iconButton` 等 4 份复制品，改一次圆角要改四处
+- 空状态一律用 `Empty`（含"筛选/搜索无结果"，不要另写虚线框 div）；加载占位用 `Skeleton`
+- base-ui 有几处默认值与 shadcn/radix **相反**，别以为"注册表原样"就是对的；包装层已按本站预期
+  修正，改动前先看 `components/ui/` 里的注释：
+  - `Menu.RadioItem` 默认 `closeOnClick = false`（普通 `Menu.Item` 是 `true`）→ 单选菜单
+    "选中即关闭"的语义在 `components/ui/dropdown-menu.tsx` 里统一打开；要"选中不关闭"就在
+    调用处显式传 `closeOnClick={false}`（`components/ui/dropdown-menu.test.tsx` 守着这条）
+  - `Select` 的 `alignItemWithTrigger` 默认 `true`（弹层会盖住触发按钮），要用下拉观感就传 `false`
+  - `TabsList` 的 `activateOnFocus` 默认 `false`（方向键只移焦点、不选中），要 radix 那种
+    "方向键即切换"就得显式打开
+  - `ToggleGroup` 没有 `type="single"`，用 `multiple`（默认 false）+ 始终按数组读 `value`
 - 信息页（设置/关于/隐私/条款）宽容器下每个小节切成「标签 13rem + 内容 1fr」，内容列铺到
   页框右边缘：既不留下一条结构性空白，行宽也由列宽自然控制在每行 64 字左右 ——
   不要给正文单独加 `max-w-*` 收窄（那是把空白换了个位置）
@@ -74,7 +93,9 @@ data/         # 产品数据 (data.json)
   排序/视图、历史页放搜索与筛选），但形态必须一致：
   - **永远单行 `h-11`**：切换器横向滚动（自带右缘渐隐提示），辅助控件钉在右侧；不要折行 ——
     折行后手机上会出现 83/111px 高的"栏"，就不是栏了
-  - 栏内控件高度对齐 `h-8`（次要按钮用 `size="sm"`，与 `InputGroup`/`FilterSelect` 同高）；
+  - 栏内控件高度对齐 `h-8`（`Button` 默认尺寸、`InputGroup`、`FilterSelect`、
+    `ToggleGroup size="default"` 都是 h-8）。注意 **`Button size="sm"` 是 h-7**，比它们矮一档 ——
+    历史页的「清除筛选 / 清空全部」现在就是 h-7，属已知档位差异；要严格同高就用默认尺寸。
     输入类控件**定宽**（`sm:w-72` 之类），不要 `flex-1` 撑满整条栏
   - **底色通栏、下边框随内容宽度**：底色铺满主区（吸顶时两侧不漏内容），分隔线收在内容
     容器上 —— 否则信息页（正文 6xl）的下划线会比正文两边各多出 40px，看着"超长"

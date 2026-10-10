@@ -1,8 +1,6 @@
 "use client"
 
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { cn } from "@/lib/utils"
-import { toolbarControl } from "@/components/product/toolbar/styles"
 import { VIEW_OPTIONS } from "@/lib/product-options"
 import type { ViewMode } from "@/lib/product-query"
 
@@ -21,9 +19,10 @@ export function ViewToggle({ view, onViewChange }: ViewToggleProps) {
       onValueChange={(value) => {
         if (value[0]) onViewChange(value[0] as ViewMode)
       }}
+      variant="outline"
       spacing={0}
       aria-label="视图切换"
-      className={cn(toolbarControl, "gap-0 overflow-hidden p-0")}
+      className="h-8"
     >
       {VIEW_OPTIONS.map(({ value: optionValue, icon: Icon }) => {
         const label = VIEW_LABELS[optionValue]
@@ -33,9 +32,9 @@ export function ViewToggle({ view, onViewChange }: ViewToggleProps) {
             value={optionValue}
             aria-label={label}
             title={label}
-            className="h-7 w-9 rounded-none border-0 p-0 text-muted-foreground data-[pressed]:bg-muted data-[pressed]:text-foreground"
+            className="h-full w-9 min-w-9 px-0 text-muted-foreground aria-pressed:bg-muted aria-pressed:text-foreground"
           >
-            <Icon className="size-4" />
+            <Icon />
           </ToggleGroupItem>
         )
       })}
