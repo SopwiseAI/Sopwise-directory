@@ -42,7 +42,7 @@ const PAGE_SIZE = 40
 /** 首帧骨架：历史数据仅在客户端（localStorage）可得，挂载前渲染同构骨架避免空态闪现（HG-01）。 */
 function HistorySkeleton() {
   return (
-    <div className="space-y-3" aria-hidden>
+    <div className="flex flex-col gap-3" aria-hidden>
       {/* 骨架同样走二级栏，保证挂载前后栏高与下边框位置不跳 */}
       <PageBar
         width="content"
@@ -60,7 +60,7 @@ function HistorySkeleton() {
       <div className="overflow-hidden rounded-lg border bg-card">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="flex items-center gap-3 border-b border-border px-4 py-2.5 last:border-b-0">
-            <div className="min-w-0 flex-1 space-y-1.5">
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
               <Skeleton className="h-4 w-1/4 rounded" />
               <Skeleton className="h-3 w-1/2 rounded" />
             </div>
@@ -129,15 +129,16 @@ function HistoryRow({ item, categoryLabel, last }: { item: HistoryItem; category
           {time}
         </span>
       </a>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="icon"
         aria-label={`删除 ${item.name} 的历史记录`}
         title="删除"
         onClick={() => removeFromHistory(item.id)}
-        className="shrink-0 rounded-md p-2 text-muted-foreground/60 outline-none transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring"
+        className="shrink-0 text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive"
       >
-        <Trash2 className="size-4" />
-      </button>
+        <Trash2 />
+      </Button>
     </li>
   )
 }
@@ -248,7 +249,7 @@ export function HistoryList({ categories }: HistoryListProps) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       {/* 二级栏：左 搜索 + 分类/时间筛选；右 计数 + 清除筛选 + 清空 */}
       <PageBar
         width="content"
@@ -334,18 +335,22 @@ export function HistoryList({ categories }: HistoryListProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 筛选/搜索无结果 */}
+      {/* 筛选/搜索无结果：与"暂无记录"共用同一套 Empty 语言（虚线框区分于有数据态） */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed py-8 text-center">
-          <Search className="size-6 text-muted-foreground/40" aria-hidden />
-          <p className="text-sm text-muted-foreground">
-            {query.trim() ? `未找到与「${query.trim()}」匹配的记录` : "当前筛选条件下没有记录"}
-          </p>
-          <Button variant="outline" size="sm" onClick={resetFilters}>
-            <X className="size-3.5" aria-hidden />
-            清除筛选
-          </Button>
-        </div>
+        <Empty className="rounded-lg border border-dashed py-8">
+          <EmptyMedia variant="icon">
+            <Search />
+          </EmptyMedia>
+          <EmptyHeader>
+            <EmptyTitle>{query.trim() ? `未找到与「${query.trim()}」匹配的记录` : "当前筛选条件下没有记录"}</EmptyTitle>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button variant="outline" size="sm" onClick={resetFilters}>
+              <X data-icon="inline-start" aria-hidden />
+              清除筛选
+            </Button>
+          </EmptyContent>
+        </Empty>
       ) : (
         <>
           <ul className="overflow-hidden rounded-lg border bg-card">

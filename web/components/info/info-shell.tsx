@@ -38,12 +38,12 @@ export function InfoLayout({ title, description, updated, sections }: InfoLayout
       </PageBar>
 
       <div className={pageShell("content", "@container")}>
-        <header className="space-y-2">
+        <header className="flex flex-col gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
           {description && <p className="max-w-3xl text-sm text-muted-foreground">{description}</p>}
         </header>
 
-        <div className="mt-8 space-y-8 text-sm leading-relaxed text-muted-foreground">
+        <div className="mt-8 flex flex-col gap-8 text-sm leading-relaxed text-muted-foreground">
           {sections.map((section) => (
             <InfoSection key={section.id} {...section} />
           ))}
@@ -62,7 +62,7 @@ export function InfoLayout({ title, description, updated, sections }: InfoLayout
 /** 正文小节：宽屏左列放小节标签，右列放内容；窄屏标题在上、内容在下。 */
 function InfoSection({ id, title, body }: InfoSectionDef) {
   return (
-    <section id={id} className={cn("scroll-mt-28 space-y-2 @4xl:space-y-0", SECTION_GRID)}>
+    <section id={id} className={cn("scroll-mt-28 flex flex-col gap-2", SECTION_GRID)}>
       <h2 className="text-base font-semibold tracking-tight text-foreground">{title}</h2>
       {/* 内容列自成容器：内部控件栅格按列宽（而非视口）决定排几列 */}
       <div className="@container flex flex-col gap-2 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5">

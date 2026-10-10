@@ -2,10 +2,9 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { Compass, Home, Search } from "lucide-react"
 import { getAllCategories } from "@/lib/data"
-import { cn } from "@/lib/utils"
 import { PageStatus } from "@/components/system/page-status"
 import { Badge } from "@/components/ui/badge"
-import { buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
 
 export const metadata: Metadata = {
@@ -25,10 +24,10 @@ export default function NotFound() {
       title="页面不存在"
       description="你访问的页面可能已被移动或删除。试着搜索，或从下面的分类继续探索。"
       actions={
-        <Link href="/" className={cn(buttonVariants({ variant: "outline" }))}>
+        <Button variant="outline" render={<Link href="/" />}>
           <Home />
           返回首页
-        </Link>
+        </Button>
       }
     >
       <form action="/search" method="GET" role="search" className="w-full max-w-sm">

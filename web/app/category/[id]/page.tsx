@@ -67,7 +67,7 @@ export default async function CategoryPage({ params }: Props) {
   const ld = (obj: unknown) => JSON.stringify(obj).replace(/</g, "\\u003c")
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld(breadcrumbLd) }} />
       {products.length > 0 && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld(itemListLd) }} />

@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Search, Settings } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { pageShell } from "@/lib/layout"
 import ThemeToggle from "./theme-toggle"
 import { Wordmark } from "@/components/brand/wordmark"
 
@@ -92,7 +94,7 @@ function HeaderInner({ className }: { className?: string }) {
         className
       )}
     >
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+      <div className={pageShell("browse", "flex h-14 items-center justify-between gap-4 px-4 sm:px-6")}>
         <Link
           href="/"
           aria-label="XiGee.net 首页"
@@ -107,27 +109,22 @@ function HeaderInner({ className }: { className?: string }) {
               <MobileSearchInput key={searchResetKey} onClose={handleSearchClose} />
             </div>
           ) : (
-            <button
-              type="button"
+            // 点开的是内联搜索框（不是对话框），所以不声明 aria-haspopup；
+            // 触发按钮展开后即卸载，也就没有可挂 aria-expanded 的常驻元素
+            <Button
+              variant="outline"
+              size="icon"
               aria-label="搜索工具"
               title="搜索"
-              aria-haspopup="dialog"
-              aria-controls="mobile-search"
               onClick={() => setSearchOpen(true)}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <Search className="size-4" />
-            </button>
+              <Search />
+            </Button>
           )}
 
-          <Link
-            href="/settings"
-            aria-label="设置"
-            title="设置"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <Settings className="size-4" />
-          </Link>
+          <Button variant="outline" size="icon" aria-label="设置" title="设置" render={<Link href="/settings" />}>
+            <Settings />
+          </Button>
 
           <ThemeToggle />
         </div>

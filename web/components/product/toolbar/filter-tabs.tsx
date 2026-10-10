@@ -61,7 +61,6 @@ export function FilterTabs({ tab, onTabChange, panelId }: FilterTabsProps) {
       ref={listRef}
       role="tablist"
       aria-label="产品筛选"
-      aria-controls={panelId}
       onKeyDown={handleKeyDown}
       // 不自己做滚动容器：滚动交给外层二级栏的槽，避免两层 overflow 裁掉焦点环
       className="flex items-center gap-1"

@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { pageShell } from "@/lib/layout"
 import { isInfoRoute } from "@/components/info/info-nav"
 import type { Category } from "@/lib/types"
 
@@ -38,7 +39,7 @@ export function SubNav({ className, categories }: SubNavProps) {
         className
       )}
     >
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 relative">
+      <div className={pageShell("browse", "relative px-4 sm:px-6")}>
         <div ref={scrollRef} className="no-scrollbar -ml-1 flex items-center gap-1 overflow-x-auto py-2 pr-8 pl-1">
           <Link
             href="/"

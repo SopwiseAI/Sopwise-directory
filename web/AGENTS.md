@@ -60,6 +60,14 @@ data/         # 产品数据 (data.json)
 - `useSearchParams()` 须包裹 `<Suspense>`
 - 页面宽度统一走 `lib/layout.ts` 的 `PAGE_WIDTH` / `pageShell()`（浏览型 `max-w-7xl`、
   内容型 `max-w-6xl`），不要在页面里写 `max-w-*` 字面量
+- 外壳 chrome（主区顶栏 `MainHeader`、移动端顶栏 `Header`、分类条 `SubNav`、`Footer`）同样走
+  `pageShell("browse")`：**底色/分隔线通栏，内容与 `main` 同宽**。不要在这里写 `max-w-*` 或干脆
+  不加宽度容器 —— 顶栏若铺满主区两侧，宽屏下会与居中的正文错开（实测 1920px 偏 180px、
+  2560px 偏 500px），整页看着像两套栅格
+- 控件一律用 `components/ui/` 的组件 + 变体（`Button variant="outline"`、`ToggleGroup variant="outline"`…），
+  不要手写 `inline-flex h-8 rounded-md border px-2.5 …` 这类与变体等价的类名：全站曾出现
+  `toolbarControl`、`iconButton` 等 4 份复制品，改一次圆角要改四处
+- 空状态一律用 `Empty`（含"筛选/搜索无结果"，不要另写虚线框 div）；加载占位用 `Skeleton`
 - 信息页（设置/关于/隐私/条款）宽容器下每个小节切成「标签 13rem + 内容 1fr」，内容列铺到
   页框右边缘：既不留下一条结构性空白，行宽也由列宽自然控制在每行 64 字左右 ——
   不要给正文单独加 `max-w-*` 收窄（那是把空白换了个位置）
@@ -74,7 +82,9 @@ data/         # 产品数据 (data.json)
   排序/视图、历史页放搜索与筛选），但形态必须一致：
   - **永远单行 `h-11`**：切换器横向滚动（自带右缘渐隐提示），辅助控件钉在右侧；不要折行 ——
     折行后手机上会出现 83/111px 高的"栏"，就不是栏了
-  - 栏内控件高度对齐 `h-8`（次要按钮用 `size="sm"`，与 `InputGroup`/`FilterSelect` 同高）；
+  - 栏内控件高度对齐 `h-8`（`Button` 默认尺寸、`InputGroup`、`FilterSelect`、
+    `ToggleGroup size="default"` 都是 h-8）。注意 **`Button size="sm"` 是 h-7**，比它们矮一档 ——
+    历史页的「清除筛选 / 清空全部」现在就是 h-7，属已知档位差异；要严格同高就用默认尺寸。
     输入类控件**定宽**（`sm:w-72` 之类），不要 `flex-1` 撑满整条栏
   - **底色通栏、下边框随内容宽度**：底色铺满主区（吸顶时两侧不漏内容），分隔线收在内容
     容器上 —— 否则信息页（正文 6xl）的下划线会比正文两边各多出 40px，看着"超长"

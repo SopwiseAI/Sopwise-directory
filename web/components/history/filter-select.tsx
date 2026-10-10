@@ -1,6 +1,7 @@
 "use client"
 
 import { ChevronDown, type LucideIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,22 +34,22 @@ export function FilterSelect({ label, icon: Icon, value, options, onChange, acti
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <button
-            type="button"
+          <Button
+            variant="outline"
             aria-label={label}
             className={cn(
-              "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "gap-1.5 text-xs",
               active
-                ? "border-brand/40 bg-brand/10 text-brand"
-                : "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground"
+                ? "border-brand/40 bg-brand/10 text-brand hover:border-brand/40 hover:bg-brand/10 hover:text-brand"
+                : "text-muted-foreground"
             )}
-          >
-            <Icon className="size-3.5 shrink-0" aria-hidden />
-            <span className="whitespace-nowrap">{selected?.label ?? label}</span>
-            <ChevronDown className="size-3.5 shrink-0 opacity-60" aria-hidden />
-          </button>
+          />
         }
-      />
+      >
+        <Icon data-icon="inline-start" aria-hidden />
+        <span className="whitespace-nowrap">{selected?.label ?? label}</span>
+        <ChevronDown data-icon="inline-end" className="opacity-60" aria-hidden />
+      </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-[9rem]">
         <DropdownMenuRadioGroup value={value} onValueChange={(next) => onChange(String(next))}>
           {options.map((option) => (

@@ -120,7 +120,7 @@ export default function RootLayout({
           <div className="flex flex-1 md:overflow-hidden">
             <Sidebar categories={allCategories} categoryCounts={categoryCounts} totalProducts={totalProducts} />
             <div className="flex min-w-0 flex-1 flex-col bg-background md:overflow-hidden">
-              <MainHeader className="hidden md:flex" categories={allCategories} />
+              <MainHeader className="hidden md:block" categories={allCategories} />
               <div
                 id="scroll-container"
                 className="flex flex-1 scroll-smooth flex-col scroll-pt-28 md:min-h-0 md:overflow-y-auto"

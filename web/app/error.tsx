@@ -4,8 +4,7 @@ import { useEffect } from "react"
 import Link from "next/link"
 import { Home, RotateCw, TriangleAlert } from "lucide-react"
 import { PageStatus } from "@/components/system/page-status"
-import { Button, buttonVariants } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
@@ -25,10 +24,10 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
             <RotateCw />
             重试
           </Button>
-          <Link href="/" className={cn(buttonVariants({ variant: "outline" }))}>
+          <Button variant="outline" render={<Link href="/" />}>
             <Home />
             返回首页
-          </Link>
+          </Button>
         </div>
       }
     />

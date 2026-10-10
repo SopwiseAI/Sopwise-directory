@@ -29,7 +29,6 @@ export default function ThemeToggle() {
       onClick={() => setTheme(nextMode)}
       aria-label={`当前：${labels[theme]}模式，点击切换${labels[nextMode]}`}
       title={`当前：${labels[theme]}模式`}
-      className="border-border bg-card text-muted-foreground hover:border-foreground/20 hover:bg-card hover:text-foreground"
     >
       {/* TH-01：三个图标叠放，由 <html data-theme> 驱动 CSS 显示，首帧即为正确图标 */}
       <span className="relative inline-flex size-4">
