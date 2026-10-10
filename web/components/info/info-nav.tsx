@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { FileText, Info, Settings, ShieldCheck, type LucideIcon } from "lucide-react"
@@ -25,9 +26,20 @@ export function isInfoRoute(pathname: string): boolean {
  */
 export function InfoNav({ className }: { className?: string }) {
   const pathname = usePathname()
+  const navRef = useRef<HTMLElement>(null)
+
+  // 窄屏放不下时横向滚动：把当前页自动滚入可视区，用户一眼看到自己在哪一项
+  useEffect(() => {
+    const el = navRef.current?.querySelector<HTMLElement>('[aria-current="page"]')
+    el?.scrollIntoView({ behavior: "auto", inline: "center", block: "nearest" })
+  }, [pathname])
 
   return (
-    <nav aria-label="信息导航" className={cn("no-scrollbar flex items-center gap-1 overflow-x-auto", className)}>
+    <nav
+      ref={navRef}
+      aria-label="信息导航"
+      className={cn("no-scrollbar flex items-center gap-1 overflow-x-auto", className)}
+    >
       {ITEMS.map(({ href, label, icon: Icon }) => {
         const active = pathname === href
         return (
