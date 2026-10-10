@@ -99,3 +99,5 @@ cd studio && APP_ENV=dev uv run pytest -v
 # 全量检查 (markdownlint + prettier check + ruff check + eslint)
 pnpm run check
 ```
+
+<!-- vercel-ignore verification: this PR touches no web/ files -->
