@@ -9,11 +9,6 @@ interface PageBarProps {
   actions?: ReactNode
   /** 内容容器宽度，需与该页正文一致（browse = 浏览型 7xl；content = 内容型 6xl） */
   width?: PageWidth
-  /**
-   * 是否是内容区顶部的第一个元素。为 true 时抵消外壳 main 的上内边距，
-   * 让二级栏紧贴顶栏 —— 首页有 Hero 在栏之上，这类页面不要传。
-   */
-  flush?: boolean
   className?: string
 }
 
@@ -23,15 +18,17 @@ interface PageBarProps {
  *
  * 各页放什么由页面决定（信息页放页面导航，首页放筛选 + 排序/视图，
  * 历史页放搜索 + 筛选 + 清空），形态一致，语义各归其位。
+ *
+ * 上下留白交给外壳 main 的上内边距与调用方的下边距，本组件不自带外边距 ——
+ * 曾经试过抵消上内边距让栏紧贴顶栏，观感过于逼仄，故保持留白。
  * 移动端不吸顶：那里已经有顶栏与分类条两层吸顶，再多一层会挤占阅读区。
  */
-export function PageBar({ children, actions, width = "content", flush, className }: PageBarProps) {
+export function PageBar({ children, actions, width = "content", className }: PageBarProps) {
   return (
     <div
       className={cn(
         "z-30 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
         "md:sticky md:top-0",
-        flush && "-mt-6",
         className
       )}
     >

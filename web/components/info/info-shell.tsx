@@ -25,7 +25,7 @@ const SECTION_GRID = "@4xl:grid @4xl:grid-cols-[13rem_minmax(0,1fr)] @4xl:items-
 /**
  * 信息区（设置/关于/隐私/条款）统一布局：二级栏（页面导航） + 标题 + 「小节标签 / 内容」两列正文。
  *
- * 导航放在统一二级栏里并紧贴顶栏、桌面吸顶（见 PageBar）；页框走 lib/layout.ts 的统一档位
+ * 导航放在统一二级栏里（见 PageBar），与正文之间保留留白、桌面吸顶；页框走 lib/layout.ts 的统一档位
  * （内容型，比首页内容区小一档）。宽屏下每个小节切成 [标签 13rem | 内容 1fr]：左列由小节
  * 标题占住，内容列就能一路铺到页框右边缘 —— 既没有"正文右侧一条空白"，长文行宽也不会
  * 失控（实测每行 64 字左右）。窄屏（容器 < 896px）自动退回"标题在上、内容在下"的堆叠版式。
@@ -33,7 +33,7 @@ const SECTION_GRID = "@4xl:grid @4xl:grid-cols-[13rem_minmax(0,1fr)] @4xl:items-
 export function InfoLayout({ title, description, updated, sections }: InfoLayoutProps) {
   return (
     <>
-      <PageBar flush className="mb-6">
+      <PageBar className="mb-6">
         <InfoNav />
       </PageBar>
 

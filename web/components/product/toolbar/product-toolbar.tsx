@@ -20,8 +20,6 @@ interface ProductToolbarProps {
   panelId?: string
   /** 左侧自定义内容（无 tabs 时展示，如分类页的「分类图标 + 名称」）。 */
   title?: ReactNode
-  /** 工具栏是否位于内容区顶部（分类页为 true：抵消外壳上内边距，紧贴顶栏）。 */
-  flush?: boolean
 }
 
 /**
@@ -38,15 +36,13 @@ export function ProductToolbar({
   onSortChange,
   showTabs = true,
   panelId,
-  title,
-  flush
+  title
 }: ProductToolbarProps) {
   const isLatestTab = tab === "latest"
 
   return (
     <PageBar
       width="browse"
-      flush={flush}
       actions={
         <>
           {/* 「最新」tab 已隐含按时间排序，隐藏排序控件避免语义重复 */}

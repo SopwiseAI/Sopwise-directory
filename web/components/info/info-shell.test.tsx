@@ -30,13 +30,14 @@ describe("InfoLayout", () => {
     expect(container.querySelector(`.${CSS.escape(PAGE_WIDTH.content)}`)).not.toBeNull()
   })
 
-  it("页面导航放进二级栏：紧贴顶栏、桌面吸顶、内容容器与正文同宽", () => {
+  it("页面导航放进二级栏：下边框 + 桌面吸顶 + 上下保留留白", () => {
     const { container } = render(<InfoLayout title="隐私政策" sections={sections} />)
     const bar = container.firstElementChild as HTMLElement
-    // 二级栏形态：通栏下边框 + 桌面吸顶 + 顶到外壳上内边距之外（flush）
     expect(bar).toHaveClass("border-b")
     expect(bar).toHaveClass("md:sticky")
-    expect(bar).toHaveClass("-mt-6")
+    // 不再抵消外壳上内边距：栏与顶栏之间保留留白（观感比贴顶更松弛）
+    expect(bar).not.toHaveClass("-mt-6")
+    expect(bar).toHaveClass("mb-6")
     // 导航在栏内
     expect(bar.querySelector('nav[aria-label="信息导航"]')).not.toBeNull()
     // 正文容器与二级栏同宽（内容型）
