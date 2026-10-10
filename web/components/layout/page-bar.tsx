@@ -32,7 +32,12 @@ export function PageBar({ children, actions, width = "content", className }: Pag
     >
       <div className={pageShell(width, "flex h-11 items-center gap-3")}>
         <div className="relative min-w-0 flex-1">
-          <div className="no-scrollbar flex items-center gap-1 overflow-x-auto">{children}</div>
+          {/*
+            横向滚动槽必须留出焦点环的余量：overflow 在任一轴为 auto 时另一轴也会被裁剪，
+            而站内控件的焦点环是 3px 外阴影（ring-3）—— 不留余量的话聚焦时环会被切掉一截。
+            -mx-1/px-1 抵掉左右各 4px，保证第一个控件仍与内容左边缘对齐。
+          */}
+          <div className="no-scrollbar -mx-1 flex items-center gap-1 overflow-x-auto px-1 py-1">{children}</div>
           {/* 切换器放不下时右缘渐隐，提示还能横向滚动（与全站分类子导航同一手法） */}
           <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent" />
         </div>

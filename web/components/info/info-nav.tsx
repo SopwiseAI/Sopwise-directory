@@ -38,7 +38,8 @@ export function InfoNav({ className }: { className?: string }) {
     <nav
       ref={navRef}
       aria-label="信息导航"
-      className={cn("no-scrollbar flex items-center gap-1 overflow-x-auto", className)}
+      // 不自己做滚动容器：滚动交给外层二级栏的槽（两层 overflow 会把焦点环裁两次）
+      className={cn("flex items-center gap-1", className)}
     >
       {ITEMS.map(({ href, label, icon: Icon }) => {
         const active = pathname === href

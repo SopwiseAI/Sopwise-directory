@@ -39,7 +39,7 @@ export function SubNav({ className, categories }: SubNavProps) {
       )}
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 relative">
-        <div ref={scrollRef} className="no-scrollbar flex items-center gap-1 overflow-x-auto py-2 pr-8">
+        <div ref={scrollRef} className="no-scrollbar -ml-1 flex items-center gap-1 overflow-x-auto py-2 pr-8 pl-1">
           <Link
             href="/"
             aria-current={pathname === "/" ? "page" : undefined}
