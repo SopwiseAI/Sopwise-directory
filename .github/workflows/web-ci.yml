@@ -1,16 +1,12 @@
 name: Web CI
 
+# 注意：这里刻意不加 paths 过滤——main 已配置分支保护，要求 "ci" 检查通过才能合并，
+# 如果只在 web/** 变更时运行，根目录/studio 的 PR 会永远等不到该检查而无法合并。
 on:
   push:
     branches: [main]
-    paths:
-      - "web/**"
-      - ".github/workflows/web-ci.yml"
   pull_request:
     branches: [main]
-    paths:
-      - "web/**"
-      - ".github/workflows/web-ci.yml"
 
 defaults:
   run:
