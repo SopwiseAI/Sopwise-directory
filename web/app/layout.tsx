@@ -3,6 +3,7 @@ import { GeistMono } from "geist/font/mono"
 import "@fontsource-variable/outfit"
 import { getAllCategories, getCategoryCounts, getStats } from "@/lib/data"
 import { getBaseUrl } from "@/lib/utils"
+import { pageShell } from "@/lib/layout"
 import { BRAND_PAGE } from "@/lib/brand"
 import { STORAGE_PREFIX } from "@/lib/storage"
 import Header from "@/components/layout/header"
@@ -123,7 +124,7 @@ export default function RootLayout({
                 id="scroll-container"
                 className="flex flex-1 scroll-smooth flex-col scroll-pt-28 md:min-h-0 md:overflow-y-auto"
               >
-                <main id="main" className="mx-auto w-full max-w-7xl scroll-mt-16 px-4 py-6 sm:px-6 flex-1">
+                <main id="main" className={pageShell("browse", "scroll-mt-16 px-4 py-6 sm:px-6 flex-1")}>
                   {children}
                 </main>
                 <Footer />

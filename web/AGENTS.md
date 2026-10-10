@@ -58,6 +58,13 @@ data/         # 产品数据 (data.json)
 - 页面为 Server Component，交互组件标记 `"use client"`
 - Next.js 16 中 `params` 是 Promise，必须 `await`
 - `useSearchParams()` 须包裹 `<Suspense>`
+- 页面宽度统一走 `lib/layout.ts` 的 `PAGE_WIDTH` / `pageShell()`（浏览型 `max-w-7xl`、
+  内容型 `max-w-6xl`），不要在页面里写 `max-w-*` 字面量
+- 信息页（设置/关于/隐私/条款）宽容器下每个小节切成「标签 13rem + 内容 1fr」，内容列铺到
+  页框右边缘：既不留下一条结构性空白，行宽也由列宽自然控制在每行 64 字左右 ——
+  不要给正文单独加 `max-w-*` 收窄（那是把空白换了个位置）
+- 控件栅格列数用容器查询（`@container` + `@2xl:` 等）跟随卡片实际宽度，不要用视口断点 ——
+  主区可用宽度会被侧栏折叠/展开改变；列数要与选项数对齐，每组都排满整行、不留空格子
 - 产品卡片点击直接跳转外部网站，无详情页
 - 数据更新：修改 `data/data.json` → PR → 合并 → Vercel 自动部署
 

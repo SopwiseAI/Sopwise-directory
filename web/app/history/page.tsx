@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { getAllCategories } from "@/lib/data"
+import { pageShell } from "@/lib/layout"
 import { HistoryList } from "@/components/history/history-list"
 
 export const metadata: Metadata = {
@@ -14,7 +15,7 @@ const categories = getAllCategories()
 
 export default function HistoryPage() {
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4">
+    <div className={pageShell("content", "space-y-4")}>
       <h1 className="text-2xl font-semibold tracking-tight">历史记录</h1>
       <HistoryList categories={categories} />
     </div>

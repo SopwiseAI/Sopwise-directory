@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import { getAllCategories, getAllProducts, getCategoryCounts, getFeaturedProducts } from "@/lib/data"
+import { pageShell } from "@/lib/layout"
 import { SearchResults } from "@/components/search/search-results"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -37,7 +38,7 @@ function ResultsSkeleton() {
 
 export default function SearchPage() {
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-4">
+    <div className={pageShell("content", "space-y-4")}>
       <h1 className="text-2xl font-semibold tracking-tight">搜索</h1>
       <Suspense fallback={<ResultsSkeleton />}>
         <SearchResults

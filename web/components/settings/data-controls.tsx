@@ -95,51 +95,56 @@ export function DataControls({ mounted }: { mounted: boolean }) {
 
   return (
     <div className="space-y-5">
-      <div className="space-y-2">
-        <div className="space-y-0.5">
-          <p className="text-xs font-medium text-foreground">历史记录</p>
-          <p className="text-xs text-muted-foreground">当前 {formatCount(count)} 条，仅保存在本机浏览器，不会上传。</p>
+      {/* 容器够宽时两块并排铺满卡片，避免右侧留一大片空白；窄屏仍是上下堆叠 */}
+      <div className="@3xl:grid @3xl:grid-cols-2 @3xl:items-start @3xl:gap-8">
+        <div className="space-y-2">
+          <div className="space-y-0.5">
+            <p className="text-xs font-medium text-foreground">历史记录</p>
+            <p className="text-xs text-muted-foreground">
+              当前 {formatCount(count)} 条，仅保存在本机浏览器，不会上传。
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleExport} disabled={count === 0}>
+              <Download />
+              导出 JSON
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+              <Upload />
+              导入 JSON
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setClearOpen(true)}
+              disabled={count === 0}
+              className="text-destructive hover:text-destructive"
+            >
+              <Trash2 />
+              清空历史
+            </Button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/json,.json"
+              className="sr-only"
+              tabIndex={-1}
+              aria-label="选择要导入的历史 JSON 文件"
+              onChange={(e) => handleImport(e.target.files?.[0])}
+            />
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleExport} disabled={count === 0}>
-            <Download />
-            导出 JSON
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
-            <Upload />
-            导入 JSON
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setClearOpen(true)}
-            disabled={count === 0}
-            className="text-destructive hover:text-destructive"
-          >
-            <Trash2 />
-            清空历史
-          </Button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="application/json,.json"
-            className="sr-only"
-            tabIndex={-1}
-            aria-label="选择要导入的历史 JSON 文件"
-            onChange={(e) => handleImport(e.target.files?.[0])}
-          />
-        </div>
-      </div>
 
-      <div className="space-y-2 border-t border-border pt-4">
-        <div className="space-y-0.5">
-          <p className="text-xs font-medium text-foreground">重置偏好</p>
-          <p className="text-xs text-muted-foreground">将外观与浏览偏好恢复默认，不影响历史记录。</p>
+        <div className="space-y-2 border-t border-border pt-4 @3xl:border-l @3xl:border-t-0 @3xl:pl-8 @3xl:pt-0">
+          <div className="space-y-0.5">
+            <p className="text-xs font-medium text-foreground">重置偏好</p>
+            <p className="text-xs text-muted-foreground">将外观与浏览偏好恢复默认，不影响历史记录。</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setResetOpen(true)}>
+            <RotateCcw />
+            恢复默认
+          </Button>
         </div>
-        <Button variant="outline" size="sm" onClick={() => setResetOpen(true)}>
-          <RotateCcw />
-          恢复默认
-        </Button>
       </div>
 
       <p role="status" aria-live="polite" className="min-h-4 font-data text-xs text-muted-foreground">

@@ -21,7 +21,7 @@ export function ThemeSwitch() {
         if (value[0]) setTheme(value[0] as ThemeMode)
       }}
       aria-label="主题模式"
-      className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3"
+      className="grid w-full grid-cols-1 gap-2 @xl:grid-cols-3"
     >
       {options.map(({ value, label, icon: Icon }) => (
         <ToggleGroupItem
