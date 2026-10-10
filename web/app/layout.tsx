@@ -13,6 +13,7 @@ import { MainHeader } from "@/components/layout/main-header"
 import { HistoryTracker } from "@/components/runtime/history-tracker"
 import { WebVitals } from "@/components/runtime/web-vitals"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { Toaster } from "@/components/ui/sonner"
 import Footer from "@/components/layout/footer"
 import "./globals.css"
 
@@ -132,6 +133,8 @@ export default function RootLayout({
             </div>
           </div>
         </TooltipProvider>
+        {/* 全局 Toast 出口（sonner）：设置页导出/导入等一次性操作结果走这里 */}
+        <Toaster />
       </body>
     </html>
   )

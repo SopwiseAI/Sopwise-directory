@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react"
 import { Download, RotateCcw, Trash2, Upload } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
@@ -55,7 +55,6 @@ export function DataControls({ mounted }: { mounted: boolean }) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [clearOpen, setClearOpen] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
-  const [status, setStatus] = useState("")
 
   if (!mounted) return <DataControlsSkeleton />
 
@@ -72,9 +71,9 @@ export function DataControls({ mounted }: { mounted: boolean }) {
       a.remove()
       // 延迟释放：部分浏览器（Firefox/Safari）在同步 revoke 时可能尚未取用 blob，导致下载被取消
       setTimeout(() => URL.revokeObjectURL(url), 0)
-      setStatus(`已导出 ${formatCount(count)} 条记录`)
+      toast.success(`已导出 ${formatCount(count)} 条记录`)
     } catch {
-      setStatus("导出失败：当前浏览器不支持下载")
+      toast.error("导出失败", { description: "当前浏览器不支持下载" })
     }
   }
 
@@ -83,13 +82,15 @@ export function DataControls({ mounted }: { mounted: boolean }) {
     try {
       const text = await file.text()
       const result = importHistory(text)
-      setStatus(
-        result.error
-          ? `导入失败：${result.error}`
-          : `导入完成：新增 ${formatCount(result.imported)} 条，跳过 ${formatCount(result.skipped)} 条，共 ${formatCount(result.total)} 条`
-      )
+      if (result.error) {
+        toast.error("导入失败", { description: result.error })
+      } else {
+        toast.success("导入完成", {
+          description: `新增 ${formatCount(result.imported)} 条，跳过 ${formatCount(result.skipped)} 条，共 ${formatCount(result.total)} 条`
+        })
+      }
     } catch {
-      setStatus("导入失败：无法读取文件")
+      toast.error("导入失败", { description: "无法读取文件" })
     } finally {
       if (fileRef.current) fileRef.current.value = ""
     }
@@ -98,7 +99,7 @@ export function DataControls({ mounted }: { mounted: boolean }) {
   const handleReset = () => {
     resetPreferences()
     setTheme("system")
-    setStatus("已恢复默认外观与浏览偏好")
+    toast.success("已恢复默认外观与浏览偏好")
   }
 
   return (
@@ -144,13 +145,6 @@ export function DataControls({ mounted }: { mounted: boolean }) {
         </Button>
       </Field>
 
-      {/* 操作结果就地反馈（role=status 而非 alert：非紧急、不抢焦点） */}
-      {status && (
-        <Alert role="status" aria-live="polite">
-          <AlertDescription>{status}</AlertDescription>
-        </Alert>
-      )}
-
       <AlertDialog open={clearOpen} onOpenChange={setClearOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -163,7 +157,7 @@ export function DataControls({ mounted }: { mounted: boolean }) {
               variant="destructive"
               onClick={() => {
                 clearHistory()
-                setStatus("已清空全部历史记录")
+                toast.success("已清空全部历史记录")
               }}
             >
               确定清空
