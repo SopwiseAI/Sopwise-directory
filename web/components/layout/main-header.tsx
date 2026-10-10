@@ -5,7 +5,6 @@ import Link from "next/link"
 import { Search, Settings, X } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { pageShell } from "@/lib/layout"
 import { Button } from "@/components/ui/button"
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
 import { Kbd } from "@/components/ui/kbd"
@@ -159,9 +158,10 @@ export function MainHeader({ className, categories }: MainHeaderProps) {
   const crumbs = resolveCrumbs(pathname, categories)
 
   return (
-    // 底色/分隔线通栏（顶栏是主区的"面板边框"），内容与正文同宽 —— 与 PageBar 同一套规矩
+    // 顶栏刻意通栏：面包屑贴主区左缘、搜索与右侧入口贴右缘，不跟居中的正文同宽。
+    // 底色与分隔线本来就铺满主区，这里是让内容也横跨整条栏。
     <header className={cn("h-14 shrink-0 border-b border-sidebar-border", className)}>
-      <div className={pageShell("browse", "flex h-full items-center gap-3 px-4 sm:px-6")}>
+      <div className="flex h-full items-center gap-3 px-4 sm:px-6">
         <nav aria-label="面包屑" className="flex min-w-0 flex-1 items-center text-sm text-muted-foreground">
           <ol className="flex min-w-0 items-center">
             {crumbs.map((crumb, i) => {

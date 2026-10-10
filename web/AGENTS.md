@@ -60,10 +60,12 @@ data/         # 产品数据 (data.json)
 - `useSearchParams()` 须包裹 `<Suspense>`
 - 页面宽度统一走 `lib/layout.ts` 的 `PAGE_WIDTH` / `pageShell()`（浏览型 `max-w-7xl`、
   内容型 `max-w-6xl`），不要在页面里写 `max-w-*` 字面量
-- 外壳 chrome（主区顶栏 `MainHeader`、移动端顶栏 `Header`、分类条 `SubNav`、`Footer`）同样走
-  `pageShell("browse")`：**底色/分隔线通栏，内容与 `main` 同宽**。不要在这里写 `max-w-*` 或干脆
-  不加宽度容器 —— 顶栏若铺满主区两侧，宽屏下会与居中的正文错开（实测 1920px 偏 180px、
-  2560px 偏 500px），整页看着像两套栅格
+- 外壳 chrome 的宽度：**主区顶栏 `MainHeader` 刻意通栏** —— 面包屑贴主区左缘、搜索与右侧入口
+  贴右缘，**不**跟居中的正文同宽。试过收进 `pageShell()` 与正文对齐：宽屏下顶栏内容被压成
+  窄窄一条（1920px 下缩进 180px、2560px 下 500px），观感反而更差，已回退。顶栏自身的底色与
+  分隔线本来就铺满主区，所以只有内容横跨整条栏。其余外壳照常走 `pageShell()`：`Footer` 与正文
+  同宽；移动端顶栏 `Header`、分类条 `SubNav` 只在 <768px 出现（该区间 `max-w-*` 不生效），
+  沿用 `pageShell("browse")` 与外壳写法统一即可
 - 控件一律用 `components/ui/` 的组件 + 变体（`Button variant="outline"`、`ToggleGroup variant="outline"`…），
   不要手写 `inline-flex h-8 rounded-md border px-2.5 …` 这类与变体等价的类名：全站曾出现
   `toolbarControl`、`iconButton` 等 4 份复制品，改一次圆角要改四处
