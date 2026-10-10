@@ -80,6 +80,7 @@ export default async function CategoryPage({ params }: Props) {
         categories={getAllCategories()}
         defaultView="grid"
         showTabs={false}
+        toolbarFlush
         emptyTitle={`「${category.name}」分类暂无工具收录`}
         emptyDescription="你可以浏览其他分类发现更多 AI 工具"
         title={

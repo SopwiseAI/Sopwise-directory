@@ -16,6 +16,7 @@ import {
   type HistoryPeriod
 } from "@/lib/history"
 import { formatCount } from "@/lib/format"
+import { PageBar } from "@/components/layout/page-bar"
 import { PricingBadge } from "@/components/product/pricing-badge"
 import { FilterSelect, type FilterOption } from "@/components/history/filter-select"
 import { useMounted } from "@/hooks/use-mounted"
@@ -42,11 +43,20 @@ const PAGE_SIZE = 40
 function HistorySkeleton() {
   return (
     <div className="space-y-3" aria-hidden>
-      <div className="flex flex-wrap items-center gap-2">
+      {/* 骨架同样走二级栏，保证挂载前后栏高与下边框位置不跳 */}
+      <PageBar
+        width="content"
+        actions={
+          <>
+            <Skeleton className="h-4 w-16 rounded" />
+            <Skeleton className="h-6 w-14 rounded-md" />
+          </>
+        }
+      >
         <Skeleton className="h-8 min-w-48 flex-1 rounded-md" />
         <Skeleton className="h-8 w-24 rounded-lg" />
         <Skeleton className="h-8 w-24 rounded-lg" />
-      </div>
+      </PageBar>
       <div className="overflow-hidden rounded-lg border bg-card">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="flex items-center gap-3 border-b border-border px-4 py-2.5 last:border-b-0">
@@ -239,8 +249,36 @@ export function HistoryList({ categories }: HistoryListProps) {
 
   return (
     <div className="space-y-3">
-      {/* 工具条：搜索 + 分类筛选 + 时间筛选 + 计数 + 清空 */}
-      <div className="flex flex-wrap items-center gap-2">
+      {/* 二级栏：左 搜索 + 分类/时间筛选；右 计数 + 清除筛选 + 清空 */}
+      <PageBar
+        width="content"
+        actions={
+          <>
+            <span role="status" aria-live="polite" className="font-data text-xs text-muted-foreground">
+              {isFiltered
+                ? `${formatCount(filtered.length)} / ${formatCount(items.length)} 条`
+                : `共 ${formatCount(items.length)} 条`}
+            </span>
+            {isFiltered && (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <X className="size-3" aria-hidden />
+                清除筛选
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowClearConfirm(true)}
+              className="rounded-md px-2 py-1 text-xs text-muted-foreground outline-none transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              清空全部
+            </button>
+          </>
+        }
+      >
         <InputGroup className="min-w-48 flex-1">
           <InputGroupAddon>
             <Search className="text-muted-foreground/60" />
@@ -281,30 +319,7 @@ export function HistoryList({ categories }: HistoryListProps) {
           }}
           active={period !== "all"}
         />
-
-        <span role="status" aria-live="polite" className="font-data text-xs text-muted-foreground">
-          {isFiltered
-            ? `${formatCount(filtered.length)} / ${formatCount(items.length)} 条`
-            : `共 ${formatCount(items.length)} 条`}
-        </span>
-        {isFiltered && (
-          <button
-            type="button"
-            onClick={resetFilters}
-            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <X className="size-3" aria-hidden />
-            清除筛选
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={() => setShowClearConfirm(true)}
-          className="rounded-md px-2 py-1 text-xs text-muted-foreground outline-none transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          清空全部
-        </button>
-      </div>
+      </PageBar>
 
       <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
         <AlertDialogContent>

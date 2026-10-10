@@ -51,6 +51,8 @@ interface ProductBrowserProps {
   title?: ReactNode
   /** 分类真源（id → 名称/图标），用于卡片/列表展示分类。缺省则只显示域名。 */
   categories?: readonly Category[]
+  /** 工具栏是否位于内容区顶部（分类页为 true），透传给二级栏。 */
+  toolbarFlush?: boolean
 }
 
 /**
@@ -88,7 +90,8 @@ export function ProductBrowser({
   showTabs = true,
   defaultTab = "all",
   title,
-  categories
+  categories,
+  toolbarFlush
 }: ProductBrowserProps) {
   // 每实例唯一前缀：避免同页多实例（或 SSR/客户端）产生重复 DOM id 与错位的 aria 关联
   const uid = useId()
@@ -216,6 +219,7 @@ export function ProductBrowser({
           showTabs={showTabs}
           panelId={panelId}
           title={title}
+          flush={toolbarFlush}
           onViewChange={setView}
           onTabChange={setTab}
           onSortChange={setSort}

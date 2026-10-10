@@ -27,7 +27,22 @@ describe("InfoLayout", () => {
 
   it("页面宽度取自统一档位（内容型），不再各页写 max-w-* 字面量", () => {
     const { container } = render(<InfoLayout title="关于 XiGee" sections={sections} />)
-    expect(container.firstElementChild).toHaveClass(PAGE_WIDTH.content)
+    expect(container.querySelector(`.${CSS.escape(PAGE_WIDTH.content)}`)).not.toBeNull()
+  })
+
+  it("页面导航放进二级栏：紧贴顶栏、桌面吸顶、内容容器与正文同宽", () => {
+    const { container } = render(<InfoLayout title="隐私政策" sections={sections} />)
+    const bar = container.firstElementChild as HTMLElement
+    // 二级栏形态：通栏下边框 + 桌面吸顶 + 顶到外壳上内边距之外（flush）
+    expect(bar).toHaveClass("border-b")
+    expect(bar).toHaveClass("md:sticky")
+    expect(bar).toHaveClass("-mt-6")
+    // 导航在栏内
+    expect(bar.querySelector('nav[aria-label="信息导航"]')).not.toBeNull()
+    // 正文容器与二级栏同宽（内容型）
+    const content = bar.nextElementSibling as HTMLElement
+    expect(content).toHaveClass(PAGE_WIDTH.content)
+    expect(bar.querySelector(`.${CSS.escape(PAGE_WIDTH.content)}`)).not.toBeNull()
   })
 
   it("小节在宽容器下切成「标签 + 内容」两列，内容列自行作为容器查询根", () => {

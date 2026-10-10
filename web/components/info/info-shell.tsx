@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import { pageShell } from "@/lib/layout"
 import { InfoNav } from "@/components/info/info-nav"
+import { PageBar } from "@/components/layout/page-bar"
 
 export interface InfoSectionDef {
   /** 小节锚点 id：正文章节保留 id，方便从站内其它位置深链到具体条款 */
@@ -22,39 +23,39 @@ interface InfoLayoutProps {
 const SECTION_GRID = "@4xl:grid @4xl:grid-cols-[13rem_minmax(0,1fr)] @4xl:items-start @4xl:gap-10"
 
 /**
- * 信息区（设置/关于/隐私/条款）统一布局：顶部子导航 + 标题 + 「小节标签 / 内容」两列正文。
+ * 信息区（设置/关于/隐私/条款）统一布局：二级栏（页面导航） + 标题 + 「小节标签 / 内容」两列正文。
  *
- * 页框走 lib/layout.ts 的统一档位（内容型，比首页内容区小一档）。宽屏下每个小节切成
- * [标签 13rem | 内容 1fr]：左列由小节标题占住，内容列就能一路铺到页框右边缘 ——
- * 既没有"正文右侧一条空白"，长文行宽也不会失控（实测每行 64 字左右）。
- * 窄屏（容器 < 896px）自动退回"标题在上、内容在下"的堆叠版式。
+ * 导航放在统一二级栏里并紧贴顶栏、桌面吸顶（见 PageBar）；页框走 lib/layout.ts 的统一档位
+ * （内容型，比首页内容区小一档）。宽屏下每个小节切成 [标签 13rem | 内容 1fr]：左列由小节
+ * 标题占住，内容列就能一路铺到页框右边缘 —— 既没有"正文右侧一条空白"，长文行宽也不会
+ * 失控（实测每行 64 字左右）。窄屏（容器 < 896px）自动退回"标题在上、内容在下"的堆叠版式。
  */
 export function InfoLayout({ title, description, updated, sections }: InfoLayoutProps) {
   return (
-    <div className={pageShell("content", "@container")}>
-      <div className="relative mb-6 border-b border-border">
-        <InfoNav className="pb-2" />
-        {/* 窄屏横向滚动时的右侧渐隐提示（与全站分类子导航一致） */}
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-background to-transparent" />
+    <>
+      <PageBar flush className="mb-6">
+        <InfoNav />
+      </PageBar>
+
+      <div className={pageShell("content", "@container")}>
+        <header className="space-y-2">
+          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+          {description && <p className="max-w-3xl text-sm text-muted-foreground">{description}</p>}
+        </header>
+
+        <div className="mt-8 space-y-8 text-sm leading-relaxed text-muted-foreground">
+          {sections.map((section) => (
+            <InfoSection key={section.id} {...section} />
+          ))}
+
+          {updated && (
+            <div className={SECTION_GRID}>
+              <p className="font-data text-xs text-muted-foreground/70 @4xl:col-start-2">最后更新：{updated}</p>
+            </div>
+          )}
+        </div>
       </div>
-
-      <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-        {description && <p className="max-w-3xl text-sm text-muted-foreground">{description}</p>}
-      </header>
-
-      <div className="mt-8 space-y-8 text-sm leading-relaxed text-muted-foreground">
-        {sections.map((section) => (
-          <InfoSection key={section.id} {...section} />
-        ))}
-
-        {updated && (
-          <div className={SECTION_GRID}>
-            <p className="font-data text-xs text-muted-foreground/70 @4xl:col-start-2">最后更新：{updated}</p>
-          </div>
-        )}
-      </div>
-    </div>
+    </>
   )
 }
 
