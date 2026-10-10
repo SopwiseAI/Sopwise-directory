@@ -93,7 +93,8 @@ export default async function CategoryPage({ params }: Props) {
             <span key="name" className="min-w-0 truncate text-base font-semibold tracking-tight">
               {category.name}
             </span>
-            <span key="count" className="shrink-0 font-data text-xs font-normal text-muted-foreground">
+            {/* 窄屏二级栏空间有限：数量让位给分类名（分类条里本来就带数量） */}
+            <span key="count" className="hidden shrink-0 font-data text-xs font-normal text-muted-foreground sm:inline">
               {formatCount(products.length)} 个工具
             </span>
             {latestDate && (

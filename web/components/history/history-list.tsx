@@ -48,12 +48,12 @@ function HistorySkeleton() {
         width="content"
         actions={
           <>
-            <Skeleton className="h-4 w-16 rounded" />
-            <Skeleton className="h-6 w-14 rounded-md" />
+            <Skeleton className="h-4 w-14 rounded" />
+            <Skeleton className="h-7 w-20 rounded-lg" />
           </>
         }
       >
-        <Skeleton className="h-8 min-w-48 flex-1 rounded-md" />
+        <Skeleton className="h-8 w-[85%] shrink-0 rounded-md sm:w-72" />
         <Skeleton className="h-8 w-24 rounded-lg" />
         <Skeleton className="h-8 w-24 rounded-lg" />
       </PageBar>
@@ -260,26 +260,19 @@ export function HistoryList({ categories }: HistoryListProps) {
                 : `共 ${formatCount(items.length)} 条`}
             </span>
             {isFiltered && (
-              <button
-                type="button"
-                onClick={resetFilters}
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <X className="size-3" aria-hidden />
+              <Button variant="ghost" size="sm" onClick={resetFilters}>
+                <X data-icon="inline-start" aria-hidden />
                 清除筛选
-              </button>
+              </Button>
             )}
-            <button
-              type="button"
-              onClick={() => setShowClearConfirm(true)}
-              className="rounded-md px-2 py-1 text-xs text-muted-foreground outline-none transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring"
-            >
+            <Button variant="destructive" size="sm" onClick={() => setShowClearConfirm(true)}>
+              <Trash2 data-icon="inline-start" aria-hidden />
               清空全部
-            </button>
+            </Button>
           </>
         }
       >
-        <InputGroup className="min-w-48 flex-1">
+        <InputGroup className="w-[85%] shrink-0 sm:w-72">
           <InputGroupAddon>
             <Search className="text-muted-foreground/60" />
           </InputGroupAddon>

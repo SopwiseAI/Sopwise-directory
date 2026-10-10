@@ -13,15 +13,13 @@ interface PageBarProps {
 }
 
 /**
- * 二级栏：内容区顶部的一条控制栏，全站统一形态 ——
- * `h-11` · 下边框 · 左切换器 / 右辅助控件 · 桌面吸附在顶栏之下。
+ * 二级栏：内容区顶部的一条控制栏，全站统一形态。
  *
- * 各页放什么由页面决定（信息页放页面导航，首页放筛选 + 排序/视图，
- * 历史页放搜索 + 筛选 + 清空），形态一致，语义各归其位。
- *
- * 上下留白交给外壳 main 的上内边距与调用方的下边距，本组件不自带外边距 ——
- * 曾经试过抵消上内边距让栏紧贴顶栏，观感过于逼仄，故保持留白。
- * 移动端不吸顶：那里已经有顶栏与分类条两层吸顶，再多一层会挤占阅读区。
+ * - 定高 `h-11` 单行：切换器横向滚动（带右缘渐隐提示），辅助控件始终钉在右侧 ——
+ *   不折行，避免手机上栏高变成 83/111px 那种"不像栏"的形态
+ * - 下边框通栏、背景通栏：吸顶时内容从它下面滚过，分隔线不会断
+ * - 桌面吸附在顶栏之下；移动端不吸顶（那里已有顶栏与分类条两层）
+ * - 上下留白交给外壳 main 的上内边距与调用方下边距，本组件不自带外边距
  */
 export function PageBar({ children, actions, width = "content", className }: PageBarProps) {
   return (
@@ -32,14 +30,12 @@ export function PageBar({ children, actions, width = "content", className }: Pag
         className
       )}
     >
-      <div
-        className={pageShell(
-          width,
-          // 桌面单行定高；窄屏允许折行（历史页的搜索框 + 两个筛选在手机上一行放不下）
-          "flex min-h-11 flex-wrap items-center justify-between gap-x-3 gap-y-1.5 py-1.5 md:h-11 md:flex-nowrap md:py-0"
-        )}
-      >
-        <div className="flex min-w-0 flex-wrap items-center gap-1 md:flex-nowrap">{children}</div>
+      <div className={pageShell(width, "flex h-11 items-center gap-3")}>
+        <div className="relative min-w-0 flex-1">
+          <div className="no-scrollbar flex items-center gap-1 overflow-x-auto">{children}</div>
+          {/* 切换器放不下时右缘渐隐，提示还能横向滚动（与全站分类子导航同一手法） */}
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent" />
+        </div>
         {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
       </div>
     </div>
