@@ -70,6 +70,15 @@ data/         # 产品数据 (data.json)
   不要手写 `inline-flex h-8 rounded-md border px-2.5 …` 这类与变体等价的类名：全站曾出现
   `toolbarControl`、`iconButton` 等 4 份复制品，改一次圆角要改四处
 - 空状态一律用 `Empty`（含"筛选/搜索无结果"，不要另写虚线框 div）；加载占位用 `Skeleton`
+- base-ui 有几处默认值与 shadcn/radix **相反**，别以为"注册表原样"就是对的；包装层已按本站预期
+  修正，改动前先看 `components/ui/` 里的注释：
+  - `Menu.RadioItem` 默认 `closeOnClick = false`（普通 `Menu.Item` 是 `true`）→ 单选菜单
+    "选中即关闭"的语义在 `components/ui/dropdown-menu.tsx` 里统一打开；要"选中不关闭"就在
+    调用处显式传 `closeOnClick={false}`（`components/ui/dropdown-menu.test.tsx` 守着这条）
+  - `Select` 的 `alignItemWithTrigger` 默认 `true`（弹层会盖住触发按钮），要用下拉观感就传 `false`
+  - `TabsList` 的 `activateOnFocus` 默认 `false`（方向键只移焦点、不选中），要 radix 那种
+    "方向键即切换"就得显式打开
+  - `ToggleGroup` 没有 `type="single"`，用 `multiple`（默认 false）+ 始终按数组读 `value`
 - 信息页（设置/关于/隐私/条款）宽容器下每个小节切成「标签 13rem + 内容 1fr」，内容列铺到
   页框右边缘：既不留下一条结构性空白，行宽也由列宽自然控制在每行 64 字左右 ——
   不要给正文单独加 `max-w-*` 收窄（那是把空白换了个位置）
