@@ -60,7 +60,7 @@ export function SettingsView({ version, stats }: SettingsViewProps) {
           <Field orientation="responsive">
             <FieldContent>
               <FieldTitle>主题</FieldTitle>
-              <FieldDescription>选择外观模式，跟随系统会自动适配深浅色。</FieldDescription>
+              <FieldDescription>亮色、暗色或跟随系统；跟随系统会随设备外观自动切换。</FieldDescription>
             </FieldContent>
             {mounted ? <ThemeSwitch /> : <Skeleton className="h-8 w-56 rounded-lg" />}
           </Field>
@@ -85,7 +85,7 @@ export function SettingsView({ version, stats }: SettingsViewProps) {
           <Field orientation="responsive">
             <FieldContent>
               <FieldTitle>版本</FieldTitle>
-              <FieldDescription>当前部署的 XiGee 版本号</FieldDescription>
+              <FieldDescription>当前部署的版本</FieldDescription>
             </FieldContent>
             <span className="font-data text-muted-foreground">v{version}</span>
           </Field>
@@ -93,7 +93,7 @@ export function SettingsView({ version, stats }: SettingsViewProps) {
           <Field orientation="responsive">
             <FieldContent>
               <FieldTitle>数据规模</FieldTitle>
-              <FieldDescription>收录工具、分类与精选的实时数量</FieldDescription>
+              <FieldDescription>收录工具、分类与精选的当前数量</FieldDescription>
             </FieldContent>
             <div className="flex flex-wrap gap-x-8 gap-y-3 @2xl:grid @2xl:grid-cols-3 @2xl:gap-x-6">
               <StatItem label="工具" value={stats.products} size="lg" />
@@ -125,5 +125,11 @@ export function SettingsView({ version, stats }: SettingsViewProps) {
     }
   ]
 
-  return <InfoLayout title="设置" description="外观、浏览偏好、数据与隐私、关于与版本、快捷键。" sections={sections} />
+  return (
+    <InfoLayout
+      title="设置"
+      description="外观、浏览偏好、数据与隐私、关于与版本、快捷键 —— 所有设置只保存在你的浏览器里。"
+      sections={sections}
+    />
+  )
 }

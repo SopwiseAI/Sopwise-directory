@@ -18,9 +18,13 @@ export const metadata: Metadata = {
 /** 站点的四条工作原则 */
 const PRINCIPLES: { icon: LucideIcon; title: string; description: string }[] = [
   { icon: Database, title: "数据驱动", description: "工具与分类来自结构化数据源，数据更新后站点重新构建。" },
-  { icon: Zap, title: "纯静态", description: "页面预渲染为静态文件，加载快、可离线缓存，也能被搜索引擎收录。" },
-  { icon: HardDrive, title: "本地优先", description: "主题、浏览偏好与访问历史只保存在你的浏览器里，不上传服务器。" },
-  { icon: ExternalLink, title: "直达官网", description: "工具卡片直接跳转外部官网，不在站内中转过一道。" }
+  {
+    icon: Zap,
+    title: "纯静态",
+    description: "页面预渲染为静态文件，没有后端数据库，加载快、可离线缓存，也能被搜索引擎收录。"
+  },
+  { icon: HardDrive, title: "本地优先", description: "主题、浏览偏好与历史记录只保存在你的浏览器里，不会上传。" },
+  { icon: ExternalLink, title: "直达官网", description: "工具卡片直接跳转外部官网，站内没有中间跳转页。" }
 ]
 
 const stats = getStats()
@@ -32,8 +36,7 @@ const sections: InfoSectionDef[] = [
     body: (
       <p>
         XiGee 把散落各处的 AI
-        工具甄选收拢到一处：按分类浏览、直接搜索，点开即达官方网站。我们不做中间页，只做一条从「发现」到「使用」的
-        最短路径。
+        工具甄选收拢到一处：按分类浏览、直接搜索，点开即达官方网站。我们不做中间页，只做一条从「发现」到「使用」的最短路径。
       </p>
     )
   },
@@ -73,7 +76,7 @@ const sections: InfoSectionDef[] = [
     title: "隐私",
     body: (
       <p>
-        XiGee 没有账号系统，不收集个人信息。关于本地存储与第三方链接的说明，见{" "}
+        XiGee 没有账号系统，不做用户追踪。关于本地存储、托管日志与第三方链接的说明，见{" "}
         <Link href="/privacy" className="text-foreground underline-offset-4 hover:underline">
           隐私政策
         </Link>
@@ -86,7 +89,10 @@ const sections: InfoSectionDef[] = [
     title: "技术",
     body: (
       <>
-        <p>基于 Next.js（App Router）静态生成，React + Tailwind CSS 构建，部署于 Vercel。</p>
+        <p>
+          Next.js（App Router）静态生成，React + Tailwind CSS 构建，部署于
+          Vercel；站点没有后端数据库，目录数据在构建时固化。
+        </p>
         <p className="font-data text-xs text-muted-foreground/70">
           当前版本 v{pkg.version} · {getBaseUrl().replace(/^https?:\/\//, "")}
         </p>
@@ -100,7 +106,7 @@ export default function AboutPage() {
     <InfoLayout
       title="关于 XiGee"
       description="精选 AI 工具目录 —— 精选值得用的 AI 工具，每一款都经过人工筛选。"
-      updated="2026-10-02"
+      updated="2026-10-10"
       sections={sections}
     />
   )

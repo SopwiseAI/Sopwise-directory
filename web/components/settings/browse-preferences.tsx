@@ -76,7 +76,7 @@ export function BrowsePreferences({ view, sort, tab, mounted }: BrowsePreference
     <FieldGroup>
       <PrefField
         label="默认视图"
-        hint="打开工具列表时使用的布局"
+        hint="首页与分类页的列表展示方式"
         options={VIEW_OPTIONS}
         skeletonWidth="w-32"
         disabled={!mounted}
@@ -85,7 +85,7 @@ export function BrowsePreferences({ view, sort, tab, mounted }: BrowsePreference
       />
       <PrefField
         label="默认排序"
-        hint="工具列表的默认排序方式"
+        hint="列表默认按什么顺序排列"
         options={SORT_OPTIONS}
         skeletonWidth="w-64"
         disabled={!mounted}
@@ -93,8 +93,8 @@ export function BrowsePreferences({ view, sort, tab, mounted }: BrowsePreference
         onChange={setSort}
       />
       <PrefField
-        label="默认 Tab"
-        hint="首页默认展示的工具范围"
+        label="默认筛选"
+        hint="首页列表默认展示的范围"
         options={TAB_OPTIONS}
         skeletonWidth="w-48"
         disabled={!mounted}

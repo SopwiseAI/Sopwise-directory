@@ -107,7 +107,7 @@ export function DataControls({ mounted }: { mounted: boolean }) {
       <Field orientation="responsive">
         <FieldContent>
           <FieldTitle>历史记录</FieldTitle>
-          <FieldDescription>当前 {formatCount(count)} 条，仅保存在本机浏览器，不会上传。</FieldDescription>
+          <FieldDescription>当前 {formatCount(count)} 条，只保存在本机浏览器，不会上传。</FieldDescription>
         </FieldContent>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleExport} disabled={count === 0}>
