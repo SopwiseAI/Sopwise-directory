@@ -30,20 +30,24 @@ describe("InfoLayout", () => {
     expect(container.querySelector(`.${CSS.escape(PAGE_WIDTH.content)}`)).not.toBeNull()
   })
 
-  it("页面导航放进二级栏：下边框 + 桌面吸顶 + 上下保留留白", () => {
+  it("页面导航放进二级栏：下边框随内容宽度 + 桌面吸顶 + 上下保留留白", () => {
     const { container } = render(<InfoLayout title="隐私政策" sections={sections} />)
     const bar = container.firstElementChild as HTMLElement
-    expect(bar).toHaveClass("border-b")
+    // 外层只管底色通栏（吸顶时不漏内容），不画边框
+    expect(bar).not.toHaveClass("border-b")
     expect(bar).toHaveClass("md:sticky")
     // 不再抵消外壳上内边距：栏与顶栏之间保留留白（观感比贴顶更松弛）
     expect(bar).not.toHaveClass("-mt-6")
     expect(bar).toHaveClass("mb-6")
     // 导航在栏内
     expect(bar.querySelector('nav[aria-label="信息导航"]')).not.toBeNull()
+    // 边框画在「与正文同宽」的内层容器上，否则信息页的下划线会比正文两边各多出 40px
+    const barInner = bar.firstElementChild as HTMLElement
+    expect(barInner).toHaveClass("border-b")
+    expect(barInner).toHaveClass(PAGE_WIDTH.content)
     // 正文容器与二级栏同宽（内容型）
     const content = bar.nextElementSibling as HTMLElement
     expect(content).toHaveClass(PAGE_WIDTH.content)
-    expect(bar.querySelector(`.${CSS.escape(PAGE_WIDTH.content)}`)).not.toBeNull()
   })
 
   it("小节在宽容器下切成「标签 + 内容」两列，内容列自行作为容器查询根", () => {

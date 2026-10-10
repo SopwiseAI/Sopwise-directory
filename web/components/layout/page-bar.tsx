@@ -17,7 +17,9 @@ interface PageBarProps {
  *
  * - 定高 `h-11` 单行：切换器横向滚动（带右缘渐隐提示），辅助控件始终钉在右侧 ——
  *   不折行，避免手机上栏高变成 83/111px 那种"不像栏"的形态
- * - 下边框通栏、背景通栏：吸顶时内容从它下面滚过，分隔线不会断
+ * - **底色通栏、下边框随内容宽度**：底色铺满主区（吸顶时内容从它下面滚过，两侧不漏内容），
+ *   分隔线则与正文/页框同一宽度收在内容容器上 —— 否则信息页（内容 6xl）的下划线会比
+ *   正文两边各多出 40px，看着"超长"
  * - 桌面吸附在顶栏之下；移动端不吸顶（那里已有顶栏与分类条两层）
  * - 上下留白交给外壳 main 的上内边距与调用方下边距，本组件不自带外边距
  */
@@ -25,12 +27,12 @@ export function PageBar({ children, actions, width = "content", className }: Pag
   return (
     <div
       className={cn(
-        "z-30 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+        "z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
         "md:sticky md:top-0",
         className
       )}
     >
-      <div className={pageShell(width, "flex h-11 items-center gap-3")}>
+      <div className={pageShell(width, "flex h-11 items-center gap-3 border-b border-border")}>
         <div className="relative min-w-0 flex-1">
           {/*
             横向滚动槽必须留出焦点环的余量：overflow 在任一轴为 auto 时另一轴也会被裁剪，
