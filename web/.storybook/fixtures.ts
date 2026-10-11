@@ -1,3 +1,4 @@
+import { buildSuggestionDocs } from "@/lib/search"
 import type { Category, Product } from "@/lib/types"
 
 /** Storybook 共享 mock 数据（仅用于 stories，不参与生产构建）。 */
@@ -78,3 +79,9 @@ export const mockProducts: Product[] = [
 ]
 
 export const mockSuggestions = ["对话助手", "图像生成", "代码工具", "写作工具"]
+
+/** 顶栏搜索建议数据（由产品 + 分类名展开，与根布局下发的同源）。 */
+export const mockSuggestionDocs = buildSuggestionDocs(
+  mockProducts,
+  Object.fromEntries(mockCategories.map((c) => [c.id, c.name]))
+)

@@ -18,7 +18,7 @@ import {
 import { formatCount } from "@/lib/format"
 import { PageBar } from "@/components/layout/page-bar"
 import { PricingBadge } from "@/components/product/pricing-badge"
-import { FilterSelect, type FilterOption } from "@/components/history/filter-select"
+import { FilterSelect, type FilterOption } from "@/components/ui/filter-select"
 import { useMounted } from "@/hooks/use-mounted"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Button } from "@/components/ui/button"

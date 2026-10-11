@@ -1,7 +1,10 @@
 import "@testing-library/jest-dom/vitest"
 
+// 补桩判断一律用 `typeof !== "function"`：jsdom 会挂上同名属性但值是 undefined，
+// 用 `"x" in globalThis` 判会「属性存在」而漏掉补桩，运行时才炸 `is not a function`。
+
 // jsdom 未实现 IntersectionObserver，测试中补一个空实现
-if (!("IntersectionObserver" in globalThis)) {
+if (typeof globalThis.IntersectionObserver !== "function") {
   class IntersectionObserverStub {
     root = null
     rootMargin = ""
@@ -17,7 +20,7 @@ if (!("IntersectionObserver" in globalThis)) {
 }
 
 // jsdom 未实现 ResizeObserver，测试中补一个空实现
-if (!("ResizeObserver" in globalThis)) {
+if (typeof globalThis.ResizeObserver !== "function") {
   class ResizeObserverStub {
     observe() {}
     unobserve() {}
@@ -32,7 +35,7 @@ if (typeof Element !== "undefined" && typeof Element.prototype.scrollIntoView !=
 }
 
 // jsdom 未实现 matchMedia，测试中补一个始终不匹配的实现
-if (!("matchMedia" in globalThis)) {
+if (typeof globalThis.matchMedia !== "function") {
   globalThis.matchMedia = ((query: string) => ({
     matches: false,
     media: query,
