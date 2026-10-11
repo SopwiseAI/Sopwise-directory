@@ -36,6 +36,79 @@ export function buildSearchDocs(
 }
 
 /**
+ * 顶栏建议（搜索建议下拉）用的精简文档。
+ *
+ *刻意不带 `description`：它占了产品数据的四成体积，而下拉只展示「名称 + 分类 + 域名」。
+ * 实测 85 条 `SuggestionDoc` ≈ 12KB raw / **3.2KB gzip**（带 description 的全量 SearchDoc 是 6.6KB gzip），
+ * 由根布局一次性下发，因此顶栏建议**零网络往返**——这正是旧版「每次换词都要跑一趟服务器」的反面。
+ */
+export interface SuggestionDoc {
+  id: string
+  name: string
+  url: string
+  categories: string[]
+  categoryNames: string[]
+  tags?: string[]
+  /** 与 Product 同源，供 data-history-* 记录访问历史（见 productHistoryAttrs）。 */
+  pricing?: Product["pricing"]
+}
+
+/** 产品 + 分类名 → 顶栏建议文档。与 buildSearchDocs 同源，保证两处分类名一致。 */
+export function buildSuggestionDocs(
+  products: readonly Product[],
+  categoryNames: Readonly<Record<string, string>> = {}
+): SuggestionDoc[] {
+  return products.map((p) => ({
+    id: p.id,
+    name: p.name,
+    url: p.url,
+    categories: p.categories,
+    categoryNames: p.categories.map((id) => categoryNames[id]).filter((name): name is string => Boolean(name)),
+    tags: p.tags,
+    pricing: p.pricing
+  }))
+}
+
+/** 顶栏下拉最多展示的条数：够用又不至于盖住整块内容。 */
+export const SUGGEST_LIMIT = 6
+
+/** 建议索引按「数据数组身份」缓存：布局每次渲染传的是同一数组，索引只在首建时付一次代价。 */
+const suggestionIndexCache = new WeakMap<readonly SuggestionDoc[], Fuse<SuggestionDoc>>()
+
+/** 取（必要时构建）建议索引。服务端首建、客户端命中缓存，顶栏每次挂载不再重建。 */
+export function getSuggestionIndex(docs: readonly SuggestionDoc[]): Fuse<SuggestionDoc> {
+  const cached = suggestionIndexCache.get(docs)
+  if (cached) return cached
+  const index = createSuggestionIndex(docs)
+  suggestionIndexCache.set(docs, index)
+  return index
+}
+
+/**
+ * 建议索引：只索引 名称 / 标签 / 分类名（不含描述，理由见 SuggestionDoc）。
+ * 权重向名称倾斜——下拉是「快速点选」，用户敲的多半是产品名。
+ */
+export function createSuggestionIndex(docs: readonly SuggestionDoc[]): Fuse<SuggestionDoc> {
+  return new Fuse([...docs], {
+    keys: [
+      { name: "name", weight: 0.5 },
+      { name: "tags", weight: 0.3 },
+      { name: "categoryNames", weight: 0.2 }
+    ],
+    threshold: resolveThreshold(),
+    ignoreLocation: true,
+    includeScore: true
+  })
+}
+
+/** 取前 N 条建议；空查询直接返回空，避免下拉在输入框为空时闪一下。 */
+export function suggest(index: Fuse<SuggestionDoc>, query: string, limit = SUGGEST_LIMIT): SuggestionDoc[] {
+  const trimmed = query.trim()
+  if (!trimmed) return []
+  return index.search(trimmed, { limit }).map((r) => r.item)
+}
+
+/**
  * 把文本按查询词切分为「命中/未命中」片段，供 UI 高亮。
  * 按空白拆词、忽略大小写，返回可渲染的片段数组；无有效词时返回整段。
  */

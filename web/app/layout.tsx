@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next"
 import { GeistMono } from "geist/font/mono"
 import "@fontsource-variable/outfit"
-import { getAllCategories, getCategoryCounts, getStats } from "@/lib/data"
+import { getAllCategories, getAllProducts, getCategoryCounts, getStats } from "@/lib/data"
+import { buildSuggestionDocs } from "@/lib/search"
 import { getBaseUrl } from "@/lib/utils"
 import { pageShell } from "@/lib/layout"
 import { BRAND_PAGE } from "@/lib/brand"
@@ -20,6 +21,12 @@ import "./globals.css"
 const allCategories = getAllCategories()
 const categoryCounts = getCategoryCounts()
 const totalProducts = getStats().products
+
+/**
+ * 顶栏搜索建议数据（不含 description，见 `SuggestionDoc`）：随根布局一次性下发，
+ * 顶栏出建议就不用再跑一趟服务器 —— 这是「边打边搜 + 建议下拉」零往返的前提。
+ */
+const suggestions = buildSuggestionDocs(getAllProducts(), Object.fromEntries(allCategories.map((c) => [c.id, c.name])))
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -120,7 +127,7 @@ export default function RootLayout({
           <div className="flex flex-1 md:overflow-hidden">
             <Sidebar categories={allCategories} categoryCounts={categoryCounts} totalProducts={totalProducts} />
             <div className="flex min-w-0 flex-1 flex-col bg-background md:overflow-hidden">
-              <MainHeader className="hidden md:block" categories={allCategories} />
+              <MainHeader className="hidden md:block" categories={allCategories} suggestions={suggestions} />
               <div
                 id="scroll-container"
                 className="flex flex-1 scroll-smooth flex-col scroll-pt-28 md:min-h-0 md:overflow-y-auto"

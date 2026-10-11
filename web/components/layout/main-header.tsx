@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useCallback, useEffect, useRef, useState, type RefObject } from "react"
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react"
 import Link from "next/link"
 import { Search, Settings, X } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
@@ -9,11 +9,21 @@ import { Button } from "@/components/ui/button"
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
 import { Kbd } from "@/components/ui/kbd"
 import ThemeToggle from "@/components/layout/theme-toggle"
+import { SearchSuggestions, suggestionOptionId } from "@/components/search/search-suggestions"
+import { useDebouncedValue } from "@/hooks/use-debounced-value"
+import { getSuggestionIndex, suggest, type SuggestionDoc } from "@/lib/search"
+import { searchPageHref, writeSearchQuery } from "@/lib/url"
 import type { Category } from "@/lib/types"
+
+/** 「边打边搜」的防抖时长：吃掉连打，又短到感觉是即打即搜。 */
+const SEARCH_DEBOUNCE_MS = 150
 
 /**
  * 查询回填：隔离在 Suspense 内读取 useSearchParams，使输入框本身仍可 SSR（不随查询串退化为客户端渲染）；
  * 依赖 query 而非 pathname，覆盖「同路径仅查询串变化」（如点击推荐词）。
+ *
+ * **聚焦时不回填**：边打边搜模式下 URL 是跟着输入走的，此刻回填会把用户刚敲的字吃掉
+ * （URL 由防抖写入，永远落后输入框一拍）。只有外部变更（后退/前进、点链接）才需要同步。
  */
 function QuerySync({
   inputRef,
@@ -27,23 +37,112 @@ function QuerySync({
 
   useEffect(() => {
     const el = inputRef.current
-    if (el && el.value !== query) el.value = query
-    onQueryChange(query)
+    if (!el) {
+      onQueryChange(query)
+      return
+    }
+    if (document.activeElement === el) return
+    if (el.value !== query) {
+      el.value = query
+      onQueryChange(query)
+    }
   }, [inputRef, query, onQueryChange])
 
   return null
 }
 
-/**
- * 主区顶栏搜索框：全站按 `/` 聚焦（非输入态），Enter 跳转 /search?q=…。
- * 输入框为非受控，失焦/清空时同步 URL（router.replace，不写历史）。
- */
-function SearchField() {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const router = useRouter()
-  const [hasValue, setHasValue] = useState(false)
+interface SearchFieldProps {
+  /** 顶栏建议数据：由根布局（server）下发，客户端零请求即可出建议。 */
+  suggestions: readonly SuggestionDoc[]
+}
 
-  const syncValueFlag = useCallback((value: string) => setHasValue(value.length > 0), [])
+/**
+ * 主区顶栏搜索框：全站按 `/` 聚焦（非输入态）。
+ *
+ * - **搜索页内边打边搜**：写 URL 走 `history.replaceState`，Next 打过补丁，只同步 Router
+ *   不发请求 —— 结果同帧更新，换词不再有网络往返（旧版每次回车都要跑一趟服务器）。
+ * - **其它页出建议下拉**：↑↓ 选择、回车进结果页，选中后回车直接打开产品。
+ * - **`<form action="/search">` 兜底**：hydration 完成前（首屏 3 秒级）按回车走原生 GET
+ *   提交跳到 `/search?q=…`，而不是像旧版那样毫无反应。
+ */
+function SearchField({ suggestions }: SearchFieldProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const rootRef = useRef<HTMLFormElement>(null)
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const [hasValue, setHasValue] = useState(false)
+  /** 输入框当前内容的镜像：非受控输入（保持 SSR 稳定），用它驱动建议与防抖。 */
+  const [draft, setDraft] = useState("")
+  const [focused, setFocused] = useState(false)
+  /** Esc 关掉过下拉后置位，避免「输入框还聚焦着」把下拉立刻又算出来。 */
+  const [dismissed, setDismissed] = useState(false)
+  /**
+   * 键盘选中项，连同「它是哪一次输入选中的」一起存。
+   * 查询一变 `activeIndex` 就在渲染期派生成 -1 —— 用派生代替「在 effect 里 setState」，
+   * 少一次级联渲染，也不会让高亮残留在已经换掉的建议列表上。
+   */
+  const [active, setActive] = useState({ query: "", index: -1 })
+
+  const isSearchPage = pathname === "/search"
+  const deferred = useDebouncedValue(draft, SEARCH_DEBOUNCE_MS)
+
+  // 建议索引按数据身份缓存：布局每次渲染拿到的是同一数组，索引只建一次
+  const suggestionIndex = useMemo(() => getSuggestionIndex(suggestions), [suggestions])
+  // 建议不吃防抖：Fuse 对百来条数据是亚毫秒级，直接给即时反馈
+  const items = useMemo(
+    () => (isSearchPage ? [] : suggest(suggestionIndex, draft)),
+    [isSearchPage, suggestionIndex, draft]
+  )
+
+  const listboxId = "search-suggestions"
+  const open = focused && !dismissed && items.length > 0
+  const activeIndex = active.query === draft && active.index >= 0 && active.index < items.length ? active.index : -1
+
+  const moveActive = (delta: number) => {
+    const current = active.query === draft ? active.index : -1
+    if (items.length === 0) {
+      setActive({ query: draft, index: -1 })
+      return
+    }
+    // 未选中时：↓ 落到第一条、↑ 落到最后一条；已选中则上下回绕
+    const next = current < 0 ? (delta > 0 ? 0 : items.length - 1) : (current + delta + items.length) % items.length
+    setActive({ query: draft, index: next })
+  }
+  const resetActive = () => setActive({ query: draft, index: -1 })
+
+  const syncValueFlag = useCallback((value: string) => {
+    setHasValue(value.length > 0)
+    setDraft(value)
+    // 输入内容一变就作废键盘选中，避免「删掉再打回来」时高亮指到意料之外的旧条目
+    setActive({ query: value, index: -1 })
+  }, [])
+
+  // 防抖后的 URL 同步：只在搜索页原地写（零网络），其它页不动地址栏
+  useEffect(() => {
+    if (isSearchPage) writeSearchQuery(deferred, pathname, window.location.search)
+  }, [deferred, isSearchPage, pathname])
+
+  // 点击下拉之外的区域收起（含点建议本身：下方 onClick 里一并处理）
+  useEffect(() => {
+    if (!focused) return
+    const onPointerDown = (e: PointerEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) {
+        setFocused(false)
+        setDismissed(false)
+      }
+    }
+    document.addEventListener("pointerdown", onPointerDown)
+    return () => document.removeEventListener("pointerdown", onPointerDown)
+  }, [focused])
+
+  const prefetchedRef = useRef(false)
+  /** 首次开始搜索时预取 /search：之后回车进结果页走客户端缓存，不再等一次 RSC 往返。 */
+  const ensurePrefetched = useCallback(() => {
+    if (prefetchedRef.current) return
+    prefetchedRef.current = true
+    router.prefetch("/search")
+  }, [router])
 
   const isTypingTarget = (el: EventTarget | null) => {
     if (!(el instanceof HTMLElement)) return false
@@ -62,19 +161,31 @@ function SearchField() {
     return () => window.removeEventListener("keydown", onKey)
   }, [])
 
-  /** 提交搜索：仅在有内容时跳转，并采用 push 以保留「返回」语义 */
-  const handleSearch = () => {
+  /** 提交搜索：搜索页原地定格 URL（不等防抖、不发请求），其它页才做一次客户端跳转。 */
+  const submitSearch = () => {
     const trimmed = inputRef.current?.value.trim() ?? ""
-    if (!trimmed) return
-    router.push(`/search?q=${encodeURIComponent(trimmed)}`)
+    if (isSearchPage) {
+      writeSearchQuery(trimmed, pathname, window.location.search)
+      return
+    }
+    ensurePrefetched()
+    router.push(searchPageHref(trimmed))
   }
 
-  /** 清空输入并同步移除 URL 上的 q（replaceState 不写历史、不触发导航），保留其它查询参数 */
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    submitSearch()
+  }
+
+  /** 清空输入并同步移除 URL 上的 q（保留其它查询参数），保留原有「清空并聚焦」语义。 */
   const handleClear = () => {
     const el = inputRef.current
     if (!el) return
     el.value = ""
+    setDraft("")
     setHasValue(false)
+    setDismissed(false)
+    resetActive()
     const params = new URLSearchParams(window.location.search)
     if (params.has("q")) {
       params.delete("q")
@@ -84,46 +195,111 @@ function SearchField() {
     el.focus()
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") {
+      // 下拉开着先收下拉（保留已输入内容），再清空，最后才失焦
+      if (open) {
+        setDismissed(true)
+        resetActive()
+        return
+      }
+      if (e.currentTarget.value) handleClear()
+      else e.currentTarget.blur()
+      return
+    }
+
+    if (open) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault()
+        moveActive(e.key === "ArrowDown" ? 1 : -1)
+        return
+      }
+      // 选中建议时回车 = 直接打开该产品；未选中则继续走表单提交（进结果页）
+      if (e.key === "Enter" && activeIndex >= 0) {
+        e.preventDefault()
+        document.getElementById(suggestionOptionId(listboxId, activeIndex))?.click()
+        resetActive()
+        setFocused(false)
+        setDismissed(false)
+        return
+      }
+    }
+    // 其余情况交给 <form onSubmit>：Enter 与原生提交共用一条路径
+  }
+
+  const handleFormClick = (e: React.MouseEvent<HTMLFormElement>) => {
+    // 点开建议（<a target="_blank">）后收起下拉；建议项的 data-history-* 埋点由 HistoryTracker 记录
+    if ((e.target as HTMLElement).closest("a")) {
+      setFocused(false)
+      setDismissed(false)
+    }
+  }
+
   return (
-    <InputGroup className="group w-full max-w-sm">
-      <Suspense fallback={null}>
-        <QuerySync inputRef={inputRef} onQueryChange={syncValueFlag} />
-      </Suspense>
-      <InputGroupAddon>
-        <Search className="text-muted-foreground/60 transition-colors group-focus-within/input-group:text-muted-foreground" />
-      </InputGroupAddon>
-      <InputGroupInput
-        ref={inputRef}
-        type="search"
-        enterKeyHint="search"
-        aria-label="搜索 AI 工具"
-        autoComplete="off"
-        onChange={(e) => setHasValue(e.currentTarget.value.length > 0)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") handleSearch()
-          if (e.key === "Escape") {
-            if (e.currentTarget.value) handleClear()
-            else e.currentTarget.blur()
-          }
-        }}
-        placeholder="搜索 AI 工具…"
-      />
-      <InputGroupAddon align="inline-end">
-        {hasValue ? (
-          <InputGroupButton
-            size="icon-xs"
-            aria-label="清除搜索"
-            title="清除"
-            className="text-muted-foreground hover:text-foreground"
-            onClick={handleClear}
-          >
-            <X />
-          </InputGroupButton>
-        ) : (
-          <Kbd aria-hidden>/</Kbd>
-        )}
-      </InputGroupAddon>
-    </InputGroup>
+    <form
+      ref={rootRef}
+      role="search"
+      aria-label="站内搜索"
+      action="/search"
+      method="get"
+      onSubmit={handleSubmit}
+      onClick={handleFormClick}
+      className="relative w-full max-w-sm"
+    >
+      <InputGroup className="group w-full">
+        <Suspense fallback={null}>
+          <QuerySync inputRef={inputRef} onQueryChange={syncValueFlag} />
+        </Suspense>
+        <InputGroupAddon>
+          <Search className="text-muted-foreground/60 transition-colors group-focus-within/input-group:text-muted-foreground" />
+        </InputGroupAddon>
+        <InputGroupInput
+          ref={inputRef}
+          name="q"
+          type="search"
+          enterKeyHint="search"
+          role="combobox"
+          aria-label="搜索 AI 工具"
+          aria-autocomplete="list"
+          aria-expanded={open}
+          aria-controls={listboxId}
+          aria-activedescendant={open && activeIndex >= 0 ? suggestionOptionId(listboxId, activeIndex) : undefined}
+          autoComplete="off"
+          onChange={(e) => {
+            const value = e.currentTarget.value
+            setHasValue(value.length > 0)
+            setDraft(value)
+            setActive({ query: value, index: -1 })
+            setDismissed(false)
+            setFocused(true)
+            ensurePrefetched()
+          }}
+          onFocus={() => {
+            setFocused(true)
+            setDismissed(false)
+            ensurePrefetched()
+          }}
+          onKeyDown={handleKeyDown}
+          placeholder="搜索 AI 工具…"
+        />
+        <InputGroupAddon align="inline-end">
+          {hasValue ? (
+            <InputGroupButton
+              size="icon-xs"
+              aria-label="清除搜索"
+              title="清除"
+              className="text-muted-foreground hover:text-foreground"
+              onClick={handleClear}
+            >
+              <X />
+            </InputGroupButton>
+          ) : (
+            <Kbd aria-hidden>/</Kbd>
+          )}
+        </InputGroupAddon>
+      </InputGroup>
+      {open && <SearchSuggestions items={items} query={draft} activeIndex={activeIndex} listboxId={listboxId} />}
+    </form>
   )
 }
 
@@ -150,17 +326,19 @@ function resolveCrumbs(pathname: string, categories: readonly Category[]): Crumb
 interface MainHeaderProps {
   className?: string
   categories: readonly Category[]
+  suggestions: readonly SuggestionDoc[]
 }
 
 /** 主区顶栏：左侧路由面包屑，右侧搜索 + 设置/主题入口。 */
-export function MainHeader({ className, categories }: MainHeaderProps) {
+export function MainHeader({ className, categories, suggestions }: MainHeaderProps) {
   const pathname = usePathname()
   const crumbs = resolveCrumbs(pathname, categories)
 
   return (
     // 顶栏刻意通栏：面包屑贴主区左缘、搜索与右侧入口贴右缘，不跟居中的正文同宽。
     // 底色与分隔线本来就铺满主区，这里是让内容也横跨整条栏。
-    <header className={cn("h-14 shrink-0 border-b border-sidebar-border", className)}>
+    // relative+z 只为让搜索建议下拉稳定压在正文之上，不改变任何度量。
+    <header className={cn("relative z-40 h-14 shrink-0 border-b border-sidebar-border", className)}>
       <div className="flex h-full items-center gap-3 px-4 sm:px-6">
         <nav aria-label="面包屑" className="flex min-w-0 flex-1 items-center text-sm text-muted-foreground">
           <ol className="flex min-w-0 items-center">
@@ -183,7 +361,7 @@ export function MainHeader({ className, categories }: MainHeaderProps) {
             })}
           </ol>
         </nav>
-        <SearchField />
+        <SearchField suggestions={suggestions} />
         <Button variant="outline" size="icon" aria-label="设置" title="设置" render={<Link href="/settings" />}>
           <Settings />
         </Button>

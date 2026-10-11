@@ -4,7 +4,8 @@ import { useMemo, useState, useTransition } from "react"
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
 import { SearchX, ArrowUpRight, Sparkles } from "lucide-react"
-import { createSearchIndex, highlightSegments } from "@/lib/search"
+import { createSearchIndex } from "@/lib/search"
+import { Highlighted } from "@/components/search/highlight"
 import { ProductRow } from "@/components/product/product-row"
 import { PricingBadge } from "@/components/product/pricing-badge"
 import { Badge } from "@/components/ui/badge"
@@ -85,24 +86,6 @@ function SuggestionChips({
         )
       })}
     </div>
-  )
-}
-
-/** 命中片段高亮渲染。 */
-function Highlighted({ text, query }: { text: string; query: string }) {
-  const segments = highlightSegments(text, query)
-  return (
-    <>
-      {segments.map((seg, i) =>
-        seg.match ? (
-          <mark key={i} className="rounded-sm bg-brand/15 px-0.5 text-foreground">
-            {seg.text}
-          </mark>
-        ) : (
-          <span key={i}>{seg.text}</span>
-        )
-      )}
-    </>
   )
 }
 

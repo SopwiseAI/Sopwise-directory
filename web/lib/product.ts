@@ -57,7 +57,19 @@ export function latestProductDate(products: readonly Product[]): string | null {
   return latest
 }
 
-export function productHistoryAttrs(product: Product): Record<string, string> {
+/**
+ * 生成 data-history-* 属性所需的最小字段集：结果行（`Product`）与顶栏搜索建议
+ * （`SuggestionDoc`）共用同一套历史埋点，点击 / 键盘回车打开都会被根部 HistoryTracker 记录。
+ */
+export interface HistoryLinkable {
+  id: string
+  name: string
+  url: string
+  categories: readonly string[]
+  pricing?: Product["pricing"]
+}
+
+export function productHistoryAttrs(product: HistoryLinkable): Record<string, string> {
   return {
     "data-history-id": product.id,
     "data-history-name": product.name,
