@@ -13,7 +13,7 @@ export function searchPageHref(query: string): string {
 }
 
 /**
- * 把查询词**原地写回**当前地址栏：不触发导航、不产生网络请求。
+ * 把若干查询参数**原地写回**当前地址栏：不触发导航、不产生网络请求。
  *
  * Next 16 给 `window.history.replaceState` 打了补丁 —— 调用后只派发 `ACTION_RESTORE`
  * 同步 Router 的 canonicalUrl，`useSearchParams()` 随之更新，但**不会发起 RSC 请求**
@@ -23,18 +23,29 @@ export function searchPageHref(query: string): string {
  * （RSC 载荷里既没有「找到 N 个」也没有「未找到与」），搜索结果 100% 在浏览器里算，
  * 走 `router.push` 等于每次换词白跑一趟服务器。换成 replaceState 后这次往返直接消失。
  *
+ * `patch` 里值为 `null` / 空串表示删除该参数；已有参数的相对顺序保持不变（避免地址栏抖动）。
  * 返回写入后的 href；与当前地址一致时跳过写入，避免每次按键都派发一次 restore。
  */
-export function writeSearchQuery(query: string, pathname: string, search: string): string {
-  const q = query.trim()
-  const rest = new URLSearchParams(search)
-  rest.delete("q")
-  const restStr = rest.toString()
-  const qs = [q ? `q=${encodeURIComponent(q)}` : "", restStr].filter(Boolean).join("&")
+export function writeSearchParams(
+  pathname: string,
+  search: string,
+  patch: Readonly<Record<string, string | null>>
+): string {
+  const params = new URLSearchParams(search)
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === null || value === "") params.delete(key)
+    else params.set(key, value)
+  }
+  const qs = params.toString()
   const next = qs ? `${pathname}?${qs}` : pathname
 
   if (typeof window !== "undefined" && `${pathname}${search}` !== next) {
     window.history.replaceState(null, "", next)
   }
   return next
+}
+
+/** 只改 q 的快捷写法（顶栏与移动端搜索框用）。 */
+export function writeSearchQuery(query: string, pathname: string, search: string): string {
+  return writeSearchParams(pathname, search, { q: query.trim() })
 }

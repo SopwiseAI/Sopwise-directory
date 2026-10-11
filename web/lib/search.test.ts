@@ -8,6 +8,11 @@ import {
   highlightSegments,
   resolveThreshold,
   suggest,
+  snippet,
+  matchedTags,
+  countCategories,
+  createFallbackIndex,
+  findRelated,
   SUGGEST_LIMIT
 } from "./search"
 import type { Product } from "./types"
@@ -249,5 +254,93 @@ describe("getSuggestionIndex", () => {
   it("不同数据数组各自建索引（不串数据）", () => {
     const other = buildSuggestionDocs([...mockProducts].slice(0, 1), { "chat-assistant": "对话助手" })
     expect(getSuggestionIndex(docs)).not.toBe(getSuggestionIndex(other))
+  })
+})
+
+describe("snippet", () => {
+  const long = "OpenAI 推出的对话式 AI 助手，支持文本生成、代码编写与多轮对话。"
+
+  it("把命中词包进上下文，并在被截断的一侧补省略号", () => {
+    const out = snippet(long, "代码")
+    expect(out).toContain("代码")
+    expect(out.startsWith("…")).toBe(true)
+    // 命中点已经很靠后，右侧就是原文结尾，不该多补一个省略号
+    expect(out.endsWith("…")).toBe(false)
+  })
+
+  it("短文本原样返回（不为了省略号而省略）", () => {
+    expect(snippet("短描述", "短")).toBe("短描述")
+    expect(snippet("短描述", "无关")).toBe("短描述")
+  })
+
+  it("没有命中时退化为从头截断", () => {
+    expect(snippet("a".repeat(100), "zzz")).toBe(`${"a".repeat(36)}…`)
+  })
+
+  it("空文本安全", () => {
+    expect(snippet("", "x")).toBe("")
+  })
+})
+
+describe("matchedTags", () => {
+  it("只返回真正命中查询词的标签", () => {
+    expect(matchedTags(["对话", "文本生成", "OpenAI"], "文本")).toEqual(["文本生成"])
+  })
+
+  it("大小写不敏感", () => {
+    expect(matchedTags(["OpenAI", "对话"], "openai")).toEqual(["OpenAI"])
+  })
+
+  it("多词查询任一命中即可", () => {
+    expect(matchedTags(["对话", "绘画"], "绘画 视频")).toEqual(["绘画"])
+  })
+
+  it("最多返回 limit 个", () => {
+    expect(matchedTags(["a1", "a2", "a3"], "a", 2)).toHaveLength(2)
+  })
+
+  it("无标签 / 空查询返回空", () => {
+    expect(matchedTags(undefined, "a")).toEqual([])
+    expect(matchedTags([], "a")).toEqual([])
+    expect(matchedTags(["对话"], "   ")).toEqual([])
+  })
+})
+
+describe("countCategories", () => {
+  const names = { "chat-assistant": "对话助手", "image-generation": "图像生成", "code-tools": "代码工具" }
+
+  it("统计命中的分类：计数倒序，同数按 id 稳定排序", () => {
+    const docs = buildSearchDocs([...mockProducts, { ...mockProducts[0], id: "chatgpt-clone" }], names)
+    expect(countCategories(docs)).toEqual([
+      { id: "chat-assistant", count: 2 },
+      { id: "code-tools", count: 1 },
+      { id: "image-generation", count: 1 }
+    ])
+  })
+
+  it("空结果返回空", () => {
+    expect(countCategories([])).toEqual([])
+  })
+})
+
+describe("createFallbackIndex / findRelated", () => {
+  const names = { "chat-assistant": "对话助手", "image-generation": "图像生成", "code-tools": "代码工具" }
+  const strict = createSearchIndex(mockProducts, names)
+  const loose = createFallbackIndex(mockProducts, names)
+
+  it("宽松索引比常规索引捞得更多", () => {
+    expect(strict.search("对话助手x").length).toBeLessThan(loose.search("对话助手x").length)
+  })
+
+  it("无关查询不硬凑结果（分数上限挡住噪音）", () => {
+    expect(findRelated(loose, "zzzznotfound")).toEqual([])
+  })
+
+  it("空查询返回空", () => {
+    expect(findRelated(loose, "   ")).toEqual([])
+  })
+
+  it("遵守条数上限", () => {
+    expect(findRelated(loose, "AI", 2).length).toBeLessThanOrEqual(2)
   })
 })

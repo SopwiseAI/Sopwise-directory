@@ -165,7 +165,8 @@ export function highlightSegments(text: string, query: string): HighlightSegment
  */
 export function createSearchIndex(
   products: readonly Product[] | readonly SearchDoc[],
-  categoryNames: Readonly<Record<string, string>> = {}
+  categoryNames: Readonly<Record<string, string>> = {},
+  threshold: number = resolveThreshold()
 ): Fuse<SearchDoc> {
   const docs = (products as readonly Product[]).every((p) => "categoryNames" in p)
     ? (products as readonly SearchDoc[])
@@ -178,8 +179,115 @@ export function createSearchIndex(
       { name: "tags", weight: 0.3 },
       { name: "categoryNames", weight: 0.2 }
     ],
-    threshold: resolveThreshold(),
+    threshold,
     ignoreLocation: true,
     includeScore: true
   })
+}
+
+/** 兜底索引的阈值下限：比常规搜索松一档，用来回答「你是不是想找…」。 */
+export const FALLBACK_THRESHOLD = 0.6
+
+/**
+ * 「也许相关」的分数上限。阈值只管匹配容差，最终打分仍可能很高 —— 只用阈值的话
+ * `asdfgh` 会凑出「Ada Health」这种纯噪音。实测 0.55 的分界刚好：
+ *
+ * - 有意义：`跑图` → DALL·E 3、`画图` → DALL·E 3、`写代码` → Codeium / GitHub Copilot
+ * - 仍然为空（不硬凑）：`asdfgh`、`qwerty`、`区块链`、`外卖`、`天气`、`股票`
+ *
+ * 也就是说它只在「确实沾边」时说话，否则把兜底让给精选推荐。
+ */
+export const FALLBACK_MAX_SCORE = 0.55
+
+/**
+ * 兜底索引：正常搜索「未找到」时再搜一次，把「差一点就中」的结果捞出来。
+ *
+ * 敲错一个字或换了个说法时，用户不该直接撞进死路。阈值取
+ * `max(常规阈值, 0.6)` —— 环境变量把常规阈值调得更松时跟随它，不会比常规还严。
+ */
+export function createFallbackIndex(
+  products: readonly Product[] | readonly SearchDoc[],
+  categoryNames: Readonly<Record<string, string>> = {}
+): Fuse<SearchDoc> {
+  return createSearchIndex(products, categoryNames, Math.max(resolveThreshold(), FALLBACK_THRESHOLD))
+}
+
+/** 在兜底索引上取「确实沾边」的前 N 条（按 `FALLBACK_MAX_SCORE` 卡分数）。 */
+export function findRelated(index: Fuse<SearchDoc>, query: string, limit = 6): SearchDoc[] {
+  const trimmed = query.trim()
+  if (!trimmed) return []
+  return index
+    .search(trimmed)
+    .filter((r) => (r.score ?? 1) <= FALLBACK_MAX_SCORE)
+    .slice(0, limit)
+    .map((r) => r.item)
+}
+
+/**
+ * 从长文本里截出「命中上下文」：围绕最早出现的那个查询词截取前后各 `window` 个字符，
+ * 两端按需补省略号；没有命中就退化成从头截断。
+ *
+ * 结果页此前直接 `truncate` 描述，命中词落在中后段时用户根本看不到「为什么命中」——
+ * 这是搜索结果最伤可用性的一处。
+ */
+export function snippet(text: string, query: string, window = 18): string {
+  if (!text) return ""
+  const lower = text.toLowerCase()
+  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
+
+  let hitStart = -1
+  let hitEnd = -1
+  for (const term of terms) {
+    const idx = lower.indexOf(term)
+    if (idx !== -1 && (hitStart === -1 || idx < hitStart)) {
+      hitStart = idx
+      hitEnd = idx + term.length
+    }
+  }
+
+  if (hitStart === -1) return text.length > window * 2 ? `${text.slice(0, window * 2)}…` : text
+
+  const start = Math.max(0, hitStart - window)
+  const end = Math.min(text.length, hitEnd + window)
+  return `${start > 0 ? "…" : ""}${text.slice(start, end)}${end < text.length ? "…" : ""}`
+}
+
+/** 结果集里的分类分布（facet）：只统计实际命中的分类，计数倒序、同数按 id 稳定排序。 */
+export interface CategoryFacet {
+  id: string
+  count: number
+}
+
+export function countCategories(results: readonly SearchDoc[]): CategoryFacet[] {
+  const counts = new Map<string, number>()
+  for (const doc of results) {
+    for (const id of doc.categories) counts.set(id, (counts.get(id) ?? 0) + 1)
+  }
+  return [...counts.entries()]
+    .map(([id, count]) => ({ id, count }))
+    .sort((a, b) => b.count - a.count || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+}
+
+/**
+ * 「把焦点交给结果列表」的全局事件名。
+ *
+ * 搜索框在顶栏、结果列表在页面里，两者没有共同祖先（布局 vs 页面），
+ * 用一个自定义事件解耦比拉一层 Context 更轻。搜索框在搜索页按 ↓ 时派发。
+ */
+export const SEARCH_FOCUS_RESULTS_EVENT = "xigee:search-focus-results"
+
+/** 结果行的选择器：列表内 ↑↓ 移动焦点、顶栏 ↓ 进入列表都用它定位，避免两处选择器写歪。 */
+export const SEARCH_RESULT_SELECTOR = "[data-search-result]"
+
+/**
+ * 命中查询词的标签（最多 `limit` 个）。
+ *
+ * 结果行右侧此前固定显示前两个标签，命中与否全看运气；改成优先显示真正命中的标签，
+ * 用户一眼就能确认「这条为什么被搜出来」。没有命中标签时调用方回落到分类名。
+ */
+export function matchedTags(tags: readonly string[] | undefined, query: string, limit = 2): string[] {
+  if (!tags || tags.length === 0) return []
+  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
+  if (terms.length === 0) return []
+  return tags.filter((tag) => terms.some((term) => tag.toLowerCase().includes(term))).slice(0, limit)
 }

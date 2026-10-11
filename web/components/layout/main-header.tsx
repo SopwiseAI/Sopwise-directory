@@ -11,7 +11,13 @@ import { Kbd } from "@/components/ui/kbd"
 import ThemeToggle from "@/components/layout/theme-toggle"
 import { SearchSuggestions, suggestionOptionId } from "@/components/search/search-suggestions"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
-import { getSuggestionIndex, suggest, type SuggestionDoc } from "@/lib/search"
+import {
+  getSuggestionIndex,
+  suggest,
+  SEARCH_FOCUS_RESULTS_EVENT,
+  SEARCH_RESULT_SELECTOR,
+  type SuggestionDoc
+} from "@/lib/search"
 import { searchPageHref, writeSearchQuery } from "@/lib/url"
 import type { Category } from "@/lib/types"
 
@@ -223,6 +229,12 @@ function SearchField({ suggestions }: SearchFieldProps) {
         setDismissed(false)
         return
       }
+    }
+    // 搜索页内按 ↓：把焦点交给结果列表（进入后由结果列表接管 ↑↓）
+    if (isSearchPage && e.key === "ArrowDown" && document.querySelector(SEARCH_RESULT_SELECTOR)) {
+      e.preventDefault()
+      window.dispatchEvent(new Event(SEARCH_FOCUS_RESULTS_EVENT))
+      return
     }
     // 其余情况交给 <form onSubmit>：Enter 与原生提交共用一条路径
   }
