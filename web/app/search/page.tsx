@@ -17,14 +17,21 @@ const featured = getFeaturedProducts()
 const categories = getAllCategories()
 const categoryCounts = getCategoryCounts()
 
-/** 搜索结果为客户端计算（query 来自 URL），SSR 呈现同构骨架，避免「加载中…→结果」突兀跳变。 */
+/**
+ * 搜索结果为客户端计算（query 来自 URL），SSR 呈现同构骨架，避免「加载中…→结果」突兀跳变。
+ *
+ * 骨架形状要与最终布局对齐（计数行 + 结果列表），否则 hydrate 完成时会出现一次明显的位置跳变。
+ */
 function ResultsSkeleton() {
   return (
     <div className="flex flex-col gap-3" aria-busy="true">
-      <Skeleton className="h-5 w-44 rounded" />
+      <div className="flex items-center justify-between gap-3">
+        <Skeleton className="h-5 w-52 rounded" />
+        <Skeleton className="h-8 w-24 rounded-lg" />
+      </div>
       <div className="overflow-hidden rounded-lg border bg-card">
         {Array.from({ length: 12 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 border-b border-border px-4 py-3.5 last:border-b-0">
+          <div key={i} className="flex items-center gap-3 border-b border-border px-4 py-3 last:border-b-0">
             <div className="flex min-w-0 flex-1 flex-col gap-1.5">
               <Skeleton className="h-4 w-1/4 rounded" />
               <Skeleton className="h-3 w-3/4 rounded" />

@@ -73,12 +73,22 @@ function persist(list: readonly string[]): string[] {
   return next
 }
 
-/** 记录一次搜索：大小写不敏感去重、最新在前、超出上限裁掉最旧。 */
+/**
+ * 记录一次搜索：大小写不敏感去重、最新在前、超出上限裁掉最旧。
+ *
+ * 另外丢掉「打字中间态」：已有项若是新查询的前缀（`c` / `ch` / `cha` → `chat`）就直接替换掉。
+ * 查询词静默 800ms 才记录，快速输入天然只留下整词；但慢速输入（边想边打）会把
+ * 最近搜索灌成一串半截词，靠这条兜住。
+ */
 export function addRecentSearch(raw: string): string[] {
   if (!isBrowser()) return []
   const query = normalizeQuery(raw)
   if (!query) return getRecentSearches()
-  const rest = getRecentSearches().filter((item) => item.toLowerCase() !== query.toLowerCase())
+  const key = query.toLowerCase()
+  const rest = getRecentSearches().filter((item) => {
+    const existing = item.toLowerCase()
+    return existing !== key && !key.startsWith(existing)
+  })
   return persist([query, ...rest])
 }
 

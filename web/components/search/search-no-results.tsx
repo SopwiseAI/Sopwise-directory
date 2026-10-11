@@ -46,8 +46,11 @@ export function SearchNoResults({
           <SearchX />
         </EmptyMedia>
         <EmptyHeader>
+          {/* 元素切分处不留空格：否则渲染成「未找到与 「zzz」 相关的工具」 */}
           <EmptyDescription>
-            未找到与 <span className="font-medium text-foreground">「{query}」</span> 相关的工具
+            未找到与
+            <span className="font-medium text-foreground">「{query}」</span>
+            相关的工具
           </EmptyDescription>
           {/* 说清「能搜什么」比再说一遍「没找到」有用：多数无结果来自搜了目录里没有的维度 */}
           <EmptyDescription className="text-xs">

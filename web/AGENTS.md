@@ -105,18 +105,24 @@ data/         # 产品数据 (data.json)
   产品筛选、信息导航、移动端分类条共用同一套样式；长列表导航（>8 项横向滚动）不要改下边线
 - 移动端信息页不显示分类条（`SubNav` 内按 `isInfoRoute()` 提前返回），避免两条横栏叠在顶栏下
 - 产品卡片点击直接跳转外部网站，无详情页
-- **搜索全程在客户端完成，换词 / 筛选 / 排序都不许走 `router.push`**：`lib/search.ts` 建 Fuse 索引
-  （`createSearchIndex` 常规 + `createFallbackIndex` 兜底），查询词 / `cat` / `sort` 一律通过
+- **搜索全程在客户端完成，换词 / 排序都不许走 `router.push`**：`lib/search.ts` 建 Fuse 索引
+  （`createSearchIndex` 常规 + `createFallbackIndex` 兜底），查询词 / `sort` 一律通过
   `lib/url.ts` 的 `writeSearchParams` 写回地址栏 —— Next 16 给 `history.replaceState` 打过补丁，
-  只派发 `ACTION_RESTORE` 同步 Router，`useSearchParams()` 随之更新但**不发 RSC 请求**。
+  只派发 `ACTION_RESTORE` 同步 Router，`useSearchParams()` 随之更新但**不发 RSC 请求**
+  （16.4.0 把这次派发搬进了 `navigator.restore`，语义不变，升级时确认过）。
   走 `router.push` 等于每次换词白跑一趟服务器，而服务端对任意 `?q=` 返回的都是同一份空骨架
   （RSC 载荷里既没有「找到 N 个」也没有「未找到与」），搜索结果 100% 在浏览器里算
 - 顶栏搜索建议数据由根布局下发（`buildSuggestionDocs` → `SuggestionDoc`，刻意不含 description，
   约 3.2KB gzip），客户端零请求即可出建议；**不要**让 client 组件直接 `import data.json`
 - 搜索页三种状态各有一个主角：空查询 = `SearchLanding`（最近搜索 / 试试这些 / 分类）、
-  有结果 = `SearchToolbar`（分类 facet + 排序）+ 结果行（描述走 `snippet()` 给出命中上下文）、
+  有结果 = 计数 + 排序 + 结果行（描述走 `snippet()` 给出命中上下文）、
   未找到 = `SearchNoResults`（`findRelated` 的「也许你想找」+ 换词建议 + 分类）。
   「也许你想找」必须同时卡阈值与 `FALLBACK_MAX_SCORE`，否则无关查询会硬凑出噪音
+- **搜索建议的 `id` / `role="option"` 必须挂在 `<a>` 上**，不能挂在包一层的 `<li>` 上：
+  回车打开靠 `getElementById(activeId).click()`，点 `<li>` 不会激活内部链接（曾因此静默失效）
+- 命中高亮只有 `tint`（名称，垫一层淡底、**不加 padding/圆角**）与 `em`（正文，muted→foreground）
+  两档。别用品牌色当强调色 —— `--brand` 就等于 `--foreground`，上色等于没上色；
+  也别在徽章里再叠一层 `<mark>`，那是纯噪音
 - 数据更新：修改 `data/data.json` → PR → 合并 → Vercel 自动部署
 
 ## CI

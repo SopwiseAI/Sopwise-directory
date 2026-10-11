@@ -25,10 +25,9 @@ export function isSearchSort(value: string | null): value is SearchSort {
   return value !== null && VALID_SORTS.has(value)
 }
 
-/** 搜索页的 URL 状态：查询词 / 分类筛选 / 排序。三者都写进地址栏，链接可分享。 */
+/** 搜索页的 URL 状态：查询词 / 排序。两者都写进地址栏，链接可分享。 */
 export interface SearchUrlState {
   query: string
-  category: string
   sort: SearchSort
 }
 
@@ -41,7 +40,6 @@ export function readSearchState(params: SearchParamsLike): SearchUrlState {
   const sort = params.get("sort")
   return {
     query: params.get("q") ?? "",
-    category: params.get("cat") ?? "",
     sort: isSearchSort(sort) ? sort : "relevance"
   }
 }

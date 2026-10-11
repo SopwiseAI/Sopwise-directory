@@ -27,6 +27,11 @@ interface SearchSuggestionsProps {
  *
  * 结构遵循 combobox 模式：`role="listbox"` + `role="option"` + `aria-selected`，
  * 由输入框的 `aria-activedescendant` 关联高亮项，焦点始终留在输入框。
+ *
+ * **`id` / `role="option"` 必须挂在 `<a>` 上，不能挂在包一层的 `<li>` 上**：
+ * `SearchField` 用 `getElementById(activeId).click()` 触发「回车打开」，
+ * 而点击 `<li>` 不会激活它内部的链接 —— 挂错位置会让回车静默失效。
+ * 同理 listbox 用 `<div>` 而不是 `<ul>`，让 option 成为它的直接子元素。
  */
 export function SearchSuggestions({ items, query, activeIndex, listboxId, className }: SearchSuggestionsProps) {
   // 选中项滚进可视区：条数少，直接查 DOM 即可，不必为它再挂一层 ref 列表
@@ -44,34 +49,36 @@ export function SearchSuggestions({ items, query, activeIndex, listboxId, classN
         className
       )}
     >
-      <ul id={listboxId} role="listbox" aria-label="搜索建议" className="max-h-72 overflow-y-auto p-1">
+      <div id={listboxId} role="listbox" aria-label="搜索建议" className="max-h-72 overflow-y-auto p-1">
         {items.map((item, i) => {
           const active = i === activeIndex
           const category = item.categoryNames[0]
           return (
-            <li key={item.id} id={suggestionOptionId(listboxId, i)} role="option" aria-selected={active}>
-              <a
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                // 建议是「预览」，回车的默认动作仍是进结果页；选中后回车由 SearchField 触发 click
-                tabIndex={-1}
-                {...productHistoryAttrs(item)}
-                className={cn(
-                  "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none",
-                  active ? "bg-accent text-accent-foreground" : "hover:bg-accent/60"
-                )}
-              >
-                <span className="min-w-0 flex-1 truncate font-medium">
-                  <Highlighted text={item.name} query={query} />
-                </span>
-                {category && <span className="shrink-0 text-xs text-muted-foreground">{category}</span>}
-                <span className="shrink-0 font-data text-xs text-muted-foreground">{getDomain(item.url)}</span>
-              </a>
-            </li>
+            <a
+              key={item.id}
+              id={suggestionOptionId(listboxId, i)}
+              role="option"
+              aria-selected={active}
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              // 建议是「预览」，回车的默认动作仍是进结果页；选中后回车由 SearchField 触发 click
+              tabIndex={-1}
+              {...productHistoryAttrs(item)}
+              className={cn(
+                "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none",
+                active ? "bg-accent text-accent-foreground" : "hover:bg-accent/60"
+              )}
+            >
+              <span className="min-w-0 flex-1 truncate font-medium">
+                <Highlighted text={item.name} query={query} variant="tint" />
+              </span>
+              {category && <span className="shrink-0 text-xs text-muted-foreground">{category}</span>}
+              <span className="shrink-0 font-data text-xs text-muted-foreground">{getDomain(item.url)}</span>
+            </a>
           )
         })}
-      </ul>
+      </div>
       <div className="flex items-center justify-between border-t border-border px-2.5 py-1.5 text-xs text-muted-foreground">
         <span className="flex items-center gap-1">
           <KbdGroup>

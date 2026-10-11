@@ -252,22 +252,6 @@ export function snippet(text: string, query: string, window = 18): string {
   return `${start > 0 ? "…" : ""}${text.slice(start, end)}${end < text.length ? "…" : ""}`
 }
 
-/** 结果集里的分类分布（facet）：只统计实际命中的分类，计数倒序、同数按 id 稳定排序。 */
-export interface CategoryFacet {
-  id: string
-  count: number
-}
-
-export function countCategories(results: readonly SearchDoc[]): CategoryFacet[] {
-  const counts = new Map<string, number>()
-  for (const doc of results) {
-    for (const id of doc.categories) counts.set(id, (counts.get(id) ?? 0) + 1)
-  }
-  return [...counts.entries()]
-    .map(([id, count]) => ({ id, count }))
-    .sort((a, b) => b.count - a.count || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
-}
-
 /**
  * 「把焦点交给结果列表」的全局事件名。
  *

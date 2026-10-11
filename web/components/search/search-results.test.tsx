@@ -48,31 +48,22 @@ describe("SearchResults", () => {
     expect(screen.getByRole("button", { name: "图像生成" })).toBeInTheDocument()
   })
 
-  it("有结果时给出分类 facet、结果计数与结果行", () => {
+  it("有结果时给出结果计数、排序入口与结果行", () => {
     nav.search = "?q=对话"
     renderResults()
 
-    expect(screen.getByRole("status")).toHaveTextContent("2 个结果")
-    expect(screen.getByRole("button", { name: /全部/ })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /对话助手/ })).toBeInTheDocument()
+    expect(screen.getByRole("status")).toHaveTextContent("找到 2 个与「对话」相关的结果")
+    expect(screen.getByRole("button", { name: "排序" })).toBeInTheDocument()
     expect(document.querySelectorAll("[data-search-result]")).toHaveLength(2)
   })
 
-  it("点分类 facet 原地写 URL（replaceState，不发导航）", () => {
+  it("切换排序原地写 URL（replaceState，不发导航）", () => {
     nav.search = "?q=对话"
     renderResults()
 
-    fireEvent.click(screen.getByRole("button", { name: /对话助手/ }))
-    expect(new URLSearchParams(window.location.search).get("cat")).toBe("chat-assistant")
-  })
-
-  it("已选分类不在本次命中里时自动失效（换词后不会卡在空结果）", () => {
-    nav.search = "?q=图像&cat=chat-assistant"
-    renderResults()
-
-    // 命中里没有 chat-assistant，派生出的有效分类为空 → 「全部」处于选中态，且结果非空
-    expect(screen.getByRole("button", { name: /全部/ })).toHaveAttribute("aria-pressed", "true")
-    expect(screen.getByRole("status")).toHaveTextContent(/^2 个结果$/)
+    fireEvent.click(screen.getByRole("button", { name: "排序" }))
+    fireEvent.click(screen.getByRole("menuitemradio", { name: /最新/ }))
+    expect(new URLSearchParams(window.location.search).get("sort")).toBe("latest")
   })
 
   it("未找到时走无结果页，并给出「也许你想找」/ 换词建议", () => {

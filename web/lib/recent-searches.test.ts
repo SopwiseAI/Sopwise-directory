@@ -56,6 +56,22 @@ describe("recent searches 读写", () => {
     expect(getRecentSearches()).toEqual(["chatgpt"])
   })
 
+  it("丢掉打字中间态：已有项是新查询前缀时被替换掉", () => {
+    addRecentSearch("c")
+    addRecentSearch("ch")
+    addRecentSearch("cha")
+    addRecentSearch("chat")
+    expect(getRecentSearches()).toEqual(["chat"])
+  })
+
+  it("中间态清理不误伤非前缀的独立搜索", () => {
+    addRecentSearch("图像")
+    addRecentSearch("视频")
+    addRecentSearch("图像生成")
+    // 「图像」是「图像生成」的前缀 → 被替换；「视频」与它无前缀关系 → 保留
+    expect(getRecentSearches()).toEqual(["图像生成", "视频"])
+  })
+
   it("空白查询不写入", () => {
     addRecentSearch("   ")
     expect(getRecentSearches()).toEqual([])

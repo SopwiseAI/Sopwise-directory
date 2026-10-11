@@ -46,13 +46,13 @@ export function SearchResultRow({ product, query, categoryNames, last }: SearchR
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
           <span className="shrink-0 truncate text-base font-medium">
-            <Highlighted text={product.name} query={query} />
+            <Highlighted text={product.name} query={query} variant="tint" />
           </span>
           <span className="hidden shrink-0 font-data text-xs text-muted-foreground sm:inline">{domain}</span>
         </div>
         {product.description && (
           <p className="truncate text-sm text-muted-foreground">
-            <Highlighted text={snippet(product.description, query)} query={query} />
+            <Highlighted text={snippet(product.description, query)} query={query} variant="em" />
           </p>
         )}
       </div>
@@ -60,9 +60,10 @@ export function SearchResultRow({ product, query, categoryNames, last }: SearchR
       <div className="flex shrink-0 items-center gap-2">
         {tags.length > 0 ? (
           <div className="hidden items-center gap-1 md:flex">
+            {/* 标签本身就是「命中证据」，不必在徽章里再叠一层高亮 —— 那是纯粹的视觉噪音 */}
             {tags.map((tag) => (
               <Badge key={tag} variant="secondary" className="px-1.5 py-0 text-xs font-normal">
-                <Highlighted text={tag} query={query} />
+                {tag}
               </Badge>
             ))}
           </div>

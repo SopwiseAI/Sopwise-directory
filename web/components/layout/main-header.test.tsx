@@ -121,6 +121,25 @@ describe("MainHeader 搜索", () => {
     expect(input).toHaveAttribute("aria-activedescendant", suggestionOptionId("search-suggestions", count - 1))
   })
 
+  it("选中建议后回车会真正打开该产品（回归：id 曾挂在 <li> 上导致点击落空）", () => {
+    vi.useFakeTimers()
+    renderHeader()
+
+    const input = typeInto("chat")
+    fireEvent.keyDown(input, { key: "ArrowDown" })
+
+    const activeId = input.getAttribute("aria-activedescendant")
+    expect(activeId).toBeTruthy()
+    const option = document.getElementById(activeId as string)
+    // 关键断言：激活项必须本身就是链接，否则 `.click()` 点不到任何可导航的元素
+    expect(option?.tagName).toBe("A")
+
+    const onClicked = vi.fn()
+    option?.addEventListener("click", onClicked)
+    fireEvent.keyDown(input, { key: "Enter" })
+    expect(onClicked).toHaveBeenCalledTimes(1)
+  })
+
   it("搜索页不弹建议下拉（结果页下方已经实时出结果，两份列表是重复的）", () => {
     vi.useFakeTimers()
     nav.pathname = "/search"

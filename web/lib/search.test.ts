@@ -10,7 +10,6 @@ import {
   suggest,
   snippet,
   matchedTags,
-  countCategories,
   createFallbackIndex,
   findRelated,
   SUGGEST_LIMIT
@@ -303,23 +302,6 @@ describe("matchedTags", () => {
     expect(matchedTags(undefined, "a")).toEqual([])
     expect(matchedTags([], "a")).toEqual([])
     expect(matchedTags(["对话"], "   ")).toEqual([])
-  })
-})
-
-describe("countCategories", () => {
-  const names = { "chat-assistant": "对话助手", "image-generation": "图像生成", "code-tools": "代码工具" }
-
-  it("统计命中的分类：计数倒序，同数按 id 稳定排序", () => {
-    const docs = buildSearchDocs([...mockProducts, { ...mockProducts[0], id: "chatgpt-clone" }], names)
-    expect(countCategories(docs)).toEqual([
-      { id: "chat-assistant", count: 2 },
-      { id: "code-tools", count: 1 },
-      { id: "image-generation", count: 1 }
-    ])
-  })
-
-  it("空结果返回空", () => {
-    expect(countCategories([])).toEqual([])
   })
 })
 

@@ -51,6 +51,16 @@ describe("SearchSuggestions", () => {
     expect(options[1]).toHaveAttribute("id", suggestionOptionId("lb", 1))
   })
 
+  it("option 就是可点击的链接本身：aria-activedescendant 必须指向 <a> 而非外层容器", () => {
+    // 回归：id 曾挂在包一层的 <li> 上，`getElementById(id).click()` 点不到链接，
+    // 于是「选中建议后回车打开」静默失效。这里锁住 id/role 必须落在 <a> 上。
+    render(<SearchSuggestions items={docs} query="chat" activeIndex={0} listboxId="lb" />)
+    const option = screen.getAllByRole("option")[0]
+    expect(option.tagName).toBe("A")
+    expect(option).toHaveAttribute("href", "https://chat.openai.com")
+    expect(document.getElementById(suggestionOptionId("lb", 0))).toBe(option)
+  })
+
   it("未选中时提示「查看全部结果」，选中后变为「打开」", () => {
     const { rerender } = render(<SearchSuggestions items={docs} query="chat" activeIndex={-1} listboxId="lb" />)
     expect(screen.getByText("查看全部结果")).toBeInTheDocument()

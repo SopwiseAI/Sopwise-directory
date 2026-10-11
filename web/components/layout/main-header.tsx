@@ -274,7 +274,8 @@ function SearchField({ suggestions }: SearchFieldProps) {
           aria-label="搜索 AI 工具"
           aria-autocomplete="list"
           aria-expanded={open}
-          aria-controls={listboxId}
+          // 收起时 listbox 并不在 DOM 里，此时不该声明 aria-controls（指向不存在的 id 是无效引用）
+          aria-controls={open ? listboxId : undefined}
           aria-activedescendant={open && activeIndex >= 0 ? suggestionOptionId(listboxId, activeIndex) : undefined}
           autoComplete="off"
           onChange={(e) => {

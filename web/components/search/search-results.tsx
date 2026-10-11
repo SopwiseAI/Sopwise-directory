@@ -4,11 +4,12 @@ import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import { Sparkles } from "lucide-react"
+import { FilterSelect } from "@/components/ui/filter-select"
 import { SearchLanding } from "@/components/search/search-landing"
 import { SearchNoResults } from "@/components/search/search-no-results"
 import { SearchResultRow } from "@/components/search/search-result-row"
-import { SearchToolbar, type SearchFacet } from "@/components/search/search-toolbar"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
+import { formatCount } from "@/lib/format"
 import { compareDateDesc, compareName, getProductDate } from "@/lib/product"
 import {
   addRecentSearch,
@@ -18,7 +19,6 @@ import {
   subscribeRecentSearches
 } from "@/lib/recent-searches"
 import {
-  countCategories,
   createFallbackIndex,
   createSearchIndex,
   findRelated,
@@ -26,7 +26,7 @@ import {
   SEARCH_RESULT_SELECTOR,
   type SearchDoc
 } from "@/lib/search"
-import { readSearchState, type SearchSort } from "@/lib/search-params"
+import { readSearchState, SEARCH_SORT_OPTIONS, type SearchSort } from "@/lib/search-params"
 import { writeSearchParams } from "@/lib/url"
 import type { Category, Product } from "@/lib/types"
 
@@ -72,7 +72,7 @@ function shuffleWithSeed<T>(items: readonly T[], seed: number): T[] {
  * 搜索结果：三种状态各有一个主角 ——
  *
  * - **空查询** → `SearchLanding`：最近搜索 / 试试这些 / 按分类浏览；
- * - **有结果** → `SearchToolbar`（分类 facet + 排序）+ 结果行，行内给出命中上下文；
+ * - **有结果** → 计数 + 排序 + 结果行，行内给出命中上下文；
  * - **未找到** → `SearchNoResults`：「也许你想找」（放宽阈值）+ 换词建议 + 分类。
  *
  * 所有状态切换都只写 URL（`replaceState`，零网络往返），结果同帧更新。
@@ -80,7 +80,7 @@ function shuffleWithSeed<T>(items: readonly T[], seed: number): T[] {
 export function SearchResults({ products, featured, categories, categoryCounts }: SearchResultsProps) {
   const searchParams = useSearchParams()
   const pathname = usePathname()
-  const { query, category, sort } = readSearchState(searchParams)
+  const { query, sort } = readSearchState(searchParams)
   const trimmedQuery = query.trim()
 
   const categoryNames = useMemo(
@@ -91,33 +91,17 @@ export function SearchResults({ products, featured, categories, categoryCounts }
   const searchIndex = useMemo(() => createSearchIndex(products, categoryNames), [products, categoryNames])
   const fallbackIndex = useMemo(() => createFallbackIndex(products, categoryNames), [products, categoryNames])
 
-  /** 相关度打分结果（尚未按分类筛选）。 */
   const scored = useMemo(() => (trimmedQuery ? searchIndex.search(trimmedQuery) : []), [trimmedQuery, searchIndex])
 
-  const facets = useMemo<SearchFacet[]>(
-    () =>
-      countCategories(scored.map((r) => r.item)).map((facet) => ({
-        id: facet.id,
-        label: categoryNames[facet.id] ?? facet.id,
-        count: facet.count
-      })),
-    [scored, categoryNames]
-  )
-
-  // 分类筛选只在它仍出现在本次命中里时生效。换了查询词后旧分类会自然失效 ——
-  // 这里用「派生」而不是 effect 去清 URL，避免先闪一帧空结果。
-  const activeCategory = category && facets.some((f) => f.id === category) ? category : ""
-
   const results = useMemo<SearchDoc[]>(() => {
-    const base = activeCategory ? scored.filter((r) => r.item.categories.includes(activeCategory)) : scored
-    const items = base.map((r) => r.item)
+    const items = scored.map((r) => r.item)
     if (sort === "relevance") return items
     return [...items].sort(
       sort === "latest"
         ? (a, b) => compareDateDesc(getProductDate(a), getProductDate(b)) || compareName(a, b)
         : compareName
     )
-  }, [scored, activeCategory, sort])
+  }, [scored, sort])
 
   /** 也许相关：只在「一条都没中」时才用宽松阈值再搜一次，并卡住分数避免硬凑噪音。 */
   const fallback = useMemo<SearchDoc[]>(() => {
@@ -147,8 +131,7 @@ export function SearchResults({ products, featured, categories, categoryCounts }
     [pathname]
   )
 
-  const handlePick = useCallback((next: string) => patch({ q: next, cat: null }), [patch])
-  const handleCategoryChange = useCallback((id: string) => patch({ cat: id }), [patch])
+  const handlePick = useCallback((next: string) => patch({ q: next }), [patch])
   const handleSortChange = useCallback(
     (next: SearchSort) => patch({ sort: next === "relevance" ? null : next }),
     [patch]
@@ -202,17 +185,25 @@ export function SearchResults({ products, featured, categories, categoryCounts }
     )
   }
 
+  const currentSort = SEARCH_SORT_OPTIONS.find((o) => o.value === sort) ?? SEARCH_SORT_OPTIONS[0]
+
   return (
     <div className="flex flex-col gap-3">
-      <SearchToolbar
-        facets={facets}
-        shown={results.length}
-        total={scored.length}
-        category={activeCategory}
-        onCategoryChange={handleCategoryChange}
-        sort={sort}
-        onSortChange={handleSortChange}
-      />
+      <div className="flex items-center justify-between gap-3">
+        {/* 中文句子里的元素切分不要留空格：`{" "}` 或行内尾随空格会渲染成「个与 「对话」 相关」 */}
+        <p role="status" aria-live="polite" className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+          找到 <span className="font-data font-medium text-foreground">{formatCount(results.length)}</span> 个与
+          <span className="font-medium text-foreground">「{trimmedQuery}」</span>相关的结果
+        </p>
+        <FilterSelect
+          label="排序"
+          icon={currentSort.icon}
+          value={sort}
+          options={SEARCH_SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+          onChange={(value) => handleSortChange(value as SearchSort)}
+          active={sort !== "relevance"}
+        />
+      </div>
 
       <div onKeyDown={handleListKeyDown} className="overflow-hidden rounded-lg border bg-card">
         {results.map((product, i) => (
