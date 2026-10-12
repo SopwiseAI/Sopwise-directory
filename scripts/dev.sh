@@ -27,7 +27,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 echo -e "${CYAN}════════════════════════════════════════════${NC}"
-echo -e "${CYAN}  Sopwise Directory — Dev Launcher${NC}"
+echo -e "${CYAN}  XiGee — Dev Launcher${NC}"
 echo -e "${CYAN}════════════════════════════════════════════${NC}"
 echo ""
 

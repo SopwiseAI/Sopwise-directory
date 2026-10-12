@@ -25,7 +25,7 @@ show_status() {
 }
 
 echo -e "${CYAN}════════════════════════════════════════════${NC}"
-echo -e "${CYAN}  Sopwise Directory — Service Status${NC}"
+echo -e "${CYAN}  XiGee — Service Status${NC}"
 echo -e "${CYAN}════════════════════════════════════════════${NC}"
 echo ""
 

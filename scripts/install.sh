@@ -4,7 +4,7 @@ set -euo pipefail
 source "$(dirname "$0")/lib.sh"
 
 echo -e "${CYAN}════════════════════════════════════════════${NC}"
-echo -e "${CYAN}  Sopwise Directory — Install Dependencies${NC}"
+echo -e "${CYAN}  XiGee — Install Dependencies${NC}"
 echo -e "${CYAN}════════════════════════════════════════════${NC}"
 echo ""
 

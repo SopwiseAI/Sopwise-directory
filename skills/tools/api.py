@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sopwise Directory Studio API CLI — AI 调用 studio 接口的命令行工具。
+"""XiGee Studio API CLI — AI 调用 studio 接口的命令行工具。
 
 用法:
   python skills/tools/api.py products [--status N] [--page N] [--page-size N] [--search K]  列出产品
@@ -679,7 +679,7 @@ def cmd_stats(args):
         s = p.get("status", 0)
         status_counts[s] = status_counts.get(s, 0) + 1
 
-    print("═══ Sopwise Directory 统计 ═══")
+    print("═══ XiGee 统计 ═══")
     print(f"  分类总数: {len(categories)}")
     print(f"  标签总数: {len(tags)}")
     print(f"  产品总数: {len(all_products)}")
@@ -814,7 +814,7 @@ def cmd_delete_link(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="XiGee Directory Studio API CLI")
+    parser = argparse.ArgumentParser(description="XiGee Studio API CLI")
     parser.add_argument(
         "--version", action="version", version=f"%(prog)s {__version__}"
     )
