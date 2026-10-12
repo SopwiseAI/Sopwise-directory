@@ -40,7 +40,7 @@ cp studio/.env.example studio/.env
 ### 分支命名
 
 ```
-feature/<name>   新功能
+feat/<name>      新功能
 fix/<name>       缺陷修复
 refactor/<name>  重构
 chore/<name>     工程化/工具链变更
@@ -85,7 +85,7 @@ husky commit-msg 自动执行 commitlint 校验提交信息格式。
 
 ## Pull Request 流程
 
-1. 从 `main` 创建功能分支 (`feature/<name>`) 或修复分支 (`fix/<name>`)
+1. 从 `main` 创建功能分支 (`feat/<name>`) 或修复分支 (`fix/<name>`)
 2. 提交代码并推送至远程
 3. 创建 Pull Request，标题遵循 Conventional Commits 格式
 4. 通过 CI 检查（lint + 构建）后合并

@@ -1,3 +1,5 @@
+<!-- 本文件有 2 个 H1：Next 注入的 agent-rules 块自带一个 + 文档标题（机器管理块不可改，故整文件禁用 MD025） -->
+<!-- markdownlint-disable MD025 -->
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

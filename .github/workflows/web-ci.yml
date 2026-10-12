@@ -24,7 +24,23 @@ jobs:
         with:
           node-version-file: ".nvmrc"
           cache: pnpm
-          cache-dependency-path: web/pnpm-lock.yaml
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            web/pnpm-lock.yaml
+
+      # 根目录检查（markdownlint + prettier）：靠 husky 本地钩子挡不住绕过钩子的提交，
+      # 必须进 CI 才能真正拦住（web/AGENTS.md 的 MD025 曾因此溜进 main）。
+      - name: Install root dependencies
+        working-directory: .
+        run: pnpm install --frozen-lockfile
+
+      - name: Markdown lint
+        working-directory: .
+        run: pnpm run lint:md
+
+      - name: Format check
+        working-directory: .
+        run: pnpm run format:check
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
