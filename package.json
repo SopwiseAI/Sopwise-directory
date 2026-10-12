@@ -14,8 +14,8 @@
     "pnpm": ">=10.0.0"
   },
   "scripts": {
-    "format": "prettier --write \"*.md\" \"*.json\" \"*.jsonc\" \".opencode/**/*.md\" \"skills/**/*.md\" \".github/**/*.yml\"",
-    "format:check": "prettier --check \"*.md\" \"*.json\" \"*.jsonc\" \".opencode/**/*.md\" \"skills/**/*.md\" \".github/**/*.yml\"",
+    "format": "prettier --write \"*.md\" \"*.json\" \"*.jsonc\" \".opencode/**/*.md\" \"skills/**/*.md\" \".github/**/*.md\" \".github/**/*.yml\"",
+    "format:check": "prettier --check \"*.md\" \"*.json\" \"*.jsonc\" \".opencode/**/*.md\" \"skills/**/*.md\" \".github/**/*.md\" \".github/**/*.yml\"",
     "lint:md": "markdownlint-cli2 \"**/*.md\"",
     "lint:md:fix": "markdownlint-cli2 --fix \"**/*.md\"",
     "check": "pnpm run lint:md && pnpm run format:check && cd studio && uv run ruff check app/ tests/ && cd ../web && pnpm lint",

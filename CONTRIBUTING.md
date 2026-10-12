@@ -27,13 +27,15 @@ pnpm install
 
 ## 环境变量
 
-复制 `studio/.env.example` 创建 `.env`：
+按目标环境复制模板（studio 按 `APP_ENV` 加载对应文件，**默认 dev → `.env.dev`**；不存在无后缀的 `.env`）：
 
 ```bash
-cp studio/.env.example studio/.env
+cp studio/.env.example studio/.env.dev   # 开发（默认，APP_ENV=dev）
+cp studio/.env.example studio/.env.sit   # SIT（APP_ENV=sit）
+cp studio/.env.example studio/.env.prod  # 生产（APP_ENV=prod）
 ```
 
-各模块按需配置对应环境变量。
+各模块按需配置对应环境变量。`scripts/mcp-mysql.sh` 读取的也是同一套 `studio/.env.<env>` 文件。
 
 ## 代码规范
 
@@ -67,19 +69,20 @@ revert: 回退
 
 ### 格式化
 
-| 文件类型                                        | 工具              | 命令                                |
-| ----------------------------------------------- | ----------------- | ----------------------------------- |
-| Markdown (root/.opencode/skills) / JSON / JSONC | prettier          | `pnpm run format`                   |
-| Python                                          | ruff              | `cd studio && uv run ruff format .` |
-| TypeScript / TSX                                | eslint (web 内置) | `cd web && pnpm lint`               |
+| 文件类型                                               | 工具              | 命令                                |
+| ------------------------------------------------------ | ----------------- | ----------------------------------- |
+| Markdown (root/.opencode/skills/.github) / JSON / YAML | prettier          | `pnpm run format`                   |
+| Python                                                 | ruff              | `cd studio && uv run ruff format .` |
+| TypeScript / TSX                                       | eslint (web 内置) | `cd web && pnpm lint`               |
 
 ### 提交流程
 
 husky pre-commit 自动执行 lint-staged：
 
 - `.md` → prettier + markdownlint
-- `.json/.yaml` → prettier
-- `.py` → ruff check + format
+- `.json/.jsonc/.yaml/.yml` → prettier
+- `.ts/.tsx/.js/.jsx/.mjs/.cjs/.css` → prettier
+- `.py` → ruff check + format（依赖 `studio/.venv`，由 `./scripts/install.sh` 创建）
 
 husky commit-msg 自动执行 commitlint 校验提交信息格式。
 
@@ -92,8 +95,10 @@ husky commit-msg 自动执行 commitlint 校验提交信息格式。
 
 ## 测试
 
+后端测试**前置条件**：本机 MySQL 已启动，且 `studio/.env.dev` 已按上文配置（conftest 每个用例前会 TRUNCATE `sd_*` 表，无库则全部报连接错误）；可用 `studio/sql/schema.sql` 初始化表结构。
+
 ```bash
-# 后端测试
+# 后端测试（需 MySQL，见上方前置条件）
 cd studio && APP_ENV=dev uv run pytest -v
 
 # 全量检查 (markdownlint + prettier check + ruff check + eslint)
