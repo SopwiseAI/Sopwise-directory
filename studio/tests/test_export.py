@@ -127,6 +127,59 @@ async def test_export_data_format(async_client, tmp_path):
     assert "publishedAt" in prod
 
 
+async def test_export_includes_category_description(async_client, tmp_path):
+    """分类 description 必须随导出下发 —— 它是分类页 meta description 的唯一数据源,
+    曾经被导出器整字段丢弃, 前端只能退回千篇一律的模板文案."""
+    cat = await create_category(
+        async_client,
+        slug="chat",
+        name="对话",
+        icon="MessageSquare",
+        description="  与 AI 对话的通用助手  ",
+    )
+    await create_product(
+        async_client,
+        slug="chatgpt",
+        name="ChatGPT",
+        category_ids=[cat["id"]],
+        status=2,
+        links=[{"url": "https://chat.openai.com", "is_primary": True}],
+    )
+
+    output = tmp_path / "data-dev.json"
+    with patch("app.exporters.json_exporter.get_settings") as mock:
+        mock.return_value.export_full_path = output
+        mock.return_value.app_env = "dev"
+        async with AsyncSessionLocal() as session:
+            await export_to_json(session)
+
+    data = json.loads(output.read_text(encoding="utf-8"))
+    assert data["categories"][0]["description"] == "与 AI 对话的通用助手"
+
+
+async def test_export_omits_blank_category_description(async_client, tmp_path):
+    """空/纯空白 description 不下发, 避免前端拿到空串后渲染出空 meta description。"""
+    cat = await create_category(async_client, slug="chat", name="对话", description="   ")
+    await create_product(
+        async_client,
+        slug="chatgpt",
+        name="ChatGPT",
+        category_ids=[cat["id"]],
+        status=2,
+        links=[{"url": "https://chat.openai.com", "is_primary": True}],
+    )
+
+    output = tmp_path / "data-dev.json"
+    with patch("app.exporters.json_exporter.get_settings") as mock:
+        mock.return_value.export_full_path = output
+        mock.return_value.app_env = "dev"
+        async with AsyncSessionLocal() as session:
+            await export_to_json(session)
+
+    data = json.loads(output.read_text(encoding="utf-8"))
+    assert "description" not in data["categories"][0]
+
+
 async def test_export_skips_product_without_link(async_client, tmp_path):
     """没有链接的产品不导出（前端 url 必填，空 url 会导致构建失败）。"""
     await create_category(async_client, slug="cat", name="分类")

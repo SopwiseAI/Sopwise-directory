@@ -110,7 +110,12 @@ async def _fetch_categories(session: AsyncSession) -> list[dict]:
         if _blank(row.slug) or _blank(row.name):
             logger.warning("跳过分类 id=%s: slug/name 为空", row.id)
             continue
-        categories.append({"id": row.slug, "name": row.name, "icon": row.icon or DEFAULT_CATEGORY_ICON})
+        item = {"id": row.slug, "name": row.name, "icon": row.icon or DEFAULT_CATEGORY_ICON}
+        # description 是分类页 meta description 与正文的数据源. 空值不下发 (与产品可选字段
+        # publishedAt/createdAt 同策略), 前端据此回落到兜底文案而不是渲染空描述.
+        if not _blank(row.description):
+            item["description"] = row.description.strip()
+        categories.append(item)
     return categories
 
 
