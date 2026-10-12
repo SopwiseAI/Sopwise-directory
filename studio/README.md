@@ -4,7 +4,7 @@ XiGee 数据管理后端，基于 FastAPI + SQLAlchemy 2.0 (async) + MySQL。
 
 ## 环境要求
 
-- Python >= 3.11
+- Python >= 3.13
 - uv (包管理器)
 - MySQL 5.7+
 
