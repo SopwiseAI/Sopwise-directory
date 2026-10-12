@@ -2,11 +2,10 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from app.models import PRICINGS, RelationType
+from app.models import PRICINGS
 
 _SLUG_PATTERN = r"^[a-z0-9]+(?:-[a-z0-9]+)*$"
 _PRICING_PATTERN = "^(" + "|".join(PRICINGS) + ")$"
-_RELATION_TYPE_PATTERN = "^(?:" + "|".join(t.value for t in RelationType) + ")$"
 
 
 class CategoryBase(BaseModel):
@@ -133,19 +132,6 @@ class TagCountResponse(BaseModel):
     product_count: int
 
 
-class ProductRelationResponse(BaseModel):
-    id: int
-    product_id: int
-    related_id: int
-    relation_type: str
-    sort_order: int
-    created_at: datetime
-    related_slug: str | None = None
-    related_name: str | None = None
-
-    model_config = {"from_attributes": True}
-
-
 class ProductResponse(ProductBase):
     id: int
     category_ids: list[int] = Field(default_factory=list, exclude=True)
@@ -155,7 +141,6 @@ class ProductResponse(ProductBase):
     categories: list[CategoryResponse] = Field(default_factory=list)
     links: list[ProductLinkResponse] = Field(default_factory=list)
     tags: list[TagResponse] = Field(default_factory=list)
-    relateds: list[ProductRelationResponse] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
 
@@ -167,14 +152,3 @@ class ProductTagUpdate(BaseModel):
 class ProductTagsResponse(BaseModel):
     product_id: int
     tag_ids: list[int]
-
-
-class ProductRelationCreate(BaseModel):
-    related_id: int
-    relation_type: str = Field(RelationType.SIMILAR.value, pattern=_RELATION_TYPE_PATTERN)
-    sort_order: int = Field(0, ge=0)
-
-
-class ProductRelationUpdate(BaseModel):
-    relation_type: str | None = Field(None, pattern=_RELATION_TYPE_PATTERN)
-    sort_order: int | None = Field(None, ge=0)

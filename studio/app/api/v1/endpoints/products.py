@@ -13,7 +13,6 @@ from app.models import (
     Product,
     ProductCategory,
     ProductLink,
-    ProductRelation,
     ProductStatus,
     ProductTag,
     Tag,
@@ -65,7 +64,6 @@ async def list_products(
         selectinload(Product.links),
         selectinload(Product.tags),
         selectinload(Product.categories),
-        selectinload(Product.relateds).selectinload(ProductRelation.related_product),
     )
     stmt = stmt.order_by(Product.sort_order.desc(), Product.published_at.desc(), Product.id)
     stmt = stmt.offset((page - 1) * page_size).limit(page_size)
@@ -85,7 +83,6 @@ async def get_product(product_id: int, db: AsyncSession = Depends(get_db)) -> Pr
             selectinload(Product.links),
             selectinload(Product.tags),
             selectinload(Product.categories),
-            selectinload(Product.relateds).selectinload(ProductRelation.related_product),
         )
         .where(Product.id == product_id)
     )
@@ -179,7 +176,6 @@ async def create_product(data: ProductCreate, db: AsyncSession = Depends(get_db)
             selectinload(Product.links),
             selectinload(Product.tags),
             selectinload(Product.categories),
-            selectinload(Product.relateds).selectinload(ProductRelation.related_product),
         )
         .where(Product.id == product.id)
     )
@@ -266,7 +262,6 @@ async def update_product(product_id: int, data: ProductUpdate, db: AsyncSession 
             selectinload(Product.links),
             selectinload(Product.tags),
             selectinload(Product.categories),
-            selectinload(Product.relateds).selectinload(ProductRelation.related_product),
         )
         .where(Product.id == product.id)
     )
