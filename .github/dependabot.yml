@@ -20,8 +20,20 @@ updates:
     labels:
       - "dependencies"
 
-  - package-ecosystem: "pip"
+  # studio 用 uv ecosystem：pip 只改 pyproject.toml 不碰 uv.lock，会造成本地
+  # uv run 静默改写 lock、版本升不落地（uv 官方文档推荐 uv ecosystem）
+  - package-ecosystem: "uv"
     directory: "/studio"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
       interval: "weekly"
     commit-message:

@@ -47,6 +47,7 @@ fix/<name>       缺陷修复
 refactor/<name>  重构
 chore/<name>     工程化/工具链变更
 docs/<name>      文档
+data/<name>      数据同步（唯一允许提交 web/data/data.json 的功能分支）
 ```
 
 ### 提交规范 (Conventional Commits)
