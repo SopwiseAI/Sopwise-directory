@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest"
-import { compareDateDesc, compareRecommended, getProductDate, latestProductDate, productHistoryAttrs } from "./product"
+import {
+  compareDateDesc,
+  compareRecommended,
+  getProductDate,
+  getRelatedProducts,
+  latestProductDate,
+  productHistoryAttrs
+} from "./product"
 import type { Product } from "./types"
 
 const mockProduct: Product = {
@@ -137,5 +144,52 @@ describe("latestProductDate", () => {
 
   it("空数组返回 null", () => {
     expect(latestProductDate([])).toBeNull()
+  })
+})
+
+describe("getRelatedProducts", () => {
+  const mk = (id: string, categories: string[], tags?: string[], featured?: boolean): Product => ({
+    ...mockProduct,
+    id,
+    name: id,
+    categories,
+    tags,
+    featured
+  })
+
+  const target = mk("target", ["chat"], ["对话"])
+  const pool: Product[] = [
+    target,
+    mk("same-cat", ["chat"], []),
+    mk("same-tag", ["other"], ["对话"]),
+    mk("both", ["chat"], ["对话"]),
+    mk("unrelated", ["other"], ["无关"])
+  ]
+
+  it("排除自身", () => {
+    expect(getRelatedProducts(target, pool).map((p) => p.id)).not.toContain("target")
+  })
+
+  it("无共同分类/标签的产品不入选（宁缺毋滥）", () => {
+    expect(getRelatedProducts(target, pool).map((p) => p.id)).not.toContain("unrelated")
+  })
+
+  it("同分类且同标签排最前，同分类次之，仅同标签最后", () => {
+    expect(getRelatedProducts(target, pool).map((p) => p.id)).toEqual(["both", "same-cat", "same-tag"])
+  })
+
+  it("分数相同时精选靠前", () => {
+    const list = [mk("plain", ["chat"], []), mk("starred", ["chat"], [], true)]
+    expect(getRelatedProducts(target, list).map((p) => p.id)).toEqual(["starred", "plain"])
+  })
+
+  it("遵守 limit", () => {
+    expect(getRelatedProducts(target, pool, 2)).toHaveLength(2)
+  })
+
+  it("结果确定性（同输入同输出，避免 SSG 与客户端不一致）", () => {
+    const a = getRelatedProducts(target, pool).map((p) => p.id)
+    const b = getRelatedProducts(target, [...pool].reverse()).map((p) => p.id)
+    expect(a).toEqual(b)
   })
 })

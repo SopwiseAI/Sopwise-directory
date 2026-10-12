@@ -53,6 +53,19 @@ export function SubNav({ className, categories }: SubNavProps) {
           >
             全部
           </Link>
+          {/* 分类索引页：移动端没有面包屑（顶栏 md 以上才出现），这里是它唯一的站内入口 */}
+          <Link
+            href="/category"
+            aria-current={pathname === "/category" ? "page" : undefined}
+            className={cn(
+              "shrink-0 rounded-md px-3 py-1.5 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              pathname === "/category"
+                ? "bg-brand/10 font-medium text-brand"
+                : "text-muted-foreground hover:bg-brand/5 hover:text-brand"
+            )}
+          >
+            分类
+          </Link>
           {categories.map((category) => {
             const isActive = pathname === `/category/${category.id}`
             return (

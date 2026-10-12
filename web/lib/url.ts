@@ -12,6 +12,19 @@ export function searchPageHref(query: string): string {
   return q ? `/search?q=${encodeURIComponent(q)}` : "/search"
 }
 
+/** 分类页 href。 */
+export function categoryHref(id: string): string {
+  return `/category/${id}`
+}
+
+/**
+ * 产品详情页 href。`id` 即导出数据里的 `product.id`，上游就是 slug（`sd_product.slug`），
+ * 所以这里不需要额外做 slug 转换。
+ */
+export function toolHref(id: string): string {
+  return `/tool/${id}`
+}
+
 /**
  * 把若干查询参数**原地写回**当前地址栏：不触发导航、不产生网络请求。
  *

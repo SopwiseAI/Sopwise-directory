@@ -3,12 +3,17 @@ import type { Product } from "@/lib/types"
 import { productHistoryAttrs } from "@/lib/product"
 import { Badge } from "@/components/ui/badge"
 import { PricingBadge } from "@/components/product/pricing-badge"
+import { StretchedProductLink } from "@/components/product/stretched-link"
 import { categoryIconNode } from "@/lib/category-icon-node"
 import { getDomain } from "@/lib/url"
 import { cn } from "@/lib/utils"
 
 const MAX_TAGS = 2
 
+/**
+ * 列表行：与 `ProductCard` 同一套点击模型 —— 外壳是容器，标题的 stretched link 铺满整行，
+ * 右侧箭头是独立的官网出站链接。
+ */
 export function ProductRow({
   product,
   last = false,
@@ -26,19 +31,18 @@ export function ProductRow({
   const extraTags = tags.length - shownTags.length
 
   return (
-    <a
-      href={product.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      {...productHistoryAttrs(product)}
+    <div
       className={cn(
-        "group flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-secondary/50 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+        "group relative flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-secondary/50",
         !last && "border-b border-border"
       )}
+      data-product-row={product.id}
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="shrink-0 truncate text-lg font-semibold tracking-tight">{product.name}</span>
+          <span className="min-w-0 shrink text-lg font-semibold tracking-tight">
+            <StretchedProductLink id={product.id} name={product.name} className="focus-visible:after:ring-inset" />
+          </span>
           {categoryLabel && (
             <span
               className="hidden shrink-0 items-center gap-1 font-data text-muted-foreground sm:inline-flex"
@@ -71,8 +75,21 @@ export function ProductRow({
           </div>
         )}
         {product.pricing && <PricingBadge pricing={product.pricing} />}
-        <ArrowUpRight className="size-3.5 shrink-0 text-muted-foreground/60 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-foreground" />
+        <a
+          href={product.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          {...productHistoryAttrs(product)}
+          aria-label={`打开 ${product.name} 官网（新标签页）`}
+          title={`打开 ${domain}`}
+          className="relative z-10 shrink-0 rounded text-muted-foreground/60 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <ArrowUpRight
+            className="size-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+            aria-hidden
+          />
+        </a>
       </div>
-    </a>
+    </div>
   )
 }

@@ -11,6 +11,7 @@ import Header from "@/components/layout/header"
 import { SubNav } from "@/components/layout/sub-nav"
 import { Sidebar } from "@/components/layout/sidebar"
 import { MainHeader } from "@/components/layout/main-header"
+import { JsonLd } from "@/components/seo/json-ld"
 import { HistoryTracker } from "@/components/runtime/history-tracker"
 import { WebVitals } from "@/components/runtime/web-vitals"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -40,9 +41,6 @@ const jsonLd = {
     "query-input": "required name=search_term_string"
   }
 }
-
-/** JSON-LD 注入前转义 `<`，避免内容中的 </script> 提前闭合脚本标签。 */
-const jsonLdString = JSON.stringify(jsonLd).replace(/</g, "\\u003c")
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -108,7 +106,7 @@ export default function RootLayout({
         <meta name="theme-color" content={BRAND_PAGE.light} />
         {/* 必须最先执行：同步内联脚本，早于首绘应用主题 / 侧栏 / 产品偏好的首帧状态 */}
         <script dangerouslySetInnerHTML={{ __html: prefsScript }} />
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString }} />
+        <JsonLd data={jsonLd} />
       </head>
       <body className="min-h-full flex flex-col pb-[env(safe-area-inset-bottom)] md:h-[100dvh] md:overflow-hidden">
         <HistoryTracker />

@@ -104,7 +104,26 @@ data/         # 产品数据 (data.json)
 - 二级栏里的切换器沿用全站既有语言（选中态 `bg-brand/10 text-brand` 胶囊）：短切换器与
   产品筛选、信息导航、移动端分类条共用同一套样式；长列表导航（>8 项横向滚动）不要改下边线
 - 移动端信息页不显示分类条（`SubNav` 内按 `isInfoRoute()` 提前返回），避免两条横栏叠在顶栏下
-- 产品卡片点击直接跳转外部网站，无详情页
+- **产品卡片/列表行是容器，不是 `<a>`**：标题的 stretched link（`components/product/stretched-link.tsx`）
+  指向站内 `/tool/[slug]` 详情页并铺满整卡，右上角箭头才是官网出站链接（`relative z-10` 抬到热区之上）。
+  两个目标不能互相嵌套（`<a>` 套 `<a>` 非法）。**`truncate` 必须放在链接内层的 `<span>` 上** ——
+  `overflow: hidden` 会把 `::after` 一起裁掉，热区就只剩标题那一小条（有测试守着）
+- 面包屑只有一个来源：`lib/breadcrumbs.ts` 的 `resolveCrumbs()`。**可见面包屑（`MainHeader`）与
+  页面里的 `BreadcrumbList` 必须调同一个函数** —— Google 要求结构化数据描述用户可见的内容，
+  两处分别计算迟早会漂移。顶栏的产品名直接复用根布局已下发的 `SuggestionDoc`，不再多传一份列表。
+  移动端顶栏 `md` 以上才出现，所以 `/category` 这类枢纽页还要在 `SubNav` 里留入口
+- 结构化数据统一走 `components/seo/json-ld.tsx` 的 `<JsonLd>` + `lib/seo.ts` 的构造函数
+  （`breadcrumbLd` / `itemListLd` / `collectionPageLd` / `softwareApplicationLd`），
+  不要在各页手写 `dangerouslySetInnerHTML` —— 那样每页都得自己记得转义 `<`
+- `ItemList` 的条目一律指向**站内** `/tool/[slug]`，不要用 `product.url`（那等于告诉 Google
+  列表条目在别的域名上）。`softwareApplicationLd` 只为 `free` / `opensource` 声明 `offers.price = 0`：
+  本站只有粗粒度价格档位，`freemium` / `paid` 编一个金额就是给 Google 喂假数据；
+  `aggregateRating` 同理不写（没有评分数据）
+- 分类页 meta description 取上游 `sd_category.description`（studio 导出），缺失时才回落到
+  `buildCategoryDescription()`；分类描述**正文只在真填了 description 时渲染** ——
+  二十个分类共用一句兜底模板摆到页面上就是模板噪音
+- 拼接模板句（把分类名插进中文句子）一律过 `lib/seo.ts` 的 `cjkJoin()`：`3D 工具` 直接拼会得到
+  `浏览3D 工具类别`，中英挤在一起在 SERP 摘要里很显眼
 - **搜索全程在客户端完成，换词 / 排序都不许走 `router.push`**：`lib/search.ts` 建 Fuse 索引
   （`createSearchIndex` 常规 + `createFallbackIndex` 兜底），查询词 / `sort` 一律通过
   `lib/url.ts` 的 `writeSearchParams` 写回地址栏 —— Next 16 给 `history.replaceState` 打过补丁，
