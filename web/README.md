@@ -1,4 +1,4 @@
-# Sopwise Directory
+# XiGee
 
 精选 AI 工具目录 — 精选值得用的 AI 产品，每一款都经过人工筛选，点击直达官方网站。
 

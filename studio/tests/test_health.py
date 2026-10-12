@@ -11,7 +11,7 @@ async def test_health_returns_ok(async_client):
     data = resp.json()
     assert "status" in data
     assert "database" in data
-    assert data["brand"] == "Sopwise"
+    assert data["brand"] == "XiGee"
     assert "version" in data
 
 
