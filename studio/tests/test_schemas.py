@@ -3,12 +3,10 @@
 import pytest
 from pydantic import ValidationError
 
-from app.models import RelationType
 from app.schemas.models import (
     CategoryCreate,
     CategoryUpdate,
     ProductCreate,
-    ProductRelationCreate,
     ProductUpdate,
     TagCreate,
     TagUpdate,
@@ -42,7 +40,3 @@ def test_pricing_rejects_unknown_values(pricing):
         ProductCreate(slug="p", name="P", pricing=pricing)
     with pytest.raises(ValidationError):
         ProductUpdate(pricing=pricing)
-
-
-def test_relation_type_default_comes_from_enum():
-    assert ProductRelationCreate(related_id=1).relation_type == RelationType.SIMILAR.value

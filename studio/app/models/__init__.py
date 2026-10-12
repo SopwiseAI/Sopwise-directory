@@ -92,10 +92,6 @@ class Product(Base):
     categories: Mapped[list[Category]] = relationship(secondary="sd_product_category", back_populates="products")
     links: Mapped[list["ProductLink"]] = relationship(back_populates="product", cascade="all, delete-orphan")
     tags: Mapped[list["Tag"]] = relationship(secondary="sd_product_tag", back_populates="products")
-    relateds: Mapped[list["ProductRelation"]] = relationship(
-        foreign_keys="ProductRelation.product_id",
-        cascade="all, delete-orphan",
-    )
 
 
 class ProductLink(Base):
@@ -151,43 +147,6 @@ class ProductTag(Base):
     )
     tag_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("sd_tag.id", ondelete="CASCADE"), primary_key=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
-
-
-class RelationType(StrEnum):
-    SIMILAR = "similar"
-    ALTERNATIVE = "alternative"
-    UPGRADE = "upgrade"
-    COMPLEMENTARY = "complementary"
-
-
-class ProductRelation(Base):
-    __tablename__ = "sd_product_relation"
-    __table_args__ = (
-        Index("idx_product", "product_id"),
-        Index("idx_related", "related_id"),
-        Index("idx_type", "relation_type"),
-        UniqueConstraint("product_id", "related_id", "relation_type", name="uk_relation"),
-    )
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    product_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("sd_product.id", ondelete="CASCADE"), nullable=False)
-    related_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("sd_product.id", ondelete="CASCADE"), nullable=False)
-    relation_type: Mapped[str] = mapped_column(String(16), nullable=False)
-    sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
-
-    related_product: Mapped["Product"] = relationship(
-        foreign_keys="ProductRelation.related_id",
-        lazy="selectin",
-    )
-
-    @property
-    def related_slug(self) -> str | None:
-        return self.related_product.slug if self.related_product else None
-
-    @property
-    def related_name(self) -> str | None:
-        return self.related_product.name if self.related_product else None
 
 
 class ProductCategory(Base):

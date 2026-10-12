@@ -199,29 +199,6 @@ async def test_export_prefers_primary_active_link(async_client, tmp_path):
     assert data["products"][0]["url"] == "https://primary.example.com"
 
 
-async def test_export_no_relateds_field(async_client, tmp_path):
-    """导出数据不含 relateds 字段。"""
-    await create_category(async_client, slug="cat", name="分类")
-    await create_product(
-        async_client,
-        slug="p1",
-        name="P1",
-        status=2,
-        links=[{"url": "https://p1.example.com"}],
-    )
-
-    output = tmp_path / "data-dev.json"
-    with patch("app.exporters.json_exporter.get_settings") as mock:
-        settings = mock.return_value
-        settings.export_full_path = output
-        settings.app_env = "dev"
-        await async_client.post("/api/v1/export")
-
-    with open(output, encoding="utf-8") as f:
-        data = json.load(f)
-    assert "relateds" not in data["products"][0]
-
-
 async def test_export_excludes_disabled_category(async_client, tmp_path):
     """产品挂在禁用分类下时, 导出的 categories 不应包含该禁用分类。"""
     active = await create_category(async_client, slug="active-cat", name="启用", status=1)
