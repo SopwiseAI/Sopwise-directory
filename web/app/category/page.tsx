@@ -5,7 +5,6 @@ import { formatCount } from "@/lib/format"
 import { resolveCrumbs } from "@/lib/breadcrumbs"
 import { absoluteUrl, breadcrumbLd, collectionPageLd } from "@/lib/seo"
 import { categoryHref } from "@/lib/url"
-import { pageShell } from "@/lib/layout"
 import { categoryIconNode } from "@/lib/category-icon-node"
 import { JsonLd } from "@/components/seo/json-ld"
 
@@ -37,7 +36,8 @@ export default function CategoryIndexPage() {
   }))
 
   return (
-    <div className={pageShell("browse", "flex flex-col gap-5")}>
+    // 浏览型页面不自己调 pageShell：外壳 main 已经是 browse 宽度，再套一层是冗余的
+    <div className="flex flex-col gap-5">
       <JsonLd data={breadcrumbLd(crumbs, url)} />
       <JsonLd data={collectionPageLd({ name: TITLE, description: DESCRIPTION, url, items })} />
 
