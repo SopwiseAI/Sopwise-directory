@@ -26,10 +26,8 @@
     "**/node_modules/**",
     "web/node_modules/**",
     "web/.next/**",
-    "web/docs/**",
     "studio/.venv/**",
     "studio/.pytest_cache/**",
-    "studio/.ruff_cache/**",
-    "scripts/run/**"
+    "studio/.ruff_cache/**"
   ]
 }
