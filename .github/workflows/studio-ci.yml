@@ -1,0 +1,120 @@
+name: Studio CI
+
+# 与 web-ci 一样刻意不加 paths 过滤: main 的分支保护要求检查通过才能合并,
+# 只在 studio/** 变更时运行会让其他模块的 PR 永远等不到这个检查。
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ⚠️ job id 与 name 都不是 "ci": 那是 web-ci 里 required check 的名字, 重名会让
+  # 两个工作流产生同名检查, 规则集就可能被"另一个 ci 通过了"满足。
+  # 上线后需要在 main 的规则集里把 "studio (ruff + pytest)" 也设为 required。
+  studio:
+    name: studio (ruff + pytest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: studio
+
+    # 用 MySQL 8.0 而不是 dev 库的 5.7: prod 就是 8.0, 而 8.0 的默认认证插件是
+    # caching_sha2_password —— 这条路径在 5.7 上永远跑不到(见 tests/test_dependencies.py
+    # 与 pyproject.toml 里 cryptography 的注释)。
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: xigee_test
+          MYSQL_USER: xigee
+          MYSQL_PASSWORD: xigee
+        ports:
+          # 刻意映射到 3307 而不是 3306: runner 镜像预装了 MySQL 8.0.46(当前
+          # "disabled by default", 但历史上曾默认启动并顶掉声明在 3306 的服务,
+          # 见 actions/runner-images#2889)。换一个宿主端口, 两种情况都安全。
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping --host=127.0.0.1 --user=root --password=root --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      APP_ENV: dev
+      APP_DEBUG: "true"
+      LOG_LEVEL: INFO
+      DB_HOST: 127.0.0.1
+      DB_PORT: "3307"
+      # 库名含 test => tests/conftest.py 的破坏性测试门禁自动放行, 不需要额外开关
+      DB_NAME: xigee_test
+      DB_USER: xigee
+      DB_PASSWORD: xigee
+      # 以下两个只是让 Settings 校验通过的一次性值, 不是密钥
+      API_KEY: ci-not-a-secret
+      CORS_ORIGINS: http://localhost:3000
+
+    steps:
+      # 所有 action 按 commit SHA 固定(与 web-ci / workflow-lint 同一约定),
+      # 版本写在行尾注释里, 由 Dependabot 的 github-actions 生态持续更新。
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          # 固定 uv 版本而不是跟随 latest: 本作业是 required check,
+          # 不能因为上游工具换版本就无故变红(与 workflow-lint.yml 装 shellcheck 同一理由)。
+          # 升级时同步更新本文件与 README 的「环境要求」。
+          version: "0.11.30"
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --no-progress
+
+      - name: Lint
+        run: uv run ruff check app/ tests/
+
+      - name: Format check
+        run: uv run ruff format --check app/ tests/
+
+      # 先单独打一次库。schema.sql 没进库 / 认证方式不对 / 端口映射错了, 都在这里
+      # 报出来, 而不是混在 400 个用例的第一条 fixture 里。
+      # 用服务容器自带的客户端灌 DDL: services 是在 checkout 之前启动的, 所以
+      # 不能靠挂载 studio/sql/schema.sql 到 docker-entrypoint-initdb.d 来做这件事。
+      - name: Apply schema
+        run: |
+          docker exec -i "${{ job.services.mysql.id }}" \
+            mysql --user=root --password=root --default-character-set=utf8mb4 xigee_test < sql/schema.sql
+
+      - name: Smoke test DB connection
+        run: |
+          uv run python - <<'PY'
+          import asyncio
+
+          from sqlalchemy import text
+
+          from app.core.database import engine
+
+
+          async def main() -> None:
+              async with engine.connect() as conn:
+                  version = (await conn.execute(text("SELECT VERSION()"))).scalar()
+              await engine.dispose()
+              print("connected to MySQL", version)
+
+
+          asyncio.run(main())
+          PY
+
+      - name: Test
+        run: uv run pytest -q --cov=app --cov-report=term-missing
