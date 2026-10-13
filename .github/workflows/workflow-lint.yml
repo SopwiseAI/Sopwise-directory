@@ -1,9 +1,9 @@
 name: Workflow Lint
 
-# 守住 workflow 自身的安全基线：
+# 守住 workflow 自身的安全基线（本作业在 ruleset 里是 required check）：
 # - actionlint：workflow 语法 / action 输入 / run 里的 shell 片段（装了 shellcheck 才会检查 shell）
 # - zizmor：workflow 安全审计（未固定引用、模板注入、凭证持久化等）
-# 这两个工具让"按 SHA 固定"不靠人自觉：有人改回 tag、或 SHA 与注释不一致，这里会报出来。
+# 两个工具与 shellcheck 都固定到精确版本并校验 sha256：required check 不能因上游工具漂移而变红。
 on:
   push:
     branches: [main]
@@ -19,6 +19,7 @@ concurrency:
 
 jobs:
   actionlint:
+    # ⚠️ 下面两个 job 的 name 同时是 main 分支保护（ruleset）里的 required check 名，改名会让 PR 永远等不到检查
     name: actionlint（语法与 shell）
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -27,13 +28,22 @@ jobs:
         with:
           persist-credentials: false
 
-      # 装 shellcheck 后 actionlint 会连带检查 run: 里的 shell 片段
+      # 装 shellcheck 后 actionlint 会连带检查 run: 里的 shell 片段。
+      # 不用 apt：apt 的 shellcheck 版本随 runner 镜像浮动，而本作业是 required check，
+      # 不能因为上游工具换版本就无故变红（本地已用 0.11.0 验证过全部 run 片段通过）。
       - name: Install shellcheck
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq shellcheck
+          set -euo pipefail
+          VERSION="0.11.0"
+          ARCHIVE="shellcheck-v${VERSION}.linux.x86_64.tar.gz"
+          curl -sSfL -o "$ARCHIVE" \
+            "https://github.com/koalaman/shellcheck/releases/download/v${VERSION}/${ARCHIVE}"
+          echo "b7af85e41cc99489dcc21d66c6d5f3685138f06d34651e6d34b42ec6d54fe6f6  ${ARCHIVE}" | sha256sum -c -
+          tar xzf "$ARCHIVE"
+          echo "$PWD/shellcheck-v${VERSION}" >> "$GITHUB_PATH"
 
-      # 不用第三方 action：直接下载官方发布包并校验 sha256，避免"用可变引用去检查可变引用"
+      # 不用第三方 action：直接下载官方发布包并校验 sha256，
+      # 避免"用可变引用去检查可变引用"
       - name: Run actionlint
         run: |
           set -euo pipefail
@@ -68,3 +78,6 @@ jobs:
           annotations: true
           # low 及以上都报（template-injection 属 low，但 confidence 高，值得拦住）
           min-severity: low
+          # 关掉在线审计：它要访问 GitHub API，而本作业是 required check，
+          # 不能让网络/配额问题卡住 PR；离线审计已覆盖固定引用、模板注入、权限等结构性风险
+          online-audits: false

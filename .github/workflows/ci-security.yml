@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   gitleaks:
+    # ⚠️ 这个 name 同时是 main 分支保护（ruleset）里的 required check 名，改名会让 PR 永远等不到它
     name: gitleaks（密钥扫描）
     runs-on: ubuntu-latest
     timeout-minutes: 15
