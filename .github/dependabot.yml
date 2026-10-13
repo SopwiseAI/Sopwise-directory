@@ -8,7 +8,7 @@ version: 2
 #   恶意/缺陷版本通常在一周内被发现并撤下），major 再拉长到 14/21 天。
 #   安全更新不受 cooldown 影响，仍会立刻开 PR。
 # 不配 reviewers：官方文档已标注该属性「closing down and will be removed」，
-#   审阅人请改用 .github/CODEOWNERS。
+#   审阅人改用 CODEOWNERS（本仓库尚未建立，属待补项）。
 # 安全更新刻意不分组：保持单个 PR、走最快路径（cooldown 对安全更新不生效）。
 # commit-message 的 prefix + include: scope 会产出 chore(deps) / chore(deps-dev) / chore(ci)，
 #   与根目录 commitlint.config.cjs 的 scope 白名单一致；分组后的 PR 同样保持这个格式。

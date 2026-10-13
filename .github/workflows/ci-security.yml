@@ -31,9 +31,11 @@ jobs:
       # 用官方 CLI 而非 gitleaks/gitleaks-action：后者对组织仓库要求 GITLEAKS_LICENSE
       # 秘钥（个人账号免费），CLI 无此限制且版本可精确控制。
       # 镜像按 digest 固定（tag 可被上游移动，digest 不可变），注释保留可读版本号。
+      # 用 `git` 扫描模式而非 `detect`：v8.19.0 起 detect/protect 已弃用并从 --help 隐藏，
+      # 官方推荐 git / dir / stdin 三种模式；`git` 等价于原来的 detect（扫本地仓库历史）。
       - name: Run gitleaks
         run: |
           IMAGE="ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f" # v8.30.1
           docker run --rm -v "$PWD:/repo" -w /repo \
             "$IMAGE" \
-            detect --source . --redact --config .gitleaks.toml --verbose
+            git --redact --config .gitleaks.toml --verbose .
