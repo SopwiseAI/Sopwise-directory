@@ -134,6 +134,33 @@ async def anon_client() -> AsyncGenerator[AsyncClient]:
         yield ac
 
 
+# ── 配置构造 ──────────────────────────────────────────────────────────────────
+
+
+def isolated_settings(**overrides: Any) -> Settings:
+    """构造一个与【外界无关】的 Settings: 不读 .env.<env>, 也不吃进程环境变量。
+
+    两条隔离都必需, 少第二条会出真事: `_env_file=None` 只管文件, 而 CI 里
+    DB_PORT=3307 是【进程环境变量】, 照样会被读进来 —— 于是"整串 database_url 相等"
+    这类断言本地过、CI 挂(本仓库首次接入 CI 时就挂在这上面)。init 参数优先级最高,
+    所以把每个字段按声明的默认值显式传一遍才真隔离; 用 model_fields 取默认值是为了
+    将来加字段时不必回来补这份清单。
+
+    db_name / db_user 的声明默认值是空串, 而校验器不允许空, 所以额外兜一组合法值。
+    """
+    declared = {name: field.get_default(call_default_factory=True) for name, field in Settings.model_fields.items()}
+    return Settings(
+        _env_file=None,
+        **{
+            **declared,
+            "db_host": "localhost",
+            "db_name": "testdb",
+            "db_user": "tester",
+            **overrides,
+        },
+    )
+
+
 # ── 工厂函数 ──────────────────────────────────────────────────────────────────
 
 

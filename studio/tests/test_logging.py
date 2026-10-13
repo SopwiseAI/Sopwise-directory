@@ -11,17 +11,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from app.core.config import Settings
 from app.core.logging import configure_logging
+from tests.conftest import isolated_settings
 
 _STUDIO_ROOT = Path(__file__).resolve().parent.parent
-
-
-def _settings(**kwargs) -> Settings:
-    kwargs.setdefault("_env_file", None)
-    for key, value in {"db_host": "localhost", "db_name": "testdb", "db_user": "tester"}.items():
-        kwargs.setdefault(key, value)
-    return Settings(**kwargs)
 
 
 def test_configure_logging_passes_settings_level(monkeypatch):
@@ -30,7 +23,7 @@ def test_configure_logging_passes_settings_level(monkeypatch):
     captured: dict[str, Any] = {}
     monkeypatch.setattr(logging, "basicConfig", lambda **kwargs: captured.update(kwargs))
 
-    configure_logging(_settings(log_level="warning"))
+    configure_logging(isolated_settings(log_level="warning"))
 
     assert captured["level"] == "WARNING"
     assert "%(name)s" in captured["format"]

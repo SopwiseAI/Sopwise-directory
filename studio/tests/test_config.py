@@ -1,23 +1,21 @@
-"""Settings 校验与 database_url 编码测试, 不依赖 .env 文件。"""
+"""Settings 校验与 database_url 编码测试, 不依赖 .env 文件。
 
+构造 Settings 一律走 tests.conftest.isolated_settings —— 它同时挡住 .env 文件与进程
+环境变量两层输入, 理由见那个函数的 docstring。
+"""
+
+from typing import Any
 from urllib.parse import unquote, urlparse
 
 import pytest
 from pydantic import ValidationError
 
-from app.core.config import Settings
-
-# 构造 Settings 时默认补一组合法的 DB_* 值。不补的话每个用例都会先因为
-# db_name/db_user 为空报一个无关的 ValidationError, pytest.raises 照样"通过",
-# 断言却退化成同义反复 —— 测 pool_size 的用例会被 db_name 的报错蒙混过关。
-_DB_DEFAULTS = {"db_host": "localhost", "db_name": "testdb", "db_user": "tester"}
+from tests.conftest import isolated_settings
 
 
-def _settings(**kwargs) -> Settings:
-    kwargs.setdefault("_env_file", None)
-    for key, value in _DB_DEFAULTS.items():
-        kwargs.setdefault(key, value)
-    return Settings(**kwargs)
+def _settings(**kwargs: Any):
+    """本模块的短别名(18 个用例都走它)。"""
+    return isolated_settings(**kwargs)
 
 
 def test_database_url_encodes_special_chars_in_password():

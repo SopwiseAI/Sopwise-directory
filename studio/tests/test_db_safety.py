@@ -9,11 +9,13 @@ clean_db 会 TRUNCATE 整张 xg_* 表, 而流水线默认连的是一个名字�
 一条 app_env="test" 的用例(APP_ENV=test 会被 Settings 直接拒绝), 见下面那条约束用例。
 """
 
+from typing import Any
+
 import pytest
 from pydantic import ValidationError
 
 from app.core.config import Settings
-from tests.conftest import _TRUNCATE_OVERRIDE_ENV, _unsafe_to_truncate
+from tests.conftest import _TRUNCATE_OVERRIDE_ENV, _unsafe_to_truncate, isolated_settings
 
 
 def _settings(
@@ -21,22 +23,15 @@ def _settings(
     app_env: str = "dev",
     db_name: str = "mfbp_kazar_sit",
     db_host: str = "10.182.32.31",
-    db_user: str = "tester",
-    api_key: str = "tester-key",
-    app_debug: bool = False,
+    **extra: Any,
 ) -> Settings:
-    # _env_file=None: 不读 .env.<env>, 只吃这里传的字段(否则本机配置会污染判定)。
-    # api_key / app_debug 也一并给足: 否则 app_env="prod" 会先被 validate_api_key 与
-    # validate_app_debug 拦下, 测不到门禁本身。
-    return Settings(
-        _env_file=None,
-        app_env=app_env,
-        app_debug=app_debug,
-        db_name=db_name,
-        db_host=db_host,
-        db_user=db_user,
-        api_key=api_key,
-    )
+    """判定矩阵的输入。默认那组值就是流水线真实的 dev 配置(名字带 sit 的共享库)。
+
+    构造本身走 conftest 的共享实现(它同时挡住 .env 与进程环境变量); 额外钉 app_debug=False
+    是因为 app_env="prod" 那几条会被 validate_app_debug 先拦下, 那样就测不到门禁本身了。
+    prod 的用例还得自己传一个非默认 api_key(validate_api_key 会拒掉默认值), 所以留了 **extra。
+    """
+    return isolated_settings(app_env=app_env, app_debug=False, db_name=db_name, db_host=db_host, **extra)
 
 
 def test_test_suffixed_db_is_allowed_without_override():
@@ -67,7 +62,9 @@ def test_shared_sit_db_requires_explicit_override():
 
 def test_prod_env_is_never_allowed():
     """生产环境不接受任何豁免, 显式开关也不行。"""
-    assert _unsafe_to_truncate(_settings(app_env="prod"), allow_shared=True) is not None
+    # prod 下 Settings 本身就会拒掉默认 api_key, 所以这里必须给一个非默认值,
+    # 否则用例在构造那一步就挂了, 测不到门禁
+    assert _unsafe_to_truncate(_settings(app_env="prod", api_key="prod-key"), allow_shared=True) is not None
 
 
 def test_prod_marker_in_db_name_is_never_allowed():
