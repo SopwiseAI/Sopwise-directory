@@ -9,3 +9,6 @@ contact_links:
   - name: 贡献指南
     url: https://github.com/sopwise-ai/xigee/blob/main/CONTRIBUTING.md
     about: 开发环境、提交规范与 PR 流程
+  - name: 行为准则
+    url: https://github.com/sopwise-ai/xigee/blob/main/CODE_OF_CONDUCT.md
+    about: 社区行为规范与举报渠道（Contributor Covenant 3.0）
