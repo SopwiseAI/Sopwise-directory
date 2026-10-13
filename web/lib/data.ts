@@ -14,10 +14,13 @@ function assertString(val: unknown, field: string): string {
 function assertCategory(raw: unknown): Category {
   if (!raw || typeof raw !== "object") throw new Error("[data] 无效的分类条目")
   const r = raw as Record<string, unknown>
+  const description = typeof r.description === "string" ? r.description.trim() : ""
   return {
     id: assertString(r.id, "category.id"),
     name: assertString(r.name, "category.name"),
-    icon: assertString(r.icon, "category.icon")
+    icon: assertString(r.icon, "category.icon"),
+    // 空描述不落成 ""：消费方用 `category.description` 的有无判断是否回落兜底文案
+    ...(description ? { description } : {})
   }
 }
 
@@ -93,6 +96,11 @@ export function getCategoryById(id: string): Category | undefined {
 
 export function getAllProducts(): readonly Product[] {
   return siteData.products
+}
+
+/** 按 slug（= 导出数据里的 product.id）取产品，供 `/tool/[slug]` 详情页使用。 */
+export function getProductById(id: string): Product | undefined {
+  return siteData.products.find((p) => p.id === id)
 }
 
 export function getFeaturedProducts(): readonly Product[] {

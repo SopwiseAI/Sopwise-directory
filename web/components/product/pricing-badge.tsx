@@ -1,4 +1,5 @@
 import type { Pricing } from "@/lib/types"
+import { PRICING_LABELS } from "@/lib/product"
 import { cn } from "@/lib/utils"
 
 export interface PricingStyle {
@@ -10,22 +11,22 @@ export interface PricingStyle {
 /** 价格 → 状态徽章（语义色：免费绿 / 免费+付费蓝 / 付费琥珀 / 开源紫） */
 export const pricingStyles: Record<Pricing, PricingStyle> = {
   free: {
-    label: "免费",
+    label: PRICING_LABELS.free,
     className: "bg-price-free/10 text-price-free border-price-free/20",
     dotClass: "bg-price-free"
   },
   freemium: {
-    label: "免费+付费",
+    label: PRICING_LABELS.freemium,
     className: "bg-price-freemium/10 text-price-freemium border-price-freemium/20",
     dotClass: "bg-price-freemium"
   },
   paid: {
-    label: "付费",
+    label: PRICING_LABELS.paid,
     className: "bg-price-paid/10 text-price-paid border-price-paid/20",
     dotClass: "bg-price-paid"
   },
   opensource: {
-    label: "开源",
+    label: PRICING_LABELS.opensource,
     className: "bg-price-opensource/10 text-price-opensource border-price-opensource/20",
     dotClass: "bg-price-opensource"
   }

@@ -1,4 +1,12 @@
-import type { Product } from "./types"
+import type { Pricing, Product } from "./types"
+
+/** 价格档位的中文标签 —— 唯一来源，`PricingBadge` 与 meta description 文案共用。 */
+export const PRICING_LABELS: Record<Pricing, string> = {
+  free: "免费",
+  freemium: "免费+付费",
+  paid: "付费",
+  opensource: "开源"
+}
 
 export function getProductDate(product: Product): string {
   return product.publishedAt ?? product.createdAt ?? ""
@@ -77,4 +85,33 @@ export function productHistoryAttrs(product: HistoryLinkable): Record<string, st
     "data-history-category": product.categories[0] ?? "",
     "data-history-pricing": product.pricing ?? ""
   }
+}
+
+/**
+ * 详情页「相关工具」：同分类优先，标签重合度次之，精选再靠前。
+ *
+ * 确定性排序（分数 → 精选 → 名称），SSG 构建与客户端结果一致，不会 hydration 抖动。
+ * 排除自身；`limit` 之外不返回。
+ */
+export function getRelatedProducts(product: Product, all: readonly Product[], limit = 6): Product[] {
+  const ownTags = new Set(product.tags ?? [])
+  const ownCategories = new Set(product.categories)
+
+  return all
+    .filter((candidate) => candidate.id !== product.id)
+    .map((candidate) => {
+      const sharedCategories = candidate.categories.filter((id) => ownCategories.has(id)).length
+      const sharedTags = (candidate.tags ?? []).filter((tag) => ownTags.has(tag)).length
+      return { candidate, score: sharedCategories * 3 + sharedTags }
+    })
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => {
+      if (a.score !== b.score) return b.score - a.score
+      const fa = a.candidate.featured ? 1 : 0
+      const fb = b.candidate.featured ? 1 : 0
+      if (fa !== fb) return fb - fa
+      return compareName(a.candidate, b.candidate)
+    })
+    .slice(0, limit)
+    .map((entry) => entry.candidate)
 }

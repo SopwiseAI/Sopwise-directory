@@ -4,7 +4,10 @@ import { getAllCategories, getCategoryById, getProductsByCategory } from "@/lib/
 import { latestProductDate } from "@/lib/product"
 import { categoryIconNode } from "@/lib/category-icon-node"
 import { formatCount, formatDate } from "@/lib/format"
-import { getBaseUrl } from "@/lib/utils"
+import { resolveCrumbs } from "@/lib/breadcrumbs"
+import { absoluteUrl, breadcrumbLd, buildCategoryDescription, itemListLd } from "@/lib/seo"
+import { categoryHref, toolHref } from "@/lib/url"
+import { JsonLd } from "@/components/seo/json-ld"
 import { ProductBrowser } from "@/components/product/product-browser"
 
 type Props = {
@@ -28,14 +31,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
   const category = getCategoryById(id)
   if (!category) return { title: "分类未找到", robots: { index: false, follow: true } }
-  const description = `发现和浏览${category.name}类别的 AI 工具，XiGee 为你精选最佳选择`
-  const empty = getProductsByCategory(id).length === 0
+
+  const products = getProductsByCategory(id)
+  // 描述来自 studio 导出的 sd_category.description；上游没填时才落到兜底文案
+  const description = category.description ?? buildCategoryDescription(category, products.length)
+
   return {
     title: `${category.name}`,
     description,
-    alternates: { canonical: `/category/${id}` },
+    alternates: { canonical: categoryHref(id) },
     openGraph: { title: `${category.name} — XiGee`, description },
-    ...(empty ? { robots: { index: false, follow: true } } : {})
+    ...(products.length === 0 ? { robots: { index: false, follow: true } } : {})
   }
 }
 
@@ -44,42 +50,26 @@ export default async function CategoryPage({ params }: Props) {
   const category = getCategoryById(id)
   if (!category) notFound()
 
+  const categories = getAllCategories()
   const products = getProductsByCategory(id)
   const latestDate = latestProductDate(products)
 
-  const baseUrl = getBaseUrl()
-  const breadcrumbLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "全部工具", item: baseUrl },
-      { "@type": "ListItem", position: 2, name: category.name, item: `${baseUrl}/category/${id}` }
-    ]
-  }
-  const itemListLd = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    name: `${category.name} — XiGee`,
-    itemListElement: products.map((p, i) => ({
-      "@type": "ListItem",
-      position: i + 1,
-      name: p.name,
-      url: p.url
-    }))
-  }
-  // JSON-LD 注入前转义 `<`，避免产品/分类名中的 </script> 提前闭合脚本标签
-  const ld = (obj: unknown) => JSON.stringify(obj).replace(/</g, "\\u003c")
+  const pageUrl = absoluteUrl(categoryHref(id))
+  const crumbs = resolveCrumbs(categoryHref(id), { categories })
+  // ItemList 指向站内详情页（此前指向外部官网 —— 等于告诉 Google 列表条目在别的域名上）
+  const listItems = products.map((product) => ({
+    name: product.name,
+    url: absoluteUrl(toolHref(product.id))
+  }))
 
   return (
     <div className="flex flex-col gap-4">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld(breadcrumbLd) }} />
-      {products.length > 0 && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld(itemListLd) }} />
-      )}
+      <JsonLd data={breadcrumbLd(crumbs, pageUrl)} />
+      {listItems.length > 0 && <JsonLd data={itemListLd(`${category.name} — XiGee`, listItems)} />}
 
       <ProductBrowser
         products={products}
-        categories={getAllCategories()}
+        categories={categories}
         defaultView="grid"
         showTabs={false}
         emptyTitle={`「${category.name}」分类暂无工具收录`}
@@ -111,6 +101,17 @@ export default async function CategoryPage({ params }: Props) {
           </div>
         }
       />
+
+      {/*
+        分类描述放在网格之后：二级栏必须紧贴顶栏保持单行形态，正文插到它前面会把「栏」挤开。
+        只有上游真填了 description 才渲染 —— 兜底文案二十个分类一模一样，摆到页面上就是模板噪音。
+      */}
+      {category.description && (
+        <section className="flex flex-col gap-1.5 border-t border-border pt-4">
+          <h2 className="text-sm font-semibold">关于「{category.name}」</h2>
+          <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">{category.description}</p>
+        </section>
+      )}
     </div>
   )
 }

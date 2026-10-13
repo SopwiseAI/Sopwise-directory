@@ -19,6 +19,7 @@ import {
   type SuggestionDoc
 } from "@/lib/search"
 import { searchPageHref, writeSearchQuery } from "@/lib/url"
+import { resolveCrumbs } from "@/lib/breadcrumbs"
 import type { Category } from "@/lib/types"
 
 /** 「边打边搜」的防抖时长：吃掉连打，又短到感觉是即打即搜。 */
@@ -316,26 +317,6 @@ function SearchField({ suggestions }: SearchFieldProps) {
   )
 }
 
-interface Crumb {
-  label: string
-  href?: string
-}
-
-function resolveCrumbs(pathname: string, categories: readonly Category[]): Crumb[] {
-  if (pathname.startsWith("/category/")) {
-    const id = pathname.slice("/category/".length)
-    const name = categories.find((c) => c.id === id)?.name
-    return name ? [{ label: "全部工具", href: "/" }, { label: name }] : [{ label: "全部工具", href: "/" }]
-  }
-  if (pathname === "/search") return [{ label: "搜索" }]
-  if (pathname === "/history") return [{ label: "历史记录" }]
-  if (pathname === "/settings") return [{ label: "设置" }]
-  if (pathname === "/about") return [{ label: "关于" }]
-  if (pathname === "/privacy") return [{ label: "隐私政策" }]
-  if (pathname === "/terms") return [{ label: "服务条款" }]
-  return [{ label: "全部工具" }]
-}
-
 interface MainHeaderProps {
   className?: string
   categories: readonly Category[]
@@ -345,7 +326,9 @@ interface MainHeaderProps {
 /** 主区顶栏：左侧路由面包屑，右侧搜索 + 设置/主题入口。 */
 export function MainHeader({ className, categories, suggestions }: MainHeaderProps) {
   const pathname = usePathname()
-  const crumbs = resolveCrumbs(pathname, categories)
+  // 面包屑与页面里的 BreadcrumbList 共用 lib/breadcrumbs 的同一个函数，两处文案不会漂移。
+  // 产品名直接从已下发的建议数据里取（它有 id/name/categories），不再多传一份产品列表。
+  const crumbs = resolveCrumbs(pathname, { categories, products: suggestions })
 
   return (
     // 顶栏刻意通栏：面包屑贴主区左缘、搜索与右侧入口贴右缘，不跟居中的正文同宽。

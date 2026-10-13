@@ -231,9 +231,19 @@ export function Sidebar({ categories, categoryCounts, totalProducts }: SidebarPr
           ) : (
             <div className="h-2 shrink-0" aria-hidden />
           )}
-          <p data-collapse-hide className={cn("px-3 pb-1.5 font-data text-muted-foreground", collapsed && "sr-only")}>
+          {/* 分组标题即分类索引页入口：用户想「看全部」时，目光正好落在这里 */}
+          <Link
+            href="/category"
+            data-collapse-hide
+            aria-current={pathname === "/category" ? "page" : undefined}
+            tabIndex={collapsed ? -1 : undefined}
+            className={cn(
+              "px-3 pb-1.5 font-data text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+              collapsed && "sr-only"
+            )}
+          >
             分类
-          </p>
+          </Link>
           {categories.map((category) => (
             <SidebarLink
               key={category.id}
