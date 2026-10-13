@@ -9,12 +9,12 @@ XiGee (AI 工具目录站) 的数据管理后端:FastAPI + SQLAlchemy 2.0 (async
 
 ## 环境要求
 
-| 依赖         | 版本       | 说明                                                |
-| ------------ | ---------- | --------------------------------------------------- |
-| Python       | >= 3.13    | `.python-version` 固定 3.13,`uv` 据此挑解释器       |
-| uv           | >= 0.11    | 依赖管理与运行入口 (`make sync` / `uv run`)         |
-| MySQL        | 5.7 或 8.0 | dev 库是 5.7,prod 库是 8.0;DDL 只用两边都支持的写法 |
-| mysql 客户端 | 与库同版本 | 仅 `make db-init` 建表时用到                        |
+| 依赖         | 版本       | 说明                                                          |
+| ------------ | ---------- | ------------------------------------------------------------- |
+| Python       | >= 3.13    | `.python-version` 固定 3.13,`uv` 据此挑解释器                 |
+| uv           | >= 0.11    | 依赖管理与运行入口 (`make sync` / `uv run`);CI 固定 `0.11.30` |
+| MySQL        | 5.7 或 8.0 | dev 库是 5.7,prod 库是 8.0;DDL 只用两边都支持的写法;CI 跑 8.0 |
+| mysql 客户端 | 与库同版本 | 仅 `make db-init` 建表时用到                                  |
 
 ## 数据流
 
@@ -75,12 +75,13 @@ make dev              # 开发; --reload; 默认 http://127.0.0.1:8000
 | `APP_ENV`                             | `dev`                                         | `dev` / `sit` / `prod`;决定加载哪个 `.env.<env>`,也决定导出产物后缀                       |
 | `APP_DEBUG`                           | `true`                                        | prod 下必须为 `false`,否则启动直接失败                                                    |
 | `APP_HOST` / `APP_PORT`               | `127.0.0.1` / `8000`                          | `make dev` / `make sit` 的监听地址;`make prod` 默认监听 `0.0.0.0` (可用 `PROD_HOST` 覆盖) |
+| `LOG_LEVEL`                           | `INFO`                                        | 日志级别:`DEBUG` / `INFO` / `WARNING` / `ERROR` / `CRITICAL`,大小写不敏感                 |
 | `DB_HOST` / `DB_PORT`                 | `localhost` / `3306`                          | MySQL 地址                                                                                |
-| `DB_NAME` / `DB_USER` / `DB_PASSWORD` | 空                                            | 必填;密码里的特殊字符会被 URL 转义,不用手写 `%40`                                         |
+| `DB_NAME` / `DB_USER` / `DB_PASSWORD` | 空                                            | 必填 (`DB_PASSWORD` 可以是空串);为空时**启动即失败**,不等第一次查询                       |
 | `DB_POOL_SIZE` / `DB_MAX_OVERFLOW`    | `5` / `10`                                    | 连接池;测试进程用 `NullPool`,这两个值不生效                                               |
 | `DB_ECHO`                             | `false`                                       | 打印 SQL;只在本地排查问题时打开                                                           |
 | `EXPORT_OUTPUT_DIR`                   | `../web/data`                                 | 导出目录,相对路径按 `studio/` 解析 (与 cwd 无关)                                          |
-| `CORS_ORIGINS`                        | `http://localhost:3000,http://localhost:5173` | 逗号分隔白名单,**不接受 `*`** (启动时校验并拒绝)                                          |
+| `CORS_ORIGINS`                        | `http://localhost:3000,http://localhost:5173` | 逗号分隔白名单,**`*` 与空值都会被启动校验拒绝**                                           |
 | `API_KEY`                             | `dev-secret-key`                              | 写操作的 `X-API-Key`;`sit` / `prod` 不允许留默认值                                        |
 
 两个必须知道的坑:
@@ -149,13 +150,16 @@ curl -X POST http://127.0.0.1:8000/api/v1/export -H "X-API-Key: $API_KEY"
 ## 测试
 
 ```bash
-make test        # APP_ENV=dev uv run pytest -v
-make test-cov    # 加覆盖率; pyproject 里 fail_under = 70
+# 目标库不是专用测试库(库名里没有 test)时必须显式放行, 否则 pytest 以退出码 3 退出
+make test ALLOW_SHARED_DB=1
+make test-cov ALLOW_SHARED_DB=1   # 加覆盖率; pyproject 里 fail_under = 74
 ```
 
 - 测试连**真数据库**:`tests/conftest.py` 每个用例前 `TRUNCATE` 四张 `xg_*` 表。必须指向一个可以随便清空的 dev/sit 库,不要指向有数据的库
+- 默认的 dev 库是共享 SIT 库,所以 `conftest.py` 里有一道破坏性门禁:`app_env=prod` 或库名/主机名命中 `prod|prd|production` **永远拒绝**(不接受任何环境变量豁免);库名含 `test` 直接放行;其余情况要设 `STUDIO_ALLOW_SHARED_DB_TRUNCATE=1`(即 `make test ALLOW_SHARED_DB=1`)。门禁在 `TRUNCATE` **之前**退出,不碰库
 - 跑测试前同样要先建表 (`make db-init`)
 - 测试进程自动用 `NullPool` (见 `app/core/database.py`),避免 pytest-asyncio 每个用例换事件循环时报连接挂到别的 loop
+- CI 跑的是本地 **MySQL 8.0** 服务容器(与 prod 同版本,认证插件也是默认的 `caching_sha2_password`),见 `.github/workflows/studio-ci.yml`。这正是 dev 的 5.7 库覆盖不到的那条路径
 
 ## 常用命令
 
@@ -165,7 +169,7 @@ make test-cov    # 加覆盖率; pyproject 里 fail_under = 70
 | `make db-init`                                   | 执行 `sql/schema.sql` 建表 (幂等)                                  |
 | `make dev` / `sit` / `prod`                      | 按环境启动服务                                                     |
 | `make format` / `lint` / `check`                 | ruff 格式化 / 检查 / 两项都跑                                      |
-| `make test` / `test-cov`                         | 测试 (可带覆盖率)                                                  |
+| `make test` / `test-cov`                         | 测试 (可带覆盖率);共享库要加 `ALLOW_SHARED_DB=1`                   |
 | `make export-dev` / `export-sit` / `export-prod` | 导出 JSON                                                          |
 | `make clean`                                     | 清掉 `.ruff_cache` / `.pytest_cache` / `.coverage` / `__pycache__` |
 
@@ -180,13 +184,15 @@ make test-cov    # 加覆盖率; pyproject 里 fail_under = 70
 
 改了下面这些地方,记得同步对应文件,否则文档会静默过期:
 
-| 改了什么                                   | 要一起改                                         |
-| ------------------------------------------ | ------------------------------------------------ |
-| 路由 (新增 / 改名 / 删除接口)              | 本文件「路由概览」                               |
-| `app/core/config.py` 的 `Settings` 字段    | `.env.example` 与本文件「环境变量」              |
-| 导出产物命名或目录 (`config.export_paths`) | 本文件「导出产物」,`.env.example` 注释           |
-| 表结构或导出投影 (`sql/schema.sql`)        | `schema/*.data.jsonc`,`app/models`,`app/schemas` |
-| Makefile 目标                              | 本文件「快速开始」「常用命令」                   |
+| 改了什么                                   | 要一起改                                          |
+| ------------------------------------------ | ------------------------------------------------- |
+| 路由 (新增 / 改名 / 删除接口)              | 本文件「路由概览」                                |
+| `app/core/config.py` 的 `Settings` 字段    | `.env.example` 与本文件「环境变量」               |
+| 导出产物命名或目录 (`config.export_paths`) | 本文件「导出产物」,`.env.example` 注释            |
+| 表结构或导出投影 (`sql/schema.sql`)        | `schema/*.data.jsonc`,`app/models`,`app/schemas`  |
+| Makefile 目标                              | 本文件「快速开始」「常用命令」                    |
+| 依赖或工具链 (`pyproject.toml`)            | `.github/workflows/studio-ci.yml`(固定了 uv 版本) |
+| `tests/conftest.py` 的破坏性门禁           | 本文件「测试」,`Makefile` 的 `ALLOW_SHARED_DB`    |
 
 ## 代码风格
 
@@ -196,4 +202,6 @@ make lint        # ruff check
 make check       # 两项都跑
 ```
 
-规则配置在 `pyproject.toml` (line-length 120,`select` 里含 `S` bandit);注释与文档用中文,标点用半角 ASCII。
+规则配置在 `pyproject.toml`:line-length 120;除 ruff 默认集外还开了 `S`(bandit)、`ASYNC`(异步函数里的阻塞调用)、`LOG` / `G`(logging 用法)、`PT`(pytest 写法)、`TID`(禁止相对导入)。注释与文档用中文,标点用半角 ASCII。
+
+pytest 侧另外两条硬约定:未知 ini 键直接报错 (`--strict-config`),弃用警告一律升级为错误 (`filterwarnings = ["error"]`)。只有已经定位到具体来源、短期修不掉的警告才允许逐条放行 —— 之前这里是 `ignore::DeprecationWarning`,把自己代码里的弃用调用也一起吞了。

@@ -152,20 +152,20 @@ husky commit-msg 自动执行 commitlint 校验提交信息格式（type 与 sco
    `docs/<name>`，数据同步用 `data/<name>`
 2. 提交代码（提交信息遵循上文 type 与 scope 规则）并推送至远程
 3. 创建 Pull Request，标题遵循 Conventional Commits 格式
-4. 通过 CI 检查（根检查 markdownlint + prettier、web 的 lint / typecheck / test / build）后合并
+4. 通过 CI 检查（根检查 markdownlint + prettier、web 的 lint / typecheck / test / build、studio 的 ruff + pytest）后合并
 
 `web/data/topics.json` 与 `web/data/tools.json` 是生产数据源：只有 `main` 与 `data/<name>` 分支允许提交，其余分支会被
 `.husky/pre-commit` 拒绝。
 
 ## 测试
 
-后端测试**前置条件**：本机 MySQL 已启动，且 `studio/.env.dev` 已按上文配置（conftest 每个用例前会 TRUNCATE `xg_*` 表，无库则全部报连接错误）；可用 `studio/sql/schema.sql` 初始化表结构。
+后端测试**前置条件**：本机 MySQL 已启动，且 `studio/.env.dev` 已按上文配置（conftest 每个用例前会 TRUNCATE `xg_*` 表，无库则全部报连接错误）；可用 `studio/sql/schema.sql` 初始化表结构。默认 dev 库不是专用测试库，所以还要显式放行破坏性清理（`make test ALLOW_SHARED_DB=1`，等价于 `STUDIO_ALLOW_SHARED_DB_TRUNCATE=1`）；不设这个开关时 pytest 以退出码 3 直接退出，不会碰库。
 
 ```bash
 # 后端测试（需 MySQL，见上方前置条件）
 pnpm run lint:py                 # ruff check
 pnpm run format:py:check         # ruff format 校验
-cd studio && APP_ENV=dev uv run pytest -v
+cd studio && make test ALLOW_SHARED_DB=1
 
 # 前端测试与类型检查（需先 ./scripts/install.sh）
 pnpm run test:web                # vitest
