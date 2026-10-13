@@ -6,6 +6,7 @@ module.exports = {
     // 重复声明只会在依赖升级时悄悄漂移。
     // 中文 subject 没有大小写概念，关闭该规则否则中文提交会被误判
     "subject-case": [0],
+    // 放宽到 120：commitlint 默认 100，对中文提交偏紧；120 与 prettier 的 printWidth 同一量级
     "header-max-length": [2, "always", 120],
     // scope 允许省略（历史提交大量使用 chore: / fix: 形式），省略时不校验
     "scope-empty": [0],

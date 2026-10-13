@@ -1,0 +1,14 @@
+# pnpm 设置文件（与 web/pnpm-workspace.yaml 同构）。
+# 现行 pnpm 约定：非敏感设置放这里；项目级 .npmrc 只承担 registry / 凭据类配置。
+# 本文件刻意不含 packages 字段：根目录不是 monorepo —— web/ 是独立 pnpm 工程，自带设置文件。
+
+# 供应链加固：新发布的版本先隔离 1 天（1440 分钟）再允许安装，覆盖全部依赖（含传递依赖）。
+# 这是 pnpm 11 起的默认值，显式写出以保证在 pnpm 10 上行为一致。
+# 需要临时放行某个包时，用 minimumReleaseAgeExclude。
+minimumReleaseAge: 1440
+
+# 运行脚本前检查 node_modules 是否与 lockfile 一致，过期则自动补装（避免"改了依赖没装"的假绿）
+verifyDepsBeforeRun: install
+
+# 不强制 peer 依赖解析（与 lockfile 的 autoInstallPeers 组合容易造成硬失败）
+strictPeerDependencies: false
