@@ -57,6 +57,10 @@ jobs:
       - name: Run zizmor
         uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
         with:
+          # 只扫 .github/：与 collect: all 搭配可覆盖 dependabot.yml，
+          # 又不会误扫 node_modules 里第三方包自带的 workflow（本机实测那里有 400+ 条噪音）
+          inputs: .github
+          collect: all
           # 固定 zizmor 版本，不跟随 latest
           version: "1.30.1"
           # 不写 SARIF：省掉 security-events: write，保持 contents: read 的最小权限

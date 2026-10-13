@@ -4,8 +4,9 @@ version: 2
 #
 # 分组：minor/patch 合并成一个 PR，major 一律单独出 PR（需要逐个审，例如 Next.js 大版本）；
 #   github-actions 全量合并——引用已按 commit SHA 固定，坏引用会让 CI 直接报红，风险低而噪音收益大。
-# 冷静期：GitHub 对版本更新默认已有 3 天 cooldown（安全更新不受影响），这里把 default-days
-#   显式写出以免配了细分项后丢掉默认保护，并把 major 拉长（工具链 14 天、web 21 天）。
+# 冷静期：GitHub 默认 3 天，这里显式提到 7 天（zizmor 的 dependabot-cooldown 建议 ≥ 7 天：
+#   恶意/缺陷版本通常在一周内被发现并撤下），major 再拉长到 14/21 天。
+#   安全更新不受 cooldown 影响，仍会立刻开 PR。
 # 不配 reviewers：官方文档已标注该属性「closing down and will be removed」，
 #   审阅人请改用 .github/CODEOWNERS。
 # 安全更新刻意不分组：保持单个 PR、走最快路径（cooldown 对安全更新不生效）。
@@ -23,7 +24,7 @@ updates:
       timezone: "Asia/Shanghai"
     open-pull-requests-limit: 3
     cooldown:
-      default-days: 3
+      default-days: 7
       semver-major-days: 14
     groups:
       root-dev-tooling:
@@ -45,7 +46,7 @@ updates:
       timezone: "Asia/Shanghai"
     open-pull-requests-limit: 5
     cooldown:
-      default-days: 3
+      default-days: 7
       semver-major-days: 21
     groups:
       web-runtime:
@@ -72,7 +73,7 @@ updates:
       timezone: "Asia/Shanghai"
     open-pull-requests-limit: 3
     cooldown:
-      default-days: 3
+      default-days: 7
       semver-major-days: 14
     groups:
       studio-deps:
