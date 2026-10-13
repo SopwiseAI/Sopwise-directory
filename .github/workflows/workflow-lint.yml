@@ -31,6 +31,8 @@ jobs:
       # 装 shellcheck 后 actionlint 会连带检查 run: 里的 shell 片段。
       # 不用 apt：apt 的 shellcheck 版本随 runner 镜像浮动，而本作业是 required check，
       # 不能因为上游工具换版本就无故变红（本地已用 0.11.0 验证过全部 run 片段通过）。
+      # 刻意不写 $GITHUB_PATH：下面把 shellcheck 路径显式传给 actionlint，
+      # 少一个 runner 全局副作用（首次上线时曾出现 job 状态卡在 in_progress）。
       - name: Install shellcheck
         run: |
           set -euo pipefail
@@ -40,7 +42,6 @@ jobs:
             "https://github.com/koalaman/shellcheck/releases/download/v${VERSION}/${ARCHIVE}"
           echo "b7af85e41cc99489dcc21d66c6d5f3685138f06d34651e6d34b42ec6d54fe6f6  ${ARCHIVE}" | sha256sum -c -
           tar xzf "$ARCHIVE"
-          echo "$PWD/shellcheck-v${VERSION}" >> "$GITHUB_PATH"
 
       # 不用第三方 action：直接下载官方发布包并校验 sha256，
       # 避免"用可变引用去检查可变引用"
@@ -48,12 +49,13 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="1.7.12"
+          SHELLCHECK_VERSION="0.11.0"
           ARCHIVE="actionlint_${VERSION}_linux_amd64.tar.gz"
           curl -sSfL -o "$ARCHIVE" \
             "https://github.com/rhysd/actionlint/releases/download/v${VERSION}/${ARCHIVE}"
           echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  ${ARCHIVE}" | sha256sum -c -
           tar xzf "$ARCHIVE" actionlint
-          ./actionlint -color
+          ./actionlint -color -shellcheck="$PWD/shellcheck-v${SHELLCHECK_VERSION}/shellcheck"
 
   zizmor:
     name: zizmor（workflow 安全审计）
