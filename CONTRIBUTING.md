@@ -128,11 +128,14 @@ scope 可以省略（例如 `chore: 更新 CI`），省略时不做校验。
 | ----------------------------------------------------------- | ------------------ | -------------------------------------- |
 | 全仓库 Markdown / JSON / JSONC / YAML / TS / TSX / JS / CSS | prettier           | `pnpm run format` / `format:check`     |
 | Markdown 规则（`**/*.md`）                                  | markdownlint-cli2  | `pnpm run lint:md` / `lint:md:fix`     |
-| Python                                                      | ruff               | `pnpm run lint:py` / `format:py:check` |
+| Python 静态检查                                             | ruff               | `pnpm run lint:py` / `format:py:check` |
+| Python 类型                                                 | mypy（strict）     | `pnpm run typecheck:py`                |
 | TypeScript / TSX 语义                                       | eslint（web 内置） | `pnpm run lint:web`                    |
 | Shell                                                       | 暂无               | 遵循 `.editorconfig`（4 空格缩进）     |
 
 行宽只有一套标准：`.prettierrc` 的 `printWidth`（Markdown 为 200）；`.editorconfig` 不再声明行宽。
+
+Python 的类型门禁配置在 `studio/pyproject.toml` 的 `[tool.mypy]`：`app/` 是 `strict = true`，`tests/` 走放宽的一层（只查会真的出错的类型问题，不强制每个用例写签名）。CI 与本地走的是同一份配置，不存在两套标准。
 
 ### 提交流程
 
@@ -152,7 +155,7 @@ husky commit-msg 自动执行 commitlint 校验提交信息格式（type 与 sco
    `docs/<name>`，数据同步用 `data/<name>`
 2. 提交代码（提交信息遵循上文 type 与 scope 规则）并推送至远程
 3. 创建 Pull Request，标题遵循 Conventional Commits 格式
-4. 通过 CI 检查（根检查 markdownlint + prettier、web 的 lint / typecheck / test / build、studio 的 ruff + pytest）后合并
+4. 通过 CI 检查（根检查 markdownlint + prettier、web 的 lint / typecheck / test / build、studio 的 ruff + mypy + pytest）后合并
 
 `web/data/topics.json` 与 `web/data/tools.json` 是生产数据源：只有 `main` 与 `data/<name>` 分支允许提交，其余分支会被
 `.husky/pre-commit` 拒绝。
@@ -165,6 +168,7 @@ husky commit-msg 自动执行 commitlint 校验提交信息格式（type 与 sco
 # 后端测试（需 MySQL，见上方前置条件）
 pnpm run lint:py                 # ruff check
 pnpm run format:py:check         # ruff format 校验
+pnpm run typecheck:py            # mypy (app/ strict, tests/ 放宽)
 cd studio && make test ALLOW_SHARED_DB=1
 
 # 前端测试与类型检查（需先 ./scripts/install.sh）

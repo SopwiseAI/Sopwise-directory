@@ -87,6 +87,11 @@ jobs:
       - name: Format check
         run: uv run ruff format --check app/ tests/
 
+      # 与本地 make check 跑同一份 [tool.mypy](strict + pydantic 插件);
+      # tests/ 用放宽的一层, 理由写在 pyproject 的 overrides 注释里
+      - name: Type check
+        run: uv run mypy app/ tests/
+
       # 先单独打一次库。schema.sql 没进库 / 认证方式不对 / 端口映射错了, 都在这里
       # 报出来, 而不是混在 400 个用例的第一条 fixture 里。
       # 用服务容器自带的客户端灌 DDL: services 是在 checkout 之前启动的, 所以

@@ -33,10 +33,11 @@
     "lint:md:fix": "markdownlint-cli2 --fix \"**/*.md\"",
     "lint:py": "cd studio && uv run ruff check app/ tests/",
     "format:py:check": "cd studio && uv run ruff format --check app/ tests/",
+    "typecheck:py": "cd studio && uv run mypy app/ tests/",
     "lint:web": "pnpm --dir web lint",
     "typecheck:web": "pnpm --dir web typecheck",
     "test:web": "pnpm --dir web test",
-    "check": "pnpm run lint:md && pnpm run format:check && pnpm run lint:py && pnpm run format:py:check && pnpm run lint:web && pnpm run typecheck:web && pnpm run test:web",
+    "check": "pnpm run lint:md && pnpm run format:check && pnpm run lint:py && pnpm run format:py:check && pnpm run typecheck:py && pnpm run lint:web && pnpm run typecheck:web && pnpm run test:web",
     "test": "pnpm run test:web",
     "prepare": "husky"
   },

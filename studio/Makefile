@@ -29,7 +29,7 @@ DB_PASSWORD ?= $(call _env,DB_PASSWORD)
 #   make prod PROD_HOST=127.0.0.1
 PROD_HOST ?= 0.0.0.0
 
-.PHONY: sync db-init dev sit prod lint format check test test-cov export-dev export-sit export-prod clean
+.PHONY: sync db-init dev sit prod lint typecheck format check test test-cov export-dev export-sit export-prod clean
 
 # 测试会 TRUNCATE .env.<APP_ENV> 指向的那 4 张 xg_* 表, conftest.py 里有一道门禁:
 # 目标库名字里没有 test 时必须显式放行, 否则 pytest 直接以退出码 3 退出(不碰库)。
@@ -73,10 +73,15 @@ prod:
 lint:
 	uv run ruff check app/ tests/
 
+# 类型检查覆盖 app/ + tests/; tests/ 用放宽的一层(不强制写签名), 阈值与理由都在
+# pyproject 的 [tool.mypy] overrides 里
+typecheck:
+	uv run mypy app/ tests/
+
 format:
 	uv run ruff format app/ tests/
 
-check: lint
+check: lint typecheck
 	uv run ruff format --check app/ tests/
 
 # 测试连真库: 每个用例前会 TRUNCATE 四张 xg_* 表, 见 tests/conftest.py。

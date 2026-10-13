@@ -50,6 +50,8 @@ dev = [
     "pytest-asyncio>=1.0.0",
     "pytest-cov>=5.0.0",
     "httpx>=0.28.1",
+    # >= 2.4: 与 ruff/pytest 同一条口径 —— 只声明实测过的那条线
+    "mypy>=2.4",
 ]
 
 [tool.ruff]
@@ -82,6 +84,42 @@ ban-relative-imports = "all"
 [tool.ruff.format]
 quote-style = "double"
 
+[tool.mypy]
+python_version = "3.13"
+# strict 全家桶(disallow_untyped_defs / disallow_any_generics / warn_return_any /
+# no_implicit_optional / strict_equality ...)。一项项列容易漏, 直接用 strict;
+# 需要豁免的地方在下面逐条写明理由, 不做全局放宽。
+strict = true
+# app/ 全量 strict; tests/ 另有一层放宽, 见下面的 overrides。
+files = ["app", "tests"]
+# pydantic 插件: 没有它, BaseSettings 子类的 __init__ 会被当成"所有字段都必填",
+# Settings() 这种全靠默认值的调用会误报 missing named argument。
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+# aiomysql 与 PyMySQL 都不带 py.typed, 也没有可用的 types-* 存根
+# (mypy 的原话是 "Missing library stubs or py.typed marker"), 只能按 Any 处理。
+# 影响面可控: 两个包都只在 app/core/database.py 里出现。
+module = ["aiomysql.*", "pymysql.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# tests/ 只查"会真的出错"的类型问题, 不强制每个用例都写签名 —— pytest 本来就用
+# fixture 注入参数, 全量 strict 在 tests/ 上是 311 个 no-untyped-def, 全是噪音。
+# 这一层照样抓到了实打实的东西: conftest 里 app_env == "test" 的死分支、
+# test_health 里拿字符串冒充 DBAPI 异常、以及把 SimpleNamespace 当真的 Tool 传进去。
+module = ["tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
+
+[[tool.mypy.overrides]]
+# test_models 整篇都在钉"StrEnum 成员 == 库里那一列的字面量"。这个等式在运行期就是
+# True(str 子类的 == 语义), mypy 却认为两边类型永不重叠 —— 是它不认识 StrEnum,
+# 不是代码有问题。只在这一个文件里关掉 strict_equality, 其余测试文件仍然开着。
+module = ["tests.test_models"]
+strict_equality = false
+
 [tool.pytest.ini_options]
 minversion = "9.1"
 testpaths = ["tests"]
@@ -105,7 +143,7 @@ omit = ["app/exporters/__main__.py"]
 [tool.coverage.report]
 show_missing = true
 precision = 2
-# 实测值(dev 库 + MySQL 5.7, branch = true)是 75.20%。门槛压在它下面一点,
+# 实测值(dev 库 + MySQL 5.7, branch = true)是 75.47%。门槛压在它下面一点,
 # 起"棘轮"作用而不是每次微调都变红 —— 要往上抬就得先补测试。
 fail_under = 74
 exclude_also = [

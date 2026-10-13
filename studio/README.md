@@ -168,7 +168,8 @@ make test-cov ALLOW_SHARED_DB=1   # 加覆盖率; pyproject 里 fail_under = 74
 | `make sync`                                      | `uv sync` 安装/同步依赖                                            |
 | `make db-init`                                   | 执行 `sql/schema.sql` 建表 (幂等)                                  |
 | `make dev` / `sit` / `prod`                      | 按环境启动服务                                                     |
-| `make format` / `lint` / `check`                 | ruff 格式化 / 检查 / 两项都跑                                      |
+| `make lint` / `typecheck` / `format`             | ruff 检查 / mypy 类型检查 / ruff 格式化                            |
+| `make check`                                     | 上面三项 + 格式校验一起跑 (CI 的 lint 段就是它)                    |
 | `make test` / `test-cov`                         | 测试 (可带覆盖率);共享库要加 `ALLOW_SHARED_DB=1`                   |
 | `make export-dev` / `export-sit` / `export-prod` | 导出 JSON                                                          |
 | `make clean`                                     | 清掉 `.ruff_cache` / `.pytest_cache` / `.coverage` / `__pycache__` |
@@ -193,15 +194,19 @@ make test-cov ALLOW_SHARED_DB=1   # 加覆盖率; pyproject 里 fail_under = 74
 | Makefile 目标                              | 本文件「快速开始」「常用命令」                    |
 | 依赖或工具链 (`pyproject.toml`)            | `.github/workflows/studio-ci.yml`(固定了 uv 版本) |
 | `tests/conftest.py` 的破坏性门禁           | 本文件「测试」,`Makefile` 的 `ALLOW_SHARED_DB`    |
+| `[tool.mypy]` 的 strict 范围或豁免         | 本文件「代码风格」,CI 的 Type check 步骤          |
 
 ## 代码风格
 
 ```bash
 make format      # ruff format (app/ tests/)
 make lint        # ruff check
-make check       # 两项都跑
+make typecheck   # mypy (app/ tests/)
+make check       # 上面三项 + 格式校验
 ```
 
 规则配置在 `pyproject.toml`:line-length 120;除 ruff 默认集外还开了 `S`(bandit)、`ASYNC`(异步函数里的阻塞调用)、`LOG` / `G`(logging 用法)、`PT`(pytest 写法)、`TID`(禁止相对导入)。注释与文档用中文,标点用半角 ASCII。
+
+类型检查是 mypy(`[tool.mypy]`):`app/` 走 `strict = true` 全量;`tests/` 走放宽的一层 —— 只查会真的出错的类型问题,不强制每个用例写签名(pytest 本来就用 fixture 注入参数,全量 strict 在 `tests/` 上是 311 个纯噪音的 `no-untyped-def`)。这一层不是摆设:它已经抓出 `conftest.py` 里 `app_env == "test"` 的**死分支**(`APP_ENV=test` 会被 `Settings` 直接拒绝)、一条替该死分支背书的**假绿用例**、以及 `test_health.py` 里拿字符串冒充 DBAPI 异常。所以别把 `tests/` 从类型门禁里摘出去。
 
 pytest 侧另外两条硬约定:未知 ini 键直接报错 (`--strict-config`),弃用警告一律升级为错误 (`filterwarnings = ["error"]`)。只有已经定位到具体来源、短期修不掉的警告才允许逐条放行 —— 之前这里是 `ignore::DeprecationWarning`,把自己代码里的弃用调用也一起吞了。

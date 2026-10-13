@@ -57,5 +57,11 @@
     ".dsh-artifacts": true,
     "**/.pnpm-store": true
   },
-  "python.defaultInterpreterPath": "studio/.venv/bin/python"
+  "python.defaultInterpreterPath": "studio/.venv/bin/python",
+  // 导入根是 studio/ 而不是仓库根: app 与 tests 两个包都挂在它下面
+  // (tests 里用 `from tests.conftest import ...`, 所以少了这条连测试都解析不了)。
+  // mypy 侧靠 pyproject.toml 定位同一个根 —— 实测: 在仓库根直接跑
+  // `studio/.venv/bin/mypy studio/app` 会满屏 import-not-found。
+  // ⚠️ 这一条只影响编辑器补全/红线, 本机没有 VS Code 无法实测, 未验证。
+  "python.analysis.extraPaths": ["studio"]
 }
