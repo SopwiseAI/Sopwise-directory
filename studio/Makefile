@@ -7,10 +7,14 @@
 #
 # 连接信息与监听地址都从 .env.<APP_ENV> 取, 取不到才落到下面的默认值 ——
 # 不要在别处再抄一份默认值, 否则改了 .env 这里还是旧的。
-# 取值方式只认 `KEY=value` 整行 (不支持行内注释), 与 .env.example 的写法一致。
-
-# 从 .env.<APP_ENV> 读一个键, 同名取最后一个
-_env = $(shell sed -n 's/^$1=//p' .env.$(APP_ENV) 2>/dev/null | tail -n 1)
+#
+# 取值的口径刻意与 python-dotenv(即服务侧 app/core/config.py 用的解析器)对齐:
+# 吃掉 `export ` 前缀、`=` 两侧空白、值两侧的成对引号、行尾 CR, 同名取最后一个。
+# 少这几步会让 make 与服务的连接信息【不一致】: 例如 DB_PASSWORD="p@ss word" 时
+# mysql 客户端拿到的是带引号的串, 报 Access denied, 而服务连得上, 排查会绕远路。
+# 仍然不支持行内注释(python-dotenv 只在 `#` 前有空白时才算注释), .env.example 已写明。
+# 注意: 这里只服务 db-init 一个目标; 服务侧的唯一解析器始终是 app/core/config.py。
+_env = $(shell sed -n 's/^[[:space:]]*\(export[[:space:]]\{1,\}\)\{0,1\}$1[[:space:]]*=[[:space:]]*//p' .env.$(APP_ENV) 2>/dev/null | sed -e 's/[[:space:]]*$$//' -e 's/^"\(.*\)"$$/\1/' -e "s/^'\(.*\)'\$$/\1/" | tr -d '\r' | tail -n 1)
 
 APP_ENV ?= dev
 HOST ?= $(or $(call _env,APP_HOST),127.0.0.1)
@@ -26,6 +30,13 @@ DB_PASSWORD ?= $(call _env,DB_PASSWORD)
 PROD_HOST ?= 0.0.0.0
 
 .PHONY: sync db-init dev sit prod lint format check test test-cov export-dev export-sit export-prod clean
+
+# 测试会 TRUNCATE .env.<APP_ENV> 指向的那 4 张 xg_* 表, conftest.py 里有一道门禁:
+# 目标库名字里没有 test 时必须显式放行, 否则 pytest 直接以退出码 3 退出(不碰库)。
+# 默认的 dev 库是 10.182.32.31 上的共享 SIT 库, 所以需要显式:
+#   make test ALLOW_SHARED_DB=1
+# 这个变量只做透传, 默认空 —— 门禁的默认姿态仍然是"拒绝"。
+ALLOW_SHARED_DB ?=
 
 # 每个目标固定自己的 APP_ENV, 免得 make sit 却读了 .env.dev
 dev export-dev: APP_ENV = dev
@@ -70,11 +81,12 @@ check: lint
 
 # 测试连真库: 每个用例前会 TRUNCATE 四张 xg_* 表, 见 tests/conftest.py。
 # 必须指向可以随便清空的 dev/sit 库, 且先跑过 make db-init。
+# 共享库(如默认 dev)还要显式放行: make test ALLOW_SHARED_DB=1
 test:
-	APP_ENV=dev uv run pytest -v
+	APP_ENV=dev STUDIO_ALLOW_SHARED_DB_TRUNCATE=$(ALLOW_SHARED_DB) uv run pytest -v
 
 test-cov:
-	APP_ENV=dev uv run pytest --cov=app --cov-report=term-missing -v
+	APP_ENV=dev STUDIO_ALLOW_SHARED_DB_TRUNCATE=$(ALLOW_SHARED_DB) uv run pytest --cov=app --cov-report=term-missing -v
 
 # 导出产物是【两个文件】: topics-{env}.json / tools-{env}.json
 # (prod 额外同步无后缀的 topics.json / tools.json 给前端)。
