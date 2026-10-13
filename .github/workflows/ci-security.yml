@@ -1,0 +1,34 @@
+name: Secret Scan
+
+# 密钥扫描：提交进仓库的凭据是最难挽回的一类事故（一旦推到公开仓库即视为已泄露），
+# 规则与白名单见根目录 .gitleaks.toml。
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # 扫全历史：避免"曾经提交过、之后删掉"的密钥被漏掉
+          fetch-depth: 0
+
+      # 用官方 CLI 而非 gitleaks/gitleaks-action：后者对组织仓库要求 GITLEAKS_LICENSE
+      # 秘钥（个人账号免费），CLI 无此限制且版本可精确控制。
+      - name: Run gitleaks
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo \
+            ghcr.io/gitleaks/gitleaks:v8.30.1 \
+            detect --source . --redact --config .gitleaks.toml --verbose

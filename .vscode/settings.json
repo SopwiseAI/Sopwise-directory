@@ -3,6 +3,27 @@
   "files.eol": "\n",
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
+  // 语言 ID 必须是 VS Code 官方 ID：.tsx 的是 typescriptreact（没有 tsx），
+  // 写错整个块会被静默忽略；javascript / javascriptreact 同理覆盖 .js / .jsx。
+  "[typescript]": {
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
@@ -18,26 +39,23 @@
     "editor.tabSize": 4,
     "editor.defaultFormatter": "charliermarsh.ruff"
   },
-  "[typescript]": {
-    "editor.tabSize": 2,
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[tsx]": {
-    "editor.tabSize": 2,
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
   "[yaml]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "editor.renderWhitespace": "boundary",
   "diffEditor.ignoreTrimWhitespace": false,
+  // 用仓库锁定的 TypeScript（web/ 内），避免 VS Code 内置版本与 web/package.json 不一致
+  "typescript.tsdk": "web/node_modules/typescript/lib",
   "search.exclude": {
     "web/node_modules": true,
     "web/.next": true,
+    "web/storybook-static": true,
     "studio/.venv": true,
     "studio/.ruff_cache": true,
     "studio/.pytest_cache": true,
-    "scripts/.state": true
+    "scripts/.state": true,
+    ".dsh-artifacts": true,
+    "**/.pnpm-store": true
   },
   "python.defaultInterpreterPath": "studio/.venv/bin/python"
 }

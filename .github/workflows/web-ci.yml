@@ -8,6 +8,15 @@ on:
   pull_request:
     branches: [main]
 
+# 最小权限：本工作流只读仓库内容（不发布、不提 PR、不写评论）
+permissions:
+  contents: read
+
+# 同一分支/PR 的旧运行自动取消：既省 runner，也避免旧结果覆盖新结果
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 defaults:
   run:
     working-directory: web
@@ -15,12 +24,17 @@ defaults:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      # 所有 action 按 commit SHA 固定（供应链要求，对应 OpenSSF Scorecard 的 Pinned-Dependencies），
+      # 版本写在行尾注释里，由 Dependabot 的 github-actions 生态持续更新。
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: pnpm/action-setup@v4
+      # 暂留 v5：pnpm/action-setup v6 起要求 pnpm >= 11，而仓库 packageManager 仍是 10.x，
+      # 待 pnpm 大版本迁移时与 packageManager 一起升级。
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: ".nvmrc"
           cache: pnpm
