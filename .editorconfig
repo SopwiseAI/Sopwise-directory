@@ -7,10 +7,24 @@ indent_style = space
 indent_size = 2
 insert_final_newline = true
 trim_trailing_whitespace = true
-max_line_length = 120
+# 行宽不在此配置：max_line_length 不在 EditorConfig 规范（0.17.2）内，写了也不生效，
+# 只会与 .prettierrc 的 printWidth 形成第二套互相矛盾的标准。
+# 行宽的唯一事实源 = .prettierrc 的 printWidth（120，Markdown 为 200）。
 
 [*.md]
+# Markdown 行尾双空格代表硬换行，必须保留（行尾脏空格仍由 markdownlint MD009 拦截）
 trim_trailing_whitespace = false
+# 必须与 .markdownlint-cli2.jsonc 的 MD007.indent 保持一致
+indent_size = 2
+
+[*.{json,jsonc,yml,yaml}]
+indent_size = 2
+
+[*.{sh,bash}]
+indent_size = 4
+
+[*.sql]
+indent_size = 4
 
 [*.py]
 indent_size = 4

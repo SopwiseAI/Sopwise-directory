@@ -1,0 +1,19 @@
+# gitleaks 配置：在官方默认规则之上，补本仓库特有的误报白名单。
+# 用法（本地或 CI）：gitleaks detect --source . --redact -c .gitleaks.toml
+# 注意：官方默认规则已忽略锁文件与二进制文件，此处只补仓库特有项。
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "本仓库已确认的误报"
+paths = [
+  # 空值模板，不含真实凭据
+  '''\.env\.example$''',
+  # 目录索引数据（第三方产品名称 / URL / 描述），不含凭据
+  '''web/data/data\.json$''',
+]
+regexes = [
+  # studio 的开发占位密钥（非 dev 环境会被 config.py 拒绝，不是活凭据）
+  '''dev-secret-key''',
+]

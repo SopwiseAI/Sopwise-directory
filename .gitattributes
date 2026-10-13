@@ -1,0 +1,26 @@
+# 统一换行：任何平台检出后仓库内一律 LF
+# （与 .editorconfig 的 end_of_line=lf、prettier 的默认 endOfLine 一致）
+* text=auto eol=lf
+
+# 二进制：禁止 git 做换行/文本处理，避免 diff 与合并损坏
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.pdf binary
+
+# 脚本必须保持 LF，否则 Windows 克隆后 shebang 换行会破坏执行
+*.sh text eol=lf
+*.bash text eol=lf
+
+# 锁文件：标记为生成物以从语言统计中排除；刻意不加 -diff，
+# 否则 PR 里依赖变更会退化成 "Bin xxx -> yyy"，无法评审。
+pnpm-lock.yaml linguist-generated=true
+web/pnpm-lock.yaml linguist-generated=true
+studio/uv.lock linguist-generated=true

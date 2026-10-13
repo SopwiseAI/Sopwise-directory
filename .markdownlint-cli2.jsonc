@@ -1,33 +1,31 @@
 {
+  // 取舍原则：只禁用「有明确理由、且仓库当前确实会触发」的规则；
+  // 每条禁用都写明原因，禁止把 lint 报错当噪音关掉。
+  // 语义提醒：markdownlint 的值是「规则参数」而非「严重级」，
+  // 启用规则用 true（或该规则自己的参数对象），不要写 2 当作 error 级别。
+  // 未列出的规则一律按默认（启用）处理，默认规则集在本仓库为 0 违规。
   "config": {
     "MD003": { "style": "atx" },
     "MD004": { "style": "dash" },
     "MD007": { "indent": 2 },
-    "MD001": 2,
-    "MD012": 2,
-    "MD013": false,
-    "MD022": false,
-    "MD024": false,
-    "MD026": false,
-    "MD029": false,
-    "MD031": false,
-    "MD032": false,
-    "MD033": false,
+    "MD013": false, // 中文长行不可避免；行宽已由 prettier（.prettierrc printWidth）表达，双标准必冲突
+    "MD029": false, // .opencode/commands/*.md 使用 "1. 1. 1." 步骤式有序列表（19 处）
+    "MD031": false, // .opencode/commands/std-list.md 有 1 处围栏贴行，属子目录内容，本次不扩大改动面
+    "MD040": false, // 现有文档约 93 处未标注语言的围栏（多为命令与输出），属内容层改造
+    "MD041": false, // .github/PULL_REQUEST_TEMPLATE.md 与 web/CLAUDE.md 首行刻意不是 H1
     "MD035": { "style": "---" },
-    "MD036": false,
-    "MD040": false,
-    "MD041": false,
-    "MD046": { "style": "fenced" },
-    "MD047": 2,
-    "MD060": false
+    "MD046": { "style": "fenced" }
   },
   "ignores": [
-    ".ruff_cache/**",
+    // 统一用 **/ 形式，避免「忽略了 studio 下的缓存却漏掉根目录同名目录」这类不对称缺陷
+    ".git/**",
     "**/node_modules/**",
-    "web/node_modules/**",
-    "web/.next/**",
-    "studio/.venv/**",
-    "studio/.pytest_cache/**",
-    "studio/.ruff_cache/**"
+    "**/__pycache__/**",
+    "**/.pytest_cache/**",
+    "**/.ruff_cache/**",
+    "**/.venv/**",
+    "**/.next/**",
+    "**/storybook-static/**",
+    ".dsh-artifacts/**"
   ]
 }
