@@ -8,6 +8,14 @@ dependencies = [
     "uvicorn[standard]>=0.54.0,<1.0",
     "sqlalchemy[asyncio]>=2.0.36,<3.0",
     "aiomysql>=0.2.0,<1.0",
+    # MySQL 8 的默认认证插件是 caching_sha2_password, 而 prod 库就是 8.0。
+    # 非 TLS 连接下 caching_sha2 的 full auth 分支要用服务端公钥做 RSA 加密密码,
+    # PyMySQL 只在装了 cryptography 时才实现它(见 pymysql/_auth.py 的 _have_cryptography)。
+    # 缺了这行, prod 会在首次连接(以及 FLUSH PRIVILEGES / 服务端重启之后)抛
+    # RuntimeError: 'cryptography' package is required ... —— 那既不是我们用
+    # OperationalError 兜住的"库不可用", 也不是能重试的错误。
+    # dev 库是 5.7(mysql_native_password), 本地测试永远走不到这条路径, 只能靠声明兜住。
+    "cryptography>=44.0.0,<48.0",
     "pydantic>=2.0.0,<3.0",
     "pydantic-settings>=2.15.0,<3.0",
     "url-normalize>=3.0.1,<4.0",
