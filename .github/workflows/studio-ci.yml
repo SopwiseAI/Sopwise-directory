@@ -7,6 +7,12 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # 手动触发: 想在某个分支上单独验一次(改 CI 自身、或排查一次假的失败)时用:
+  #   gh workflow run studio-ci.yml --ref <branch>
+  # ⚠️ GitHub 要求 workflow_dispatch 必须已经出现在【默认分支】上才可派发,
+  #    所以本文件合并进 main 之前, 这条命令会报 404 (workflow ... not found on
+  #    the default branch)。在那之前只能靠 PR 触发。
+  workflow_dispatch:
 
 permissions:
   contents: read
