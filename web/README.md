@@ -8,7 +8,7 @@
 - Tailwind CSS 4 + shadcn/ui (base-nova, neutral)
 - fuse.js（客户端模糊搜索）、lucide-react（图标）
 - Vitest + Testing Library（单元测试）
-- pnpm 10 + Node 22
+- pnpm 12 + Node 24
 
 ## 快速开始
 

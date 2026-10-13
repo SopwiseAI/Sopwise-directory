@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@12.11.2",
-  "description": "AI-powered product discovery directory",
+  "description": "Curated directory of AI tools — hand-picked, links to official sites",
   "keywords": [
     "ai",
-    "directory",
-    "product-discovery",
+    "ai-tools",
+    "ai-directory",
+    "curated",
     "nextjs",
     "fastapi"
   ],
@@ -35,7 +36,7 @@
     "lint:web": "pnpm --dir web lint",
     "typecheck:web": "pnpm --dir web typecheck",
     "test:web": "pnpm --dir web test",
-    "check": "pnpm run lint:md && pnpm run format:check && pnpm run lint:py && pnpm run format:py:check && pnpm run lint:web && pnpm run typecheck:web",
+    "check": "pnpm run lint:md && pnpm run format:check && pnpm run lint:py && pnpm run format:py:check && pnpm run lint:web && pnpm run typecheck:web && pnpm run test:web",
     "test": "pnpm run test:web",
     "prepare": "husky"
   },

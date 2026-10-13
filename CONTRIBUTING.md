@@ -172,6 +172,7 @@ pnpm run test:web                # vitest
 pnpm run typecheck:web           # tsc --noEmit
 pnpm --dir web build             # next build
 
-# 全量静态检查（markdownlint + prettier + ruff + eslint + tsc，等价于 CI 的检查部分）
+# 全量本地检查（markdownlint + prettier + ruff + eslint + tsc + vitest）
+# CI 另含 web 的 next build（本地按需 `pnpm --dir web build`）
 pnpm run check
 ```
