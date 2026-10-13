@@ -5,13 +5,14 @@
 ## 项目结构
 
 ```
-web/          前端 (Next.js 16 SSG + pnpm)
-studio/       后端 (FastAPI + uv + MySQL)
-skills/       AI 套件 (Python CLI + prompts)
-scripts/      开发脚本 (Shell)
-.opencode/    opencode 命令与 Agent 规则
-opencode.json opencode 配置（含本地 MySQL MCP 连接，见「AI 工具配置」）
-.github/      CI 与 Issue / PR 模板
+web/                 前端 (Next.js 16 SSG + pnpm)
+studio/              后端 (FastAPI + uv + MySQL)
+skills/              AI 套件 (Python CLI + prompts)
+scripts/             开发脚本 (Shell)
+.opencode/           opencode 命令与 Agent 规则
+opencode.json        opencode 配置（含本地 MySQL MCP 连接，见「AI 工具配置」）
+pnpm-workspace.yaml  pnpm 行为设置（非敏感项）
+.github/             CI 与 Issue / PR 模板
 ```
 
 ## 前置要求
@@ -23,7 +24,7 @@ opencode.json opencode 配置（含本地 MySQL MCP 连接，见「AI 工具配�
 | Python  | >= 3.13          | `studio/pyproject.toml`                                     |
 | uv      | 最新             | studio 依赖管理（`uv sync` / `uv run`）                     |
 | MySQL   | >= 5.7           | `studio/sql/schema.sql`、后端测试必需                       |
-| git     | >= 2.40          | husky 钩子与 lint-staged 17（要求 git >= 2.32）             |
+| git     | >= 2.32          | husky 钩子与 lint-staged 17（后者硬性要求 git >= 2.32）     |
 
 首次克隆后 `pnpm install` 会自动安装 husky 钩子。Node 或 git 版本过低时，提交钩子会在
 `lint-staged` 一步失败（此时 `nvm install 24` / 升级 git 即可）；CI 使用 `node-version-file: .nvmrc`，
@@ -60,13 +61,15 @@ cp studio/.env.example studio/.env.prod  # 生产（APP_ENV=prod）
 
 `opencode.json` 与 `.opencode/` 是本仓库自带的 AI 工具（opencode）配置，包含：
 
-- `opencode.json`：Agent 指令文件指向与三个本地 MySQL MCP 连接（`mysql-dev` 允许写；
+- `opencode.json`：Agent 指令文件（`instructions`）与三个本地 MySQL MCP 连接（`mysql-dev` 允许写；
   `mysql-sit` / `mysql-prod` 只读，凭据来自被忽略的 `studio/.env.<env>`，配置里不含任何密钥）
 - `.opencode/commands/`：`std-*` 系列项目命令
 - MCP server 由根 `package.json` 的 `devDependencies` **锁定精确版本**，通过本地 bin 执行，
   不会在运行时从网络拉取最新版本
 
-个人覆盖配置请写 `opencode.local.json`（已在 `.gitignore` 中）。
+个人覆盖配置不要改受版本控制的 `opencode.json`，两种方式二选一：写全局配置
+`~/.config/opencode/opencode.json`；或在仓库内放本地文件并用环境变量指定
+`OPENCODE_CONFIG=./opencode.local.json`（该文件名已在 `.gitignore` 中）。
 
 ## 代码规范
 
@@ -140,7 +143,8 @@ husky pre-commit 自动执行 lint-staged：
 - `.ts/.tsx/.mts/.cts/.js/.jsx/.mjs/.cjs/.css` → prettier
 - `.py` → ruff check + format（依赖 `studio/.venv`，由 `./scripts/install.sh` 创建）
 
-husky commit-msg 自动执行 commitlint 校验提交信息格式（分支名与 scope 规则见上文）。
+husky commit-msg 自动执行 commitlint 校验提交信息格式（type 与 scope 规则见上文）。
+分支名规范与 `web/data/data.json` 的提交限制由 husky pre-commit 钩子把关，不通过则拒绝提交。
 
 ## Pull Request 流程
 

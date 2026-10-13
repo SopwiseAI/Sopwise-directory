@@ -2,12 +2,13 @@
 
 ## 我该去哪里提问
 
-| 需求                     | 渠道                                                                                                      |
-| ------------------------ | --------------------------------------------------------------------------------------------------------- |
-| 使用问题、部署、数据导入 | [GitHub Issues](https://github.com/sopwise-ai/xigee/issues)（请先搜索已有 Issue，并选用「功能建议」模板） |
-| 可复现的缺陷             | [缺陷报告模板](https://github.com/sopwise-ai/xigee/issues/new?template=bug_report.yml)                    |
-| 安全漏洞                 | 不要开公开 Issue，请走 [安全政策](./SECURITY.md) 的私密上报通道                                           |
-| 参与开发                 | 见 [贡献指南](./CONTRIBUTING.md) 与 [行为准则](./CODE_OF_CONDUCT.md)                                      |
+| 需求                     | 渠道                                                                                                                |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| 使用问题、部署、数据导入 | [GitHub Issues](https://github.com/sopwise-ai/xigee/issues)（请先搜索已有 Issue；没有合适的模板时直接开空白 Issue） |
+| 功能建议                 | [功能建议模板](https://github.com/sopwise-ai/xigee/issues/new?template=feature_request.yml)                         |
+| 可复现的缺陷             | [缺陷报告模板](https://github.com/sopwise-ai/xigee/issues/new?template=bug_report.yml)                              |
+| 安全漏洞                 | 不要开公开 Issue，请走 [安全政策](./SECURITY.md) 的私密上报通道                                                     |
+| 参与开发                 | 见 [贡献指南](./CONTRIBUTING.md) 与 [行为准则](./CODE_OF_CONDUCT.md)                                                |
 
 ## 我们接受与不接受什么
 
