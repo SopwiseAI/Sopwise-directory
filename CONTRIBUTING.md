@@ -99,6 +99,10 @@ chore: 构建/工具
 revert: 回退
 ```
 
+纯格式化提交（例如全仓 prettier 重排）请单独提交，并把该提交的完整 SHA 追加到
+`.git-blame-ignore-revs`，避免 `git blame` 的每一行都指向格式化提交。GitHub 的 blame 视图会自动
+识别该文件；本地可用 `git config blame.ignoreRevsFile .git-blame-ignore-revs` 启用。
+
 **scope 白名单**（commitlint 的 `scope-enum` 为强制校验，未列出的 scope 会被拒绝）：
 
 | scope               | 适用范围                                |

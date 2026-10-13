@@ -1,0 +1,11 @@
+# git blame 忽略列表：纯格式化提交放在这里，避免每一行都指向格式化提交。
+#
+# 启用（每个克隆各做一次）：
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+# GitHub 的 blame 视图会自动识别本文件，无需配置。
+#
+# 只登记「纯格式化 / 纯重命名」提交，不要登记带逻辑改动的提交。
+# 每行一个完整 SHA，注释用 # 开头。
+
+# style: trailingComma 对齐 Prettier 3 默认（none → all，纯格式化，147 个文件）
+d0ed3f1b050457b7adae215d4cb728c3cfb0a288
