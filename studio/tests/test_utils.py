@@ -12,6 +12,17 @@ from tests.conftest import create_topic
 # -- normalize_url ---------------------------------------------------------------
 
 
+def test_normalize_url_raises_when_library_returns_nothing(monkeypatch):
+    """url_normalize 的声明是 str | None; 它回空值时必须变成 400, 不能是 500。
+
+    不挡这一步的话 urlsplit(None) 抛的是 TypeError, 会绕过 main.py 的
+    InvalidURLError 处理器漏成 500。这个分支正常输入走不到, 只能这样钉住。
+    """
+    monkeypatch.setattr("app.utils.url.url_normalize", lambda *_args, **_kwargs: "")
+    with pytest.raises(InvalidURLError):
+        normalize_url("https://example.com")
+
+
 class TestNormalizeUrl:
     """app/utils/url.py 的归一化规则: 小写域名 / 去 www / 去默认端口 / 去尾斜杠 / 去 fragment / query 排序."""
 

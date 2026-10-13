@@ -3,15 +3,58 @@
 clean_db 会 TRUNCATE 整张 xg_* 表, 而流水线默认连的是一个名字带 sit 的远端共享库。
 门禁本身必须可被独立验证, 所以这里直接覆盖 _unsafe_to_truncate 的判定矩阵 ——
 不能只靠"跑一遍没出事"来证明它有效。
+
+矩阵里用的是【真正的 Settings】而不是 SimpleNamespace: 用鸭子类型拼一个假 settings
+很方便, 但它会绕过字段校验, 于是"不可达的分支"也能被断言成"通过" —— 这里曾经就有
+一条 app_env="test" 的用例(APP_ENV=test 会被 Settings 直接拒绝), 见下面那条约束用例。
 """
 
-from types import SimpleNamespace
+import pytest
+from pydantic import ValidationError
 
+from app.core.config import Settings
 from tests.conftest import _TRUNCATE_OVERRIDE_ENV, _unsafe_to_truncate
 
 
-def _settings(*, app_env: str = "dev", db_name: str = "mfbp_kazar_sit", db_host: str = "10.182.32.31"):
-    return SimpleNamespace(app_env=app_env, db_name=db_name, db_host=db_host)
+def _settings(
+    *,
+    app_env: str = "dev",
+    db_name: str = "mfbp_kazar_sit",
+    db_host: str = "10.182.32.31",
+    db_user: str = "tester",
+    api_key: str = "tester-key",
+    app_debug: bool = False,
+) -> Settings:
+    # _env_file=None: 不读 .env.<env>, 只吃这里传的字段(否则本机配置会污染判定)。
+    # api_key / app_debug 也一并给足: 否则 app_env="prod" 会先被 validate_api_key 与
+    # validate_app_debug 拦下, 测不到门禁本身。
+    return Settings(
+        _env_file=None,
+        app_env=app_env,
+        app_debug=app_debug,
+        db_name=db_name,
+        db_host=db_host,
+        db_user=db_user,
+        api_key=api_key,
+    )
+
+
+def test_test_suffixed_db_is_allowed_without_override():
+    """专用测试库(名字含 test)无需额外开关。"""
+    assert _unsafe_to_truncate(_settings(db_name="studio_test"), allow_shared=False) is None
+    assert _unsafe_to_truncate(_settings(db_name="xigee_test"), allow_shared=False) is None
+
+
+def test_app_env_test_is_not_a_valid_env():
+    """门禁里【没有】app_env=test 这条出口 —— AppEnv 只认 dev/sit/prod。
+
+    以前这里有一条 test_app_env_test_is_allowed_without_override, 用 SimpleNamespace
+    拼出 app_env="test" 让门禁放行, 于是它一直在给一个不可能发生的分支背书。
+    改成钉住约束本身: 谁想把 test 加进 AppEnv, 这条会先红, 然后必须连带处理门禁、
+    .env.example、README 与 Makefile。
+    """
+    with pytest.raises(ValidationError):
+        _settings(app_env="test")
 
 
 def test_shared_sit_db_requires_explicit_override():
@@ -20,16 +63,6 @@ def test_shared_sit_db_requires_explicit_override():
     assert reason is not None
     assert _TRUNCATE_OVERRIDE_ENV in reason
     assert _unsafe_to_truncate(_settings(), allow_shared=True) is None
-
-
-def test_test_suffixed_db_is_allowed_without_override():
-    """专用测试库(名字含 test)无需额外开关。"""
-    assert _unsafe_to_truncate(_settings(db_name="studio_test"), allow_shared=False) is None
-
-
-def test_app_env_test_is_allowed_without_override():
-    """app_env=test 是指定的安全出口, 无需额外开关。"""
-    assert _unsafe_to_truncate(_settings(app_env="test"), allow_shared=False) is None
 
 
 def test_prod_env_is_never_allowed():
@@ -46,5 +79,11 @@ def test_prod_marker_in_host_is_never_allowed():
 
 
 def test_empty_db_name_is_not_silently_treated_as_test():
-    """库名缺失时不能误判成测试库放行。"""
-    assert _unsafe_to_truncate(_settings(db_name=""), allow_shared=False) is not None
+    """库名缺失时不能误判成测试库放行。
+
+    这个输入已经【无法通过正常构造拿到】—— Settings 现在要求 db_name 非空(见
+    app/core/config.py 的 validate_db_identity)。这里用 model_construct 绕过字段校验是
+    刻意的: 门禁是个纯函数, 它的防线不该建立在"调用方一定校验过了"之上。
+    """
+    settings = Settings.model_construct(app_env="dev", db_name="", db_host="10.182.32.31")
+    assert _unsafe_to_truncate(settings, allow_shared=False) is not None

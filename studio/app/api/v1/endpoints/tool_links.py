@@ -57,7 +57,7 @@ async def list_tool_links(
     tool_id: int,
     db: DbSession,
     status_filter: LinkStatus | None = Query(None, alias="status"),
-) -> list[ToolLinkResponse]:
+) -> list[ToolLink]:
     # 刻意不校验工具是否存在: 未知工具返回 [], 而不是 404(见 tests 里的用例)。
     # 这是纯读接口, 空列表和"工具没有链接"对调用方是同一个意思, 不值得多一次查询。
     stmt = select(ToolLink).where(ToolLink.tool_id == tool_id)

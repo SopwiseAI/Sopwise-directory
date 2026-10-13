@@ -1,14 +1,15 @@
 from collections.abc import Collection, Iterable
+from typing import Any
 
 from fastapi import HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import ColumnElement, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import DeclarativeBase, InstrumentedAttribute
+from sqlalchemy.orm import InstrumentedAttribute
 
-from app.models import LinkStatus, Tool, ToolLink, ToolStatus, ToolTopic
+from app.models import LinkStatus, Tool, ToolLink, ToolStatus, ToolTopic, Topic
 
 
-def drop_none(data: dict, *, keep_none: Collection[str] = ()) -> dict:
+def drop_none(data: dict[str, Any], *, keep_none: Collection[str] = ()) -> dict[str, Any]:
     """移除显式 None 值。
 
     `model_dump(exclude_unset=True)` 仍会保留显式传入的 null; 对非空字段
@@ -21,7 +22,7 @@ def drop_none(data: dict, *, keep_none: Collection[str] = ()) -> dict:
 
 async def check_unique(
     db: AsyncSession,
-    model: type[DeclarativeBase],
+    model: type[Tool] | type[Topic],
     field: InstrumentedAttribute[str],
     value: str,
     *,
@@ -35,7 +36,10 @@ async def check_unique(
     的竞态窗口就交给它。
 
     Args:
-        model: SQLAlchemy 模型类
+        model: SQLAlchemy 模型类。只列 Tool / Topic —— 它们都带自增 id 且都有字符串
+               唯一列。写成 type[DeclarativeBase] 会让 model.id 变成未定义属性(mypy
+               报 attr-defined), 而用一个泛型 Protocol 去描述"有 id 的模型类"在这里
+               只是把断言换个地方藏起来。
         field: 要检查的列(只支持字符串列, 枚举列的取值由 schema 层保证)
         value: 待检查的值
         exclude_id: 更新场景下排除自身这一行
@@ -52,7 +56,7 @@ async def check_unique(
         )
 
 
-def active_link_exists():
+def active_link_exists() -> ColumnElement[bool]:
     """相关子查询:该工具存在 status='active' 的链接。
 
     抽出来是为了让 /topics 与 /tools 的计数口径只写一次。注意导出器【不用】它:

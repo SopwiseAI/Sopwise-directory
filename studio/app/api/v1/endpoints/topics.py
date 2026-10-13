@@ -32,7 +32,7 @@ async def list_topics(
     status_filter: TopicStatus | None = Query(None, alias="status"),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
-) -> list[TopicResponse]:
+) -> list[Topic]:
     base = select(Topic)
     if status_filter is not None:
         base = base.where(Topic.status == status_filter)
@@ -53,7 +53,7 @@ async def list_topics(
 
 
 @router.get("/{topic_id}", response_model=TopicResponse)
-async def get_topic(topic_id: int, db: DbSession) -> TopicResponse:
+async def get_topic(topic_id: int, db: DbSession) -> Topic:
     topic = await db.get(Topic, topic_id)
     if not topic:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Topic not found")
@@ -68,7 +68,7 @@ async def list_topic_tools(
     db: DbSession,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-) -> list[ToolResponse]:
+) -> list[Tool]:
     """该主题下的工具。
 
     这里【不过滤 status】——这是后台接口,编辑要能看到 draft/pending 的归属;
@@ -102,7 +102,7 @@ async def list_topic_tools(
 @router.post(
     "", response_model=TopicResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_write)]
 )
-async def create_topic(data: TopicCreate, db: DbSession) -> TopicResponse:
+async def create_topic(data: TopicCreate, db: DbSession) -> Topic:
     await check_unique(db, Topic, Topic.slug, data.slug, label="Slug")
     await check_unique(db, Topic, Topic.name, data.name, label="Topic name")
 
@@ -119,7 +119,7 @@ async def create_topic(data: TopicCreate, db: DbSession) -> TopicResponse:
 
 
 @router.put("/{topic_id}", response_model=TopicResponse, dependencies=[Depends(require_write)])
-async def update_topic(topic_id: int, data: TopicUpdate, db: DbSession) -> TopicResponse:
+async def update_topic(topic_id: int, data: TopicUpdate, db: DbSession) -> Topic:
     topic = await db.get(Topic, topic_id)
     if not topic:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Topic not found")

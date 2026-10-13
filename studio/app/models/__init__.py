@@ -140,6 +140,15 @@ class Topic(Base):
         Index("idx_topic_status_sort", "status", "sort_order"),
     )
 
+    # ── 非列属性 ──────────────────────────────────────────────────────────────
+    # 由 API 层在序列化前挂上的聚合值, 不是列, 所以【刻意不写 Mapped[]】。
+    # SQLAlchemy 2.0 对这种裸注解默认抛 MappedAnnotationError, __allow_unmapped__ 是
+    # 官方给的放行开关。代价要记住: 它同时会放过"漏写 Mapped[] 的真列", 所以往这两个
+    # 类里加属性时先想清楚是列还是非列, 别让这个开关把错误藏起来。
+    __allow_unmapped__ = True
+    # 会进导出的工具数(见 app/api/v1/endpoints/topics.py 的 _published_tool_count)
+    tool_count: int
+
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     slug: Mapped[str] = mapped_column(String(64), nullable=False)
     name: Mapped[str] = mapped_column(String(64), nullable=False)
@@ -168,6 +177,14 @@ class Tool(Base):
         UniqueConstraint("name", name="uk_tool_name"),
         Index("idx_tool_status_sort", "status", "sort_order"),
     )
+
+    # ── 非列属性(同上, 见 Topic 的说明) ────────────────────────────────────────
+    # 三个都从 tool_topics 关联行摊平而来, 由 hydrate_tools() 赋值 ——
+    # is_primary / sort_order 是每条关系自己的属性, 必须走那张表, 不能从 Topic 推导。
+    __allow_unmapped__ = True
+    topics: list[Topic]
+    topic_ids: list[int]
+    primary_topic_id: int | None
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     slug: Mapped[str] = mapped_column(String(64), nullable=False)

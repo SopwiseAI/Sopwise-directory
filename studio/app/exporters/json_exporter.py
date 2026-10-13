@@ -19,6 +19,7 @@ import tempfile
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,6 +30,12 @@ from app.models import LinkStatus, Pricing, Tool, ToolLink, ToolStatus, ToolTopi
 from app.schemas.common import ExportResponse
 
 logger = logging.getLogger(__name__)
+
+# 导出条目是逐字段拼出来的(可选字段按 NULL 语义【省略键】而不是输出 null, 见
+# 文件头的规则), 所以结构上就是松散的 dict。取个名字只是让签名读起来仍然是
+# "主题列表 / 工具列表", 别把它当成有保证的 schema —— 形状的权威定义在
+# schema/topics.data.jsonc 与 schema/tools.data.jsonc。
+type ExportItem = dict[str, Any]
 
 DEFAULT_TOPIC_ICON = "Box"
 UNCATEGORIZED_SLUG = "misc"
@@ -140,7 +147,7 @@ async def export_to_json(session: AsyncSession) -> ExportResponse:
     )
 
 
-def _ensure_uncategorized(topics: list[dict], tools: list[dict]) -> None:
+def _ensure_uncategorized(topics: list[ExportItem], tools: list[ExportItem]) -> None:
     """若存在回退到 misc 的工具, 保证主题列表里有这一项。
 
     正常情况下 misc 是 xg_topic 里一条真实种子行(见 schema.sql 第 5 节);
@@ -160,7 +167,7 @@ def _ensure_uncategorized(topics: list[dict], tools: list[dict]) -> None:
         )
 
 
-def _fill_tool_counts(topics: list[dict], tools: list[dict]) -> None:
+def _fill_tool_counts(topics: list[ExportItem], tools: list[ExportItem]) -> None:
     """按【已导出的 tools[]】就地聚合 toolCount。
 
     刻意不另跑一条 SQL:口径必须和最终产物逐字一致,从同一个列表里数出来
@@ -174,18 +181,18 @@ def _fill_tool_counts(topics: list[dict], tools: list[dict]) -> None:
         topic["toolCount"] = counts.get(topic["id"], 0)
 
 
-async def _fetch_topics(session: AsyncSession) -> tuple[list[dict], Counter[str]]:
+async def _fetch_topics(session: AsyncSession) -> tuple[list[ExportItem], Counter[str]]:
     stmt = select(Topic).where(Topic.status == TopicStatus.ACTIVE).order_by(Topic.sort_order.desc(), Topic.id)
     rows = (await session.execute(stmt)).scalars().all()
 
-    topics: list[dict] = []
+    topics: list[ExportItem] = []
     skipped: Counter[str] = Counter()
     for row in rows:
         if _blank(row.slug) or _blank(row.name):
             logger.warning("跳过主题 id=%s: slug/name 为空", row.id)
             skipped["主题 slug/name 为空"] += 1
             continue
-        item: dict = {
+        item: ExportItem = {
             "id": row.slug,
             "name": row.name,
             "icon": row.icon or DEFAULT_TOPIC_ICON,
@@ -209,7 +216,7 @@ def _sorted_links(links: list[ToolLink]) -> list[ToolLink]:
     )
 
 
-async def _fetch_tools(session: AsyncSession) -> tuple[list[dict], Counter[str]]:
+async def _fetch_tools(session: AsyncSession) -> tuple[list[ExportItem], Counter[str]]:
     # 两个 selectinload 把 links / tool_topics(+topic) 各用一条 IN 查询取回:
     # 循环里再碰关系属性就是 N+1,而且异步 session 惰性加载会直接抛 MissingGreenlet
     stmt = (
@@ -223,7 +230,7 @@ async def _fetch_tools(session: AsyncSession) -> tuple[list[dict], Counter[str]]
     )
     rows = (await session.execute(stmt)).scalars().all()
 
-    tools: list[dict] = []
+    tools: list[ExportItem] = []
     skipped: Counter[str] = Counter()
     for row in rows:
         active_links = _sorted_links(row.links)
@@ -254,7 +261,7 @@ async def _fetch_tools(session: AsyncSession) -> tuple[list[dict], Counter[str]]
             if tt.topic is not None and tt.topic.status == TopicStatus.ACTIVE
         ]
 
-        item: dict = {
+        item: ExportItem = {
             "id": row.slug,
             "name": row.name,
             "tagline": row.tagline,

@@ -5,9 +5,11 @@
 某个端点漏挂 require_write 不会被任何测试发现。
 """
 
+from typing import Any
+
 import pytest
 
-_MINIMAL_TOOL = {
+_MINIMAL_TOOL: dict[str, Any] = {
     "slug": "auth-tool",
     "name": "鉴权工具",
     "tagline": "用于鉴权用例。",
@@ -17,7 +19,7 @@ _MINIMAL_TOOL = {
     "languages": ["zh"],
 }
 
-_WRITE_ROUTES = [
+_WRITE_ROUTES: list[tuple[str, str, dict[str, Any] | None]] = [
     ("post", "/api/v1/topics", {"slug": "auth-topic", "name": "鉴权主题"}),
     ("put", "/api/v1/topics/1", {"name": "改名"}),
     ("delete", "/api/v1/topics/1", None),

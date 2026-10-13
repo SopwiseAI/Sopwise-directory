@@ -1,5 +1,6 @@
 import os
 import sys
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
@@ -14,7 +15,7 @@ _is_test = bool(os.getenv("PYTEST_CURRENT_TEST")) or "pytest" in sys.modules
 
 settings = get_settings()
 
-_engine_kwargs: dict = {
+_engine_kwargs: dict[str, Any] = {
     "echo": settings.db_echo,
     # 双保险: 服务端 wait_timeout 掐掉的连接靠 pre_ping 剔除, pool_recycle 提前换掉
     # 闲置连接, 免得把一个已经死掉的连接借给请求

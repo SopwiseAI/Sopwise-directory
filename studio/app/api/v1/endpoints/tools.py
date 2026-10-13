@@ -261,7 +261,7 @@ async def list_tools(
     featured: bool | None = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-) -> list[ToolResponse]:
+) -> list[Tool]:
     base = select(Tool)
     if status_filter is not None:
         base = base.where(Tool.status == status_filter)
@@ -287,7 +287,7 @@ async def list_tools(
 
 
 @router.get("/{tool_id}", response_model=ToolResponse)
-async def get_tool(tool_id: int, db: DbSession) -> ToolResponse:
+async def get_tool(tool_id: int, db: DbSession) -> Tool:
     tool = await _tool_or_404(db, tool_id)
     return await hydrate_tool(db, tool)
 
@@ -295,7 +295,7 @@ async def get_tool(tool_id: int, db: DbSession) -> ToolResponse:
 @router.post(
     "", response_model=ToolResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_write)]
 )
-async def create_tool(data: ToolCreate, db: DbSession) -> ToolResponse:
+async def create_tool(data: ToolCreate, db: DbSession) -> Tool:
     # 先做完 payload 自身的校验再碰库: 非法输入不该产生任何查询
     initial_status = ToolStatus(data.status)
     if initial_status not in _VALID_INITIAL_STATUSES:
@@ -350,7 +350,7 @@ async def create_tool(data: ToolCreate, db: DbSession) -> ToolResponse:
 
 
 @router.put("/{tool_id}", response_model=ToolResponse, dependencies=[Depends(require_write)])
-async def update_tool(tool_id: int, data: ToolUpdate, db: DbSession) -> ToolResponse:
+async def update_tool(tool_id: int, data: ToolUpdate, db: DbSession) -> Tool:
     # 加锁读放最前面: 这个函数既要读 status 做迁移判断, 又要改主主题, 两者都不能
     # 基于加锁前的旧快照。锁的粒度是"一个工具", 后台逐条编辑不会成为瓶颈。
     tool = await load_tool(db, tool_id, for_update=True)

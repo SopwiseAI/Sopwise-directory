@@ -23,7 +23,11 @@ def _settings(**kwargs) -> Settings:
 def test_database_url_encodes_special_chars_in_password():
     s = _settings(db_password="a b@c/d")
     assert "a%20b%40c%2Fd" in s.database_url
-    assert unquote(urlparse(s.database_url).password) == "a b@c/d"
+    password = urlparse(s.database_url).password
+    # password 的类型是 str | None; 先断言非 None, 否则 unquote(None) 抛的 TypeError
+    # 会把"URL 里根本没有 password 段"这件事伪装成别的问题
+    assert password is not None
+    assert unquote(password) == "a b@c/d"
 
 
 def test_database_url_encodes_db_name():

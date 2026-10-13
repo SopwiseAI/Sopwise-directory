@@ -6,14 +6,14 @@ prod 下额外同步一份无后缀的 topics.json / tools.json 给前端。
 
 import json
 from datetime import date
-from types import SimpleNamespace
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 from sqlalchemy import update
 
 from app.core.database import AsyncSessionLocal
 from app.exporters.json_exporter import _invalid_reason, _write_text_atomic, export_to_json
-from app.models import Tool, Topic
+from app.models import Access, Origin, Pricing, Tool, Topic
 from app.schemas.common import ExportResponse
 from tests.conftest import create_link, create_tool, create_topic
 
@@ -21,7 +21,7 @@ from tests.conftest import create_link, create_tool, create_topic
 def _mock_settings(tmp_path, app_env: str = "dev") -> MagicMock:
     """把导出路径指到 tmp_path, 避免测试覆盖真实的 web/data 产物。"""
 
-    def export_paths(*, frontend_names: bool = False) -> dict:
+    def export_paths(*, frontend_names: bool = False) -> dict[str, Any]:
         suffix = "" if frontend_names else f"-{app_env}"
         return {
             "topics": tmp_path / f"topics{suffix}.json",
@@ -34,25 +34,32 @@ def _mock_settings(tmp_path, app_env: str = "dev") -> MagicMock:
     return mock
 
 
-def _read(path) -> list:
+def _read(path: Any) -> list[Any]:
     with open(path, encoding="utf-8") as handle:
-        return json.load(handle)
+        parsed: list[Any] = json.load(handle)
+        return parsed
 
 
-def _row(**overrides) -> SimpleNamespace:
-    """_invalid_reason 只读属性, 用 SimpleNamespace 造行即可绕开 ORM/库约束。"""
-    values: dict = {
+def _row(**overrides: Any) -> Tool:
+    """造一行给 _invalid_reason 用。
+
+    刻意用【真的 Tool】而不是 SimpleNamespace: 假对象会连字段名写错都发现不了
+    (_invalid_reason 换个属性名, 测试照样绿)。真模型赋值时会当场报 TypeError。
+    overrides 收 Any 是有意的 —— 这个 helper 存在的意义之一就是塞进"库里才会有"的
+    脏值(pricing="enterprise" 这种直连改库产物), 那正是类型系统禁止的取值。
+    """
+    values: dict[str, Any] = {
         "slug": "x",
         "name": "X",
         "tagline": "句末有标点。",
-        "pricing": "free",
-        "origin": "cn",
-        "access": "direct",
+        "pricing": Pricing.FREE,
+        "origin": Origin.CN,
+        "access": Access.DIRECT,
         "languages": ["zh"],
         "tags": [],
     }
     values.update(overrides)
-    return SimpleNamespace(**values)
+    return Tool(**values)
 
 
 # ── 鉴权 ──────────────────────────────────────────────────────────────────────
@@ -608,7 +615,11 @@ def test_invalid_reason_flags_blank_url():
 
 def test_invalid_reason_flags_unknown_pricing():
     """ENUM 列让这种行不可能从 API 进来, 但直连改库仍可能; 导出端要兜住。"""
-    assert "pricing" in _invalid_reason(_row(pricing="enterprise"), "https://example.com")
+    reason = _invalid_reason(_row(pricing="enterprise"), "https://example.com")
+    # 先收口再判子串: _invalid_reason 返回 None 时 "pricing" in None 抛的是 TypeError,
+    # 报错信息会指向这里而不是"它没返回原因"
+    assert reason is not None
+    assert "pricing" in reason
 
 
 def test_invalid_reason_flags_empty_languages():

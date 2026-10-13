@@ -4,12 +4,13 @@ import secrets
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.exc import TimeoutError as SATimeoutError
+from starlette.middleware.base import RequestResponseEndpoint
 
 from app.api.v1.router import router as v1_router
 from app.core.config import get_app_version, get_settings
@@ -77,7 +78,7 @@ app.add_middleware(
 
 
 @app.middleware("http")
-async def add_request_id(request: Request, call_next):
+async def add_request_id(request: Request, call_next: RequestResponseEndpoint) -> Response:
     request_id = _request_id_of(request)
     request.state.request_id = request_id
     response = await call_next(request)

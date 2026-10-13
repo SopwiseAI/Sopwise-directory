@@ -1,7 +1,9 @@
 """请求/响应模型的校验规则守卫。"""
 
+from typing import Any
+
 import pytest
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from app.schemas.models import (
     ToolCreate,
@@ -13,14 +15,14 @@ from app.schemas.models import (
     TopicUpdate,
 )
 
-TOPIC_SLUG_MODELS = [TopicCreate, TopicUpdate]
+TOPIC_SLUG_MODELS: list[type[BaseModel]] = [TopicCreate, TopicUpdate]
 SLUG_VALID = ["a", "chat-assistant", "topic-1", "zapier", "api"]
 SLUG_INVALID = ["Chat", "chat assistant", "chat_assistant", "-chat", "chat-", "中文", ""]
 
 
-def _tool_payload(**overrides) -> dict:
+def _tool_payload(**overrides: Any) -> dict[str, Any]:
     """ToolCreate 的合法底稿(必填字段一个都不能少)。"""
-    payload: dict = {
+    payload: dict[str, Any] = {
         "slug": "tool",
         "name": "工具",
         "tagline": "一句话简介。",

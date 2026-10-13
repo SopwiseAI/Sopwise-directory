@@ -72,12 +72,19 @@ def normalize_url(raw_url: str) -> str:
     except ValueError:
         raise InvalidURLError(f"Invalid URL: {raw_url}") from None
 
-    scheme, netloc, path, query, _ = urlsplit(normalized)
+    # url_normalize 的声明是 str | None(它只在入参为 None 时回 None)。我们的入参必然
+    # 非空, 但类型上必须收口: 不挡的话 urlsplit(None) 抛的是 TypeError, 会漏成 500。
+    if not normalized:
+        raise InvalidURLError(f"Invalid URL: {raw_url}")
 
-    path = "/" if path == "/" or not path else path.rstrip("/")
-    query = "&".join(sorted(query.split("&"))) if query else ""
+    # 刻意不复用上面的 scheme / netloc: 那几个来自我们自己拼的串, 这里来自
+    # url_normalize 的返回值。名字分开, 类型推断和阅读都不用再回头对上下文。
+    norm_scheme, norm_netloc, norm_path, norm_query, _ = urlsplit(normalized)
 
-    return urlunsplit((scheme, netloc, path, query, ""))
+    norm_path = "/" if norm_path in ("", "/") else norm_path.rstrip("/")
+    norm_query = "&".join(sorted(norm_query.split("&"))) if norm_query else ""
+
+    return urlunsplit((norm_scheme, norm_netloc, norm_path, norm_query, ""))
 
 
 def url_hash_normalized(normalized_url: str) -> str:

@@ -4,10 +4,10 @@ from functools import lru_cache
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as pkg_version
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 from urllib.parse import quote
 
-from pydantic import Field, field_validator
+from pydantic import Field, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
@@ -59,13 +59,13 @@ class Settings(BaseSettings):
 
     @field_validator("log_level", mode="before")
     @classmethod
-    def normalize_log_level(cls, v):
+    def normalize_log_level(cls, v: Any) -> Any:
         # LOG_LEVEL=info 是最顺手的写法, 但 Literal 只做精确匹配, 这里统一成大写
         return v.upper() if isinstance(v, str) else v
 
     @field_validator("db_host", "db_name", "db_user")
     @classmethod
-    def validate_db_identity(cls, v: str, info) -> str:
+    def validate_db_identity(cls, v: str, info: ValidationInfo) -> str:
         # 这三个键空着不会在启动时报错, 而是等到第一次查询才炸出 aiomysql 的原始
         # 错误("No database selected" / "Access denied"), 排查成本高得多。
         # db_password 刻意不校验: 本地库允许空密码, 那是合法配置。
@@ -75,7 +75,7 @@ class Settings(BaseSettings):
 
     @field_validator("app_debug")
     @classmethod
-    def validate_app_debug(cls, v, info):
+    def validate_app_debug(cls, v: bool, info: ValidationInfo) -> bool:
         env = info.data.get("app_env", "dev")
         if env == "prod" and v:
             raise ValueError("app_debug must be False in prod (configure APP_DEBUG=false in .env.prod)")
@@ -83,7 +83,7 @@ class Settings(BaseSettings):
 
     @field_validator("api_key")
     @classmethod
-    def validate_api_key(cls, v, info):
+    def validate_api_key(cls, v: str, info: ValidationInfo) -> str:
         env = info.data.get("app_env", "dev")
         if not v:
             raise ValueError(f"api_key must not be empty (configure API_KEY in .env.{env})")

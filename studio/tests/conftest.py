@@ -17,6 +17,7 @@
 import logging
 import os
 from collections.abc import AsyncGenerator
+from typing import Any
 
 import pytest
 import pytest_asyncio
@@ -59,7 +60,11 @@ def _unsafe_to_truncate(settings: Settings, *, allow_shared: bool) -> str | None
     口径, 由严格到宽松:
       1. 【永远拒绝】app_env=prod, 或 db_name/db_host 命中 prod/prd/production。
          这一条不接受任何环境变量豁免。
-      2. 【直接放行】app_env=test, 或 db_name 含 test —— 专用测试库, 无需额外开关。
+      2. 【直接放行】db_name 含 test —— 专用测试库, 无需额外开关。
+         刻意【不看】app_env: AppEnv 只有 dev/sit/prod 三个取值, 判 app_env == "test"
+         是永远走不到的分支(Settings 会先把 APP_ENV=test 拒掉)。这里曾经有那条分支,
+         而且还有一条绕过 Settings 校验的用例在替它背书 —— 想加 test 出口, 先看
+         tests/test_db_safety.py 里钉住这个约束的那条用例。
       3. 【需显式开关】其余情况(例如 dev 指向名字带 sit 的共享库)必须设置
          STUDIO_ALLOW_SHARED_DB_TRUNCATE=1 才放行。
     """
@@ -69,7 +74,7 @@ def _unsafe_to_truncate(settings: Settings, *, allow_shared: bool) -> str | None
 
     if settings.app_env == "prod" or any(hint in name or hint in host for hint in _PROD_HINTS):
         return f"目标库疑似生产环境({target}), 拒绝运行破坏性测试"
-    if settings.app_env == "test" or "test" in name:
+    if "test" in name:
         return None
     if allow_shared:
         return None
@@ -84,7 +89,7 @@ def _guard_destructive_db(settings: Settings) -> None:
     allow_shared = os.getenv(_TRUNCATE_OVERRIDE_ENV) == "1"
     if reason := _unsafe_to_truncate(settings, allow_shared=allow_shared):
         pytest.exit(reason, returncode=3)
-    if allow_shared and "test" not in (settings.db_name or "").lower() and settings.app_env != "test":
+    if allow_shared and "test" not in (settings.db_name or "").lower():
         logging.getLogger(__name__).warning(
             "clean_db 将在共享库 %s/%s 上 TRUNCATE xg_* 表(由 %s=1 显式放行)",
             settings.db_host,
@@ -140,13 +145,16 @@ async def create_topic(
     description: str | None = None,
     sort_order: int = 0,
     status: str = "active",
-) -> dict:
-    payload: dict = {"slug": slug, "name": name, "icon": icon, "sort_order": sort_order, "status": status}
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {"slug": slug, "name": name, "icon": icon, "sort_order": sort_order, "status": status}
     if description is not None:
         payload["description"] = description
     resp = await client.post("/api/v1/topics", json=payload)
     assert resp.status_code == 201, resp.text
-    return resp.json()
+    # resp.json() 是 Any, 显式落到 dict 上: 工厂函数的返回值必须是有形状的,
+    # 否则 mypy 的 warn_return_any 会一路往上传染(以前它是返回 Any 的)
+    data: dict[str, Any] = resp.json()
+    return data
 
 
 async def create_tool(
@@ -167,8 +175,8 @@ async def create_tool(
     status: str = ToolStatus.DRAFT,
     topic_ids: list[int] | None = None,
     primary_topic_id: int | None = None,
-    links: list[dict] | None = None,
-) -> dict:
+    links: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     """建工具。
 
     status 传 published/archived 时自动补走迁移流程: create 只允许 draft/pending,
@@ -178,7 +186,7 @@ async def create_tool(
     needs_publish = wanted in (ToolStatus.PUBLISHED, ToolStatus.ARCHIVED)
     create_status = ToolStatus.PENDING if needs_publish else wanted
 
-    payload: dict = {
+    payload: dict[str, Any] = {
         "slug": slug,
         "name": name,
         "tagline": tagline,
@@ -203,7 +211,7 @@ async def create_tool(
 
     resp = await client.post("/api/v1/tools", json=payload)
     assert resp.status_code == 201, resp.text
-    data = resp.json()
+    data: dict[str, Any] = resp.json()
 
     if needs_publish:
         resp = await client.put(f"/api/v1/tools/{data['id']}", json={"status": ToolStatus.PUBLISHED})
@@ -226,10 +234,13 @@ async def create_link(
     is_primary: bool = False,
     status: str = "active",
     sort_order: int = 0,
-) -> dict:
-    payload: dict = {"url": url, "is_primary": is_primary, "status": status, "sort_order": sort_order}
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {"url": url, "is_primary": is_primary, "status": status, "sort_order": sort_order}
     if label:
         payload["label"] = label
     resp = await client.post(f"/api/v1/tools/{tool_id}/links", json=payload)
     assert resp.status_code == 201, resp.text
-    return resp.json()
+    # resp.json() 是 Any, 显式落到 dict 上: 工厂函数的返回值必须是有形状的,
+    # 否则 mypy 的 warn_return_any 会一路往上传染(以前它是返回 Any 的)
+    data: dict[str, Any] = resp.json()
+    return data

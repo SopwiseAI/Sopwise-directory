@@ -9,6 +9,7 @@ import logging
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 from app.core.config import Settings
 from app.core.logging import configure_logging
@@ -26,7 +27,7 @@ def _settings(**kwargs) -> Settings:
 def test_configure_logging_passes_settings_level(monkeypatch):
     # logging.basicConfig 在 root 已有 handler(pytest 挂了)时是 no-op, 所以这里替换掉它,
     # 只断言我们确实把 Settings 的级别传了出去
-    captured: dict = {}
+    captured: dict[str, Any] = {}
     monkeypatch.setattr(logging, "basicConfig", lambda **kwargs: captured.update(kwargs))
 
     configure_logging(_settings(log_level="warning"))
