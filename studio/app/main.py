@@ -14,9 +14,9 @@ from sqlalchemy.exc import TimeoutError as SATimeoutError
 from app.api.v1.router import router as v1_router
 from app.core.config import get_app_version, get_settings
 from app.core.database import engine
+from app.core.logging import configure_logging
 from app.utils.url import InvalidURLError
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(name)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # 日志/性能都要求请求 id 是短且可打印的, 具体格式不限
@@ -41,6 +41,8 @@ def _request_id_of(request: Request) -> str:
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     settings = get_settings()
+    # 日志在这里配置, 不在模块导入时: import app.main 不该产生全局副作用
+    configure_logging(settings)
     logger.info(
         "Studio starting [%s] | DB: %s:%s/%s",
         settings.app_env,
@@ -99,7 +101,7 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
         loc = ".".join(str(p) for p in err.get("loc", []))
         errors.append(f"{loc}: {err.get('msg', '')}")
     return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
         content={"detail": "; ".join(errors)},
         headers={"X-Request-ID": getattr(request.state, "request_id", "-")},
     )
@@ -122,7 +124,7 @@ async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSON
     detail = "Resource conflict"
     if "cannot be null" in raw:
         # MySQL 1048: 说明端点漏了必填校验, 这是请求内容的问题, 不是资源状态冲突
-        status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+        status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
         detail = "Missing required field"
     elif "Duplicate entry" in raw or "UNIQUE" in raw:
         detail = "Resource conflict — unique constraint violated"
@@ -167,7 +169,10 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
         request.method,
         request.url.path,
         exc,
-        exc_info=True,
+        # 传异常实例而不是 True: True 取的是 sys.exc_info(), 而这个处理器是被 Starlette
+        # 在自己的 except 块里 await 的, 能拿到调用栈纯属实现细节。传实例在哪都能打印
+        # 完整 traceback(ruff 的 LOG014 指的也是这条)。
+        exc_info=exc,
     )
     return JSONResponse(
         status_code=500,

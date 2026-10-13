@@ -53,7 +53,7 @@ def split_link_url(raw_url: str) -> tuple[str, str, str]:
         # schema 那层只能拦住非 http(s)/缺主机名(422); 端口非法这类要等归一化才暴露,
         # 所以在这里补一个 422(而不是让 main.py 的全局 InvalidURLError 处理器回 400)
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(exc),
         ) from exc
     # 用 url_hash_normalized 而不是 url_hash(raw_url): 后者内部会再归一化一次,
@@ -62,7 +62,7 @@ def split_link_url(raw_url: str) -> tuple[str, str, str]:
     # (一个汉字 1 字符 → 9 字符), 落库 VARCHAR(2048) 超长会报 1406(500)。
     if len(normalized) > 2048:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="URL is too long after normalization (max 2048 characters)",
         )
     return raw_url, normalized, url_hash_normalized(normalized)

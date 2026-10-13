@@ -13,6 +13,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 logger = logging.getLogger(__name__)
 
 AppEnv = Literal["dev", "sit", "prod"]
+LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 
 def get_app_version() -> str:
@@ -30,6 +31,9 @@ class Settings(BaseSettings):
     app_debug: bool = True
     app_host: str = "127.0.0.1"
     app_port: int = 8000
+
+    # 只影响 root logger 的级别(见 app/core/logging.py); 取值必须是大写字面量之一
+    log_level: LogLevel = "INFO"
 
     db_host: str = "localhost"
     db_port: int = 3306
@@ -52,6 +56,22 @@ class Settings(BaseSettings):
         env_file=str(_STUDIO_ROOT / f".env.{os.getenv('APP_ENV', 'dev')}"),
         env_file_encoding="utf-8",
     )
+
+    @field_validator("log_level", mode="before")
+    @classmethod
+    def normalize_log_level(cls, v):
+        # LOG_LEVEL=info 是最顺手的写法, 但 Literal 只做精确匹配, 这里统一成大写
+        return v.upper() if isinstance(v, str) else v
+
+    @field_validator("db_host", "db_name", "db_user")
+    @classmethod
+    def validate_db_identity(cls, v: str, info) -> str:
+        # 这三个键空着不会在启动时报错, 而是等到第一次查询才炸出 aiomysql 的原始
+        # 错误("No database selected" / "Access denied"), 排查成本高得多。
+        # db_password 刻意不校验: 本地库允许空密码, 那是合法配置。
+        if not v.strip():
+            raise ValueError(f"{info.field_name} 不能为空(在 .env.<APP_ENV> 里配置)")
+        return v.strip()
 
     @field_validator("app_debug")
     @classmethod
@@ -87,8 +107,13 @@ class Settings(BaseSettings):
         # main.py 里 allow_credentials=True 是写死的。Starlette 在这个组合下遇到 "*" 会把
         # 请求的 Origin 原样回显,等于对任意站点开放凭证;现在只用 X-API-Key(不是浏览器
         # 自动携带的凭证)所以风险有限,但哪天加了 Cookie 会话就是真漏洞。宁可启动失败。
-        if "*" in {origin.strip() for origin in v.split(",")}:
+        origins = [origin.strip() for origin in v.split(",") if origin.strip()]
+        if "*" in origins:
             raise ValueError("cors_origins 不能用 *(allow_credentials=True 下会回显任意 Origin), 请逐个列白名单")
+        # 空值同样是坑: CORS_ORIGINS= 不会报错, 只是浏览器请求全被挡下, 前端只看到
+        # 一个没有细节的 CORS 错误。.env.example 写明这是必填项, 这里兑现它。
+        if not origins:
+            raise ValueError("cors_origins 不能为空(如 http://localhost:3000, 多个用逗号分隔)")
         return v
 
     @property

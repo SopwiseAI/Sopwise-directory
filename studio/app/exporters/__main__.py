@@ -8,14 +8,17 @@ import asyncio
 import logging
 import sys
 
+from app.core.config import get_settings
 from app.core.database import AsyncSessionLocal, engine
+from app.core.logging import configure_logging
 from app.exporters.json_exporter import export_to_json
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(name)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 async def main() -> int:
+    # 与 app.main 的 lifespan 一致: 日志在启动路径上配置, 不在模块导入时
+    configure_logging(get_settings())
     logger.info("Starting JSON export...")
     try:
         async with AsyncSessionLocal() as session:
