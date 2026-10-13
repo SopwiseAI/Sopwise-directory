@@ -1,45 +1,106 @@
-"""公共 fixtures — 所有测试共享。
+"""公共 fixtures -- 所有测试共享。
 
 设计原则:
-  1. 每个测试函数独立，不依赖其他测试的副作用
-  2. clean_db 仅在 setup 阶段清理（下一个测试的 setup 会再清理一次，teardown 冗余）
-  3. async_client fixture 提供 httpx AsyncClient
+  1. 每个测试函数独立, 不依赖其他测试的副作用
+  2. clean_db 仅在 setup 阶段清理(下一个测试的 setup 会再清理一次, teardown 冗余)
+  3. async_client fixture 提供带 API Key 的 httpx AsyncClient
   4. api_headers fixture 提供导出端点鉴权
   5. 工厂函数简化测试数据构造
+
+表名已从上一代的 sd_product* 换到 xg_*: TRUNCATE 顺序按外键依赖从子到父,
+外加 FOREIGN_KEY_CHECKS=0 兜底(否则父表 TRUNCATE 会被 RESTRICT 外键挡住)。
+
+⚠ clean_db 是【破坏性】的: 它把整张 xg_* 表清空。默认连的又是一个名字带 sit 的
+远端共享库, 所以进 TRUNCATE 之前必须过 _guard_destructive_db 那道门禁(见下)。
 """
 
 import logging
+import os
 from collections.abc import AsyncGenerator
 
+import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 
-from app.core.config import get_settings
+from app.core.config import Settings, get_settings
 from app.core.database import AsyncSessionLocal, engine
 from app.main import app
-from app.models import ProductStatus
+from app.models import ToolStatus
 
-API_KEY = get_settings().api_key
+settings = get_settings()
+API_KEY = settings.api_key
 
 # 抑制测试中的 SQL 日志
 engine.echo = False
 logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
+# 子表在前: 即便将来去掉 FOREIGN_KEY_CHECKS=0 也能按顺序清干净
 _TABLES = [
-    "sd_product_tag",
-    "sd_product_category",
-    "sd_product_link",
-    "sd_product",
-    "sd_category",
-    "sd_tag",
+    "xg_tool_link",
+    "xg_tool_topic",
+    "xg_tool",
+    "xg_topic",
 ]
+
+# ── 破坏性测试的库门禁 ────────────────────────────────────────────────────────
+# clean_db 会清空整张表。默认的 dev 配置连的是 10.182.32.31:3312/mfbp_kazar_sit
+# —— 库名里写着 sit, 并不保证"用完即弃"。清错了没有第二次机会, 所以这里放一道
+# 硬门禁, 而不是靠"大家记得别连错"。
+_TRUNCATE_OVERRIDE_ENV = "STUDIO_ALLOW_SHARED_DB_TRUNCATE"
+_PROD_HINTS = ("prod", "prd", "production")
+_guard_checked = False
+
+
+def _unsafe_to_truncate(settings: Settings, *, allow_shared: bool) -> str | None:
+    """返回拒绝理由(可以清库则 None)。拆成纯函数是为了能被单测直接覆盖判定矩阵。
+
+    口径, 由严格到宽松:
+      1. 【永远拒绝】app_env=prod, 或 db_name/db_host 命中 prod/prd/production。
+         这一条不接受任何环境变量豁免。
+      2. 【直接放行】app_env=test, 或 db_name 含 test —— 专用测试库, 无需额外开关。
+      3. 【需显式开关】其余情况(例如 dev 指向名字带 sit 的共享库)必须设置
+         STUDIO_ALLOW_SHARED_DB_TRUNCATE=1 才放行。
+    """
+    name = (settings.db_name or "").lower()
+    host = (settings.db_host or "").lower()
+    target = f"{host}/{name}"
+
+    if settings.app_env == "prod" or any(hint in name or hint in host for hint in _PROD_HINTS):
+        return f"目标库疑似生产环境({target}), 拒绝运行破坏性测试"
+    if settings.app_env == "test" or "test" in name:
+        return None
+    if allow_shared:
+        return None
+    return (
+        f"clean_db 会 TRUNCATE {target} 上的 xg_* 表, 但它看起来不是专用测试库。"
+        f" 确认无误后请设置 {_TRUNCATE_OVERRIDE_ENV}=1 再跑"
+    )
+
+
+def _guard_destructive_db(settings: Settings) -> None:
+    """门禁在第一次 clean_db 之前跑一次; 不通过则整场退出(不会碰库)。"""
+    allow_shared = os.getenv(_TRUNCATE_OVERRIDE_ENV) == "1"
+    if reason := _unsafe_to_truncate(settings, allow_shared=allow_shared):
+        pytest.exit(reason, returncode=3)
+    if allow_shared and "test" not in (settings.db_name or "").lower() and settings.app_env != "test":
+        logging.getLogger(__name__).warning(
+            "clean_db 将在共享库 %s/%s 上 TRUNCATE xg_* 表(由 %s=1 显式放行)",
+            settings.db_host,
+            settings.db_name,
+            _TRUNCATE_OVERRIDE_ENV,
+        )
 
 
 @pytest_asyncio.fixture(autouse=True)
 async def clean_db():
-    """每个测试前自动清理所有 sd_* 表数据，保证测试隔离。"""
+    """每个测试前自动清理所有 xg_* 表数据, 保证测试隔离。"""
+    global _guard_checked
+    if not _guard_checked:
+        _guard_destructive_db(settings)
+        _guard_checked = True
+
     async with AsyncSessionLocal() as session:
         await session.execute(text("SET FOREIGN_KEY_CHECKS = 0"))
         for table in _TABLES:
@@ -60,7 +121,7 @@ async def async_client() -> AsyncGenerator[AsyncClient]:
 
 @pytest_asyncio.fixture
 async def anon_client() -> AsyncGenerator[AsyncClient]:
-    """Client without API key — for testing auth failures."""
+    """Client without API key -- for testing auth failures."""
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://test",
@@ -71,80 +132,86 @@ async def anon_client() -> AsyncGenerator[AsyncClient]:
 # ── 工厂函数 ──────────────────────────────────────────────────────────────────
 
 
-async def create_category(
+async def create_topic(
     client: AsyncClient,
-    slug: str = "test-cat",
-    name: str = "测试分类",
-    icon: str = "Bot",
+    slug: str = "test-topic",
+    name: str = "测试主题",
+    icon: str = "Box",
     description: str | None = None,
     sort_order: int = 0,
-    status: int = 1,
+    status: str = "active",
 ) -> dict:
     payload: dict = {"slug": slug, "name": name, "icon": icon, "sort_order": sort_order, "status": status}
     if description is not None:
         payload["description"] = description
-    resp = await client.post("/api/v1/categories", json=payload)
+    resp = await client.post("/api/v1/topics", json=payload)
     assert resp.status_code == 201, resp.text
     return resp.json()
 
 
-async def create_tag(
+async def create_tool(
     client: AsyncClient,
-    slug: str = "test-tag",
-    name: str = "测试标签",
-    sort_order: int = 0,
-    status: int = 1,
-) -> dict:
-    resp = await client.post(
-        "/api/v1/tags",
-        json={"slug": slug, "name": name, "sort_order": sort_order, "status": status},
-    )
-    assert resp.status_code == 201, resp.text
-    return resp.json()
-
-
-async def create_product(
-    client: AsyncClient,
-    slug: str = "test-product",
-    name: str = "测试产品",
+    slug: str = "test-tool",
+    name: str = "测试工具",
+    *,
+    tagline: str = "测试工具的一句话简介。",
     description: str | None = None,
-    category_ids: list[int] | None = None,
     pricing: str = "free",
-    featured: bool = False,
+    is_open_source: bool = False,
+    origin: str = "overseas",
+    access: str = "direct",
+    languages: list[str] | None = None,
+    tags: list[str] | None = None,
+    is_featured: bool = False,
     sort_order: int = 0,
-    status: int = 0,
+    status: str = ToolStatus.DRAFT,
+    topic_ids: list[int] | None = None,
+    primary_topic_id: int | None = None,
     links: list[dict] | None = None,
-    tag_ids: list[int] | None = None,
 ) -> dict:
-    needs_transition = status in (ProductStatus.PUBLISHED, ProductStatus.ARCHIVED)
-    create_status = ProductStatus.PENDING if needs_transition else status
+    """建工具。
+
+    status 传 published/archived 时自动补走迁移流程: create 只允许 draft/pending,
+    所以先建成 pending, 再用 PUT 推到目标状态 -- 这也顺带验证了 published_at 的写入时机。
+    """
+    wanted = str(status)
+    needs_publish = wanted in (ToolStatus.PUBLISHED, ToolStatus.ARCHIVED)
+    create_status = ToolStatus.PENDING if needs_publish else wanted
+
     payload: dict = {
         "slug": slug,
         "name": name,
+        "tagline": tagline,
         "pricing": pricing,
-        "featured": featured,
+        "is_open_source": is_open_source,
+        "origin": origin,
+        "access": access,
+        "languages": languages if languages is not None else ["zh"],
+        "tags": tags if tags is not None else [],
+        "is_featured": is_featured,
         "sort_order": sort_order,
         "status": create_status,
     }
     if description is not None:
         payload["description"] = description
-    if category_ids:
-        payload["category_ids"] = category_ids
+    if topic_ids:
+        payload["topic_ids"] = topic_ids
+    if primary_topic_id is not None:
+        payload["primary_topic_id"] = primary_topic_id
     if links:
         payload["links"] = links
-    if tag_ids:
-        payload["tag_ids"] = tag_ids
-    resp = await client.post("/api/v1/products", json=payload)
+
+    resp = await client.post("/api/v1/tools", json=payload)
     assert resp.status_code == 201, resp.text
     data = resp.json()
 
-    if status == ProductStatus.PUBLISHED:
-        resp = await client.put(f"/api/v1/products/{data['id']}", json={"status": 2})
+    if needs_publish:
+        resp = await client.put(f"/api/v1/tools/{data['id']}", json={"status": ToolStatus.PUBLISHED})
         assert resp.status_code == 200, resp.text
         data = resp.json()
-    elif status == ProductStatus.ARCHIVED:
-        await client.put(f"/api/v1/products/{data['id']}", json={"status": 2})
-        resp = await client.put(f"/api/v1/products/{data['id']}", json={"status": 3})
+
+    if wanted == ToolStatus.ARCHIVED:
+        resp = await client.put(f"/api/v1/tools/{data['id']}", json={"status": ToolStatus.ARCHIVED})
         assert resp.status_code == 200, resp.text
         data = resp.json()
 
@@ -153,14 +220,16 @@ async def create_product(
 
 async def create_link(
     client: AsyncClient,
-    product_id: int,
+    tool_id: int,
     url: str = "https://example.com",
     label: str | None = None,
     is_primary: bool = False,
+    status: str = "active",
+    sort_order: int = 0,
 ) -> dict:
-    payload: dict = {"url": url, "is_primary": is_primary}
+    payload: dict = {"url": url, "is_primary": is_primary, "status": status, "sort_order": sort_order}
     if label:
         payload["label"] = label
-    resp = await client.post(f"/api/v1/products/{product_id}/links", json=payload)
+    resp = await client.post(f"/api/v1/tools/{tool_id}/links", json=payload)
     assert resp.status_code == 201, resp.text
     return resp.json()

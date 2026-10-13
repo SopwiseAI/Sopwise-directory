@@ -1,0 +1,129 @@
+// ============================================================================
+// 工具列表（tools）· 导出后的标准格式
+// ----------------------------------------------------------------------------
+// 顶层是【数组】，一个元素 = 一个工具。
+//
+// 成员规则【导出】（必须与 topics.data.jsonc 的 toolCount 口径逐字一致）:
+//   status = 'published' 且【存在 status='active' 的链接】
+//   即"已发布"不够，还必须至少有一条可用链接；否则该工具不进 tools[]（避免死链）。
+//   推论：tools[].url 永不为空。
+//
+// ⚠ 本文件是【字段写法样本】，不是数据集：只用 1 个元素演示每个字段怎么写。
+//   它引用的 chat / code / research 在 topics.data.jsonc 样本里并未全部列出，
+//   跨文件一致性由校验脚本负责——该脚本当前【缺失】。
+//
+// 数组顺序：库里的 sort_order DESC → published_at DESC → id 升序做 tie-break。
+//
+// 字段清单（16 个）:
+//   id             string   必填  ≤64           kebab-case
+//   name           string   必填  ≤128
+//   tagline        string   必填  ≤80
+//   description    string   可选  ≤500          NULL 时【省略该键】
+//   url            string   必填                必 https、无尾斜杠、无 www.
+//   topics         string[] 必填  ≥1            值来自 xg_topic.slug，首个即主主题
+//   tags           string[] 必填  ≤8            可为空数组；卡片只展示前 3 个
+//   pricing        enum     必填                free | freemium | paid
+//   openSource     boolean  必填
+//   origin         enum     必填                cn | overseas
+//   access         enum     必填                direct | proxy
+//   languages      string[] 必填  ≥1 且 ≤8      ISO 639-1 两字母小写，首项为主语言
+//   featured       boolean  必填
+//   publishedAt    string   可选  YYYY-MM-DD    正常由端点首次转 published 时写入；直连改库可造出缺失行，导出端会【省略该键】
+//   lastUpdatedAt  string   可选  YYYY-MM-DD    NULL 时【省略该键】
+//   links          object[] 可选                可为空数组或省略
+//
+// 校验归属：app 是唯一关卡 —— 库层没有 CHECK / ENUM（为兼容 MySQL 5.7 且便于加值），
+// 所有值域与形状校验都在 app/schemas 的 Pydantic 里。
+// 标注约定：【app】Pydantic/端点强制，违反必报错｜【导出】导出端实现｜【自觉】没有代码能查，只能靠 review
+//
+// 注意：本文件是【带注释的格式定义】，含 // 与尾随逗号，【不能被 JSON.parse】。
+//       真正导出的数据文件必须是严格 JSON。
+// ============================================================================
+[
+  {
+    // 对外主键，同时也是 URL 片段。kebab-case，发布后不得更改【自觉】。
+    // 格式由【app】校验保证；"不改"没有任何强制，改了所有外链会静默 404。
+    "id": "deepseek",
+
+    // 工具名称，用官方写法，别自行翻译或加后缀【自觉】。
+    // 库里有 UNIQUE 约束：同名工具无法共存（这是业务假设，不是技术必然）。
+    "name": "DeepSeek",
+
+    // 一句话简介。卡片上唯一展示的文案，也用于导出 awesome 风格清单。
+    //   句末带标点 ——【app】校验保证
+    //   客观陈述而非营销口号 ——【自觉】
+    //   不出现本站名、拉丁文开头需大写 ——【自觉】
+    // 另注意：awesome-lint 只认 ASCII 的 . ! ? …，中文句号「。」
+    // 需要在【生成清单那一步】转换；站内中文文案保持中文标点。
+    "tagline": "开源权重的通用大模型家族，推理与代码能力突出，价格极低。",
+
+    // 较长的补充说明，可选。供详情页与搜索索引使用，卡片不展示。NULL 时【省略该键】。
+    "description": "由深度求索发布的开源权重模型系列，覆盖通用对话与代码专用模型。官方 API 按 token 计费，权重可下载离线自部署，适合成本敏感的生产级集成。",
+
+    // 官方主链接。必须 https，且不得以 / 结尾、不得带 www. 前缀。
+    // 取自 is_primary=1 且 status='active' 的那条链接；取不到则回退首个 active 链接。
+    // 【已定】归一化在【写入端】完成（app/utils/url.py），导出端直取 url_normalized。
+    // 所以这几条要求由写入端保证：库里 url 是原始输入（不导出），url_normalized 才是导出值。
+    "url": "https://deepseek.com",
+
+    // 所属主题的 id 列表，至少 1 个。
+    // 值来自 xg_topic.slug（【不是】主键 id——那是 BIGINT，对不上 topics[].id）。
+    // 数组【首个即主主题】：导出 awesome 风格清单时，每个工具只在主主题下出现一次
+    //——awesome-lint 的 double-link 规则不允许同一条链接出现两次，
+    //  所以多主题工具不能在每个主题下都列一遍。
+    // 这些 id 必须都能在 topics 数组里找到；无有效主题时导出端回退到 misc「未分类」，
+    // 所以 misc 必须始终存在且不可禁用。
+    "topics": ["chat", "code", "research"],
+
+    // 标签：展示用短词，或检索用简称（如 ds = DeepSeek）。
+    // 卡片最多展示前 3 个；参与搜索加权与命中高亮。最多 8 个【app】。
+    // 注意：JSON 数组在 MySQL 8.0 无法建普通索引（需 8.0.17+ 多值索引），
+    //      按标签检索目前是全表扫；且没有受控词表，"开源"与"开放源代码"会各写各的【自觉】。
+    "tags": ["ds", "开源", "大模型", "推理", "低价 API"],
+
+    // 价格模式：free | freemium | paid
+    // 注意「是否开源」是【另一根正交的轴】，见下面的 openSource——
+    // 开源工具同样可以有付费的云托管版，所以两者不能压进同一个枚举。
+    "pricing": "freemium",
+
+    // 源码是否开放（授权属性，与 pricing 正交）。
+    // 例：DeepSeek 权重可下载 = true；而它的官方 API 仍按 token 收费（pricing=freemium）。
+    "openSource": true,
+
+    // 开发与运营主体所在地区：cn=国产（大陆主体），overseas=海外。
+    // 两个值都不给默认值【app 必填；库层 NOT NULL 且不给默认】：漏填必须报错，不能替编辑猜。
+    "origin": "cn",
+
+    // 大陆网络环境下是否需要代理才能正常使用——含打开、注册、登录、支付全链路，
+    // 任一环节需要代理即为 proxy（最常见的坑：站点能开，但只提供 Google 登录）。
+    // 易变属性：会被封也会解封，靠定期复检【自觉】，复检日期记在库里但不导出。
+    "access": "direct",
+
+    // 界面与交互支持的语言，ISO 639-1 两字母小写，按重要度排序，首项为主语言。
+    // 【app】校验"1~8 项、两字母小写、不重复"；库层只保证它是 JSON，什么都不拦。
+    // 注意"首项即主语言"是位置语义：整理性重排会静默改掉主语言【自觉】。
+    "languages": ["zh", "en"],
+
+    // 是否精选。
+    "featured": true,
+
+    // 收录进本站的日期（首次转为 published 时写入一次，之后不再变）。格式 YYYY-MM-DD。
+    // 由端点保证：转 published 时写入。库层没有耦合，直连改库能造出 published 却没日期的行。
+    "publishedAt": "2026-01-15",
+
+    // 工具自身的最后更新日期（外部事实，编辑器维护）。格式 YYYY-MM-DD。
+    // 与库里的审计列 updated_at（改库时间）无关，不要混。
+    "lastUpdatedAt": "2026-09-30",
+
+    // 官网之外的次要链接，可选。顺序：sort_order DESC → id 升序。
+    // label 取值：website | api | docs | github | playground | pricing | plugin | other
+    // ⚠ 主链接那一行的 label 不进这里（它是死数据），所以"主链接其实是 GitHub 仓库"
+    //    这件事在导出物里表达不出来。
+    "links": [
+      { "label": "docs", "url": "https://api-docs.deepseek.com" },
+      { "label": "api", "url": "https://platform.deepseek.com" },
+      { "label": "github", "url": "https://github.com/deepseek-ai" },
+      { "label": "pricing", "url": "https://api-docs.deepseek.com/quick_start/pricing" },
+    ],
+  },
+]

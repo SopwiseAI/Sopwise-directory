@@ -7,12 +7,17 @@ from sqlalchemy.pool import NullPool
 
 from app.core.config import get_settings
 
+# 测试下必须换成 NullPool: pytest-asyncio 每个用例一个事件循环, 池子会把上一轮循环里
+# 建的连接带进下一轮, 报 "attached to a different loop"。用 sys.modules 判断是为了让
+# conftest 在 import 阶段就生效(那时 PYTEST_CURRENT_TEST 还没设上)。
 _is_test = bool(os.getenv("PYTEST_CURRENT_TEST")) or "pytest" in sys.modules
 
 settings = get_settings()
 
 _engine_kwargs: dict = {
     "echo": settings.db_echo,
+    # 双保险: 服务端 wait_timeout 掐掉的连接靠 pre_ping 剔除, pool_recycle 提前换掉
+    # 闲置连接, 免得把一个已经死掉的连接借给请求
     "pool_pre_ping": True,
     "pool_recycle": 3600,
 }
@@ -28,6 +33,8 @@ engine = create_async_engine(settings.database_url, **_engine_kwargs)
 AsyncSessionLocal = async_sessionmaker(
     engine,
     class_=AsyncSession,
+    # commit 后还要能读属性(响应要序列化 ORM 对象)。expire_on_commit=True 会让那次读取
+    # 触发隐式 IO, 在异步 session 里直接抛 MissingGreenlet
     expire_on_commit=False,
 )
 

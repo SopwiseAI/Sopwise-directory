@@ -5,7 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase, InstrumentedAttribute
 
-from app.models import Product, ProductCategory, ProductStatus, ProductTag
+from app.models import LinkStatus, Tool, ToolLink, ToolStatus, ToolTopic
 
 
 def drop_none(data: dict, *, keep_none: Collection[str] = ()) -> dict:
@@ -28,14 +28,18 @@ async def check_unique(
     exclude_id: int | None = None,
     label: str = "Field",
 ) -> None:
-    """Check that a field value is unique, raising 409 if it exists.
+    """值已存在时抛 409, 否则放行。
+
+    先查再写是为了拿到可读的错误(库里的 UNIQUE 只会回一句 Duplicate entry, 前端拿不到
+    是哪个字段); 真正的唯一性仍由 xg_tool / xg_topic 的 UNIQUE 键兜底 —— 查与写之间
+    的竞态窗口就交给它。
 
     Args:
-        model: SQLAlchemy model class
-        field: Column to check
-        value: Value to check for
-        exclude_id: If set, ignores the row with this id (for updates)
-        label: Human-readable field name for error message
+        model: SQLAlchemy 模型类
+        field: 要检查的列(只支持字符串列, 枚举列的取值由 schema 层保证)
+        value: 待检查的值
+        exclude_id: 更新场景下排除自身这一行
+        label: 错误信息里的字段名
     """
     stmt = select(model.id).where(field == value)
     if exclude_id is not None:
@@ -48,31 +52,38 @@ async def check_unique(
         )
 
 
-async def published_category_counts(db: AsyncSession, category_ids: Iterable[int]) -> dict[int, int]:
-    """批量统计各分类下已发布(status=2)产品数, 返回 {category_id: count}."""
-    ids = set(category_ids)
+def active_link_exists():
+    """相关子查询:该工具存在 status='active' 的链接。
+
+    抽出来是为了让 /topics 与 /tools 的计数口径只写一次。注意导出器【不用】它:
+    导出端的 toolCount 是在最终的 tools[] 上就地聚合的(见 json_exporter._fill_tool_counts),
+    比再跑一条 SQL 更能保证"徽标数与主题页条数"逐字一致。
+    """
+    return select(ToolLink.id).where(ToolLink.tool_id == Tool.id, ToolLink.status == LinkStatus.ACTIVE).exists()
+
+
+async def published_tool_counts(db: AsyncSession, topic_ids: Iterable[int]) -> dict[int, int]:
+    """批量统计各主题下【会出现在 tools[] 里】的工具数, 返回 {topic_id: count}。
+
+    成员规则与 studio/sql/schema.sql 的【导出投影】逐字一致:
+        status='published' AND 存在 status='active' 的链接
+    少任何一个条件,导出的 toolCount 就会和主题页实际条数对不上。
+
+    按关联行统计,不看主题自己是不是 active —— 禁用主题不进导出,所以这里多算的那点
+    不会出现在产物里。传入空集合时直接返回 {},不产生无意义的 IN () 查询。
+    """
+    ids = set(topic_ids)
     if not ids:
         return {}
     stmt = (
-        select(ProductCategory.category_id, func.count().label("cnt"))
-        .join(Product, Product.id == ProductCategory.product_id)
-        .where(ProductCategory.category_id.in_(ids), Product.status == ProductStatus.PUBLISHED)
-        .group_by(ProductCategory.category_id)
+        select(ToolTopic.topic_id, func.count().label("cnt"))
+        .join(Tool, Tool.id == ToolTopic.tool_id)
+        .where(
+            ToolTopic.topic_id.in_(ids),
+            Tool.status == ToolStatus.PUBLISHED,
+            active_link_exists(),
+        )
+        .group_by(ToolTopic.topic_id)
     )
     rows = await db.execute(stmt)
-    return {row.category_id: row.cnt for row in rows}
-
-
-async def published_tag_product_counts(db: AsyncSession, tag_ids: Iterable[int]) -> dict[int, int]:
-    """批量统计各标签下已发布(status=2)产品数, 返回 {tag_id: count}."""
-    ids = set(tag_ids)
-    if not ids:
-        return {}
-    stmt = (
-        select(ProductTag.tag_id, func.count().label("cnt"))
-        .join(Product, Product.id == ProductTag.product_id)
-        .where(ProductTag.tag_id.in_(ids), Product.status == ProductStatus.PUBLISHED)
-        .group_by(ProductTag.tag_id)
-    )
-    rows = await db.execute(stmt)
-    return {row.tag_id: row.cnt for row in rows}
+    return {row.topic_id: row.cnt for row in rows}

@@ -1,38 +1,90 @@
-.PHONY: dev sit prod sync lint format check test test-cov export-dev export-sit export-prod clean
+# XiGee Studio · 常用命令
+#
+# APP_ENV 是唯一的环境开关 (dev / sit / prod): 它既决定加载哪个 .env.<APP_ENV>,
+# 也决定导出产物的后缀。命令行变量优先, 例如:
+#   make db-init APP_ENV=prod
+#   make dev PORT=9000
+#
+# 连接信息与监听地址都从 .env.<APP_ENV> 取, 取不到才落到下面的默认值 ——
+# 不要在别处再抄一份默认值, 否则改了 .env 这里还是旧的。
+# 取值方式只认 `KEY=value` 整行 (不支持行内注释), 与 .env.example 的写法一致。
+
+# 从 .env.<APP_ENV> 读一个键, 同名取最后一个
+_env = $(shell sed -n 's/^$1=//p' .env.$(APP_ENV) 2>/dev/null | tail -n 1)
+
+APP_ENV ?= dev
+HOST ?= $(or $(call _env,APP_HOST),127.0.0.1)
+PORT ?= $(or $(call _env,APP_PORT),8000)
+DB_HOST ?= $(or $(call _env,DB_HOST),127.0.0.1)
+DB_PORT ?= $(or $(call _env,DB_PORT),3306)
+DB_NAME ?= $(call _env,DB_NAME)
+DB_USER ?= $(call _env,DB_USER)
+DB_PASSWORD ?= $(call _env,DB_PASSWORD)
+
+# prod 默认监听所有地址 (由前置的容器/反向代理转发); 要改成只听本机:
+#   make prod PROD_HOST=127.0.0.1
+PROD_HOST ?= 0.0.0.0
+
+.PHONY: sync db-init dev sit prod lint format check test test-cov export-dev export-sit export-prod clean
+
+# 每个目标固定自己的 APP_ENV, 免得 make sit 却读了 .env.dev
+dev export-dev: APP_ENV = dev
+sit export-sit: APP_ENV = sit
+prod export-prod: APP_ENV = prod
 
 sync:
 	uv sync
 
+# 建表: 整份执行 sql/schema.sql (幂等, 可重复跑)。表结构的权威来源就是那个文件,
+# 改表结构要同时改它并重跑这个目标 —— 启动服务不会自动建表。
+# 密码走 MYSQL_PWD 而不是 -p<密码>: 后者会把密码暴露在 ps 的命令行里。
+# 客户端必须带 utf8mb4: 脚本里有中文种子数据 (misc / 未分类)。
+db-init:
+	@command -v mysql >/dev/null 2>&1 || { echo "未找到 mysql 客户端, 请先安装 (与目标库同版本)"; exit 1; }
+	@if [ -z "$(DB_NAME)" ] || [ -z "$(DB_USER)" ]; then \
+		echo "DB_NAME / DB_USER 为空: 先 cp .env.example .env.$(APP_ENV) 并填写, 或命令行传入 (如 DB_NAME=x DB_USER=y make db-init)"; \
+		exit 1; \
+	fi
+	MYSQL_PWD="$(DB_PASSWORD)" mysql --host="$(DB_HOST)" --port="$(DB_PORT)" --user="$(DB_USER)" \
+		--default-character-set=utf8mb4 "$(DB_NAME)" < sql/schema.sql
+	@echo "已应用 sql/schema.sql → $(DB_USER)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)"
+
 dev:
-	APP_ENV=dev uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+	APP_ENV=dev uv run uvicorn app.main:app --reload --host $(HOST) --port $(PORT)
 
 sit:
-	APP_ENV=sit uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
+	APP_ENV=sit uv run uvicorn app.main:app --host $(HOST) --port $(PORT)
 
 prod:
-	APP_ENV=prod uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+	APP_ENV=prod uv run uvicorn app.main:app --host $(PROD_HOST) --port $(PORT)
 
+# 与根目录 package.json 的 lint:py 保持同一范围 (app/ + tests/), 避免两套标准
 lint:
-	uv run ruff check .
+	uv run ruff check app/ tests/
 
 format:
-	uv run ruff format .
+	uv run ruff format app/ tests/
 
 check: lint
-	uv run ruff format --check .
+	uv run ruff format --check app/ tests/
 
+# 测试连真库: 每个用例前会 TRUNCATE 四张 xg_* 表, 见 tests/conftest.py。
+# 必须指向可以随便清空的 dev/sit 库, 且先跑过 make db-init。
 test:
 	APP_ENV=dev uv run pytest -v
 
 test-cov:
 	APP_ENV=dev uv run pytest --cov=app --cov-report=term-missing -v
 
+# 导出产物是【两个文件】: topics-{env}.json / tools-{env}.json
+# (prod 额外同步无后缀的 topics.json / tools.json 给前端)。
 export-dev:
 	APP_ENV=dev uv run python -m app.exporters
 
 export-sit:
 	APP_ENV=sit uv run python -m app.exporters
 
+# 会覆盖 web/data/topics.json 与 tools.json —— 那是前端的数据源, 确认要发布时再跑
 export-prod:
 	APP_ENV=prod uv run python -m app.exporters
 

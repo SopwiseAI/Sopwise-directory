@@ -1,4 +1,5 @@
 import logging
+import re
 import secrets
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -7,7 +8,8 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy.exc import TimeoutError as SATimeoutError
 
 from app.api.v1.router import router as v1_router
 from app.core.config import get_app_version, get_settings
@@ -17,9 +19,23 @@ from app.utils.url import InvalidURLError
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(name)s - %(message)s")
 logger = logging.getLogger(__name__)
 
+# 日志/性能都要求请求 id 是短且可打印的, 具体格式不限
+_REQUEST_ID_PATTERN = re.compile(r"[A-Za-z0-9._-]{1,64}")
+
 
 def _generate_request_id() -> str:
     return secrets.token_hex(12)
+
+
+def _request_id_of(request: Request) -> str:
+    """取客户端带来的 X-Request-ID, 不合法就换一个新的。
+
+    这个值既回写响应头又进日志, 原样反射等于把请求头当成了可信输入:
+    带 CR/LF 的值会破坏响应头(h11 直接报错断连), 也能伪造日志行。
+    所以只接受一个窄字符集, 其余一律换成自己生成的值。
+    """
+    candidate = request.headers.get("X-Request-ID", "")
+    return candidate if _REQUEST_ID_PATTERN.fullmatch(candidate) else _generate_request_id()
 
 
 @asynccontextmanager
@@ -60,7 +76,7 @@ app.add_middleware(
 
 @app.middleware("http")
 async def add_request_id(request: Request, call_next):
-    request_id = request.headers.get("X-Request-ID") or _generate_request_id()
+    request_id = _request_id_of(request)
     request.state.request_id = request_id
     response = await call_next(request)
     response.headers["X-Request-ID"] = request_id
@@ -99,16 +115,45 @@ async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSON
         request.url.path,
         exc,
     )
+    # 只翻译成少数几种可操作的说法, 原始 SQL / 字段值全部留在日志里:
+    # 直接把 str(exc.orig) 回给调用方会泄露表名、索引名甚至数据本身
+    raw = str(exc.orig.args[0]) if exc.orig and exc.orig.args else ""
+    status_code = status.HTTP_409_CONFLICT
     detail = "Resource conflict"
-    if exc.orig and exc.orig.args:
-        err = str(exc.orig.args[0])
-        if "Duplicate entry" in err or "UNIQUE" in err:
-            detail = "Resource conflict — unique constraint violated"
-        elif "FOREIGN KEY" in err or "cannot delete" in err.lower():
-            detail = "Resource has existing associations, cannot delete"
+    if "cannot be null" in raw:
+        # MySQL 1048: 说明端点漏了必填校验, 这是请求内容的问题, 不是资源状态冲突
+        status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+        detail = "Missing required field"
+    elif "Duplicate entry" in raw or "UNIQUE" in raw:
+        detail = "Resource conflict — unique constraint violated"
+    elif "FOREIGN KEY" in raw or "cannot delete" in raw.lower():
+        detail = "Resource has existing associations, cannot delete"
     return JSONResponse(
-        status_code=409,
+        status_code=status_code,
         content={"detail": detail},
+        headers={"X-Request-ID": request_id},
+    )
+
+
+@app.exception_handler(OperationalError)
+@app.exception_handler(SATimeoutError)
+async def database_unavailable_handler(request: Request, exc: OperationalError | SATimeoutError) -> JSONResponse:
+    """库连不上 / 锁等待超时 / 连接池取不到连接 => 503, 不是 500。
+
+    "服务器自己写错了"和"依赖暂时不可用"要能区分开: 前者报警给人看, 后者应该
+    重试。把 OperationalError 归到 500 会让监控把每次数据库抖动都当成代码回归。
+    """
+    request_id = getattr(request.state, "request_id", "-")
+    logger.error(
+        "Database unavailable [%s] on %s %s: %s",
+        request_id,
+        request.method,
+        request.url.path,
+        exc,
+    )
+    return JSONResponse(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        content={"detail": "Database unavailable, please retry"},
         headers={"X-Request-ID": request_id},
     )
 

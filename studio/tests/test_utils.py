@@ -4,19 +4,19 @@ import pytest
 from fastapi import HTTPException
 
 from app.core.database import AsyncSessionLocal
-from app.models import Category
+from app.models import Topic
 from app.utils.db import check_unique
 from app.utils.url import InvalidURLError, normalize_url, url_hash
-from tests.conftest import create_category
+from tests.conftest import create_topic
 
 # -- normalize_url ---------------------------------------------------------------
 
 
 class TestNormalizeUrl:
-    """schema.sql 归一化规则: 小写域名 / 去 www / 去默认端口 / 去尾斜杠(根路径保留) / 去 fragment / query 排序."""
+    """app/utils/url.py 的归一化规则: 小写域名 / 去 www / 去默认端口 / 去尾斜杠 / 去 fragment / query 排序."""
 
-    def test_schema_doc_example(self):
-        """schema 文档示例: http://www.Example.com:443/foo/#top -> https://example.com/foo"""
+    def test_normalization_doc_example(self):
+        """规则文档里的示例: http://www.Example.com:443/foo/#top -> https://example.com/foo"""
         assert normalize_url("http://www.Example.com:443/foo/#top") == "https://example.com/foo"
 
     def test_empty_string(self):
@@ -48,7 +48,7 @@ class TestNormalizeUrl:
         assert normalize_url("http://example.com:3000/foo") == "https://example.com:3000/foo"
 
     def test_root_path_kept(self):
-        """根路径 '/' 应保留 (schema: 根路径除外)."""
+        """根路径 '/' 应保留 (根路径除外)."""
         assert normalize_url("https://example.com/") == "https://example.com/"
         assert normalize_url("https://example.com") == "https://example.com/"
 
@@ -208,34 +208,45 @@ class TestUrlHash:
 async def test_check_unique_available(async_client):
     """字段值不存在时不应抛异常."""
     async with AsyncSessionLocal() as session:
-        await check_unique(session, Category, Category.slug, "unique-slug", label="Slug")
+        await check_unique(session, Topic, Topic.slug, "unique-slug", label="Slug")
 
 
 async def test_check_unique_conflict(async_client):
     """字段值已存在时应抛 409."""
-    await create_category(async_client, slug="dup-slug", name="重复Slug")
+    await create_topic(async_client, slug="dup-slug", name="重复Slug")
 
     async with AsyncSessionLocal() as session:
         with pytest.raises(HTTPException) as exc_info:
-            await check_unique(session, Category, Category.slug, "dup-slug", label="Slug")
+            await check_unique(session, Topic, Topic.slug, "dup-slug", label="Slug")
         assert exc_info.value.status_code == 409
         assert "Slug already exists" in exc_info.value.detail
 
 
 async def test_check_unique_exclude_id(async_client):
     """更新场景: exclude_id 应排除自身记录."""
-    cat = await create_category(async_client, slug="keep-slug", name="保留Slug")
+    topic = await create_topic(async_client, slug="keep-slug", name="保留Slug")
 
     async with AsyncSessionLocal() as session:
-        await check_unique(session, Category, Category.slug, "keep-slug", exclude_id=cat["id"], label="Slug")
+        await check_unique(session, Topic, Topic.slug, "keep-slug", exclude_id=topic["id"], label="Slug")
 
 
 async def test_check_unique_exclude_id_still_conflicts(async_client):
     """更新场景: exclude_id 排除自身后, 与其他记录冲突仍应抛 409."""
-    cat1 = await create_category(async_client, slug="slug-a", name="Slug A")
-    await create_category(async_client, slug="slug-b", name="Slug B")
+    topic_a = await create_topic(async_client, slug="slug-a", name="Slug A")
+    await create_topic(async_client, slug="slug-b", name="Slug B")
 
     async with AsyncSessionLocal() as session:
         with pytest.raises(HTTPException) as exc_info:
-            await check_unique(session, Category, Category.slug, "slug-b", exclude_id=cat1["id"], label="Slug")
+            await check_unique(session, Topic, Topic.slug, "slug-b", exclude_id=topic_a["id"], label="Slug")
         assert exc_info.value.status_code == 409
+
+
+async def test_check_unique_on_name_field(async_client):
+    """唯一性检查是按列做的: 换成 name 列同样生效."""
+    await create_topic(async_client, slug="name-slug", name="唯一名")
+
+    async with AsyncSessionLocal() as session:
+        with pytest.raises(HTTPException) as exc_info:
+            await check_unique(session, Topic, Topic.name, "唯一名", label="Topic name")
+        assert exc_info.value.status_code == 409
+        assert "Topic name already exists" in exc_info.value.detail

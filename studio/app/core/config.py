@@ -40,7 +40,9 @@ class Settings(BaseSettings):
     db_max_overflow: int = Field(10, ge=0)
     db_echo: bool = False
 
-    export_output_path: str = "../web/data/data.json"
+    # 导出目录。产物是【两个文件】——与 studio/schema/*.data.jsonc 的顶层数组一致:
+    #   topics-{env}.json / tools-{env}.json;prod 额外同步一份无后缀的 topics.json / tools.json
+    export_output_dir: str = "../web/data"
 
     cors_origins: str = "http://localhost:3000,http://localhost:5173"
 
@@ -71,6 +73,24 @@ class Settings(BaseSettings):
             )
         return v
 
+    @field_validator("export_output_dir")
+    @classmethod
+    def validate_export_output_dir(cls, v: str) -> str:
+        # 空串会被 Path("") 解析成"."(studio/ 本身), 产物静默落到源码目录里, 必须拦下
+        if not v.strip():
+            raise ValueError("export_output_dir 不能为空(默认 ../web/data)")
+        return v.strip()
+
+    @field_validator("cors_origins")
+    @classmethod
+    def validate_cors_origins(cls, v: str) -> str:
+        # main.py 里 allow_credentials=True 是写死的。Starlette 在这个组合下遇到 "*" 会把
+        # 请求的 Origin 原样回显,等于对任意站点开放凭证;现在只用 X-API-Key(不是浏览器
+        # 自动携带的凭证)所以风险有限,但哪天加了 Cookie 会话就是真漏洞。宁可启动失败。
+        if "*" in {origin.strip() for origin in v.split(",")}:
+            raise ValueError("cors_origins 不能用 *(allow_credentials=True 下会回显任意 Origin), 请逐个列白名单")
+        return v
+
     @property
     def database_url(self) -> str:
         return (
@@ -83,11 +103,28 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @property
-    def export_full_path(self) -> Path:
-        path = Path(self.export_output_path)
-        if not path.is_absolute():
-            path = _STUDIO_ROOT / path
-        return path.with_stem(f"{path.stem}-{self.app_env}")
+    def export_dir(self) -> Path:
+        """导出目录(绝对路径)。
+
+        相对路径按 studio/ 解析而不是进程 cwd —— 产物落在哪儿不该取决于谁在哪个目录下
+        敲的命令;resolve() 只是把 studio/../web/data 里的 ".." 折掉, 让日志与
+        ExportResponse.output_path 里的路径可读。
+        """
+        path = Path(self.export_output_dir)
+        return (path if path.is_absolute() else _STUDIO_ROOT / path).resolve()
+
+    def export_paths(self, *, frontend_names: bool = False) -> dict[str, Path]:
+        """导出产物路径。
+
+        frontend_names=True 时用无环境后缀的名字(topics.json / tools.json),
+        只在 prod 下额外同步——开发产物带 -dev/-sit 后缀,避免误覆盖前端数据源。
+        """
+        suffix = "" if frontend_names else f"-{self.app_env}"
+        directory = self.export_dir
+        return {
+            "topics": directory / f"topics{suffix}.json",
+            "tools": directory / f"tools{suffix}.json",
+        }
 
 
 @lru_cache
