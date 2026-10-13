@@ -12,3 +12,11 @@ verifyDepsBeforeRun: install
 
 # 不强制 peer 依赖解析（与 lockfile 的 autoInstallPeers 组合容易造成硬失败）
 strictPeerDependencies: false
+
+# 依赖构建脚本允许清单（pnpm 11 起取代 onlyBuiltDependencies）。
+# 放在这里而不是 package.json 的 pnpm 字段：SchemaStore 的 package.json schema 对 pnpm 对象
+# 仍是 additionalProperties: false 且尚未收录 allowBuilds（VS Code 会报「属性 allowBuilds 不允许」），
+# 而 pnpm-workspace 的 schema 已支持该键（SchemaStore PR #5222 / pnpm#10311）。
+# esbuild 的 postinstall 只负责就位平台二进制，属常规构建脚本，显式放行。
+allowBuilds:
+  esbuild: true

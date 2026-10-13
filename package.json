@@ -39,11 +39,6 @@
     "test": "pnpm run test:web",
     "prepare": "husky"
   },
-  "pnpm": {
-    "allowBuilds": {
-      "esbuild": true
-    }
-  },
   "devDependencies": {
     "@benborla29/mcp-server-mysql": "2.0.9",
     "@commitlint/cli": "^21.2.3",
