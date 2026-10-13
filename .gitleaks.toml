@@ -2,6 +2,9 @@
 # 用法（本地或 CI）：gitleaks detect --source . --redact -c .gitleaks.toml
 # 注意：官方默认规则已忽略锁文件与二进制文件，此处只补仓库特有项。
 
+# 与官方配置模板一致：低于该版本的 gitleaks 不保证支持本文件的全部特性
+minVersion = "v8.25.0"
+
 [extend]
 useDefault = true
 

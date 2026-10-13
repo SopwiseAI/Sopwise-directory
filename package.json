@@ -2,7 +2,7 @@
   "name": "xigee",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@10.30.1",
+  "packageManager": "pnpm@10.34.6",
   "description": "AI-powered product discovery directory",
   "keywords": [
     "ai",
@@ -22,7 +22,7 @@
     "url": "https://github.com/sopwise-ai/xigee.git"
   },
   "engines": {
-    "node": ">=22.22.1",
+    "node": ">=24.0.0",
     "pnpm": ">=10.0.0"
   },
   "scripts": {
@@ -40,7 +40,9 @@
     "prepare": "husky"
   },
   "pnpm": {
-    "onlyBuiltDependencies": []
+    "allowBuilds": {
+      "esbuild": true
+    }
   },
   "devDependencies": {
     "@benborla29/mcp-server-mysql": "2.0.9",
@@ -49,7 +51,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
     "markdownlint-cli2": "^0.23.3",
-    "prettier": "^3.9.9"
+    "prettier": "^3.9.10"
   },
   "lint-staged": {
     "*.md": [

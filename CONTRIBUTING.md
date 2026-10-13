@@ -16,17 +16,17 @@ opencode.json opencode 配置（含本地 MySQL MCP 连接，见「AI 工具配�
 
 ## 前置要求
 
-| 依赖    | 版本           | 依据                                                           |
-| ------- | -------------- | -------------------------------------------------------------- |
-| Node.js | 22（≥22.22.1） | `.nvmrc`、`package.json` 的 engines（下限由 lint-staged 决定） |
-| pnpm    | >= 10          | `package.json` 的 engines、`packageManager`                    |
-| Python  | >= 3.13        | `studio/pyproject.toml`                                        |
-| uv      | 最新           | studio 依赖管理（`uv sync` / `uv run`）                        |
-| MySQL   | >= 5.7         | `studio/sql/schema.sql`、后端测试必需                          |
-| git     | >= 2.40        | husky 钩子与 lint-staged 17（要求 git >= 2.32）                |
+| 依赖    | 版本             | 依据                                                        |
+| ------- | ---------------- | ----------------------------------------------------------- |
+| Node.js | 24（Active LTS） | `.nvmrc`、`package.json` 的 engines（`>=24.0.0`）           |
+| pnpm    | >= 10            | `package.json` 的 engines、`packageManager`（当前 10.34.6） |
+| Python  | >= 3.13          | `studio/pyproject.toml`                                     |
+| uv      | 最新             | studio 依赖管理（`uv sync` / `uv run`）                     |
+| MySQL   | >= 5.7           | `studio/sql/schema.sql`、后端测试必需                       |
+| git     | >= 2.40          | husky 钩子与 lint-staged 17（要求 git >= 2.32）             |
 
 首次克隆后 `pnpm install` 会自动安装 husky 钩子。Node 或 git 版本过低时，提交钩子会在
-`lint-staged` 一步失败（此时 `nvm install 22` / 升级 git 即可）；CI 使用 `node-version-file: .nvmrc`，
+`lint-staged` 一步失败（此时 `nvm install 24` / 升级 git 即可）；CI 使用 `node-version-file: .nvmrc`，
 请以 `.nvmrc` 的版本为准。
 
 ## 开发环境

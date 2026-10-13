@@ -1,11 +1,9 @@
 module.exports = {
   extends: ["@commitlint/config-conventional"],
   rules: {
-    "type-enum": [
-      2,
-      "always",
-      ["feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore", "revert"]
-    ],
+    // type-enum 不重复声明：@commitlint/config-conventional v21 的默认白名单
+    // 已与仓库要求逐项一致（build/chore/ci/docs/feat/fix/perf/refactor/revert/style/test），
+    // 重复声明只会在依赖升级时悄悄漂移。
     // 中文 subject 没有大小写概念，关闭该规则否则中文提交会被误判
     "subject-case": [0],
     "header-max-length": [2, "always", 120],
