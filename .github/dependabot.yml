@@ -1,19 +1,59 @@
 version: 2
+
+# 配置取舍（2026-10 依据官方 dependabot-options-reference 复核）
+#
+# 分组：minor/patch 合并成一个 PR，major 一律单独出 PR（需要逐个审，例如 Next.js 大版本）；
+#   github-actions 全量合并——引用已按 commit SHA 固定，坏引用会让 CI 直接报红，风险低而噪音收益大。
+# 冷静期：GitHub 对版本更新默认已有 3 天 cooldown（安全更新不受影响），这里把 default-days
+#   显式写出以免配了细分项后丢掉默认保护，并把 major 拉长（工具链 14 天、web 21 天）。
+# 不配 reviewers：官方文档已标注该属性「closing down and will be removed」，
+#   审阅人请改用 .github/CODEOWNERS。
+# 安全更新刻意不分组：保持单个 PR、走最快路径（cooldown 对安全更新不生效）。
+# commit-message 的 prefix + include: scope 会产出 chore(deps) / chore(deps-dev) / chore(ci)，
+#   与根目录 commitlint.config.cjs 的 scope 白名单一致；分组后的 PR 同样保持这个格式。
+
 updates:
+  # 根目录：工程化工具链（全部是 devDependencies）
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 3
+    cooldown:
+      default-days: 3
+      semver-major-days: 14
+    groups:
+      root-dev-tooling:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
     commit-message:
       prefix: "chore"
       include: "scope"
     labels:
       - "dependencies"
 
+  # web：Next.js 应用，按运行时 / 工具链分开分组（groups 的 dependency-type 支持 npm）
   - package-ecosystem: "npm"
     directory: "/web"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
+      semver-major-days: 21
+    groups:
+      web-runtime:
+        dependency-type: "production"
+        update-types: ["minor", "patch"]
+      web-tooling:
+        dependency-type: "development"
+        update-types: ["minor", "patch"]
     commit-message:
       prefix: "chore"
       include: "scope"
@@ -21,21 +61,43 @@ updates:
       - "dependencies"
 
   # studio 用 uv ecosystem：pip 只改 pyproject.toml 不碰 uv.lock，会造成本地
-  # uv run 静默改写 lock、版本升不落地（uv 官方文档推荐 uv ecosystem）
+  # uv run 静默改写 lock、版本升不落地（uv 官方文档推荐 uv ecosystem）。
+  # 注意：groups 的 dependency-type 不被 uv 支持，因此用 patterns 分组。
   - package-ecosystem: "uv"
     directory: "/studio"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 3
+    cooldown:
+      default-days: 3
+      semver-major-days: 14
+    groups:
+      studio-deps:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
     commit-message:
       prefix: "chore"
       include: "scope"
     labels:
       - "dependencies"
 
+  # GitHub Actions：引用已按 commit SHA 固定，逐条出 PR 噪音最大，故全量合并
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 3
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns: ["*"]
     commit-message:
       prefix: "chore"
       include: "scope"
