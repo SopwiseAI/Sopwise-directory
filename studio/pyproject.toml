@@ -1,8 +1,20 @@
 [project]
 name = "studio"
 version = "0.1.0"
-description = "XiGee Studio — data management backend"
+description = "XiGee Studio — 数据管理后端"
+readme = "README.md"
 requires-python = ">=3.13"
+# PEP 639: license 用 SPDX 表达式; LICENSE 在仓库根目录(studio/ 之外),
+# 所以 license-files 显式置空, 否则打包会去找 studio/LICENSE* 并落空。
+license = "MIT"
+license-files = []
+keywords = ["xigee", "ai-tools", "ai-directory", "fastapi", "sqlalchemy", "mysql"]
+classifiers = [
+    # 私有应用, 防止误发到 PyPI
+    "Private :: Do Not Upload",
+    "Framework :: FastAPI",
+    "Programming Language :: Python :: 3.13",
+]
 dependencies = [
     "fastapi>=0.141.1,<1.0",
     "uvicorn[standard]>=0.54.0,<1.0",
@@ -22,7 +34,8 @@ dependencies = [
 ]
 
 [build-system]
-requires = ["hatchling"]
+# hatchling >= 1.27 才支持 PEP 639 的 license / license-files
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
@@ -32,7 +45,9 @@ packages = ["app"]
 dev = [
     "ruff>=0.9.0",
     "pytest>=9.1.1",
-    "pytest-asyncio>=0.25.0",
+    # >= 1.0: pyproject 的 [tool.pytest.ini_options] 用了 asyncio_default_fixture_loop_scope,
+    # 配合 --strict-config, 老版本不认这个 ini 键会直接报错。声明就要声明实测过的那条线。
+    "pytest-asyncio>=1.0.0",
     "pytest-cov>=5.0.0",
     "httpx>=0.28.1",
 ]
@@ -42,7 +57,13 @@ target-version = "py313"
 line-length = 120
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "N", "W", "UP", "B", "S", "C4", "RET", "SIM", "RUF", "T20"]
+# ASYNC: 拦住异步函数里的阻塞调用(time.sleep/open/requests) —— 这类问题在
+#        FastAPI 里表现为整个事件循环被卡住, 本地小数据量测不出来。
+# LOG  : logging 用法(exc_info 位置、warn vs warning、f-string 形式化参数)
+# G    : 同上, 偏 logging 格式串
+# PT   : flake8-pytest-style, 测试写法统一(pytest.raises 块、断言拆分)
+# TID  : 禁止相对导入; 全仓用 app.* 绝对导入, 否则同一模块会被导入两次
+select = ["E", "F", "I", "N", "W", "UP", "B", "S", "C4", "RET", "SIM", "RUF", "T20", "ASYNC", "LOG", "G", "PT", "TID"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S", "B", "RUF002", "RUF003"]
@@ -51,21 +72,44 @@ select = ["E", "F", "I", "N", "W", "UP", "B", "S", "C4", "RET", "SIM", "RUF", "T
 "app/utils/url.py" = ["S104"]
 "app/schemas/models.py" = ["S104"]
 
+[tool.ruff.lint.isort]
+# 显式声明, 不依赖 detect_same_package 的推断(它只在同包内生效, 加个 src/ 目录就失效)
+known-first-party = ["app"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
 [tool.ruff.format]
 quote-style = "double"
 
 [tool.pytest.ini_options]
-asyncio_mode = "auto"
+minversion = "9.1"
 testpaths = ["tests"]
-addopts = "--strict-markers"
-filterwarnings = [
-    "ignore::DeprecationWarning",
-]
+asyncio_mode = "auto"
+# 显式钉死异步 fixture 的事件循环作用域。不写这行 pytest-asyncio 会发
+# PytestDeprecationWarning, 而且未来版本会把默认值从 "fixture" 改成 "function" ——
+# 到那天行为会静默变化, 而本套件每个用例都要 TRUNCATE, 必须用例级隔离。
+asyncio_default_fixture_loop_scope = "function"
+# --strict-config: pyproject 里写错的 ini 键直接报错, 而不是被静默忽略
+addopts = "--strict-markers --strict-config"
+# 弃用警告一律升级为错误。【已经定位到具体来源且短期修不掉】的条目才允许逐条放行;
+# 这里此前是 ignore::DeprecationWarning, 结果把我们自己代码里
+# HTTP_422_UNPROCESSABLE_ENTITY 的弃用警告一并吞了(CI 里表现为 17 次静默通过)。
+filterwarnings = ["error"]
 
 [tool.coverage.run]
+branch = true
 source = ["app"]
-omit = ["app/exporters/__main__.py", "tests/*"]
+omit = ["app/exporters/__main__.py"]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 70
+precision = 2
+# 实测值(dev 库 + MySQL 5.7, branch = true)是 75.20%。门槛压在它下面一点,
+# 起"棘轮"作用而不是每次微调都变红 —— 要往上抬就得先补测试。
+fail_under = 74
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]

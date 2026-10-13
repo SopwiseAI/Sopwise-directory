@@ -79,9 +79,11 @@ async def test_fk_tt_topic_restrict_at_db_level(async_client):
     await create_tool(async_client, slug="t1", name="T1", topic_ids=[topic["id"]])
 
     async with AsyncSessionLocal() as session:
+        # 只留一条语句: InnoDB 的 FK RESTRICT 在 DELETE 执行那一刻就报 1451,
+        # 不会等到 commit(PT012 要求 raises 块里只有一条简单语句, 原来的
+        # session.commit() 永远执行不到)。
         with pytest.raises(IntegrityError):
             await session.execute(text("DELETE FROM xg_topic WHERE id = :topic_id"), {"topic_id": topic["id"]})
-            await session.commit()
 
 
 async def test_delete_tool_releases_topic(async_client):

@@ -188,7 +188,8 @@ class TestUrlHash:
     def test_empty_string_hash(self):
         """空字符串不应抛异常."""
         h = url_hash("")
-        assert isinstance(h, str) and len(h) == 64
+        assert isinstance(h, str)
+        assert len(h) == 64
 
     def test_hash_length(self):
         assert len(url_hash("https://example.com")) == 64
