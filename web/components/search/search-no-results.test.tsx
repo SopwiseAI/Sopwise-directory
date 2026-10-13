@@ -21,7 +21,7 @@ function renderNoResults(props: Partial<React.ComponentProps<typeof SearchNoResu
       categoryNames={categoryNames}
       onPick={onPick}
       {...props}
-    />
+    />,
   )
   return { onPick }
 }

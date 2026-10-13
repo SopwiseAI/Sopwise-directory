@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 const meta = {
   title: "UI/Empty",
   component: Empty,
-  tags: ["autodocs"]
+  tags: ["autodocs"],
 } satisfies Meta<typeof Empty>
 
 export default meta
@@ -26,5 +26,5 @@ export const Default: Story = {
         <Button variant="outline">去逛逛</Button>
       </EmptyContent>
     </Empty>
-  )
+  ),
 }

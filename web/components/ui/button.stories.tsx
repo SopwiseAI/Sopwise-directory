@@ -9,15 +9,15 @@ const meta = {
   argTypes: {
     variant: {
       control: "select",
-      options: ["default", "brand", "outline", "secondary", "ghost", "destructive", "link"]
+      options: ["default", "brand", "outline", "secondary", "ghost", "destructive", "link"],
     },
     size: {
       control: "select",
-      options: ["default", "xs", "sm", "lg", "icon", "icon-xs", "icon-sm", "icon-lg"]
+      options: ["default", "xs", "sm", "lg", "icon", "icon-xs", "icon-sm", "icon-lg"],
     },
     isLoading: { control: "boolean" },
-    disabled: { control: "boolean" }
-  }
+    disabled: { control: "boolean" },
+  },
 } satisfies Meta<typeof Button>
 
 export default meta
@@ -34,7 +34,7 @@ export const Variants: Story = {
       <Button variant="destructive">Destructive</Button>
       <Button variant="link">Link</Button>
     </div>
-  )
+  ),
 }
 
 export const Sizes: Story = {
@@ -45,7 +45,7 @@ export const Sizes: Story = {
       <Button size="default">default</Button>
       <Button size="lg">lg</Button>
     </div>
-  )
+  ),
 }
 
 export const IconSizes: Story = {
@@ -64,7 +64,7 @@ export const IconSizes: Story = {
         +
       </Button>
     </div>
-  )
+  ),
 }
 
 export const Loading: Story = {
@@ -75,7 +75,7 @@ export const Loading: Story = {
         加载
       </Button>
     </div>
-  )
+  ),
 }
 
 export const Playground: Story = {}

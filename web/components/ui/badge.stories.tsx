@@ -9,9 +9,9 @@ const meta = {
   argTypes: {
     variant: {
       control: "select",
-      options: ["default", "secondary", "destructive", "outline", "ghost", "link"]
-    }
-  }
+      options: ["default", "secondary", "destructive", "outline", "ghost", "link"],
+    },
+  },
 } satisfies Meta<typeof Badge>
 
 export default meta
@@ -27,7 +27,7 @@ export const Variants: Story = {
       <Badge variant="ghost">Ghost</Badge>
       <Badge variant="link">Link</Badge>
     </div>
-  )
+  ),
 }
 
 export const Playground: Story = {}
@@ -37,5 +37,5 @@ export const AsLink: Story = {
     <Badge render={<a href="#" />} variant="outline">
       Link Badge
     </Badge>
-  )
+  ),
 }

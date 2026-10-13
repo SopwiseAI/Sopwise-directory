@@ -7,7 +7,7 @@ const meta = {
   component: MainHeader,
   tags: ["autodocs"],
   args: { categories: mockCategories, suggestions: mockSuggestionDocs },
-  parameters: { layout: "fullscreen" }
+  parameters: { layout: "fullscreen" },
 } satisfies Meta<typeof MainHeader>
 
 export default meta
@@ -16,5 +16,5 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {}
 
 export const NoCategories: Story = {
-  args: { categories: [], suggestions: [] }
+  args: { categories: [], suggestions: [] },
 }

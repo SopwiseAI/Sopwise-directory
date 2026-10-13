@@ -37,8 +37,8 @@ const jsonLd = {
   potentialAction: {
     "@type": "SearchAction",
     target: `${getBaseUrl()}/search?q={search_term_string}`,
-    "query-input": "required name=search_term_string"
-  }
+    "query-input": "required name=search_term_string",
+  },
 }
 
 /** JSON-LD 注入前转义 `<`，避免内容中的 </script> 提前闭合脚本标签。 */
@@ -47,7 +47,7 @@ const jsonLdString = JSON.stringify(jsonLd).replace(/</g, "\\u003c")
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  viewportFit: "cover"
+  viewportFit: "cover",
 }
 
 export const metadata: Metadata = {
@@ -60,8 +60,8 @@ export const metadata: Metadata = {
     description: "精选值得用的 AI 工具，每一款都经过人工筛选，点击直达官方网站。",
     siteName: "XiGee",
     locale: "zh_CN",
-    type: "website"
-  }
+    type: "website",
+  },
 }
 
 /**
@@ -98,7 +98,7 @@ setTimeout(function(){d.removeAttribute("data-prefs")},2000)
 }catch(e){}})()`
 
 export default function RootLayout({
-  children
+  children,
 }: Readonly<{
   children: React.ReactNode
 }>) {

@@ -1,0 +1,14 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 安全漏洞（请勿公开提交）
+    url: https://github.com/sopwise-ai/xigee/security/advisories/new
+    about: 通过 GitHub 私密通道上报，详见 SECURITY.md
+  - name: 使用问题与支持渠道
+    url: https://github.com/sopwise-ai/xigee/blob/main/SUPPORT.md
+    about: 提问前先看支持渠道说明
+  - name: 贡献指南
+    url: https://github.com/sopwise-ai/xigee/blob/main/CONTRIBUTING.md
+    about: 开发环境、提交规范与 PR 流程
+  - name: 行为准则
+    url: https://github.com/sopwise-ai/xigee/blob/main/CODE_OF_CONDUCT.md
+    about: 社区行为规范与举报渠道（Contributor Covenant 3.0）

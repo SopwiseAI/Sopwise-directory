@@ -6,14 +6,14 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuRadioItemIndicator,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 
 const meta = {
   title: "UI/DropdownMenu",
   component: DropdownMenu,
-  tags: ["autodocs"]
+  tags: ["autodocs"],
 } satisfies Meta<typeof DropdownMenu>
 
 export default meta
@@ -29,7 +29,7 @@ export const Basic: Story = {
         <DropdownMenuItem disabled>删除（禁用）</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  ),
 }
 
 export const WithRadioGroup: Story = {
@@ -53,5 +53,5 @@ export const WithRadioGroup: Story = {
         </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  ),
 }

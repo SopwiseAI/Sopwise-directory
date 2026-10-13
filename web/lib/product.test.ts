@@ -11,7 +11,7 @@ const mockProduct: Product = {
   tags: ["test"],
   pricing: "free",
   featured: false,
-  createdAt: "2024-01-01"
+  createdAt: "2024-01-01",
 }
 
 describe("getProductDate", () => {
@@ -53,7 +53,7 @@ describe("compareRecommended", () => {
     id,
     name: id,
     createdAt: date,
-    featured
+    featured,
   })
 
   it("精选优先于非精选", () => {

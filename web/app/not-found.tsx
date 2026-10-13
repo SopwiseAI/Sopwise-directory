@@ -9,7 +9,7 @@ import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "
 
 export const metadata: Metadata = {
   title: "页面未找到",
-  robots: { index: false }
+  robots: { index: false },
 }
 
 const categories = getAllCategories()

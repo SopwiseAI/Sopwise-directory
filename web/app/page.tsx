@@ -4,7 +4,7 @@ import { ProductBrowser } from "@/components/product/product-browser"
 import { Hero } from "@/components/hero/hero"
 
 export const metadata: Metadata = {
-  alternates: { canonical: "/" }
+  alternates: { canonical: "/" },
 }
 
 const products = getAllProducts()

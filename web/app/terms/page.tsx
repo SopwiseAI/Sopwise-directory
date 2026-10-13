@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "服务条款",
   description: "XiGee 服务条款：本站内容仅供参考，收录工具与链接由第三方提供，使用风险自负。",
   alternates: { canonical: "/terms" },
-  openGraph: { title: "服务条款", description: "使用 XiGee 前请阅读的条款与免责声明" }
+  openGraph: { title: "服务条款", description: "使用 XiGee 前请阅读的条款与免责声明" },
 }
 
 const sections: InfoSectionDef[] = [
@@ -18,7 +18,7 @@ const sections: InfoSectionDef[] = [
         XiGee 是一个 AI
         工具导航与发现站点，只做索引与跳转，不托管任何第三方工具的页面或内容。站内展示的工具信息（名称、简介、分类、价格标注等）来自公开数据与人工整理，可能滞后于对方官网的最新情况，仅供参考，不构成任何专业建议或推荐担保。
       </p>
-    )
+    ),
   },
   {
     id: "third-party",
@@ -27,7 +27,7 @@ const sections: InfoSectionDef[] = [
       <p>
         本站收录的工具均直接跳转第三方网站。我们无法控制这些网站的内容、可用性、安全性或合法性，也不对其提供的服务与工具负责。你与第三方之间的任何交互与风险，由你自行承担。
       </p>
-    )
+    ),
   },
   {
     id: "no-warranty",
@@ -36,7 +36,7 @@ const sections: InfoSectionDef[] = [
       <p>
         本站按「现状」提供，不对信息的准确性、完整性、时效性作任何明示或默示担保；工具的实时价格、具体功能与可用性，一律以其官网为准。因使用本站或其收录内容而产生的任何损失，本站不承担责任。
       </p>
-    )
+    ),
   },
   {
     id: "ip",
@@ -46,7 +46,7 @@ const sections: InfoSectionDef[] = [
         本站的名称、标识与页面设计归 XiGee
         所有。被收录工具的名称、图标与商标归各自所有者所有，本站仅用于识别与说明用途。
       </p>
-    )
+    ),
   },
   {
     id: "acceptable-use",
@@ -55,7 +55,7 @@ const sections: InfoSectionDef[] = [
       <p>
         请勿以任何方式滥用本站：包括但不限于以高频请求冲击服务、绕过或干扰正常的访问与缓存、将本站内容用于违法用途，以及抹去来源后整体复制本站的编辑整理成果。
       </p>
-    )
+    ),
   },
   {
     id: "changes",
@@ -68,8 +68,8 @@ const sections: InfoSectionDef[] = [
         </Link>
         。
       </p>
-    )
-  }
+    ),
+  },
 ]
 
 export default function TermsPage() {

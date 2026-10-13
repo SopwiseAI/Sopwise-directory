@@ -8,7 +8,7 @@ const meta = {
   component: SortMenu,
   tags: ["autodocs"],
   args: { sort: "latest", onSortChange: () => {} },
-  argTypes: { sort: { control: "inline-radio", options: ["latest", "name-asc", "name-desc"] } }
+  argTypes: { sort: { control: "inline-radio", options: ["latest", "name-asc", "name-desc"] } },
 } satisfies Meta<typeof SortMenu>
 
 export default meta
@@ -20,9 +20,9 @@ function ControlledSortMenu({ initial = "latest" }: { initial?: SortMode }) {
 }
 
 export const Interactive: Story = {
-  render: () => <ControlledSortMenu />
+  render: () => <ControlledSortMenu />,
 }
 
 export const NameAsc: Story = {
-  render: () => <ControlledSortMenu initial="name-asc" />
+  render: () => <ControlledSortMenu initial="name-asc" />,
 }

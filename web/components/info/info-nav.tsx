@@ -10,7 +10,7 @@ const ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/settings", label: "设置", icon: Settings },
   { href: "/about", label: "关于", icon: Info },
   { href: "/privacy", label: "隐私政策", icon: ShieldCheck },
-  { href: "/terms", label: "服务条款", icon: FileText }
+  { href: "/terms", label: "服务条款", icon: FileText },
 ]
 
 /** 信息区路由：供全站判断「这是信息页」（如移动端不显示分类条）。 */
@@ -50,7 +50,7 @@ export function InfoNav({ className }: { className?: string }) {
             aria-current={active ? "page" : undefined}
             className={cn(
               "group relative flex shrink-0 items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              active ? "bg-brand/10 font-medium text-brand" : "text-muted-foreground hover:bg-brand/5 hover:text-brand"
+              active ? "bg-brand/10 font-medium text-brand" : "text-muted-foreground hover:bg-brand/5 hover:text-brand",
             )}
           >
             <Icon className="size-4 shrink-0" aria-hidden />

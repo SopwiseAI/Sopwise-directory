@@ -5,8 +5,8 @@ const config: StorybookConfig = {
   addons: ["@storybook/addon-themes", "@storybook/addon-docs"],
   framework: {
     name: "@storybook/nextjs-vite",
-    options: {}
-  }
+    options: {},
+  },
 }
 
 export default config

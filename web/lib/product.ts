@@ -75,6 +75,6 @@ export function productHistoryAttrs(product: HistoryLinkable): Record<string, st
     "data-history-name": product.name,
     "data-history-url": product.url,
     "data-history-category": product.categories[0] ?? "",
-    "data-history-pricing": product.pricing ?? ""
+    "data-history-pricing": product.pricing ?? "",
   }
 }

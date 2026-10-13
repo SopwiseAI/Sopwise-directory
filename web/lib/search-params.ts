@@ -16,7 +16,7 @@ export interface SearchSortOption {
 export const SEARCH_SORT_OPTIONS: readonly SearchSortOption[] = [
   { value: "relevance", label: "相关度", icon: Sparkles },
   { value: "latest", label: "最新", icon: Clock },
-  { value: "name", label: "名称 A-Z", icon: ArrowDownAZ }
+  { value: "name", label: "名称 A-Z", icon: ArrowDownAZ },
 ]
 
 const VALID_SORTS: ReadonlySet<string> = new Set(SEARCH_SORT_OPTIONS.map((o) => o.value))
@@ -40,6 +40,6 @@ export function readSearchState(params: SearchParamsLike): SearchUrlState {
   const sort = params.get("sort")
   return {
     query: params.get("q") ?? "",
-    sort: isSearchSort(sort) ? sort : "relevance"
+    sort: isSearchSort(sort) ? sort : "relevance",
   }
 }

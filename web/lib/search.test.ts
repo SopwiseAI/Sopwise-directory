@@ -12,7 +12,7 @@ import {
   matchedTags,
   createFallbackIndex,
   findRelated,
-  SUGGEST_LIMIT
+  SUGGEST_LIMIT,
 } from "./search"
 import type { Product } from "./types"
 
@@ -26,7 +26,7 @@ const mockProducts: Product[] = [
     tags: ["AI", "对话"],
     pricing: "freemium",
     featured: true,
-    createdAt: "2022-11-30"
+    createdAt: "2022-11-30",
   },
   {
     id: "2",
@@ -37,7 +37,7 @@ const mockProducts: Product[] = [
     tags: ["AI", "图像"],
     pricing: "paid",
     featured: false,
-    createdAt: "2022-07-01"
+    createdAt: "2022-07-01",
   },
   {
     id: "3",
@@ -48,8 +48,8 @@ const mockProducts: Product[] = [
     tags: ["AI", "代码"],
     pricing: "paid",
     featured: true,
-    createdAt: "2021-06-29"
-  }
+    createdAt: "2021-06-29",
+  },
 ]
 
 describe("createSearchIndex", () => {
@@ -82,7 +82,7 @@ describe("createSearchIndex", () => {
     const idx = createSearchIndex(mockProducts, {
       "chat-assistant": "对话助手",
       "image-generation": "图像生成",
-      "code-tools": "代码工具"
+      "code-tools": "代码工具",
     })
     const results = idx.search("对话助手")
     expect(results.length).toBeGreaterThan(0)
@@ -107,7 +107,7 @@ describe("highlightSegments", () => {
   it("大小写不敏感命中并分段", () => {
     expect(highlightSegments("ChatGPT", "chat")).toEqual([
       { text: "Chat", match: true },
-      { text: "GPT", match: false }
+      { text: "GPT", match: false },
     ])
   })
 
@@ -115,7 +115,7 @@ describe("highlightSegments", () => {
     expect(highlightSegments("AI 图像生成工具", "图像")).toEqual([
       { text: "AI ", match: false },
       { text: "图像", match: true },
-      { text: "生成工具", match: false }
+      { text: "生成工具", match: false },
     ])
   })
 
@@ -179,7 +179,7 @@ describe("buildSuggestionDocs", () => {
   const docs = buildSuggestionDocs(mockProducts, {
     "chat-assistant": "对话助手",
     "image-generation": "图像生成",
-    "code-tools": "代码工具"
+    "code-tools": "代码工具",
   })
 
   it("保留 id / name / url / categories / pricing 供建议与历史埋点共用", () => {
@@ -188,7 +188,7 @@ describe("buildSuggestionDocs", () => {
       name: "ChatGPT",
       url: "https://chat.openai.com",
       categories: ["chat-assistant"],
-      pricing: "freemium"
+      pricing: "freemium",
     })
     expect(docs[0].categoryNames).toEqual(["对话助手"])
   })
@@ -208,7 +208,7 @@ describe("suggest", () => {
   const docs = buildSuggestionDocs(mockProducts, {
     "chat-assistant": "对话助手",
     "image-generation": "图像生成",
-    "code-tools": "代码工具"
+    "code-tools": "代码工具",
   })
   const index = createSuggestionIndex(docs)
 
@@ -237,7 +237,7 @@ describe("suggest", () => {
       url: `https://tool${i}.example.com`,
       categories: ["c"],
       categoryNames: ["工具"],
-      tags: ["tool"]
+      tags: ["tool"],
     }))
     expect(suggest(createSuggestionIndex(many), "tool")).toHaveLength(SUGGEST_LIMIT)
   })

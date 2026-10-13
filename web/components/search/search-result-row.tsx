@@ -40,7 +40,7 @@ export function SearchResultRow({ product, query, categoryNames, last }: SearchR
       {...productHistoryAttrs(product)}
       className={cn(
         "group flex items-center gap-3 px-4 py-3 transition-colors outline-none hover:bg-brand/[0.02] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-        !last && "border-b border-border"
+        !last && "border-b border-border",
       )}
     >
       <div className="min-w-0 flex-1">

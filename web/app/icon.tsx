@@ -10,7 +10,7 @@ export function generateImageMetadata() {
     { id: "32", size: { width: 32, height: 32 }, alt: "XiGee" },
     { id: "96", size: { width: 96, height: 96 }, alt: "XiGee" },
     { id: "192", size: { width: 192, height: 192 }, alt: "XiGee" },
-    { id: "512", size: { width: 512, height: 512 }, alt: "XiGee" }
+    { id: "512", size: { width: 512, height: 512 }, alt: "XiGee" },
   ]
 }
 
@@ -27,11 +27,11 @@ export default async function Icon({ id }: { id: Promise<string | number> }) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: BRAND_TILE.light
+        backgroundColor: BRAND_TILE.light,
       }}
     >
       <BrandGlyphSvg size="70%" color={BRAND_FOREGROUND.light} />
     </div>,
-    { width: dimension, height: dimension }
+    { width: dimension, height: dimension },
   )
 }

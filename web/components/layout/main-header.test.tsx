@@ -9,13 +9,13 @@ const nav = vi.hoisted(() => ({
   push: vi.fn(),
   prefetch: vi.fn(),
   pathname: "/",
-  search: ""
+  search: "",
 }))
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: nav.push, prefetch: nav.prefetch, replace: vi.fn() }),
   usePathname: () => nav.pathname,
-  useSearchParams: () => new URLSearchParams(nav.search)
+  useSearchParams: () => new URLSearchParams(nav.search),
 }))
 
 const DEBOUNCE_MS = 150
@@ -112,7 +112,7 @@ describe("MainHeader 搜索", () => {
     expect(input).toHaveAttribute("aria-activedescendant", suggestionOptionId("search-suggestions", 0))
     expect(document.getElementById(suggestionOptionId("search-suggestions", 0))).toHaveAttribute(
       "aria-selected",
-      "true"
+      "true",
     )
 
     // 从第一条再往上 = 回绕到最后一条（不是回到「未选中」）

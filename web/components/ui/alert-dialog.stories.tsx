@@ -8,14 +8,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 
 const meta = {
   title: "UI/AlertDialog",
   component: AlertDialog,
-  tags: ["autodocs"]
+  tags: ["autodocs"],
 } satisfies Meta<typeof AlertDialog>
 
 export default meta
@@ -36,7 +36,7 @@ export const Destructive: Story = {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  ),
 }
 
 export const Default: Story = {
@@ -54,5 +54,5 @@ export const Default: Story = {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  ),
 }

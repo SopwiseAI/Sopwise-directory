@@ -4,12 +4,13 @@
   "watcher": {
     "ignore": [
       ".git/**",
-      ".ruff_cache/**",
-      "node_modules/**",
-      "web/node_modules/**",
-      "web/.next/**",
-      "studio/.venv/**",
-      "studio/**/__pycache__/**",
+      "**/node_modules/**",
+      "**/__pycache__/**",
+      "**/.pytest_cache/**",
+      "**/.ruff_cache/**",
+      "**/.venv/**",
+      "**/.next/**",
+      ".dsh-artifacts/**",
       "scripts/.state/**"
     ]
   },

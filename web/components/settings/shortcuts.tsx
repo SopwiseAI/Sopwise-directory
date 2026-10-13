@@ -5,7 +5,7 @@ import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemSeparat
 const SHORTCUTS: { keys: string[]; description: string }[] = [
   { keys: ["/"], description: "聚焦顶部搜索框" },
   { keys: ["Enter"], description: "在搜索框中执行搜索" },
-  { keys: ["Esc"], description: "清空搜索内容 / 关闭搜索框" }
+  { keys: ["Esc"], description: "清空搜索内容 / 关闭搜索框" },
 ]
 
 /** 全站键盘快捷键速查：Item 行 + 发丝分隔，不套卡片。 */

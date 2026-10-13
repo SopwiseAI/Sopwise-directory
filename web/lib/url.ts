@@ -29,7 +29,7 @@ export function searchPageHref(query: string): string {
 export function writeSearchParams(
   pathname: string,
   search: string,
-  patch: Readonly<Record<string, string | null>>
+  patch: Readonly<Record<string, string | null>>,
 ): string {
   const params = new URLSearchParams(search)
   for (const [key, value] of Object.entries(patch)) {

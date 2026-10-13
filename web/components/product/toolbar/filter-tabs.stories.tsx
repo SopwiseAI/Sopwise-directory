@@ -8,7 +8,7 @@ const meta = {
   component: FilterTabs,
   tags: ["autodocs"],
   args: { tab: "all", onTabChange: () => {} },
-  argTypes: { tab: { control: "inline-radio", options: ["all", "latest", "featured"] } }
+  argTypes: { tab: { control: "inline-radio", options: ["all", "latest", "featured"] } },
 } satisfies Meta<typeof FilterTabs>
 
 export default meta
@@ -20,13 +20,13 @@ function ControlledFilterTabs({ initial = "all" }: { initial?: TabMode }) {
 }
 
 export const Interactive: Story = {
-  render: () => <ControlledFilterTabs />
+  render: () => <ControlledFilterTabs />,
 }
 
 export const Latest: Story = {
-  render: () => <ControlledFilterTabs initial="latest" />
+  render: () => <ControlledFilterTabs initial="latest" />,
 }
 
 export const Featured: Story = {
-  render: () => <ControlledFilterTabs initial="featured" />
+  render: () => <ControlledFilterTabs initial="featured" />,
 }

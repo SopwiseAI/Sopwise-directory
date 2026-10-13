@@ -29,7 +29,7 @@ export function PageBar({ children, actions, width = "content", className }: Pag
       className={cn(
         "z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
         "md:sticky md:top-0",
-        className
+        className,
       )}
     >
       <div className={pageShell(width, "flex h-11 items-center gap-3 border-b border-border")}>

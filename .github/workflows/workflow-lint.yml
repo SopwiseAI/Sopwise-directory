@@ -1,0 +1,85 @@
+name: Workflow Lint
+
+# 守住 workflow 自身的安全基线（本作业在 ruleset 里是 required check）：
+# - actionlint：workflow 语法 / action 输入 / run 里的 shell 片段（装了 shellcheck 才会检查 shell）
+# - zizmor：workflow 安全审计（未固定引用、模板注入、凭证持久化等）
+# 两个工具与 shellcheck 都固定到精确版本并校验 sha256：required check 不能因上游工具漂移而变红。
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  actionlint:
+    # ⚠️ 下面两个 job 的 name 同时是 main 分支保护（ruleset）里的 required check 名，改名会让 PR 永远等不到检查
+    name: actionlint（语法与 shell）
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # 装 shellcheck 后 actionlint 会连带检查 run: 里的 shell 片段。
+      # 不用 apt：apt 的 shellcheck 版本随 runner 镜像浮动，而本作业是 required check，
+      # 不能因为上游工具换版本就无故变红（本地已用 0.11.0 验证过全部 run 片段通过）。
+      # 刻意不写 $GITHUB_PATH：下面把 shellcheck 路径显式传给 actionlint，
+      # 少一个 runner 全局副作用（首次上线时曾出现 job 状态卡在 in_progress）。
+      - name: Install shellcheck
+        run: |
+          set -euo pipefail
+          VERSION="0.11.0"
+          ARCHIVE="shellcheck-v${VERSION}.linux.x86_64.tar.gz"
+          curl -sSfL -o "$ARCHIVE" \
+            "https://github.com/koalaman/shellcheck/releases/download/v${VERSION}/${ARCHIVE}"
+          echo "b7af85e41cc99489dcc21d66c6d5f3685138f06d34651e6d34b42ec6d54fe6f6  ${ARCHIVE}" | sha256sum -c -
+          tar xzf "$ARCHIVE"
+
+      # 不用第三方 action：直接下载官方发布包并校验 sha256，
+      # 避免"用可变引用去检查可变引用"
+      - name: Run actionlint
+        run: |
+          set -euo pipefail
+          VERSION="1.7.12"
+          SHELLCHECK_VERSION="0.11.0"
+          ARCHIVE="actionlint_${VERSION}_linux_amd64.tar.gz"
+          curl -sSfL -o "$ARCHIVE" \
+            "https://github.com/rhysd/actionlint/releases/download/v${VERSION}/${ARCHIVE}"
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  ${ARCHIVE}" | sha256sum -c -
+          tar xzf "$ARCHIVE" actionlint
+          ./actionlint -color -shellcheck="$PWD/shellcheck-v${SHELLCHECK_VERSION}/shellcheck"
+
+  zizmor:
+    name: zizmor（workflow 安全审计）
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run zizmor
+        uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        with:
+          # 只扫 .github/：与 collect: all 搭配可覆盖 dependabot.yml，
+          # 又不会误扫 node_modules 里第三方包自带的 workflow（本机实测那里有 400+ 条噪音）
+          inputs: .github
+          collect: all
+          # 固定 zizmor 版本，不跟随 latest
+          version: "1.30.1"
+          # 不写 SARIF：省掉 security-events: write，保持 contents: read 的最小权限
+          advanced-security: false
+          annotations: true
+          # low 及以上都报（template-injection 属 low，但 confidence 高，值得拦住）
+          min-severity: low
+          # 关掉在线审计：它要访问 GitHub API，而本作业是 required check，
+          # 不能让网络/配额问题卡住 PR；离线审计已覆盖固定引用、模板注入、权限等结构性风险
+          online-audits: false

@@ -8,7 +8,7 @@ const meta = {
   component: ViewToggle,
   tags: ["autodocs"],
   args: { view: "grid", onViewChange: () => {} },
-  argTypes: { view: { control: "inline-radio", options: ["grid", "list"] } }
+  argTypes: { view: { control: "inline-radio", options: ["grid", "list"] } },
 } satisfies Meta<typeof ViewToggle>
 
 export default meta
@@ -20,9 +20,9 @@ function ControlledViewToggle({ initial = "grid" }: { initial?: ViewMode }) {
 }
 
 export const Interactive: Story = {
-  render: () => <ControlledViewToggle />
+  render: () => <ControlledViewToggle />,
 }
 
 export const List: Story = {
-  render: () => <ControlledViewToggle initial="list" />
+  render: () => <ControlledViewToggle initial="list" />,
 }

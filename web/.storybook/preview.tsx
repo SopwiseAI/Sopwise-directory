@@ -40,7 +40,7 @@ const preview: Preview = {
   parameters: {
     controls: { matchers: { color: /(background|color)$/i, date: /Date$/i } },
     backgrounds: { disable: true },
-    nextjs: { appDirectory: true }
+    nextjs: { appDirectory: true },
   },
   globalTypes: {
     theme: {
@@ -51,14 +51,14 @@ const preview: Preview = {
         items: [
           { value: "light", title: "Light", icon: "sun" },
           { value: "dark", title: "Dark", icon: "moon" },
-          { value: "system", title: "System", icon: "browser" }
+          { value: "system", title: "System", icon: "browser" },
         ],
-        dynamicTitle: true
-      }
-    }
+        dynamicTitle: true,
+      },
+    },
   },
   initialGlobals: { theme: "light" },
-  decorators: [withProjectTheme]
+  decorators: [withProjectTheme],
 }
 
 export default preview

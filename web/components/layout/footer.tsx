@@ -12,7 +12,7 @@ export default function Footer() {
       <div
         className={pageShell(
           "browse",
-          "flex flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-6"
+          "flex flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-6",
         )}
       >
         <Link

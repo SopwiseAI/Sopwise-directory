@@ -141,7 +141,7 @@ export function Sidebar({ categories, categoryCounts, totalProducts }: SidebarPr
     if (!nav || !sentinel) return
     const observer = new IntersectionObserver(([entry]) => setAtBottom(entry.isIntersecting), {
       root: nav,
-      threshold: 0
+      threshold: 0,
     })
     observer.observe(sentinel)
     return () => observer.disconnect()
@@ -165,7 +165,7 @@ export function Sidebar({ categories, categoryCounts, totalProducts }: SidebarPr
       className={cn(
         "hidden shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex",
         collapsed ? "w-14" : "w-[280px]",
-        "transition-[width] duration-200"
+        "transition-[width] duration-200",
       )}
     >
       {/* 品牌区：折叠控制恒在品牌行（DSH 式）。
@@ -175,7 +175,7 @@ export function Sidebar({ categories, categoryCounts, totalProducts }: SidebarPr
       <div
         className={cn(
           "relative z-10 flex shrink-0 items-center bg-sidebar",
-          collapsed ? "justify-center py-2.5" : "h-16 justify-between px-3"
+          collapsed ? "justify-center py-2.5" : "h-16 justify-between px-3",
         )}
       >
         {collapsed ? (
@@ -201,7 +201,7 @@ export function Sidebar({ categories, categoryCounts, totalProducts }: SidebarPr
           aria-label="主导航"
           className={cn(
             "flex h-full flex-col overflow-y-auto",
-            collapsed ? "gap-1.5 px-2.5 pb-3 pt-3" : "gap-0.5 px-1.5 pb-3 pt-2"
+            collapsed ? "gap-1.5 px-2.5 pb-3 pt-3" : "gap-0.5 px-1.5 pb-3 pt-2",
           )}
         >
           {/* 全部工具（核心主功能，首位） */}
@@ -252,7 +252,7 @@ export function Sidebar({ categories, categoryCounts, totalProducts }: SidebarPr
           aria-hidden
           className={cn(
             "pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-sidebar via-sidebar/70 to-transparent transition-opacity duration-200",
-            atBottom ? "opacity-0" : "opacity-100"
+            atBottom ? "opacity-0" : "opacity-100",
           )}
         />
         {/* 顶部柔和渐隐：向下滚动后浮出，暗示上方还有内容（无边框，仅靠渐变分层） */}
@@ -260,7 +260,7 @@ export function Sidebar({ categories, categoryCounts, totalProducts }: SidebarPr
           aria-hidden
           className={cn(
             "pointer-events-none absolute inset-x-0 top-0 h-4 bg-gradient-to-b from-sidebar to-transparent transition-opacity duration-200",
-            scrolled ? "opacity-100" : "opacity-0"
+            scrolled ? "opacity-100" : "opacity-0",
           )}
         />
       </div>
@@ -287,7 +287,7 @@ function SidebarLink({ href, active, collapsed, label, icon, count }: SidebarLin
         collapsed && "justify-center px-0 py-2.5 [&_svg]:size-5",
         active
           ? "bg-sidebar-accent font-medium text-foreground"
-          : "text-muted-foreground hover:bg-sidebar-accent/70 hover:text-foreground"
+          : "text-muted-foreground hover:bg-sidebar-accent/70 hover:text-foreground",
       )}
     >
       {/* 活跃指示条 */}
@@ -295,7 +295,7 @@ function SidebarLink({ href, active, collapsed, label, icon, count }: SidebarLin
         aria-hidden
         className={cn(
           "absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-brand transition-opacity",
-          active ? "opacity-100" : "opacity-0"
+          active ? "opacity-100" : "opacity-0",
         )}
       />
       {icon}
@@ -308,7 +308,7 @@ function SidebarLink({ href, active, collapsed, label, icon, count }: SidebarLin
           data-sidebar-count
           className={cn(
             "font-data tabular-nums transition-colors",
-            collapsed ? "sr-only" : active ? "text-sidebar-accent-foreground/70" : "text-muted-foreground"
+            collapsed ? "sr-only" : active ? "text-sidebar-accent-foreground/70" : "text-muted-foreground",
           )}
         >
           {count}

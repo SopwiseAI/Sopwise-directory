@@ -9,8 +9,8 @@ const meta = {
   argTypes: {
     label: { control: "text" },
     value: { control: "number" },
-    size: { control: "inline-radio", options: ["sm", "lg"] }
-  }
+    size: { control: "inline-radio", options: ["sm", "lg"] },
+  },
 } satisfies Meta<typeof StatItem>
 
 export default meta
@@ -24,9 +24,9 @@ export const Sizes: Story = {
       <StatItem label="产品" value={1234} size="sm" />
       <StatItem label="产品" value={1234} size="lg" />
     </div>
-  )
+  ),
 }
 
 export const LargeNumber: Story = {
-  args: { label: "访问量", value: 128456, size: "lg" }
+  args: { label: "访问量", value: 128456, size: "lg" },
 }

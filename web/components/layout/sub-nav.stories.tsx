@@ -7,7 +7,7 @@ const meta = {
   component: SubNav,
   tags: ["autodocs"],
   args: { categories: mockCategories },
-  parameters: { layout: "fullscreen" }
+  parameters: { layout: "fullscreen" },
 } satisfies Meta<typeof SubNav>
 
 export default meta

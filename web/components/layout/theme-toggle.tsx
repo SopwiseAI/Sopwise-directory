@@ -11,7 +11,7 @@ export default function ThemeToggle() {
   const next: Record<ThemeMode, ThemeMode> = {
     light: "dark",
     dark: "system",
-    system: "light"
+    system: "light",
   }
 
   const nextMode = next[theme]
@@ -19,7 +19,7 @@ export default function ThemeToggle() {
   const labels: Record<ThemeMode, string> = {
     light: "亮色",
     dark: "暗色",
-    system: "系统"
+    system: "系统",
   }
 
   return (

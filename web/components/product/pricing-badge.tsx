@@ -12,23 +12,23 @@ export const pricingStyles: Record<Pricing, PricingStyle> = {
   free: {
     label: "免费",
     className: "bg-price-free/10 text-price-free border-price-free/20",
-    dotClass: "bg-price-free"
+    dotClass: "bg-price-free",
   },
   freemium: {
     label: "免费+付费",
     className: "bg-price-freemium/10 text-price-freemium border-price-freemium/20",
-    dotClass: "bg-price-freemium"
+    dotClass: "bg-price-freemium",
   },
   paid: {
     label: "付费",
     className: "bg-price-paid/10 text-price-paid border-price-paid/20",
-    dotClass: "bg-price-paid"
+    dotClass: "bg-price-paid",
   },
   opensource: {
     label: "开源",
     className: "bg-price-opensource/10 text-price-opensource border-price-opensource/20",
-    dotClass: "bg-price-opensource"
-  }
+    dotClass: "bg-price-opensource",
+  },
 }
 
 export function PricingBadge({ pricing }: { pricing: Pricing }) {
@@ -38,7 +38,7 @@ export function PricingBadge({ pricing }: { pricing: Pricing }) {
       data-slot="pricing-badge"
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono text-xs font-medium tracking-wide",
-        style.className
+        style.className,
       )}
     >
       <span className={cn("size-1.5 rounded-full", style.dotClass)} aria-hidden />

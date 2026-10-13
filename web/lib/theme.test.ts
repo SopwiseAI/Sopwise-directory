@@ -12,7 +12,7 @@ function installMatchMedia(initialDark: boolean) {
     removeEventListener: (_: string, cb: (e: { matches: boolean }) => void) => listeners.delete(cb),
     addListener: (cb: (e: { matches: boolean }) => void) => listeners.add(cb),
     removeListener: (cb: (e: { matches: boolean }) => void) => listeners.delete(cb),
-    dispatchEvent: () => false
+    dispatchEvent: () => false,
   }
   const spy = vi.fn(() => mql)
   vi.stubGlobal("matchMedia", spy)
@@ -21,7 +21,7 @@ function installMatchMedia(initialDark: boolean) {
     setDark(dark: boolean) {
       mql.matches = dark
       listeners.forEach((cb) => cb({ matches: dark }))
-    }
+    },
   }
 }
 

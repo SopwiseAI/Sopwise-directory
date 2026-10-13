@@ -16,7 +16,7 @@ import {
   suggest,
   SEARCH_FOCUS_RESULTS_EVENT,
   SEARCH_RESULT_SELECTOR,
-  type SuggestionDoc
+  type SuggestionDoc,
 } from "@/lib/search"
 import { searchPageHref, writeSearchQuery } from "@/lib/url"
 import type { Category } from "@/lib/types"
@@ -33,7 +33,7 @@ const SEARCH_DEBOUNCE_MS = 150
  */
 function QuerySync({
   inputRef,
-  onQueryChange
+  onQueryChange,
 }: {
   inputRef: RefObject<HTMLInputElement | null>
   onQueryChange: (value: string) => void
@@ -98,7 +98,7 @@ function SearchField({ suggestions }: SearchFieldProps) {
   // 建议不吃防抖：Fuse 对百来条数据是亚毫秒级，直接给即时反馈
   const items = useMemo(
     () => (isSearchPage ? [] : suggest(suggestionIndex, draft)),
-    [isSearchPage, suggestionIndex, draft]
+    [isSearchPage, suggestionIndex, draft],
   )
 
   const listboxId = "search-suggestions"

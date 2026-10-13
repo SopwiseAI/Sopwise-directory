@@ -5,7 +5,7 @@ describe("readSearchState", () => {
   it("读取 q / sort", () => {
     expect(readSearchState(new URLSearchParams("?q=图像&sort=latest"))).toEqual({
       query: "图像",
-      sort: "latest"
+      sort: "latest",
     })
   })
 

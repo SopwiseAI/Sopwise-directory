@@ -198,7 +198,7 @@ export function addToHistory(product: HistorySource): HistoryItem[] {
     pricing: product.pricing ?? existing?.pricing,
     lastVisitedAt: now,
     firstVisitedAt: existing?.firstVisitedAt ?? now,
-    visitCount: (existing?.visitCount ?? 0) + 1
+    visitCount: (existing?.visitCount ?? 0) + 1,
   }
   const saved = persist([item, ...rest])
   if (!saved) return list
@@ -299,7 +299,7 @@ export function importHistory(raw: string): ImportResult {
         Date.parse(older.firstVisitedAt) < Date.parse(newer.firstVisitedAt)
           ? older.firstVisitedAt
           : newer.firstVisitedAt,
-      visitCount: Math.max(current.visitCount, item.visitCount)
+      visitCount: Math.max(current.visitCount, item.visitCount),
     })
   }
 
@@ -349,7 +349,7 @@ export const HISTORY_PERIODS: readonly { value: HistoryPeriod; label: string }[]
   { value: "all", label: "全部时间" },
   { value: "today", label: "今天" },
   { value: "week", label: "近 7 天" },
-  { value: "month", label: "近 30 天" }
+  { value: "month", label: "近 30 天" },
 ]
 
 export interface HistoryFilter {
@@ -365,7 +365,7 @@ export interface HistoryFilter {
 export function filterHistory(
   items: readonly HistoryItem[],
   { categoryId, period = "all" }: HistoryFilter = {},
-  now: Date = new Date()
+  now: Date = new Date(),
 ): HistoryItem[] {
   const todayStart = startOfDay(now)
   const lowerBound =

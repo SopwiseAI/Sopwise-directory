@@ -27,11 +27,11 @@ export interface SearchDoc extends Product {
 /** 把产品 + 分类名映射展开为可索引文档。 */
 export function buildSearchDocs(
   products: readonly Product[],
-  categoryNames: Readonly<Record<string, string>> = {}
+  categoryNames: Readonly<Record<string, string>> = {},
 ): SearchDoc[] {
   return products.map((p) => ({
     ...p,
-    categoryNames: p.categories.map((id) => categoryNames[id]).filter((name): name is string => Boolean(name))
+    categoryNames: p.categories.map((id) => categoryNames[id]).filter((name): name is string => Boolean(name)),
   }))
 }
 
@@ -56,7 +56,7 @@ export interface SuggestionDoc {
 /** 产品 + 分类名 → 顶栏建议文档。与 buildSearchDocs 同源，保证两处分类名一致。 */
 export function buildSuggestionDocs(
   products: readonly Product[],
-  categoryNames: Readonly<Record<string, string>> = {}
+  categoryNames: Readonly<Record<string, string>> = {},
 ): SuggestionDoc[] {
   return products.map((p) => ({
     id: p.id,
@@ -65,7 +65,7 @@ export function buildSuggestionDocs(
     categories: p.categories,
     categoryNames: p.categories.map((id) => categoryNames[id]).filter((name): name is string => Boolean(name)),
     tags: p.tags,
-    pricing: p.pricing
+    pricing: p.pricing,
   }))
 }
 
@@ -93,11 +93,11 @@ export function createSuggestionIndex(docs: readonly SuggestionDoc[]): Fuse<Sugg
     keys: [
       { name: "name", weight: 0.5 },
       { name: "tags", weight: 0.3 },
-      { name: "categoryNames", weight: 0.2 }
+      { name: "categoryNames", weight: 0.2 },
     ],
     threshold: resolveThreshold(),
     ignoreLocation: true,
-    includeScore: true
+    includeScore: true,
   })
 }
 
@@ -166,7 +166,7 @@ export function highlightSegments(text: string, query: string): HighlightSegment
 export function createSearchIndex(
   products: readonly Product[] | readonly SearchDoc[],
   categoryNames: Readonly<Record<string, string>> = {},
-  threshold: number = resolveThreshold()
+  threshold: number = resolveThreshold(),
 ): Fuse<SearchDoc> {
   const docs = (products as readonly Product[]).every((p) => "categoryNames" in p)
     ? (products as readonly SearchDoc[])
@@ -177,11 +177,11 @@ export function createSearchIndex(
       { name: "name", weight: 0.4 },
       { name: "description", weight: 0.3 },
       { name: "tags", weight: 0.3 },
-      { name: "categoryNames", weight: 0.2 }
+      { name: "categoryNames", weight: 0.2 },
     ],
     threshold,
     ignoreLocation: true,
-    includeScore: true
+    includeScore: true,
   })
 }
 
@@ -207,7 +207,7 @@ export const FALLBACK_MAX_SCORE = 0.55
  */
 export function createFallbackIndex(
   products: readonly Product[] | readonly SearchDoc[],
-  categoryNames: Readonly<Record<string, string>> = {}
+  categoryNames: Readonly<Record<string, string>> = {},
 ): Fuse<SearchDoc> {
   return createSearchIndex(products, categoryNames, Math.max(resolveThreshold(), FALLBACK_THRESHOLD))
 }

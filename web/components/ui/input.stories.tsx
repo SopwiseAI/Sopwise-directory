@@ -8,7 +8,7 @@ const meta = {
   title: "UI/Input",
   component: Input,
   tags: ["autodocs"],
-  args: { placeholder: "输入内容…" }
+  args: { placeholder: "输入内容…" },
 } satisfies Meta<typeof Input>
 
 export default meta
@@ -17,7 +17,7 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {}
 
 export const Invalid: Story = {
-  args: { "aria-invalid": true, defaultValue: "错误输入" }
+  args: { "aria-invalid": true, defaultValue: "错误输入" },
 }
 
 export const WithInputGroup: Story = {
@@ -33,5 +33,5 @@ export const WithInputGroup: Story = {
         </InputGroupText>
       </InputGroupAddon>
     </InputGroup>
-  )
+  ),
 }

@@ -1,0 +1,42 @@
+name: Secret Scan
+
+# 密钥扫描：提交进仓库的凭据是最难挽回的一类事故（一旦推到公开仓库即视为已泄露），
+# 规则与白名单见根目录 .gitleaks.toml。
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gitleaks:
+    # ⚠️ 这个 name 同时是 main 分支保护（ruleset）里的 required check 名，改名会让 PR 永远等不到它
+    name: gitleaks（密钥扫描）
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # 扫全历史：避免"曾经提交过、之后删掉"的密钥被漏掉
+          fetch-depth: 0
+          # gitleaks 只读本地历史，不需要把 token 留在 .git/config（zizmor: artipacked）
+          persist-credentials: false
+
+      # 用官方 CLI 而非 gitleaks/gitleaks-action：后者对组织仓库要求 GITLEAKS_LICENSE
+      # 秘钥（个人账号免费），CLI 无此限制且版本可精确控制。
+      # 镜像按 digest 固定（tag 可被上游移动，digest 不可变），注释保留可读版本号。
+      # 用 `git` 扫描模式而非 `detect`：v8.19.0 起 detect/protect 已弃用并从 --help 隐藏，
+      # 官方推荐 git / dir / stdin 三种模式；`git` 等价于原来的 detect（扫本地仓库历史）。
+      - name: Run gitleaks
+        run: |
+          IMAGE="ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f" # v8.30.1
+          docker run --rm -v "$PWD:/repo" -w /repo \
+            "$IMAGE" \
+            git --redact --config .gitleaks.toml --verbose .

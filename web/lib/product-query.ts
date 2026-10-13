@@ -45,7 +45,7 @@ export function readUrlParams(search: string): UrlState {
   return {
     tab,
     view: viewParam && isValidView(viewParam) ? viewParam : null,
-    sort: sortParam && isValidSort(sortParam) ? sortParam : null
+    sort: sortParam && isValidSort(sortParam) ? sortParam : null,
   }
 }
 
@@ -57,7 +57,7 @@ export function resolveInitialTab({
   urlTab,
   storedTab,
   defaultTab,
-  showTabs
+  showTabs,
 }: {
   urlTab: TabMode | null
   storedTab: TabMode | null

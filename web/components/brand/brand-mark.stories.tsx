@@ -9,8 +9,8 @@ const meta = {
   argTypes: {
     size: { control: "inline-radio", options: ["sm", "md", "lg", "xl"] },
     glyphClassName: { control: "text" },
-    className: { control: "text" }
-  }
+    className: { control: "text" },
+  },
 } satisfies Meta<typeof BrandMark>
 
 export default meta
@@ -23,15 +23,15 @@ export const Sizes: Story = {
         <BrandMark key={s} size={s} />
       ))}
     </div>
-  )
+  ),
 }
 
 export const Playground: Story = {}
 
 export const GlyphOverride: Story = {
-  render: () => <BrandMark size="lg" glyphClassName="size-3" />
+  render: () => <BrandMark size="lg" glyphClassName="size-3" />,
 }
 
 export const RoundedFull: Story = {
-  render: () => <BrandMark size="lg" className="rounded-full" />
+  render: () => <BrandMark size="lg" className="rounded-full" />,
 }

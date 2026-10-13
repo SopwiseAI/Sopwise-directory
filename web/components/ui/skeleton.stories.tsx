@@ -4,14 +4,14 @@ import { Skeleton } from "@/components/ui/skeleton"
 const meta = {
   title: "UI/Skeleton",
   component: Skeleton,
-  tags: ["autodocs"]
+  tags: ["autodocs"],
 } satisfies Meta<typeof Skeleton>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
-  render: () => <Skeleton className="h-8 w-48" />
+  render: () => <Skeleton className="h-8 w-48" />,
 }
 
 export const CardList: Story = {
@@ -27,5 +27,5 @@ export const CardList: Story = {
         </div>
       ))}
     </div>
-  )
+  ),
 }

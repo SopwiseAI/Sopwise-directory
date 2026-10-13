@@ -115,7 +115,7 @@ function HeaderInner({ className }: { className?: string }) {
     <header
       className={cn(
         "sticky top-0 z-50 w-full border-b bg-background/95 pt-[env(safe-area-inset-top)] backdrop-blur supports-[backdrop-filter]:bg-background/60",
-        className
+        className,
       )}
     >
       <div className={pageShell("browse", "flex h-14 items-center justify-between gap-4 px-4 sm:px-6")}>

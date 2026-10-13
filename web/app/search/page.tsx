@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: "搜索",
   // noindex 页面不声明 canonical：索引已拒绝收录，再给规范地址属于多余信号
   openGraph: { title: "搜索" },
-  robots: { index: false, follow: true }
+  robots: { index: false, follow: true },
 }
 
 const allProducts = getAllProducts()

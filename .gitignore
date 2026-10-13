@@ -1,5 +1,6 @@
 # dependencies
 node_modules/
+.pnpm-store/
 
 # testing
 coverage/
@@ -14,17 +15,37 @@ storybook-static/
 
 # misc
 .DS_Store
-*.pem
+*.local
 
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.log
 
-# env files (保留 .env.example 可提交)
+# 密钥 / 证书 / SSH（*.pem 之外的类型同样必须挡住）
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.crt
+*.cer
+id_rsa*
+id_ed25519*
+.netrc
+.pgpass
+service-account*.json
+credentials.json
+
+# env files（无斜杠模式在任意层级生效；保留 .env.example 可提交）
 .env
 .env.*
+*.env
+.envrc
+.direnv/
 !.env.example
 
 # vercel
@@ -47,11 +68,21 @@ venv/
 .coverage
 htmlcov/
 
-# IDE
+# IDE（.vscode 只白名单化团队共享的两个文件，避免 .vscode/mcp.json 等带凭据的文件入库）
 .idea/
-.vscode/*.code-snippets
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
 *.swp
 *.swo
+
+# 工具缓存
+.turbo/
+.eslintcache
+
+# Agent / 本地临时产物（原先只写在本机 .git/info/exclude，不随克隆分发）
+.dsh-artifacts/
+opencode.local.json
 
 # scripts runtime
 scripts/.state/

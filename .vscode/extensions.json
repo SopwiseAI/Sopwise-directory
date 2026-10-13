@@ -5,6 +5,10 @@
     "DavidAnson.vscode-markdownlint",
     "bradlc.vscode-tailwindcss",
     "ms-python.python",
-    "dbaeumer.vscode-eslint"
+    "dbaeumer.vscode-eslint",
+    // VS Code 原生不读 .editorconfig，缺这个扩展则仓库的缩进/行尾/尾随空白约定在编辑器里不生效
+    "EditorConfig.EditorConfig",
+    // 仓库用 vitest（web/），装它才能在编辑器里直接运行/调试用例
+    "vitest.explorer"
   ]
 }

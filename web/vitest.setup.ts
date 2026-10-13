@@ -46,6 +46,6 @@ if (typeof globalThis.matchMedia !== "function") {
     removeEventListener() {},
     dispatchEvent() {
       return false
-    }
+    },
   })) as unknown as typeof window.matchMedia
 }

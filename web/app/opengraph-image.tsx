@@ -27,7 +27,7 @@ export default function OpengraphImage() {
         padding: "80px 96px",
         background: BRAND_PAGE.dark,
         color: BRAND_TILE.dark,
-        fontFamily: "Outfit"
+        fontFamily: "Outfit",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 32 }}>
@@ -39,7 +39,7 @@ export default function OpengraphImage() {
             backgroundColor: BRAND_TILE.dark,
             display: "flex",
             alignItems: "center",
-            justifyContent: "center"
+            justifyContent: "center",
           }}
         >
           <BrandGlyphSvg size={46} color={BRAND_FOREGROUND.dark} />
@@ -57,7 +57,7 @@ export default function OpengraphImage() {
           fontSize: 60,
           fontWeight: 600,
           lineHeight: 1.2,
-          letterSpacing: -1
+          letterSpacing: -1,
         }}
       >
         精选值得用的 AI 工具
@@ -75,6 +75,6 @@ export default function OpengraphImage() {
 
       <div style={{ display: "flex", fontSize: 24, color: BRAND_MUTED.dark, marginTop: 40 }}>{SITE_HOST}</div>
     </div>,
-    { ...size, fonts: OG_FONTS }
+    { ...size, fonts: OG_FONTS },
   )
 }

@@ -28,7 +28,7 @@ export function PageStatus({ code, media, title, description, actions, children,
       role={role}
       className={cn(
         "mx-auto flex min-h-[60vh] w-full max-w-xl flex-col items-center justify-center px-6 py-16",
-        className
+        className,
       )}
     >
       <Empty className="gap-5">

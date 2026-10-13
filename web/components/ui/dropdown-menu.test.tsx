@@ -5,7 +5,7 @@ import {
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "./dropdown-menu"
 
 /**
@@ -22,7 +22,7 @@ function renderMenu() {
           <DropdownMenuRadioItem value="name-asc">名称 A-Z</DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
       </DropdownMenuContent>
-    </DropdownMenu>
+    </DropdownMenu>,
   )
 }
 
@@ -51,7 +51,7 @@ describe("DropdownMenuRadioItem 选中后关闭菜单", () => {
             </DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
         </DropdownMenuContent>
-      </DropdownMenu>
+      </DropdownMenu>,
     )
     const item = screen.getByRole("menuitemradio", { name: "B" })
     fireEvent.click(item)

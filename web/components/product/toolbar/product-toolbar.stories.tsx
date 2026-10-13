@@ -13,9 +13,9 @@ const meta = {
     sort: "latest",
     onViewChange: () => {},
     onTabChange: () => {},
-    onSortChange: () => {}
+    onSortChange: () => {},
   },
-  argTypes: { showTabs: { control: "boolean" } }
+  argTypes: { showTabs: { control: "boolean" } },
 } satisfies Meta<typeof ProductToolbar>
 
 export default meta
@@ -41,9 +41,9 @@ function Demo({ showTabs = true }: { showTabs?: boolean }) {
 }
 
 export const WithTabs: Story = {
-  render: () => <Demo showTabs />
+  render: () => <Demo showTabs />,
 }
 
 export const WithoutTabs: Story = {
-  render: () => <Demo showTabs={false} />
+  render: () => <Demo showTabs={false} />,
 }

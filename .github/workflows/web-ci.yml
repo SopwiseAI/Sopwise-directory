@@ -8,19 +8,37 @@ on:
   pull_request:
     branches: [main]
 
+# 最小权限：本工作流只读仓库内容（不发布、不提 PR、不写评论）
+permissions:
+  contents: read
+
+# 同一分支/PR 的旧运行自动取消：既省 runner，也避免旧结果覆盖新结果
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 defaults:
   run:
     working-directory: web
 
 jobs:
   ci:
+    # 注意：job id 必须保持 ci —— main 的分支保护要求名为 "ci" 的检查，
+    # 一旦给这个 job 加 name:，检查上下文会变成新名字而导致 PR 永远等不到该检查。
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      # 所有 action 按 commit SHA 固定（供应链要求，对应 OpenSSF Scorecard 的 Pinned-Dependencies），
+      # 版本写在行尾注释里，由 Dependabot 的 github-actions 生态持续更新。
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # 后续步骤不需要带着 token 执行 git 命令（zizmor: artipacked）
+          persist-credentials: false
 
-      - uses: pnpm/action-setup@v4
+      # v6 起要求 pnpm >= 11：仓库已迁移到 pnpm 12（见根 package.json 的 packageManager），故随之升级
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: ".nvmrc"
           cache: pnpm

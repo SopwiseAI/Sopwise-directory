@@ -17,7 +17,7 @@ function assertCategory(raw: unknown): Category {
   return {
     id: assertString(r.id, "category.id"),
     name: assertString(r.name, "category.name"),
-    icon: assertString(r.icon, "category.icon")
+    icon: assertString(r.icon, "category.icon"),
   }
 }
 
@@ -48,7 +48,7 @@ function assertProduct(raw: unknown): Product {
     pricing: pricing as Product["pricing"],
     featured: typeof r.featured === "boolean" ? r.featured : undefined,
     publishedAt: typeof r.publishedAt === "string" ? r.publishedAt : undefined,
-    createdAt: typeof r.createdAt === "string" ? r.createdAt : undefined
+    createdAt: typeof r.createdAt === "string" ? r.createdAt : undefined,
   }
 }
 
@@ -125,6 +125,6 @@ export function getStats(): SiteStats {
   return {
     products: siteData.products.length,
     categories: siteData.categories.length,
-    featured: getFeaturedProducts().length
+    featured: getFeaturedProducts().length,
   }
 }

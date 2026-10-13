@@ -12,7 +12,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Field, FieldContent, FieldDescription, FieldGroup, FieldTitle } from "@/components/ui/field"
 import { useHistoryCount } from "@/components/history/history-count"
@@ -86,7 +86,7 @@ export function DataControls({ mounted }: { mounted: boolean }) {
         toast.error("导入失败", { description: result.error })
       } else {
         toast.success("导入完成", {
-          description: `新增 ${formatCount(result.imported)} 条，跳过 ${formatCount(result.skipped)} 条，共 ${formatCount(result.total)} 条`
+          description: `新增 ${formatCount(result.imported)} 条，跳过 ${formatCount(result.skipped)} 条，共 ${formatCount(result.total)} 条`,
         })
       }
     } catch {

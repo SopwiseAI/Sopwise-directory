@@ -17,8 +17,8 @@ const eslintConfig = defineConfig([
     // Test config
     "vitest.config.mts",
     "vitest.setup.ts",
-    "vitest.server-only-stub.ts"
-  ])
+    "vitest.server-only-stub.ts",
+  ]),
 ])
 
 export default eslintConfig

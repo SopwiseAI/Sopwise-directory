@@ -2,32 +2,52 @@
   "name": "xigee",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@10.30.1",
-  "description": "AI-powered product discovery directory",
+  "packageManager": "pnpm@12.11.2",
+  "description": "Curated directory of AI tools — hand-picked, links to official sites",
+  "keywords": [
+    "ai",
+    "ai-tools",
+    "ai-directory",
+    "curated",
+    "nextjs",
+    "fastapi"
+  ],
+  "homepage": "https://www.xigee.net",
+  "bugs": {
+    "url": "https://github.com/sopwise-ai/xigee/issues"
+  },
+  "author": "SopwiseAI (https://github.com/sopwise-ai)",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/sopwise-ai/xigee.git"
   },
   "engines": {
-    "node": ">=22.0.0",
-    "pnpm": ">=10.0.0"
+    "node": ">=24.0.0",
+    "pnpm": ">=12.0.0"
   },
   "scripts": {
-    "format": "prettier --write \"*.md\" \"*.json\" \"*.jsonc\" \".opencode/**/*.md\" \"skills/**/*.md\" \".github/**/*.md\" \".github/**/*.yml\"",
-    "format:check": "prettier --check \"*.md\" \"*.json\" \"*.jsonc\" \".opencode/**/*.md\" \"skills/**/*.md\" \".github/**/*.md\" \".github/**/*.yml\"",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "lint:md": "markdownlint-cli2 \"**/*.md\"",
     "lint:md:fix": "markdownlint-cli2 --fix \"**/*.md\"",
-    "check": "pnpm run lint:md && pnpm run format:check && cd studio && uv run ruff check app/ tests/ && cd ../web && pnpm lint",
+    "lint:py": "cd studio && uv run ruff check app/ tests/",
+    "format:py:check": "cd studio && uv run ruff format --check app/ tests/",
+    "lint:web": "pnpm --dir web lint",
+    "typecheck:web": "pnpm --dir web typecheck",
+    "test:web": "pnpm --dir web test",
+    "check": "pnpm run lint:md && pnpm run format:check && pnpm run lint:py && pnpm run format:py:check && pnpm run lint:web && pnpm run typecheck:web && pnpm run test:web",
+    "test": "pnpm run test:web",
     "prepare": "husky"
   },
   "devDependencies": {
+    "@benborla29/mcp-server-mysql": "2.0.9",
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
     "markdownlint-cli2": "^0.23.3",
-    "prettier": "^3.9.9"
+    "prettier": "^3.9.10"
   },
   "lint-staged": {
     "*.md": [
@@ -41,7 +61,7 @@
       "studio/.venv/bin/ruff check --fix",
       "studio/.venv/bin/ruff format"
     ],
-    "*.{ts,tsx,js,jsx,mjs,cjs,css}": [
+    "*.{ts,tsx,mts,cts,js,jsx,mjs,cjs,css}": [
       "prettier --write"
     ]
   }

@@ -8,8 +8,8 @@ const meta = {
   tags: ["autodocs"],
   args: { product: mockProduct },
   argTypes: {
-    last: { control: "boolean" }
-  }
+    last: { control: "boolean" },
+  },
 } satisfies Meta<typeof ProductRow>
 
 export default meta
@@ -18,7 +18,7 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {}
 
 export const WithCategory: Story = {
-  args: { categoryLabel: "对话助手", categoryIcon: "message-square" }
+  args: { categoryLabel: "对话助手", categoryIcon: "message-square" },
 }
 
 export const List: Story = {
@@ -28,5 +28,5 @@ export const List: Story = {
         <ProductRow key={p.id} product={p} categoryLabel="对话助手" categoryIcon="message-square" last={i === 2} />
       ))}
     </div>
-  )
+  ),
 }

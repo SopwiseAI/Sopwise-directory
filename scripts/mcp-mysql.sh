@@ -8,9 +8,9 @@ ENV="${APP_ENV:-dev}"
 ENV_FILE="$SCRIPT_DIR/../studio/.env.${ENV}"
 
 if [ ! -f "$ENV_FILE" ]; then
-  echo "错误: 环境文件不存在: $ENV_FILE" >&2
-  echo "请先创建: cp studio/.env.example $ENV_FILE" >&2
-  exit 1
+    echo "错误: 环境文件不存在: $ENV_FILE" >&2
+    echo "请先创建: cp studio/.env.example $ENV_FILE" >&2
+    exit 1
 fi
 
 # 读取 .env 文件并 export
@@ -31,9 +31,18 @@ export MYSQL_DB="${DB_NAME}"
 
 # 默认只读; 需要写操作时设 MYSQL_ALLOW_WRITE=true
 if [ "${MYSQL_ALLOW_WRITE:-false}" = "true" ]; then
-  export ALLOW_INSERT_OPERATION="true"
-  export ALLOW_UPDATE_OPERATION="true"
-  export ALLOW_DELETE_OPERATION="true"
+    export ALLOW_INSERT_OPERATION="true"
+    export ALLOW_UPDATE_OPERATION="true"
+    export ALLOW_DELETE_OPERATION="true"
 fi
 
-exec npx -y @benborla29/mcp-server-mysql
+# MCP server 由根 package.json 锁定精确版本（见 devDependencies），用本地 bin 执行，
+# 避免 `npx -y` 在每次运行时从网络拉取未固定版本的代码并持有数据库凭据。
+MCP_BIN="$SCRIPT_DIR/../node_modules/.bin/mcp-server-mysql"
+if [ ! -x "$MCP_BIN" ]; then
+    echo "错误: 未找到 $MCP_BIN" >&2
+    echo "请先在仓库根目录执行: pnpm install" >&2
+    exit 1
+fi
+
+exec "$MCP_BIN"

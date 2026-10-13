@@ -6,7 +6,7 @@ import {
   getCategoryCounts,
   getFeaturedProducts,
   getProductsByCategory,
-  getStats
+  getStats,
 } from "./data"
 import { CATEGORY_ICONS } from "./category-icon-node"
 
