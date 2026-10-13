@@ -20,7 +20,7 @@ pnpm-workspace.yaml  pnpm 行为设置（非敏感项）
 | 依赖    | 版本             | 依据                                                        |
 | ------- | ---------------- | ----------------------------------------------------------- |
 | Node.js | 24（Active LTS） | `.nvmrc`、`package.json` 的 engines（`>=24.0.0`）           |
-| pnpm    | >= 10            | `package.json` 的 engines、`packageManager`（当前 10.34.6） |
+| pnpm    | >= 12            | `package.json` 的 engines、`packageManager`（当前 12.11.2） |
 | Python  | >= 3.13          | `studio/pyproject.toml`                                     |
 | uv      | 最新             | studio 依赖管理（`uv sync` / `uv run`）                     |
 | MySQL   | >= 5.7           | `studio/sql/schema.sql`、后端测试必需                       |

@@ -1,6 +1,11 @@
-ignoredBuiltDependencies:
-  - sharp
-  - unrs-resolver
+# pnpm 设置文件（pnpm 11 起设置不再从 package.json 的 pnpm 字段读取）。
+# 本文件刻意不含 packages 字段：web/ 是独立 pnpm 工程，根目录不是 monorepo。
 
-onlyBuiltDependencies:
-  - esbuild
+# 依赖构建脚本允许清单（pnpm 11 起取代 onlyBuiltDependencies / ignoredBuiltDependencies /
+# neverBuiltDependencies；旧的键在 v12 会被判为未识别设置并直接报错）。
+# esbuild 的 postinstall 只负责就位平台二进制，属常规构建脚本，显式放行；
+# sharp / unrs-resolver 走预编译二进制、不需要 native 构建，显式拒绝以留下审计痕迹。
+allowBuilds:
+  esbuild: true
+  sharp: false
+  unrs-resolver: false
