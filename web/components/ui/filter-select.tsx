@@ -8,7 +8,7 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuRadioItemIndicator,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 
@@ -41,7 +41,7 @@ export function FilterSelect({ label, icon: Icon, value, options, onChange, acti
               "gap-1.5 text-xs",
               active
                 ? "border-brand/40 bg-brand/10 text-brand hover:border-brand/40 hover:bg-brand/10 hover:text-brand"
-                : "text-muted-foreground"
+                : "text-muted-foreground",
             )}
           />
         }

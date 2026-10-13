@@ -12,7 +12,7 @@ const mockProduct: Product = {
   url: "https://test.com",
   categories: ["test-cat"],
   pricing: "free",
-  createdAt: "2024-01-01"
+  createdAt: "2024-01-01",
 }
 
 function CountProbe() {

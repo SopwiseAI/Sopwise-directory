@@ -20,7 +20,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     .map((cat) => withLastModified(`${baseUrl}/category/${cat.id}`, getProductsByCategory(cat.id)))
 
   const infoUrls = ["/about", "/privacy", "/terms"].map((path) => ({
-    url: `${baseUrl}${path}`
+    url: `${baseUrl}${path}`,
   }))
 
   return [withLastModified(baseUrl, getAllProducts()), ...categoryUrls, ...infoUrls]

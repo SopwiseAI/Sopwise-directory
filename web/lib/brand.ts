@@ -15,23 +15,23 @@ export const BRAND_GLYPH_PATH = "M12 0.8 Q13.2 10.6 21.8 12 Q13.2 13.4 12 23.2 Q
 /** 品牌墨块底色（浅色场景近黑，深色场景反相近白）。 */
 export const BRAND_TILE = {
   light: "#0f1115",
-  dark: "#f9fafb"
+  dark: "#f9fafb",
 } as const
 
 /** 品牌墨块上的前景色（标记/文字）。 */
 export const BRAND_FOREGROUND = {
   light: "#ffffff",
-  dark: "#0f1115"
+  dark: "#0f1115",
 } as const
 
 /** 页面背景色（浅色白 / 深色炭黑）。 */
 export const BRAND_PAGE = {
   light: "#ffffff",
-  dark: "#151517"
+  dark: "#151517",
 } as const
 
 /** 辅助文本色（OG 图等场景）。 */
 export const BRAND_MUTED = {
   light: "#61666b",
-  dark: "#adb2b8"
+  dark: "#adb2b8",
 } as const

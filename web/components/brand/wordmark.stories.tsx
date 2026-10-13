@@ -7,8 +7,8 @@ const meta = {
   tags: ["autodocs"],
   args: { size: "md" },
   argTypes: {
-    size: { control: "inline-radio", options: ["sm", "md", "lg", "xl"] }
-  }
+    size: { control: "inline-radio", options: ["sm", "md", "lg", "xl"] },
+  },
 } satisfies Meta<typeof Wordmark>
 
 export default meta
@@ -21,7 +21,7 @@ export const Sizes: Story = {
         <Wordmark key={s} size={s} />
       ))}
     </div>
-  )
+  ),
 }
 
 export const Playground: Story = {}

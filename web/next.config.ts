@@ -4,17 +4,17 @@ import { fileURLToPath } from "node:url"
 import { dirname, resolve } from "node:path"
 
 const withBundleAnalyzer = bundleAnalyzer({
-  enabled: process.env.ANALYZE === "true"
+  enabled: process.env.ANALYZE === "true",
 })
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
     // MVP 阶段无产品图片/logo，统一用首字母或 SVG 图标；引入图片后改回 remotePatterns + 开启优化
-    unoptimized: true
+    unoptimized: true,
   },
   turbopack: {
-    root: resolve(dirname(fileURLToPath(import.meta.url)))
+    root: resolve(dirname(fileURLToPath(import.meta.url))),
   },
   async headers() {
     const isDev = process.env.NODE_ENV === "development"
@@ -28,7 +28,7 @@ const nextConfig: NextConfig = {
       "connect-src 'self'",
       "frame-ancestors 'none'",
       "base-uri 'self'",
-      "form-action 'self'"
+      "form-action 'self'",
     ].join("; ")
 
     return [
@@ -39,11 +39,11 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
-          { key: "Content-Security-Policy", value: csp }
-        ]
-      }
+          { key: "Content-Security-Policy", value: csp },
+        ],
+      },
     ]
-  }
+  },
 }
 
 export default withBundleAnalyzer(nextConfig)

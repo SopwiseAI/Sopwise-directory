@@ -16,7 +16,7 @@ const CFG: Record<WordmarkSize, { gap: string; text: string; net: string }> = {
   sm: { gap: "gap-[0.4em]", text: "text-sm", net: "text-[0.62em]" },
   md: { gap: "gap-[0.42em]", text: "text-lg", net: "text-[0.62em]" },
   lg: { gap: "gap-[0.44em]", text: "text-2xl", net: "text-[0.6em]" },
-  xl: { gap: "gap-[0.46em]", text: "text-2xl sm:text-3xl", net: "text-[0.56em]" }
+  xl: { gap: "gap-[0.46em]", text: "text-2xl sm:text-3xl", net: "text-[0.56em]" },
 }
 
 /**
@@ -32,7 +32,7 @@ export function Wordmark({ size = "md", className }: WordmarkProps) {
         "inline-flex min-w-0 items-center font-brand font-semibold tracking-[-0.02em]",
         cfg.text,
         cfg.gap,
-        className
+        className,
       )}
     >
       <BrandMark className="size-[1.28em] rounded-[0.36em]" glyphClassName="size-[0.8em]" />

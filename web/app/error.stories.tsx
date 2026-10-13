@@ -7,8 +7,8 @@ const meta = {
   parameters: { layout: "centered" },
   args: {
     error: new Error("Failed to load (preview)"),
-    reset: () => {}
-  }
+    reset: () => {},
+  },
 } satisfies Meta<typeof PageError>
 
 export default meta

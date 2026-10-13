@@ -11,7 +11,7 @@ const docs: SuggestionDoc[] = [
     categories: ["chat-assistant"],
     categoryNames: ["对话助手"],
     tags: ["对话"],
-    pricing: "freemium"
+    pricing: "freemium",
   },
   {
     id: "midjourney",
@@ -20,8 +20,8 @@ const docs: SuggestionDoc[] = [
     categories: ["image-generation"],
     categoryNames: ["图像生成"],
     tags: ["图像"],
-    pricing: "paid"
-  }
+    pricing: "paid",
+  },
 ]
 
 describe("SearchSuggestions", () => {

@@ -4,13 +4,13 @@ import { InfoLayout, type InfoSectionDef } from "./info-shell"
 import { PAGE_WIDTH } from "@/lib/layout"
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/privacy"
+  usePathname: () => "/privacy",
 }))
 
 const sections: InfoSectionDef[] = [
   { id: "collect", title: "我们收集什么", body: <p>甲</p> },
   { id: "local-data", title: "保存在你浏览器里的数据", body: <p>乙</p> },
-  { id: "cookies", title: "Cookie 与追踪", body: <p>丙</p> }
+  { id: "cookies", title: "Cookie 与追踪", body: <p>丙</p> },
 ]
 
 describe("InfoLayout", () => {
@@ -19,7 +19,7 @@ describe("InfoLayout", () => {
     expect(Array.from(container.querySelectorAll("section[id]")).map((el) => el.id)).toEqual([
       "collect",
       "local-data",
-      "cookies"
+      "cookies",
     ])
     expect(screen.getByRole("heading", { name: "我们收集什么" })).toBeInTheDocument()
     expect(screen.getByText("丙")).toBeInTheDocument()

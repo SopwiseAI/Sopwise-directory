@@ -10,7 +10,7 @@ describe("readUrlParams", () => {
     expect(readUrlParams("?tab=featured&view=list&sort=name-asc")).toEqual({
       tab: "featured",
       view: "list",
-      sort: "name-asc"
+      sort: "name-asc",
     })
   })
 
@@ -27,7 +27,7 @@ describe("readUrlParams", () => {
     expect(readUrlParams("?tab=bogus&view=bogus&sort=bogus")).toEqual({
       tab: null,
       view: null,
-      sort: null
+      sort: null,
     })
   })
 

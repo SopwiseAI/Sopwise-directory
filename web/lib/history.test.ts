@@ -12,7 +12,7 @@ import {
   parseHistorySnapshot,
   resolveMaxItems,
   subscribeHistory,
-  type HistoryItem
+  type HistoryItem,
 } from "./history"
 import type { Product } from "./types"
 
@@ -24,7 +24,7 @@ const mockProduct: Product = {
   categories: ["test-cat"],
   pricing: "free",
   featured: false,
-  createdAt: "2024-01-01"
+  createdAt: "2024-01-01",
 }
 
 describe("addToHistory", () => {
@@ -113,9 +113,9 @@ describe("数据模型与迁移", () => {
           url: "https://a.com",
           domain: "a.com",
           categoryId: "c",
-          visitedAt: "2024-01-01T00:00:00.000Z"
-        }
-      ])
+          visitedAt: "2024-01-01T00:00:00.000Z",
+        },
+      ]),
     )
     const list = getHistory()
     expect(list).toHaveLength(1)
@@ -130,8 +130,8 @@ describe("数据模型与迁移", () => {
       "xigee:history",
       JSON.stringify([
         { id: "", url: "https://x.com", name: "bad" },
-        { id: "ok", url: "https://ok.com", name: "OK", lastVisitedAt: "not-a-date" }
-      ])
+        { id: "ok", url: "https://ok.com", name: "OK", lastVisitedAt: "not-a-date" },
+      ]),
     )
     const list = getHistory()
     expect(list.map((i) => i.id)).toEqual(["ok"])
@@ -201,7 +201,7 @@ describe("配额降级", () => {
     const spy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
       this: Storage,
       k: string,
-      v: string
+      v: string,
     ) {
       if (k === "xigee:history" && calls++ === 0) throw new DOMException("quota", "QuotaExceededError")
       return original.call(this, k, v)
@@ -227,8 +227,8 @@ describe("导出与导入", () => {
       v: 2,
       items: [
         { id: "a", name: "A", url: "https://a.com", visitCount: 2, lastVisitedAt: "2024-02-01T00:00:00.000Z" },
-        { id: "b", name: "B", url: "https://b.com", lastVisitedAt: "2024-03-01T00:00:00.000Z" }
-      ]
+        { id: "b", name: "B", url: "https://b.com", lastVisitedAt: "2024-03-01T00:00:00.000Z" },
+      ],
     })
     const res = importHistory(file)
     expect(res).toMatchObject({ imported: 2, skipped: 0, total: 2 })
@@ -253,9 +253,9 @@ describe("导出与导入", () => {
           url: "https://a.com",
           visitCount: 7,
           lastVisitedAt: "2099-01-01T00:00:00.000Z",
-          firstVisitedAt: "2000-01-01T00:00:00.000Z"
-        }
-      ]
+          firstVisitedAt: "2000-01-01T00:00:00.000Z",
+        },
+      ],
     })
     const res = importHistory(file)
     expect(res.imported).toBe(1)
@@ -271,7 +271,7 @@ describe("导出与导入", () => {
       { id: "", url: "https://x.com", name: "bad" },
       { id: "a", name: "A", url: "https://a.com" },
       { id: "a", name: "A dup", url: "https://a.com" },
-      { id: "b", name: "B", url: "https://b.com" }
+      { id: "b", name: "B", url: "https://b.com" },
     ])
     const res = importHistory(file)
     expect(res.imported).toBe(2)
@@ -300,14 +300,14 @@ describe("filterHistory", () => {
     categoryId,
     lastVisitedAt: iso,
     firstVisitedAt: iso,
-    visitCount: 1
+    visitCount: 1,
   })
   const now = new Date("2026-03-10T12:00:00")
   const items = [
     mk("today", "chat", "2026-03-10T09:00:00"),
     mk("yesterday", "code", "2026-03-09T09:00:00"),
     mk("week", "chat", "2026-03-05T09:00:00"),
-    mk("old", "code", "2026-01-01T09:00:00")
+    mk("old", "code", "2026-01-01T09:00:00"),
   ]
 
   it("period=all 返回全部", () => {
@@ -350,11 +350,11 @@ describe("getHistoryCategoryIds", () => {
       categoryId,
       lastVisitedAt: "2026-03-10T09:00:00",
       firstVisitedAt: "2026-03-10T09:00:00",
-      visitCount: 1
+      visitCount: 1,
     })
     expect(getHistoryCategoryIds([mk("a", "chat"), mk("b", ""), mk("c", "code"), mk("d", "chat")])).toEqual([
       "chat",
-      "code"
+      "code",
     ])
   })
 })
@@ -371,7 +371,7 @@ describe("parseHistorySnapshot", () => {
 
   it("解析旧版裸数组并迁移", () => {
     const raw = JSON.stringify([
-      { id: "a", name: "A", url: "https://a.com", categoryId: "c", visitedAt: "2024-01-01T00:00:00.000Z" }
+      { id: "a", name: "A", url: "https://a.com", categoryId: "c", visitedAt: "2024-01-01T00:00:00.000Z" },
     ])
     const list = parseHistorySnapshot(raw)
     expect(list).toHaveLength(1)
@@ -412,7 +412,7 @@ describe("v2 信封上限裁剪", () => {
       categoryId: "",
       lastVisitedAt: "2024-01-01T00:00:00.000Z",
       firstVisitedAt: "2024-01-01T00:00:00.000Z",
-      visitCount: 1
+      visitCount: 1,
     }))
     localStorage.setItem("xigee:history", JSON.stringify({ v: 2, items }))
     const list = getHistory()

@@ -8,7 +8,7 @@ export const mockCategories: Category[] = [
   { id: "image-generation", name: "图像生成", icon: "Image" },
   { id: "code-tools", name: "代码工具", icon: "Code" },
   { id: "writing-tools", name: "写作工具", icon: "PenTool" },
-  { id: "video-tools", name: "视频工具", icon: "Video" }
+  { id: "video-tools", name: "视频工具", icon: "Video" },
 ]
 
 export const mockCategoryCounts: Record<string, number> = {
@@ -16,7 +16,7 @@ export const mockCategoryCounts: Record<string, number> = {
   "image-generation": 7,
   "code-tools": 7,
   "writing-tools": 5,
-  "video-tools": 5
+  "video-tools": 5,
 }
 
 export const mockProduct: Product = {
@@ -29,7 +29,7 @@ export const mockProduct: Product = {
   pricing: "freemium",
   featured: true,
   publishedAt: "2026-01-15",
-  createdAt: "2026-01-10"
+  createdAt: "2026-01-10",
 }
 
 export const mockProducts: Product[] = [
@@ -43,7 +43,7 @@ export const mockProducts: Product[] = [
     tags: ["对话", "长文本"],
     pricing: "freemium",
     featured: true,
-    publishedAt: "2026-02-01"
+    publishedAt: "2026-02-01",
   },
   {
     id: "midjourney",
@@ -53,7 +53,7 @@ export const mockProducts: Product[] = [
     categories: ["image-generation"],
     tags: ["图像", "绘画"],
     pricing: "paid",
-    publishedAt: "2026-01-20"
+    publishedAt: "2026-01-20",
   },
   {
     id: "stable-diffusion",
@@ -63,7 +63,7 @@ export const mockProducts: Product[] = [
     categories: ["image-generation"],
     tags: ["图像", "开源"],
     pricing: "opensource",
-    publishedAt: "2026-01-05"
+    publishedAt: "2026-01-05",
   },
   {
     id: "github-copilot",
@@ -74,8 +74,8 @@ export const mockProducts: Product[] = [
     tags: ["编程", "补全"],
     pricing: "paid",
     featured: true,
-    publishedAt: "2026-02-10"
-  }
+    publishedAt: "2026-02-10",
+  },
 ]
 
 export const mockSuggestions = ["对话助手", "图像生成", "代码工具", "写作工具"]
@@ -83,5 +83,5 @@ export const mockSuggestions = ["对话助手", "图像生成", "代码工具", 
 /** 顶栏搜索建议数据（由产品 + 分类名展开，与根布局下发的同源）。 */
 export const mockSuggestionDocs = buildSuggestionDocs(
   mockProducts,
-  Object.fromEntries(mockCategories.map((c) => [c.id, c.name]))
+  Object.fromEntries(mockCategories.map((c) => [c.id, c.name])),
 )

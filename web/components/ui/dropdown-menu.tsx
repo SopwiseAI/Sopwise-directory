@@ -40,7 +40,7 @@ function DropdownMenuContent({
           className={cn(
             "z-50 max-h-(--available-height) min-w-[10rem] origin-(--transform-origin) overflow-y-auto overflow-x-hidden rounded-lg border bg-popover p-1 text-popover-foreground shadow-md",
             "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
-            className
+            className,
           )}
           {...props}
         >
@@ -57,7 +57,7 @@ function DropdownMenuItem({ className, ...props }: MenuPrimitive.Item.Props) {
       data-slot="dropdown-menu-item"
       className={cn(
         "relative flex cursor-default select-none items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-        className
+        className,
       )}
       {...props}
     />
@@ -83,7 +83,7 @@ function DropdownMenuRadioItem({ className, children, closeOnClick = true, ...pr
       closeOnClick={closeOnClick}
       className={cn(
         "relative flex cursor-default select-none items-center gap-2 rounded-md py-1.5 pl-2 pr-8 text-sm outline-none transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[checked]:font-medium data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-        className
+        className,
       )}
       {...props}
     >
@@ -98,7 +98,7 @@ function DropdownMenuRadioItemIndicator({ className, ...props }: MenuPrimitive.R
       data-slot="dropdown-menu-radio-item-indicator"
       className={cn(
         "pointer-events-none absolute right-2 top-1/2 inline-flex size-4 -translate-y-1/2 items-center justify-center",
-        className
+        className,
       )}
       {...props}
     >
@@ -114,5 +114,5 @@ export {
   DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuRadioItemIndicator
+  DropdownMenuRadioItemIndicator,
 }

@@ -13,7 +13,7 @@ import {
   removeFromHistory,
   subscribeHistory,
   type HistoryItem,
-  type HistoryPeriod
+  type HistoryPeriod,
 } from "@/lib/history"
 import { formatCount } from "@/lib/format"
 import { PageBar } from "@/components/layout/page-bar"
@@ -32,7 +32,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import type { Category } from "@/lib/types"
 
@@ -181,7 +181,7 @@ export function HistoryList({ categories }: HistoryListProps) {
 
   const periodOptions = useMemo<FilterOption[]>(
     () => HISTORY_PERIODS.map((p) => ({ value: p.value, label: p.label })),
-    []
+    [],
   )
 
   // 搜索（名称/域名/分类）→ 分类 + 时间筛选
@@ -213,7 +213,7 @@ export function HistoryList({ categories }: HistoryListProps) {
           setVisibleCount((n) => Math.min(n + PAGE_SIZE, filtered.length))
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: "200px" },
     )
     observer.observe(el)
     return () => observer.disconnect()

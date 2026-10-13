@@ -7,8 +7,8 @@ const meta = {
   tags: ["autodocs"],
   argTypes: {
     align: { control: "inline-radio", options: ["left", "center"] },
-    className: { control: "text" }
-  }
+    className: { control: "text" },
+  },
 } satisfies Meta<typeof HeroBackdrop>
 
 export default meta
@@ -23,9 +23,9 @@ function Frame({ align }: { align: "left" | "center" }) {
 }
 
 export const Left: Story = {
-  render: () => <Frame align="left" />
+  render: () => <Frame align="left" />,
 }
 
 export const Center: Story = {
-  render: () => <Frame align="center" />
+  render: () => <Frame align="center" />,
 }

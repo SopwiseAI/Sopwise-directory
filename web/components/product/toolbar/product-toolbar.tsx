@@ -36,7 +36,7 @@ export function ProductToolbar({
   onSortChange,
   showTabs = true,
   panelId,
-  title
+  title,
 }: ProductToolbarProps) {
   const isLatestTab = tab === "latest"
 

@@ -14,7 +14,7 @@ type Props = {
 export async function generateStaticParams() {
   const categories = getAllCategories()
   return categories.map((category) => ({
-    id: category.id
+    id: category.id,
   }))
 }
 
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description,
     alternates: { canonical: `/category/${id}` },
     openGraph: { title: `${category.name} — XiGee`, description },
-    ...(empty ? { robots: { index: false, follow: true } } : {})
+    ...(empty ? { robots: { index: false, follow: true } } : {}),
   }
 }
 
@@ -53,8 +53,8 @@ export default async function CategoryPage({ params }: Props) {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "全部工具", item: baseUrl },
-      { "@type": "ListItem", position: 2, name: category.name, item: `${baseUrl}/category/${id}` }
-    ]
+      { "@type": "ListItem", position: 2, name: category.name, item: `${baseUrl}/category/${id}` },
+    ],
   }
   const itemListLd = {
     "@context": "https://schema.org",
@@ -64,8 +64,8 @@ export default async function CategoryPage({ params }: Props) {
       "@type": "ListItem",
       position: i + 1,
       name: p.name,
-      url: p.url
-    }))
+      url: p.url,
+    })),
   }
   // JSON-LD 注入前转义 `<`，避免产品/分类名中的 </script> 提前闭合脚本标签
   const ld = (obj: unknown) => JSON.stringify(obj).replace(/</g, "\\u003c")

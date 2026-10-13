@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
  */
 export const PAGE_WIDTH = {
   browse: "max-w-7xl",
-  content: "max-w-6xl"
+  content: "max-w-6xl",
 } as const
 
 export type PageWidth = keyof typeof PAGE_WIDTH

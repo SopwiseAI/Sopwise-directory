@@ -19,7 +19,7 @@ import {
   getSort,
   getTab,
   getView,
-  subscribePreferences
+  subscribePreferences,
 } from "@/lib/preferences"
 import type { SortMode, TabMode, ViewMode } from "@/lib/product-query"
 
@@ -31,7 +31,7 @@ interface SettingsViewProps {
 const DOC_LINKS = [
   { href: "/about", label: "关于" },
   { href: "/privacy", label: "隐私政策" },
-  { href: "/terms", label: "服务条款" }
+  { href: "/terms", label: "服务条款" },
 ]
 
 function useBrowsePreferences(): { view: ViewMode; sort: SortMode; tab: TabMode } {
@@ -65,17 +65,17 @@ export function SettingsView({ version, stats }: SettingsViewProps) {
             {mounted ? <ThemeSwitch /> : <Skeleton className="h-8 w-56 rounded-lg" />}
           </Field>
         </FieldGroup>
-      )
+      ),
     },
     {
       id: "browsing",
       title: "浏览偏好",
-      body: <BrowsePreferences view={view} sort={sort} tab={tab} mounted={mounted} />
+      body: <BrowsePreferences view={view} sort={sort} tab={tab} mounted={mounted} />,
     },
     {
       id: "data-privacy",
       title: "数据与隐私",
-      body: <DataControls mounted={mounted} />
+      body: <DataControls mounted={mounted} />,
     },
     {
       id: "about",
@@ -116,13 +116,13 @@ export function SettingsView({ version, stats }: SettingsViewProps) {
             </div>
           </Field>
         </FieldGroup>
-      )
+      ),
     },
     {
       id: "shortcuts",
       title: "快捷键",
-      body: <Shortcuts />
-    }
+      body: <Shortcuts />,
+    },
   ]
 
   return (

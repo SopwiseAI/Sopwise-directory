@@ -5,7 +5,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 const meta = {
   title: "UI/ToggleGroup",
   component: ToggleGroup,
-  tags: ["autodocs"]
+  tags: ["autodocs"],
 } satisfies Meta<typeof ToggleGroup>
 
 export default meta
@@ -34,9 +34,9 @@ function MultipleDemo() {
 }
 
 export const Single: Story = {
-  render: () => <SingleDemo />
+  render: () => <SingleDemo />,
 }
 
 export const Multiple: Story = {
-  render: () => <MultipleDemo />
+  render: () => <MultipleDemo />,
 }

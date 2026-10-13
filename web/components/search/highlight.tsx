@@ -20,7 +20,7 @@ const VARIANT_CLASS: Record<HighlightVariant, string> = {
    * 描述这类正文：把命中的字从 muted 提到 foreground 并加重，靠明度差说话，完全不动排版。
    * 必须显式 `bg-transparent` —— `<mark>` 自带浏览器默认黄底，只改字重会留下黄块。
    */
-  em: "bg-transparent font-medium text-foreground"
+  em: "bg-transparent font-medium text-foreground",
 }
 
 /**
@@ -30,7 +30,7 @@ const VARIANT_CLASS: Record<HighlightVariant, string> = {
 export function Highlighted({
   text,
   query,
-  variant = "em"
+  variant = "em",
 }: {
   text: string
   query: string
@@ -45,7 +45,7 @@ export function Highlighted({
           </mark>
         ) : (
           <span key={i}>{seg.text}</span>
-        )
+        ),
       )}
     </>
   )

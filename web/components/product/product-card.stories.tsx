@@ -6,7 +6,7 @@ const meta = {
   title: "Product/ProductCard",
   component: ProductCard,
   tags: ["autodocs"],
-  args: { product: mockProduct }
+  args: { product: mockProduct },
 } satisfies Meta<typeof ProductCard>
 
 export default meta
@@ -15,7 +15,7 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {}
 
 export const WithCategory: Story = {
-  args: { categoryLabel: "对话助手", categoryIcon: "message-square" }
+  args: { categoryLabel: "对话助手", categoryIcon: "message-square" },
 }
 
 export const MinimalProduct: Story = {
@@ -25,9 +25,9 @@ export const MinimalProduct: Story = {
       name: "Minimal AI",
       description: "没有标签与价格信息的最小产品卡片。",
       url: "https://example.com",
-      categories: ["chat-assistant"]
-    }
-  }
+      categories: ["chat-assistant"],
+    },
+  },
 }
 
 export const Grid: Story = {
@@ -37,5 +37,5 @@ export const Grid: Story = {
         <ProductCard key={p.id} product={p} categoryLabel="对话助手" categoryIcon="message-square" />
       ))}
     </div>
-  )
+  ),
 }

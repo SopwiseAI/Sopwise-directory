@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react"
 import { InfoNav } from "./info-nav"
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/privacy"
+  usePathname: () => "/privacy",
 }))
 
 describe("InfoNav", () => {
@@ -14,7 +14,7 @@ describe("InfoNav", () => {
     for (const label of ["设置", "关于", "隐私政策", "服务条款"]) {
       expect(screen.getByRole("link", { name: new RegExp(label) })).toHaveAttribute(
         "href",
-        expect.stringMatching(/^\/(settings|about|privacy|terms)$/)
+        expect.stringMatching(/^\/(settings|about|privacy|terms)$/),
       )
     }
     const current = screen.getByRole("link", { name: /隐私政策/ })

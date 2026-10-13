@@ -20,7 +20,7 @@ import {
   TrendingUp,
   HeartPulse,
   Gamepad2,
-  type LucideIcon
+  type LucideIcon,
 } from "lucide-react"
 
 const iconMap: Record<string, LucideIcon> = {
@@ -43,7 +43,7 @@ const iconMap: Record<string, LucideIcon> = {
   Scale,
   TrendingUp,
   HeartPulse,
-  Gamepad2
+  Gamepad2,
 }
 
 export { iconMap as CATEGORY_ICONS }

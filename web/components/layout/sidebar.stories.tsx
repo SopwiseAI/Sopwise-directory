@@ -15,8 +15,8 @@ const meta = {
       <TooltipProvider>
         <Story />
       </TooltipProvider>
-    )
-  ]
+    ),
+  ],
 } satisfies Meta<typeof Sidebar>
 
 export default meta
@@ -41,7 +41,7 @@ export const Expanded: Story = {
     <Clean>
       <Sidebar {...args} />
     </Clean>
-  )
+  ),
 }
 
 export const Collapsed: Story = {
@@ -58,5 +58,5 @@ export const Collapsed: Story = {
     }
     document.documentElement.setAttribute("data-sidebar", "collapsed")
     window.dispatchEvent(new Event("xigee:sidebar-collapse"))
-  }
+  },
 }

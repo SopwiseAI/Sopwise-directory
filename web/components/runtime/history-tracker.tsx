@@ -28,7 +28,7 @@ export function HistoryTracker() {
         name: link.dataset.historyName ?? id,
         url: link.dataset.historyUrl ?? "",
         categories: link.dataset.historyCategory ? [link.dataset.historyCategory] : [],
-        pricing: pricing && VALID_PRICING.has(pricing) ? (pricing as Pricing) : undefined
+        pricing: pricing && VALID_PRICING.has(pricing) ? (pricing as Pricing) : undefined,
       })
     }
 

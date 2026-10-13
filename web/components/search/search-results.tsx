@@ -16,7 +16,7 @@ import {
   clearRecentSearches,
   getRecentSearchesSnapshot,
   parseRecentSearches,
-  subscribeRecentSearches
+  subscribeRecentSearches,
 } from "@/lib/recent-searches"
 import {
   createFallbackIndex,
@@ -24,7 +24,7 @@ import {
   findRelated,
   SEARCH_FOCUS_RESULTS_EVENT,
   SEARCH_RESULT_SELECTOR,
-  type SearchDoc
+  type SearchDoc,
 } from "@/lib/search"
 import { readSearchState, SEARCH_SORT_OPTIONS, type SearchSort } from "@/lib/search-params"
 import { writeSearchParams } from "@/lib/url"
@@ -85,7 +85,7 @@ export function SearchResults({ products, featured, categories, categoryCounts }
 
   const categoryNames = useMemo(
     () => Object.fromEntries(categories.map((c) => [c.id, c.name])) as Record<string, string>,
-    [categories]
+    [categories],
   )
 
   const searchIndex = useMemo(() => createSearchIndex(products, categoryNames), [products, categoryNames])
@@ -99,7 +99,7 @@ export function SearchResults({ products, featured, categories, categoryCounts }
     return [...items].sort(
       sort === "latest"
         ? (a, b) => compareDateDesc(getProductDate(a), getProductDate(b)) || compareName(a, b)
-        : compareName
+        : compareName,
     )
   }, [scored, sort])
 
@@ -128,13 +128,13 @@ export function SearchResults({ products, featured, categories, categoryCounts }
     (next: Record<string, string | null>) => {
       writeSearchParams(pathname, window.location.search, next)
     },
-    [pathname]
+    [pathname],
   )
 
   const handlePick = useCallback((next: string) => patch({ q: next }), [patch])
   const handleSortChange = useCallback(
     (next: SearchSort) => patch({ sort: next === "relevance" ? null : next }),
-    [patch]
+    [patch],
   )
   const handleClearRecent = useCallback(() => clearRecentSearches(), [])
 

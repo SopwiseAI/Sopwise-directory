@@ -4,7 +4,7 @@ import Header from "./header"
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: () => {}, replace: () => {} }),
-  usePathname: () => "/"
+  usePathname: () => "/",
 }))
 
 /** 模拟视口宽度查询：仅覆盖 (min-width: 768px)。 */
@@ -19,8 +19,8 @@ function installViewport(isDesktop: boolean) {
       removeEventListener() {},
       addListener() {},
       removeListener() {},
-      dispatchEvent: () => false
-    }))
+      dispatchEvent: () => false,
+    })),
   )
 }
 

@@ -29,7 +29,7 @@ function PrefField<T extends string>({
   skeletonWidth,
   disabled,
   value,
-  onChange
+  onChange,
 }: PrefFieldProps<T>) {
   return (
     <Field orientation="responsive">

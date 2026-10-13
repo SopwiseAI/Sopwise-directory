@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "关于",
   description: "XiGee 是一个纯静态、数据驱动的精选 AI 工具目录，精选值得用的 AI 工具，每一款都经过人工筛选。",
   alternates: { canonical: "/about" },
-  openGraph: { title: "关于", description: "了解 XiGee 的甄选理念、数据规模与工作方式" }
+  openGraph: { title: "关于", description: "了解 XiGee 的甄选理念、数据规模与工作方式" },
 }
 
 /** 站点的四条工作原则 */
@@ -21,10 +21,10 @@ const PRINCIPLES: { icon: LucideIcon; title: string; description: string }[] = [
   {
     icon: Zap,
     title: "纯静态",
-    description: "页面预渲染为静态文件，没有后端数据库，加载快、可离线缓存，也能被搜索引擎收录。"
+    description: "页面预渲染为静态文件，没有后端数据库，加载快、可离线缓存，也能被搜索引擎收录。",
   },
   { icon: HardDrive, title: "本地优先", description: "主题、浏览偏好与历史记录只保存在你的浏览器里，不会上传。" },
-  { icon: ExternalLink, title: "直达官网", description: "工具卡片直接跳转外部官网，站内没有中间跳转页。" }
+  { icon: ExternalLink, title: "直达官网", description: "工具卡片直接跳转外部官网，站内没有中间跳转页。" },
 ]
 
 const stats = getStats()
@@ -38,7 +38,7 @@ const sections: InfoSectionDef[] = [
         XiGee 把散落各处的 AI
         工具甄选收拢到一处：按分类浏览、直接搜索，点开即达官方网站。我们不做中间页，只做一条从「发现」到「使用」的最短路径。
       </p>
-    )
+    ),
   },
   {
     id: "data",
@@ -50,7 +50,7 @@ const sections: InfoSectionDef[] = [
         <StatItem label="分类" value={stats.categories} size="lg" />
         <StatItem label="精选" value={stats.featured} size="lg" />
       </div>
-    )
+    ),
   },
   {
     id: "how-it-works",
@@ -69,7 +69,7 @@ const sections: InfoSectionDef[] = [
           </Item>
         ))}
       </ItemGroup>
-    )
+    ),
   },
   {
     id: "privacy",
@@ -82,7 +82,7 @@ const sections: InfoSectionDef[] = [
         </Link>
         。
       </p>
-    )
+    ),
   },
   {
     id: "tech",
@@ -97,8 +97,8 @@ const sections: InfoSectionDef[] = [
           当前版本 v{pkg.version} · {getBaseUrl().replace(/^https?:\/\//, "")}
         </p>
       </>
-    )
-  }
+    ),
+  },
 ]
 
 export default function AboutPage() {

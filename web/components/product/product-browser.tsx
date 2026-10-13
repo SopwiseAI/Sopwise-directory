@@ -9,7 +9,7 @@ import {
   useMemo,
   useState,
   useSyncExternalStore,
-  type ReactNode
+  type ReactNode,
 } from "react"
 import { useSearchParams } from "next/navigation"
 import type { Category, Product } from "@/lib/types"
@@ -20,7 +20,7 @@ import {
   getView,
   setSort as persistSort,
   setView as persistView,
-  subscribePreferences
+  subscribePreferences,
 } from "@/lib/preferences"
 import { ProductRow } from "@/components/product/product-row"
 import { ProductCard } from "@/components/product/product-card"
@@ -33,7 +33,7 @@ import {
   type SortMode,
   type TabMode,
   type UrlState,
-  type ViewMode
+  type ViewMode,
 } from "@/lib/product-query"
 import { useMounted } from "@/hooks/use-mounted"
 import { PackageOpen } from "lucide-react"
@@ -88,7 +88,7 @@ export function ProductBrowser({
   showTabs = true,
   defaultTab = "all",
   title,
-  categories
+  categories,
 }: ProductBrowserProps) {
   // 每实例唯一前缀：避免同页多实例（或 SSR/客户端）产生重复 DOM id 与错位的 aria 关联
   const uid = useId()
@@ -199,7 +199,7 @@ export function ProductBrowser({
       const cat = id ? categoryMap.get(id) : undefined
       return { label: cat?.name ?? "", icon: cat?.icon }
     },
-    [categoryMap]
+    [categoryMap],
   )
 
   return (
@@ -251,7 +251,7 @@ export function ProductBrowser({
 function BrowserContent({
   view,
   products,
-  categoryOf
+  categoryOf,
 }: {
   view: ViewMode
   products: readonly Product[]

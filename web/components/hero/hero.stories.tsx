@@ -5,7 +5,7 @@ const meta = {
   title: "Hero/Hero",
   component: Hero,
   tags: ["autodocs"],
-  parameters: { layout: "fullscreen" }
+  parameters: { layout: "fullscreen" },
 } satisfies Meta<typeof Hero>
 
 export default meta
@@ -16,5 +16,5 @@ export const Default: Story = {
     <div className="mx-auto w-full max-w-7xl p-4 sm:p-6">
       <Hero />
     </div>
-  )
+  ),
 }

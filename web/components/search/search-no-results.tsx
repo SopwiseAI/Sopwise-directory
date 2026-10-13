@@ -37,7 +37,7 @@ export function SearchNoResults({
   categories,
   categoryCounts,
   categoryNames,
-  onPick
+  onPick,
 }: SearchNoResultsProps) {
   return (
     <div className="flex flex-col gap-8">

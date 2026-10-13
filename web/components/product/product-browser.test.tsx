@@ -6,7 +6,7 @@ import type { Product } from "@/lib/types"
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(window.location.search),
   useRouter: () => ({ push: () => {}, replace: () => {} }),
-  usePathname: () => "/"
+  usePathname: () => "/",
 }))
 
 function makeProduct(id: string): Product {
@@ -17,7 +17,7 @@ function makeProduct(id: string): Product {
     url: `https://${id}.example.com`,
     categories: ["test"],
     pricing: "free",
-    createdAt: "2024-01-01"
+    createdAt: "2024-01-01",
   }
 }
 
@@ -45,7 +45,7 @@ describe("ProductBrowser a11y ids", () => {
       <>
         <ProductBrowser products={products} showTabs />
         <ProductBrowser products={products} showTabs />
-      </>
+      </>,
     )
     const panels = container.querySelectorAll<HTMLElement>('[role="tabpanel"]')
     expect(panels.length).toBe(2)

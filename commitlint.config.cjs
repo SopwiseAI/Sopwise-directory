@@ -16,7 +16,7 @@ module.exports = {
     "scope-enum": [
       2,
       "always",
-      ["web", "studio", "skills", "scripts", "root", "docs", "data", "deps", "deps-dev", "ci"]
-    ]
-  }
+      ["web", "studio", "skills", "scripts", "root", "docs", "data", "deps", "deps-dev", "ci"],
+    ],
+  },
 }

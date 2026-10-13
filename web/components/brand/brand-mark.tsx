@@ -25,14 +25,14 @@ const BOX = {
   sm: "size-6 rounded-[7px]",
   md: "size-8 rounded-[9px]",
   lg: "size-9 rounded-[10px]",
-  xl: "size-12 rounded-[13px]"
+  xl: "size-12 rounded-[13px]",
 } as const
 
 const GLYPH = {
   sm: "size-3.5",
   md: "size-4.5",
   lg: "size-5",
-  xl: "size-7"
+  xl: "size-7",
 } as const
 
 /** 品牌标记：墨色纯色圆角方块 + 星芒（深色下自动反相）。 */
@@ -43,7 +43,7 @@ export function BrandMark({ className, glyphClassName, size = "md" }: BrandMarkP
       className={cn(
         "brand-tile relative inline-flex shrink-0 items-center justify-center text-brand-foreground",
         BOX[size],
-        className
+        className,
       )}
     >
       <BrandGlyph className={cn(GLYPH[size], glyphClassName)} />

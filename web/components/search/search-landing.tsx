@@ -27,7 +27,7 @@ export function SearchLanding({
   suggestions,
   categories,
   categoryCounts,
-  onPick
+  onPick,
 }: SearchLandingProps) {
   return (
     <div className="flex flex-col gap-8">

@@ -46,7 +46,7 @@ export function SearchSuggestions({ items, query, activeIndex, listboxId, classN
     <div
       className={cn(
         "absolute left-0 right-0 top-[calc(100%+4px)] z-50 overflow-hidden rounded-lg border bg-popover text-popover-foreground shadow-lg",
-        className
+        className,
       )}
     >
       <div id={listboxId} role="listbox" aria-label="搜索建议" className="max-h-72 overflow-y-auto p-1">
@@ -67,7 +67,7 @@ export function SearchSuggestions({ items, query, activeIndex, listboxId, classN
               {...productHistoryAttrs(item)}
               className={cn(
                 "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none",
-                active ? "bg-accent text-accent-foreground" : "hover:bg-accent/60"
+                active ? "bg-accent text-accent-foreground" : "hover:bg-accent/60",
               )}
             >
               <span className="min-w-0 flex-1 truncate font-medium">

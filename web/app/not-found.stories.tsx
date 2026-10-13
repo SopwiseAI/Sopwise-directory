@@ -4,7 +4,7 @@ import NotFound from "@/app/not-found"
 const meta = {
   title: "App/NotFound",
   component: NotFound,
-  parameters: { layout: "centered" }
+  parameters: { layout: "centered" },
 } satisfies Meta<typeof NotFound>
 
 export default meta

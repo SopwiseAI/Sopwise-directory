@@ -12,13 +12,13 @@ export function HeroBackdrop({ className, align = "left" }: { className?: string
           "absolute inset-0 opacity-70 dark:opacity-50 [background-image:linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] [background-size:26px_26px]",
           align === "center"
             ? "[mask-image:radial-gradient(ellipse_55%_55%_at_50%_0%,#000_55%,transparent)]"
-            : "[mask-image:radial-gradient(ellipse_70%_60%_at_28%_0%,#000_50%,transparent)]"
+            : "[mask-image:radial-gradient(ellipse_70%_60%_at_28%_0%,#000_50%,transparent)]",
         )}
       />
       <div
         className={cn(
           "absolute -top-28 h-64 w-[40rem] rounded-full bg-foreground/[0.04] blur-[80px] dark:bg-foreground/[0.09]",
-          align === "center" ? "left-1/2 -translate-x-1/2" : "left-[12%]"
+          align === "center" ? "left-1/2 -translate-x-1/2" : "left-[12%]",
         )}
       />
     </div>
@@ -31,7 +31,7 @@ export function HeroEyebrow({ children, className }: { children: React.ReactNode
     <p
       className={cn(
         "inline-flex items-center gap-2 font-data uppercase tracking-[0.22em] text-muted-foreground",
-        className
+        className,
       )}
     >
       <span className="relative flex size-1.5">

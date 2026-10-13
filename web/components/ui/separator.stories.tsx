@@ -5,7 +5,7 @@ const meta = {
   title: "UI/Separator",
   component: Separator,
   tags: ["autodocs"],
-  argTypes: { orientation: { control: "inline-radio", options: ["horizontal", "vertical"] } }
+  argTypes: { orientation: { control: "inline-radio", options: ["horizontal", "vertical"] } },
 } satisfies Meta<typeof Separator>
 
 export default meta
@@ -18,7 +18,7 @@ export const Horizontal: Story = {
       <Separator />
       <div>下方内容</div>
     </div>
-  )
+  ),
 }
 
 export const Vertical: Story = {
@@ -28,5 +28,5 @@ export const Vertical: Story = {
       <Separator orientation="vertical" />
       <span>右</span>
     </div>
-  )
+  ),
 }

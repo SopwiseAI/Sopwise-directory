@@ -6,7 +6,7 @@ const meta = {
   component: HeroEyebrow,
   tags: ["autodocs"],
   args: { children: "Curated AI Directory" },
-  argTypes: { className: { control: "text" } }
+  argTypes: { className: { control: "text" } },
 } satisfies Meta<typeof HeroEyebrow>
 
 export default meta
@@ -15,5 +15,5 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {}
 
 export const CustomColor: Story = {
-  args: { children: "Custom Color", className: "text-foreground" }
+  args: { children: "Custom Color", className: "text-foreground" },
 }

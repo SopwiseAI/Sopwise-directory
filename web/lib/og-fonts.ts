@@ -14,5 +14,5 @@ export const OG_FONTS = OUTFIT_WEIGHTS.map((weight) => ({
   name: "Outfit",
   data: readFileSync(join(process.cwd(), "assets", "fonts", `outfit-${weight}.ttf`)),
   weight,
-  style: "normal" as const
+  style: "normal" as const,
 }))

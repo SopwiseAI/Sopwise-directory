@@ -7,8 +7,8 @@ const meta = {
   tags: ["autodocs"],
   args: { pricing: "free" },
   argTypes: {
-    pricing: { control: "inline-radio", options: ["free", "freemium", "paid", "opensource"] }
-  }
+    pricing: { control: "inline-radio", options: ["free", "freemium", "paid", "opensource"] },
+  },
 } satisfies Meta<typeof PricingBadge>
 
 export default meta
@@ -22,7 +22,7 @@ export const All: Story = {
       <PricingBadge pricing="paid" />
       <PricingBadge pricing="opensource" />
     </div>
-  )
+  ),
 }
 
 export const Playground: Story = {}

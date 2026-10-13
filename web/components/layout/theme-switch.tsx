@@ -7,7 +7,7 @@ import { setTheme, useTheme, type ThemeMode } from "@/lib/theme"
 const options: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
   { value: "light", label: "亮色", icon: Sun },
   { value: "dark", label: "暗色", icon: Moon },
-  { value: "system", label: "跟随系统", icon: Monitor }
+  { value: "system", label: "跟随系统", icon: Monitor },
 ]
 
 /**

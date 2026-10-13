@@ -11,8 +11,8 @@ const meta = {
       <TooltipProvider>
         <Story />
       </TooltipProvider>
-    )
-  ]
+    ),
+  ],
 } satisfies Meta<typeof Tooltip>
 
 export default meta
@@ -24,7 +24,7 @@ export const Default: Story = {
       <TooltipTrigger render={<Button variant="outline" />}>悬停查看</TooltipTrigger>
       <TooltipContent>这是一个提示气泡</TooltipContent>
     </Tooltip>
-  )
+  ),
 }
 
 export const Sides: Story = {
@@ -37,5 +37,5 @@ export const Sides: Story = {
         </Tooltip>
       ))}
     </div>
-  )
+  ),
 }

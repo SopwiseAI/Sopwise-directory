@@ -6,7 +6,7 @@ import {
   normalizeQuery,
   parseRecentSearches,
   RECENT_SEARCH_LIMIT,
-  removeRecentSearch
+  removeRecentSearch,
 } from "./recent-searches"
 
 describe("normalizeQuery", () => {

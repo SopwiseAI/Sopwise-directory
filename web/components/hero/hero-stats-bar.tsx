@@ -7,7 +7,7 @@ export function HeroStatsBar({ stats, className }: { stats: HeroStats; className
   const items: [string, number][] = [
     ["工具", stats.products],
     ["分类", stats.categories],
-    ["精选", stats.featured]
+    ["精选", stats.featured],
   ]
 
   return (
@@ -18,7 +18,7 @@ export function HeroStatsBar({ stats, className }: { stats: HeroStats; className
           className={cn(
             "flex items-baseline gap-2",
             i > 0 &&
-              "relative pl-8 before:absolute before:left-0 before:top-[0.1em] before:h-[1.1em] before:w-px before:bg-border/80"
+              "relative pl-8 before:absolute before:left-0 before:top-[0.1em] before:h-[1.1em] before:w-px before:bg-border/80",
           )}
         >
           <dt className="text-xs tracking-wide text-muted-foreground">{label}</dt>

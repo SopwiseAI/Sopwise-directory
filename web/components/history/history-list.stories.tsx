@@ -44,7 +44,7 @@ const sampleItems: HistoryItem[] = [
     pricing: "freemium",
     lastVisitedAt: iso(3),
     firstVisitedAt: iso(600),
-    visitCount: 12
+    visitCount: 12,
   },
   {
     id: "anthropic-claude",
@@ -55,7 +55,7 @@ const sampleItems: HistoryItem[] = [
     pricing: "freemium",
     lastVisitedAt: iso(90),
     firstVisitedAt: iso(2000),
-    visitCount: 4
+    visitCount: 4,
   },
   {
     id: "midjourney",
@@ -66,7 +66,7 @@ const sampleItems: HistoryItem[] = [
     pricing: "paid",
     lastVisitedAt: iso(1500),
     firstVisitedAt: iso(9000),
-    visitCount: 2
+    visitCount: 2,
   },
   {
     id: "github-copilot",
@@ -77,15 +77,15 @@ const sampleItems: HistoryItem[] = [
     pricing: "paid",
     lastVisitedAt: iso(6000),
     firstVisitedAt: iso(20000),
-    visitCount: 1
-  }
+    visitCount: 1,
+  },
 ]
 
 const meta = {
   title: "History/HistoryList",
   component: HistoryList,
   tags: ["autodocs"],
-  args: { categories: mockCategories }
+  args: { categories: mockCategories },
 } satisfies Meta<typeof HistoryList>
 
 export default meta
@@ -97,8 +97,8 @@ export const Empty: Story = {
       <Seed items={NO_ITEMS}>
         <Story />
       </Seed>
-    )
-  ]
+    ),
+  ],
 }
 
 export const WithItems: Story = {
@@ -107,6 +107,6 @@ export const WithItems: Story = {
       <Seed items={sampleItems}>
         <Story />
       </Seed>
-    )
-  ]
+    ),
+  ],
 }

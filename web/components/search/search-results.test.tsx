@@ -9,7 +9,7 @@ const nav = vi.hoisted(() => ({ pathname: "/search", search: "" }))
 
 vi.mock("next/navigation", () => ({
   usePathname: () => nav.pathname,
-  useSearchParams: () => new URLSearchParams(nav.search)
+  useSearchParams: () => new URLSearchParams(nav.search),
 }))
 
 const featured = mockProducts.filter((p) => p.featured)
@@ -21,7 +21,7 @@ function renderResults() {
       featured={featured}
       categories={mockCategories}
       categoryCounts={mockCategoryCounts}
-    />
+    />,
   )
 }
 

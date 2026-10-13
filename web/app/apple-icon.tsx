@@ -15,11 +15,11 @@ export default function AppleIcon() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: BRAND_TILE.light
+        backgroundColor: BRAND_TILE.light,
       }}
     >
       <BrandGlyphSvg size="70%" color={BRAND_FOREGROUND.light} />
     </div>,
-    size
+    size,
   )
 }

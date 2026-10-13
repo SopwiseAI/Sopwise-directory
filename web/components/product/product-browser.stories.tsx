@@ -15,7 +15,7 @@ const meta = {
     } catch {
       /* noop */
     }
-  }
+  },
 } satisfies Meta<typeof ProductBrowser>
 
 export default meta
@@ -24,17 +24,17 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {}
 
 export const ListView: Story = {
-  args: { defaultView: "list" }
+  args: { defaultView: "list" },
 }
 
 export const WithoutTabs: Story = {
-  args: { showTabs: false }
+  args: { showTabs: false },
 }
 
 export const Empty: Story = {
   args: {
     products: [],
     emptyTitle: "该分类暂无产品",
-    emptyDescription: "换个分类看看吧"
-  }
+    emptyDescription: "换个分类看看吧",
+  },
 }

@@ -36,7 +36,7 @@ export function SubNav({ className, categories }: SubNavProps) {
       aria-label="分类导航"
       className={cn(
         "sticky top-[calc(3.5rem_+_env(safe-area-inset-top))] z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-        className
+        className,
       )}
     >
       <div className={pageShell("browse", "relative px-4 sm:px-6")}>
@@ -48,7 +48,7 @@ export function SubNav({ className, categories }: SubNavProps) {
               "shrink-0 rounded-md px-3 py-1.5 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
               pathname === "/"
                 ? "bg-brand/10 font-medium text-brand"
-                : "text-muted-foreground hover:bg-brand/5 hover:text-brand"
+                : "text-muted-foreground hover:bg-brand/5 hover:text-brand",
             )}
           >
             全部
@@ -64,7 +64,7 @@ export function SubNav({ className, categories }: SubNavProps) {
                   "shrink-0 rounded-md px-3 py-1.5 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   isActive
                     ? "bg-brand/10 font-medium text-brand"
-                    : "text-muted-foreground hover:bg-brand/5 hover:text-brand"
+                    : "text-muted-foreground hover:bg-brand/5 hover:text-brand",
                 )}
               >
                 {category.name}

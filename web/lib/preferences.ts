@@ -10,7 +10,7 @@ export const DEFAULT_TAB: TabMode = "all"
 const KEYS = {
   view: storageKey("default-view"),
   sort: storageKey("default-sort"),
-  tab: storageKey("default-tab")
+  tab: storageKey("default-tab"),
 } as const
 
 const PREFERENCE_KEYS: readonly string[] = [KEYS.view, KEYS.sort, KEYS.tab]

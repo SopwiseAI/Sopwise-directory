@@ -10,7 +10,7 @@ import {
   setSort,
   setTab,
   setView,
-  subscribePreferences
+  subscribePreferences,
 } from "./preferences"
 
 beforeEach(() => localStorage.clear())

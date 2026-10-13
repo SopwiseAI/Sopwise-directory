@@ -14,7 +14,7 @@
     "MD040": false, // 现有文档约 93 处未标注语言的围栏（多为命令与输出），属内容层改造
     "MD041": false, // .github/PULL_REQUEST_TEMPLATE.md 与 web/CLAUDE.md 首行刻意不是 H1
     "MD035": { "style": "---" },
-    "MD046": { "style": "fenced" }
+    "MD046": { "style": "fenced" },
   },
   "ignores": [
     // 统一用 **/ 形式，避免「忽略了 studio 下的缓存却漏掉根目录同名目录」这类不对称缺陷
@@ -26,6 +26,6 @@
     "**/.venv/**",
     "**/.next/**",
     "**/storybook-static/**",
-    ".dsh-artifacts/**"
-  ]
+    ".dsh-artifacts/**",
+  ],
 }

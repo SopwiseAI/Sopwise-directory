@@ -6,7 +6,7 @@ const meta = {
   component: PanelIcon,
   tags: ["autodocs"],
   args: { className: "size-6 text-foreground" },
-  argTypes: { className: { control: "text" } }
+  argTypes: { className: { control: "text" } },
 } satisfies Meta<typeof PanelIcon>
 
 export default meta
@@ -19,7 +19,7 @@ export const Sizes: Story = {
         <PanelIcon key={s} className={s} />
       ))}
     </div>
-  )
+  ),
 }
 
 export const Playground: Story = {}

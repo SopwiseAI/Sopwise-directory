@@ -5,7 +5,7 @@ const meta = {
   title: "Brand/BrandGlyph",
   component: BrandGlyph,
   tags: ["autodocs"],
-  argTypes: { className: { control: "text" } }
+  argTypes: { className: { control: "text" } },
 } satisfies Meta<typeof BrandGlyph>
 
 export default meta
@@ -18,7 +18,7 @@ export const Sizes: Story = {
         <BrandGlyph key={s} className={s} />
       ))}
     </div>
-  )
+  ),
 }
 
 export const Colors: Story = {
@@ -28,5 +28,5 @@ export const Colors: Story = {
       <BrandGlyph className="size-8 text-muted-foreground" />
       <BrandGlyph className="size-8 text-destructive" />
     </div>
-  )
+  ),
 }

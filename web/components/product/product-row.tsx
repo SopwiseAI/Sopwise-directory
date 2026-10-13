@@ -13,7 +13,7 @@ export function ProductRow({
   product,
   last = false,
   categoryLabel,
-  categoryIcon
+  categoryIcon,
 }: {
   product: Product
   last?: boolean
@@ -33,7 +33,7 @@ export function ProductRow({
       {...productHistoryAttrs(product)}
       className={cn(
         "group flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-secondary/50 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-        !last && "border-b border-border"
+        !last && "border-b border-border",
       )}
     >
       <div className="min-w-0 flex-1">

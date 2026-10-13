@@ -78,7 +78,7 @@ export function FilterTabs({ tab, onTabChange, panelId }: FilterTabsProps) {
             onClick={() => onTabChange(value)}
             className={cn(
               "flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              active ? "bg-brand/10 font-medium text-brand" : "text-muted-foreground hover:bg-brand/5 hover:text-brand"
+              active ? "bg-brand/10 font-medium text-brand" : "text-muted-foreground hover:bg-brand/5 hover:text-brand",
             )}
           >
             <Icon className="size-4 shrink-0" aria-hidden />
