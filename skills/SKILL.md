@@ -1,6 +1,6 @@
 ---
 name: xigee
-description: "XiGee Directory 数据管理 Skills。当用户需要添加/审核/发布/补全 AI 产品、管理分类和标签、导出数据时使用。通过 skills/tools/api.py 调用 studio API 完成数据管理。"
+description: "XiGee Directory 数据管理 Skills。当用户需要添加/审核/发布/补全 AI 工具、管理主题与标签、导出数据时使用。通过 skills/tools/api.py 调用 studio API 完成数据管理。"
 ---
 
 # XiGee Directory 数据管理
@@ -9,26 +9,29 @@ description: "XiGee Directory 数据管理 Skills。当用户需要添加/审核
 
 本 Skill 集通过 `skills/tools/api.py` CLI 工具驱动 studio 后端 API，实现 AI 目录站的数据管理全流程。
 
-## 产品生命周期
+## 工具生命周期
 
 ```
-采集(/std-collect) → 草稿(0) → 补全(/std-enrich) → 提交(/std-submit) → 待审核(1)
-      ↑                                                                    │
-      └──── 审核打回(1→0, /std-review) ────────────────────────────────────┤
-                                                                          ▼
-                                                     审核通过(1→2, /std-review)
-                                                                          ▼
-                                                    已发布(2) ⇄ 下架/重新发布(3)
+采集(/std-collect) → 草稿(draft) → 补全(/std-enrich) → 提交(/std-submit) → 待审核(pending)
+      ↑                                                                        │
+      └──── 审核打回(pending→draft, /std-review) ──────────────────────────────┤
+                                                                              ▼
+                                                       审核通过(pending→published, /std-review)
+                                                                              ▼
+                                                    已发布(published) ⇄ 下架/重新发布(archived)
 ```
 
 横切动作（随时可调）: `/std-verify` 校对、`/std-list` 列出、`/std-stats` 总览
 
-| 状态   | 值  | 说明                   | 导出 |
-| ------ | --- | ---------------------- | ---- |
-| 草稿   | 0   | 新创建，信息可能不完整 | 否   |
-| 待审核 | 1   | 已提交，等待审核       | 否   |
-| 已发布 | 2   | 审核通过，对外可见     | 是   |
-| 已下架 | 3   | 已下线，不再展示       | 否   |
+| 状态   | 值        | 说明                         | 导出 |
+| ------ | --------- | ---------------------------- | ---- |
+| 草稿   | draft     | 新创建，信息可能不完整       | 否   |
+| 待审核 | pending   | 已提交，等待审核             | 否   |
+| 已发布 | published | 审核通过，且存在 active 链接 | 是   |
+| 已下架 | archived  | 已下线，不再展示             | 否   |
+
+合法状态迁移: draft→pending, pending→draft, pending→published, published→archived, archived→published。
+非法迁移后端返回 409。主题状态为 `active` / `disabled`，链接状态为 `active` / `broken` / `disabled`。
 
 ## 工具
 
@@ -57,39 +60,43 @@ description: "XiGee Directory 数据管理 Skills。当用户需要添加/审核
 这保证模型在 prod 环境执行命令时不会"随意乱来"，任何破坏性操作都需要双重显式确认。
 
 ```bash
-# 产品管理
-python skills/tools/api.py products [--status N] [--search K]   # 列出产品
-python skills/tools/api.py product <id>                         # 产品详情
-python skills/tools/api.py add-product --name <name> [--url <url>] [--category-ids 1,2,3] [--sort-order <N>]
-python skills/tools/api.py update-product <id> [--status <N>] [--name] [--slug] [--description] [--category-ids 1,2,3] [--pricing] [--featured | --no-featured] [--sort-order <N>]
-python skills/tools/api.py delete-product <id>
+# 工具管理
+python skills/tools/api.py tools [--status draft|pending|published|archived] [--topic-id N] [--featured] [--search K]   # 列出工具
+python skills/tools/api.py tool <id>                            # 工具详情
+python skills/tools/api.py add-tool --name <name> --tagline <一句话> --pricing <free|freemium|paid> \
+    --origin <cn|overseas> --access <direct|proxy> --languages zh,en \
+    [--url <url>] [--topic-ids 1,2] [--primary-topic-id N] [--tags a,b] [--open-source] [--featured] [--sort-order N]
+python skills/tools/api.py update-tool <id> [--status <值>] [--name] [--slug] [--tagline] [--description] \
+    [--pricing] [--origin] [--access] [--languages zh,en] [--tags a,b] [--topic-ids 1,2] [--primary-topic-id N] \
+    [--open-source | --no-open-source] [--featured | --no-featured] [--sort-order N]
+python skills/tools/api.py delete-tool <id>
 
-# 分类管理
-python skills/tools/api.py categories [--status {0,1}]
-python skills/tools/api.py add-category --name <name> --slug <slug> --icon <icon>
-python skills/tools/api.py update-category <id> [--name] [--slug] [--icon] [--sort-order] [--status]
-python skills/tools/api.py delete-category <id>
-python skills/tools/api.py category-count <id>
-
-# 标签管理
-python skills/tools/api.py tags [--status {0,1}]
-python skills/tools/api.py add-tag --name <name> --slug <slug>
-python skills/tools/api.py update-tag <id> [--name] [--slug] [--sort-order] [--status {0,1}]
-python skills/tools/api.py delete-tag <id>
-python skills/tools/api.py tag-count <id>
+# 主题管理
+python skills/tools/api.py topics [--status active|disabled]
+python skills/tools/api.py topic <id>
+python skills/tools/api.py add-topic --name <name> --slug <slug> [--icon <icon>] [--description] [--sort-order N] [--status active|disabled]
+python skills/tools/api.py update-topic <id> [--name] [--slug] [--icon] [--description] [--sort-order] [--status]
+python skills/tools/api.py delete-topic <id>
+python skills/tools/api.py topic-count <id>                     # 主题下已发布工具数
+python skills/tools/api.py topic-tools <id>                     # 主题下全部工具
 
 # 链接管理
-python skills/tools/api.py product-links <id> [--status {1,2,3}]
-python skills/tools/api.py add-link <product_id> --url <url> [--primary] [--status {1,2,3}]
-python skills/tools/api.py update-link <product_id> <link_id> [--url] [--label] [--primary] [--status {1,2,3}]
-python skills/tools/api.py delete-link <product_id> <link_id>
+python skills/tools/api.py tool-links <id> [--status active|broken|disabled]
+python skills/tools/api.py add-link <tool_id> --url <url> [--label website|api|docs|github|playground|pricing|plugin|other] [--primary] [--status active|broken|disabled]
+python skills/tools/api.py update-link <tool_id> <link_id> [--url] [--label] [--primary | --no-primary] [--status]
+python skills/tools/api.py delete-link <tool_id> <link_id>
 
-# 标签关联
-python skills/tools/api.py product-tags <id>
-python skills/tools/api.py set-tags <product_id> --tag-ids 1,2,3
+# 主题归属（全量替换）
+python skills/tools/api.py tool-topics <id>
+python skills/tools/api.py set-topics <tool_id> --topic-ids 1,2 [--primary-topic-id N]
+
+# 标签（工具字段，无独立端点）
+python skills/tools/api.py tags                                 # 列出全部标签（客户端聚合）
+python skills/tools/api.py tool-tags <id>                       # 查看某工具标签
+python skills/tools/api.py set-tags <tool_id> --tags a,b,c      # 全量替换某工具标签
 
 # 数据操作
-python skills/tools/api.py export                        # 导出 → data-{env}.json; 仅 prod 同步 data.json
+python skills/tools/api.py export                        # 导出 → topics-{env}.json + tools-{env}.json; 仅 prod 同步 topics.json + tools.json
 python skills/tools/api.py stats                         # 目录统计
 python skills/tools/api.py health                        # 健康检查（含后端环境）
 python skills/tools/api.py --version                     # 版本
@@ -111,49 +118,48 @@ python skills/tools/api.py --version                     # 版本
 
 ## 命令清单
 
-| 命令                   | 说明                       |
-| ---------------------- | -------------------------- |
-| `/std-collect`         | 采集批量产品入库为草稿     |
-| `/std-add-product`     | 添加产品（单条，草稿状态） |
-| `/std-manage-product`  | 产品管理（查看/改/删）     |
-| `/std-add-category`    | 添加分类                   |
-| `/std-add-tag`         | 添加标签                   |
-| `/std-manage-category` | 分类管理（查看/改/删）     |
-| `/std-manage-tag`      | 标签管理（查看/改/删）     |
-| `/std-enrich`          | AI 补全产品信息            |
-| `/std-verify`          | 数据正确性校对             |
-| `/std-submit`          | 提交审核 (0→1)             |
-| `/std-review`          | 审核待审核产品             |
-| `/std-publish`         | 发布产品                   |
-| `/std-archive`         | 下架/重新发布 (2↔3)        |
-| `/std-list`            | 列出产品                   |
-| `/std-stats`           | 目录总览                   |
-| `/std-export`          | 导出 JSON                  |
+| 命令                | 说明                                  |
+| ------------------- | ------------------------------------- |
+| `/std-collect`      | 采集批量工具入库为草稿                |
+| `/std-add-tool`     | 添加工具（单条，草稿状态）            |
+| `/std-manage-tool`  | 工具管理（查看/改/删/链接/主题/标签） |
+| `/std-add-topic`    | 添加主题                              |
+| `/std-manage-topic` | 主题管理（查看/改/删）                |
+| `/std-set-tags`     | 标签管理（列出/查看/设置）            |
+| `/std-enrich`       | AI 补全工具信息                       |
+| `/std-verify`       | 数据正确性校对                        |
+| `/std-submit`       | 提交审核 (draft→pending)              |
+| `/std-review`       | 审核待审核工具                        |
+| `/std-publish`      | 发布工具                              |
+| `/std-archive`      | 下架/重新发布 (published↔archived)    |
+| `/std-list`         | 列出工具                              |
+| `/std-stats`        | 目录总览                              |
+| `/std-export`       | 导出 JSON                             |
 
 ### 命名规范
 
-- **生命周期动作**（产品专属流程）: `std-{动词}` — collect/enrich/verify/submit/review/publish/archive
-- **CRUD 操作**（需区分实体）: `std-{动词}-{实体}` — add-product/manage-product/add-category/manage-category/add-tag/manage-tag
+- **生命周期动作**（工具专属流程）: `std-{动词}` — collect/enrich/verify/submit/review/publish/archive
+- **CRUD 操作**（需区分实体）: `std-{动词}-{实体}` — add-tool/manage-tool/add-topic/manage-topic
+- **字段操作**: `std-set-tags`（标签是工具字段，没有独立生命周期）
 - **系统命令**: `std-{动词}` — stats/export
 
-### 完整 API 覆盖（25/25 接口）
+### 完整 API 覆盖（12 paths / 20 operations）
 
-| 分类 | api.py 命令                                        | 对应后端接口                               |
-| ---- | -------------------------------------------------- | ------------------------------------------ |
-| 系统 | `health`                                           | `GET /health`                              |
-|      | `env`                                              | `GET /env`                                 |
-| 产品 | `products` `product`                               | `GET /products` `GET /products/{id}`       |
-|      | `add-product` `update-product` `delete-product`    | CRUD                                       |
-| 分类 | `categories` `category`                            | `GET /categories` `GET /categories/{id}`   |
-|      | `add-category` `update-category` `delete-category` | CRUD                                       |
-|      | `category-count`                                   | `GET /categories/{id}/count`               |
-| 标签 | `tags` `tag`                                       | `GET /tags` `GET /tags/{id}`               |
-|      | `add-tag` `update-tag` `delete-tag`                | CRUD                                       |
-|      | `tag-count`                                        | `GET /tags/{id}/count`                     |
-| 链接 | `product-links`                                    | `GET /products/{id}/links`                 |
-|      | `add-link` `update-link` `delete-link`             | CRUD                                       |
-| 标签 | `product-tags`                                     | `GET /products/{id}` (取 tags 字段)        |
-|      | `set-tags`                                         | `PUT /products/{id}/tags`                  |
-| 数据 | `export` `stats`                                   | `POST /export` (export) / 聚合查询 (stats) |
+| 分类     | api.py 命令                               | 对应后端接口                                  |
+| -------- | ----------------------------------------- | --------------------------------------------- |
+| 系统     | `health`                                  | `GET /health`                                 |
+|          | `env`                                     | `GET /env`                                    |
+| 主题     | `topics` `topic`                          | `GET /topics` `GET /topics/{id}`              |
+|          | `add-topic` `update-topic` `delete-topic` | CRUD                                          |
+|          | `topic-tools`                             | `GET /topics/{id}/tools`                      |
+|          | `topic-count`                             | `GET /topics/{id}/tool-count`                 |
+| 工具     | `tools` `tool`                            | `GET /tools` `GET /tools/{id}`                |
+|          | `add-tool` `update-tool` `delete-tool`    | CRUD                                          |
+| 链接     | `tool-links`                              | `GET /tools/{id}/links`                       |
+|          | `add-link` `update-link` `delete-link`    | CRUD                                          |
+| 主题归属 | `tool-topics` `set-topics`                | `GET /tools/{id}` + `PUT /tools/{id}/topics`  |
+| 标签     | `tags` `tool-tags`                        | 客户端聚合 + `GET /tools/{id}` (取 tags 字段) |
+|          | `set-tags`                                | `PUT /tools/{id}`                             |
+| 数据     | `export` `stats`                          | `POST /export` (export) / 聚合查询 (stats)    |
 
 所有列表命令均支持 `--page` 和 `--page-size` 分页参数。

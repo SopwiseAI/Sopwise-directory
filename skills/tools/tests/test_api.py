@@ -73,61 +73,81 @@ class TestPrintTable(unittest.TestCase):
             self.assertEqual(api._display_width(lines[0]), api._display_width(lines[1]))
 
 
-class TestSetTagsParsing(unittest.TestCase):
-    def test_clean(self):
-        with patch.object(api, "_write", return_value=(True, {})):
+class TestSplitCsv(unittest.TestCase):
+    def test_str_clean(self):
+        self.assertEqual(api._split_csv("a, b ,c"), ["a", "b", "c"])
+
+    def test_str_empty(self):
+        self.assertEqual(api._split_csv(""), [])
+
+    def test_str_only_commas(self):
+        self.assertEqual(api._split_csv(",, "), [])
+
+    def test_int_clean(self):
+        self.assertEqual(api._split_int_csv("1, 2 ,3", "--topic-ids"), [1, 2, 3])
+
+    def test_int_empty(self):
+        self.assertEqual(api._split_int_csv("", "--topic-ids"), [])
+
+    def test_int_invalid_exits(self):
+        with self.assertRaises(SystemExit):
+            api._split_int_csv("1,abc,3", "--topic-ids")
+
+
+class TestSetTags(unittest.TestCase):
+    """set-tags 现在写 Tool.tags（字符串数组），走 PUT /tools/{id}，不再是 /{id}/tags。"""
+
+    def _run(self, tags):
+        with patch.object(api, "_write", return_value=(True, {})) as m:
             ns = MagicMock()
-            ns.product_id = 1
-            ns.tag_ids = "1,2,3"
+            ns.tool_id = 1
+            ns.tags = tags
             ns.dry_run = False
             ns.yes = True
             ns.op_id = None
             api._GLOBAL_ARGS = ns
             api.cmd_set_tags(ns)
+            return m
+
+    def test_full_replace(self):
+        m = self._run("a, b")
+        self.assertEqual(m.call_args[0][0], "PUT")
+        self.assertEqual(m.call_args[0][1], "/tools/1")
+        self.assertEqual(m.call_args[0][2], {"tags": ["a", "b"]})
 
     def test_trailing_comma(self):
-        with patch.object(api, "_write", return_value=(True, {})):
+        m = self._run("x,y,")
+        self.assertEqual(m.call_args[0][2], {"tags": ["x", "y"]})
+
+    def test_empty_clears(self):
+        m = self._run("")
+        self.assertEqual(m.call_args[0][2], {"tags": []})
+
+
+class TestSetTopics(unittest.TestCase):
+    def _run(self, topic_ids, primary=None):
+        with patch.object(api, "_write", return_value=(True, {})) as m:
             ns = MagicMock()
-            ns.product_id = 1
-            ns.tag_ids = "1,2,3,"
+            ns.tool_id = 1
+            ns.topic_ids = topic_ids
+            ns.primary_topic_id = primary
             ns.dry_run = False
             ns.yes = True
             ns.op_id = None
             api._GLOBAL_ARGS = ns
-            api.cmd_set_tags(ns)
+            api.cmd_set_topics(ns)
+            return m
 
-    def test_spaces(self):
-        with patch.object(api, "_write", return_value=(True, {})):
-            ns = MagicMock()
-            ns.product_id = 1
-            ns.tag_ids = " 1 , 2 , 3 "
-            ns.dry_run = False
-            ns.yes = True
-            ns.op_id = None
-            api._GLOBAL_ARGS = ns
-            api.cmd_set_tags(ns)
+    def test_payload(self):
+        m = self._run("1,2", primary=2)
+        self.assertEqual(m.call_args[0][1], "/tools/1/topics")
+        self.assertEqual(
+            m.call_args[0][2], {"topic_ids": [1, 2], "primary_topic_id": 2}
+        )
 
-    def test_invalid(self):
-        ns = MagicMock()
-        ns.product_id = 1
-        ns.tag_ids = "1,abc,3"
-        ns.dry_run = False
-        ns.yes = True
-        ns.op_id = None
-        api._GLOBAL_ARGS = ns
+    def test_empty_topic_ids_exits(self):
         with self.assertRaises(SystemExit):
-            api.cmd_set_tags(ns)
-
-    def test_empty(self):
-        ns = MagicMock()
-        ns.product_id = 1
-        ns.tag_ids = ",,"
-        ns.dry_run = False
-        ns.yes = True
-        ns.op_id = None
-        api._GLOBAL_ARGS = ns
-        with self.assertRaises(SystemExit):
-            api.cmd_set_tags(ns)
+            self._run(",,")
 
 
 class TestOpIds(unittest.TestCase):
@@ -172,7 +192,7 @@ class TestRequestRetry(unittest.TestCase):
         )
         with patch("urllib.request.urlopen", side_effect=err) as m:
             with self.assertRaises(SystemExit):
-                api._request_with_headers("POST", "/products", {"a": 1})
+                api._request_with_headers("POST", "/tools", {"a": 1})
             self.assertEqual(m.call_count, 1)
 
     def test_read_retried_on_500(self):
@@ -193,7 +213,7 @@ class TestRequestRetry(unittest.TestCase):
         success_resp.read = MagicMock(return_value=b'{"ok": true}')
         with patch("urllib.request.urlopen", side_effect=[err, success_resp]):
             with patch("time.sleep"):
-                result, _ = api._request_with_headers("GET", "/products")
+                result, _ = api._request_with_headers("GET", "/tools")
             self.assertEqual(result, {"ok": True})
 
 
@@ -208,7 +228,7 @@ class TestCancelledError(unittest.TestCase):
             patch.object(api, "_confirm", return_value=False),
             self.assertRaises(api.CancelledError),
         ):
-            api._write("POST", "/products", {"a": 1}, summary="test", confirm="?")
+            api._write("POST", "/tools", {"a": 1}, summary="test", confirm="?")
 
 
 class TestFetchAll(unittest.TestCase):
@@ -217,7 +237,7 @@ class TestFetchAll(unittest.TestCase):
             return [{"id": 1}], {}
 
         with patch.object(api, "_request_with_headers", side_effect=side_effect):
-            result = api._fetch_all("/products", page_size=100)
+            result = api._fetch_all("/tools", page_size=100)
             self.assertEqual(len(result), 1)
 
     def test_multi_page(self):
@@ -232,7 +252,7 @@ class TestFetchAll(unittest.TestCase):
             return next(pages)
 
         with patch.object(api, "_request_with_headers", side_effect=side_effect):
-            result = api._fetch_all("/products", page_size=100)
+            result = api._fetch_all("/tools", page_size=100)
             self.assertEqual(len(result), 101)
 
     def test_honors_max_pages(self):
@@ -247,54 +267,67 @@ class TestFetchAll(unittest.TestCase):
             return next(pages)
 
         with patch.object(api, "_request_with_headers", side_effect=side_effect):
-            result = api._fetch_all("/products", page_size=100)
+            result = api._fetch_all("/tools", page_size=100)
             self.assertEqual(len(result), api._MAX_FETCH_PAGES * 100)
             self.assertEqual(api._request_with_headers.call_count, api._MAX_FETCH_PAGES)
 
 
-class TestSearchFilter(unittest.TestCase):
-    def test_server_side_search_passes_param(self):
-        with patch.object(
-            api,
-            "_request_with_headers",
-            return_value=([], {"x-supported-params": "search"}),
-        ) as m:
-            ns = MagicMock()
-            ns.status = None
-            ns.category_id = None
-            ns.featured = False
-            ns.search = "chat"
-            ns.page = 1
-            ns.page_size = 20
-            ns.json = False
-            api.cmd_products(ns)
-            called_url = m.call_args[0][1]
-            self.assertIn("search=chat", called_url)
+class TestToolsSearch(unittest.TestCase):
+    """后端 /tools 没有 search 参数，CLI 拉全量后客户端过滤。"""
 
-    def test_client_side_search(self):
-        products = [
-            {"id": 1, "name": "ChatGPT", "slug": "chatgpt"},
-            {"id": 2, "name": "Claude", "slug": "claude"},
-            {"id": 3, "name": "Perplexity", "slug": "perplexity"},
+    def _ns(self, **kwargs):
+        ns = MagicMock()
+        ns.status = None
+        ns.topic_id = None
+        ns.featured = False
+        ns.page = 1
+        ns.page_size = 20
+        ns.json = False
+        ns.search = None
+        for key, value in kwargs.items():
+            setattr(ns, key, value)
+        return ns
+
+    def test_search_not_sent_as_param(self):
+        with (
+            patch.object(api, "_request_with_headers", return_value=([], {})) as m,
+            patch.object(api, "_fetch_all", return_value=[]),
+        ):
+            api.cmd_tools(self._ns(search="chat"))
+            self.assertNotIn("search=", m.call_args[0][1])
+
+    def test_search_filters_client_side(self):
+        tools = [
+            {"id": 1, "name": "ChatGPT", "slug": "chatgpt", "tags": []},
+            {"id": 2, "name": "Claude", "slug": "claude", "tags": []},
         ]
         with (
-            patch.object(api, "_request_with_headers", return_value=(products, {})),
+            patch.object(api, "_request_with_headers", return_value=(tools, {})),
+            patch.object(api, "_fetch_all", return_value=tools),
             patch.object(api, "_print_table") as table_mock,
         ):
-            ns = MagicMock()
-            ns.status = None
-            ns.category_id = None
-            ns.featured = False
-            ns.search = "chat"
-            ns.page = 1
-            ns.page_size = 20
-            ns.json = False
-            api.cmd_products(ns)
+            api.cmd_tools(self._ns(search="chat"))
             displayed = table_mock.call_args[0][0]
-            self.assertEqual(len(displayed), 1)
-            names = [p["name"] for p in displayed]
-            self.assertIn("ChatGPT", names)
-            self.assertNotIn("Claude", names)
+            self.assertEqual([t["name"] for t in displayed], ["ChatGPT"])
+
+    def test_search_hits_tags(self):
+        tools = [
+            {"id": 1, "name": "X", "slug": "x", "tags": ["大模型"]},
+            {"id": 2, "name": "Y", "slug": "y", "tags": ["绘画"]},
+        ]
+        with (
+            patch.object(api, "_request_with_headers", return_value=(tools, {})),
+            patch.object(api, "_fetch_all", return_value=tools),
+            patch.object(api, "_print_table") as table_mock,
+        ):
+            api.cmd_tools(self._ns(search="大模型"))
+            displayed = table_mock.call_args[0][0]
+            self.assertEqual([t["name"] for t in displayed], ["X"])
+
+    def test_status_filter_sent_as_param(self):
+        with patch.object(api, "_request_with_headers", return_value=([], {})) as m:
+            api.cmd_tools(self._ns(status="published"))
+            self.assertIn("status=published", m.call_args[0][1])
 
 
 if __name__ == "__main__":

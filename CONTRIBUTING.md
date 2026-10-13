@@ -81,7 +81,7 @@ fix/<name>       缺陷修复
 refactor/<name>  重构
 chore/<name>     工程化/工具链变更
 docs/<name>      文档
-data/<name>      数据同步（唯一允许提交 web/data/data.json 的功能分支）
+data/<name>      数据同步（唯一允许提交 web/data/topics.json 与 tools.json 的功能分支）
 ```
 
 ### 提交规范 (Conventional Commits)
@@ -108,17 +108,17 @@ revert: 回退
 
 **scope 白名单**（commitlint 的 `scope-enum` 为强制校验，未列出的 scope 会被拒绝）：
 
-| scope               | 适用范围                                |
-| ------------------- | --------------------------------------- |
-| `web`               | `web/` 前端                             |
-| `studio`            | `studio/` 后端                          |
-| `skills`            | `skills/` AI 套件                       |
-| `scripts`           | `scripts/` 脚本                         |
-| `root`              | 根目录文件与仓库工程化（含 `.github/`） |
-| `docs`              | 文档                                    |
-| `data`              | `web/data/data.json` 数据同步分支专用   |
-| `deps` / `deps-dev` | 依赖升级（Dependabot 自动生成的 scope） |
-| `ci`                | CI / 工作流相关改动                     |
+| scope               | 适用范围                                               |
+| ------------------- | ------------------------------------------------------ |
+| `web`               | `web/` 前端                                            |
+| `studio`            | `studio/` 后端                                         |
+| `skills`            | `skills/` AI 套件                                      |
+| `scripts`           | `scripts/` 脚本                                        |
+| `root`              | 根目录文件与仓库工程化（含 `.github/`）                |
+| `docs`              | 文档                                                   |
+| `data`              | `web/data/topics.json` / `tools.json` 数据同步分支专用 |
+| `deps` / `deps-dev` | 依赖升级（Dependabot 自动生成的 scope）                |
+| `ci`                | CI / 工作流相关改动                                    |
 
 scope 可以省略（例如 `chore: 更新 CI`），省略时不做校验。
 
@@ -144,7 +144,7 @@ husky pre-commit 自动执行 lint-staged：
 - `.py` → ruff check + format（依赖 `studio/.venv`，由 `./scripts/install.sh` 创建）
 
 husky commit-msg 自动执行 commitlint 校验提交信息格式（type 与 scope 规则见上文）。
-分支名规范与 `web/data/data.json` 的提交限制由 husky pre-commit 钩子把关，不通过则拒绝提交。
+分支名规范与 `web/data/topics.json` / `web/data/tools.json` 的提交限制由 husky pre-commit 钩子把关，不通过则拒绝提交。
 
 ## Pull Request 流程
 
@@ -154,12 +154,12 @@ husky commit-msg 自动执行 commitlint 校验提交信息格式（type 与 sco
 3. 创建 Pull Request，标题遵循 Conventional Commits 格式
 4. 通过 CI 检查（根检查 markdownlint + prettier、web 的 lint / typecheck / test / build）后合并
 
-`web/data/data.json` 是生产数据源：只有 `main` 与 `data/<name>` 分支允许提交，其余分支会被
+`web/data/topics.json` 与 `web/data/tools.json` 是生产数据源：只有 `main` 与 `data/<name>` 分支允许提交，其余分支会被
 `.husky/pre-commit` 拒绝。
 
 ## 测试
 
-后端测试**前置条件**：本机 MySQL 已启动，且 `studio/.env.dev` 已按上文配置（conftest 每个用例前会 TRUNCATE `sd_*` 表，无库则全部报连接错误）；可用 `studio/sql/schema.sql` 初始化表结构。
+后端测试**前置条件**：本机 MySQL 已启动，且 `studio/.env.dev` 已按上文配置（conftest 每个用例前会 TRUNCATE `xg_*` 表，无库则全部报连接错误）；可用 `studio/sql/schema.sql` 初始化表结构。
 
 ```bash
 # 后端测试（需 MySQL，见上方前置条件）

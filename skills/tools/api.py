@@ -2,40 +2,50 @@
 """XiGee Studio API CLI — AI 调用 studio 接口的命令行工具。
 
 用法:
-  python skills/tools/api.py products [--status N] [--page N] [--page-size N] [--search K]  列出产品
-  python skills/tools/api.py product <id>                   查看产品详情
-  python skills/tools/api.py add-product --name <name> [--url <url>] [--category-ids 1,2,3] [--pricing <p>] [--featured] [--slug <slug>] [--description <desc>]
-  python skills/tools/api.py update-product <id> [--status N] [--name <name>] [--description <desc>] [--category-ids 1,2,3] [--pricing <p>] [--featured | --no-featured]
-  python skills/tools/api.py delete-product <id>
-  python skills/tools/api.py categories [--page N] [--page-size N]       列出分类
-  python skills/tools/api.py category <id>              查看分类详情
-  python skills/tools/api.py add-category --name <name> --slug <slug> --icon <icon>
-  python skills/tools/api.py update-category <id> [--name <name>] [--slug <slug>]
-  python skills/tools/api.py delete-category <id>
-  python skills/tools/api.py category-count <id>        分类产品数
-  python skills/tools/api.py tags [--status {0,1}] [--page N] [--page-size N]  列出标签
-  python skills/tools/api.py tag <id>                   查看标签详情
-  python skills/tools/api.py add-tag --name <name> --slug <slug>
-  python skills/tools/api.py update-tag <id> [--name <name>] [--slug <slug>] [--sort-order <N>] [--status {0,1}]
-  python skills/tools/api.py delete-tag <id>
-  python skills/tools/api.py tag-count <id>             标签产品数
-  python skills/tools/api.py product-links <id>         列出产品链接
-  python skills/tools/api.py add-link <product_id> --url <url> [--label <label>] [--primary]
-  python skills/tools/api.py update-link <product_id> <link_id> [--url <url>] [--label] [--primary]
-  python skills/tools/api.py delete-link <product_id> <link_id>
-  python skills/tools/api.py product-tags <id>          查看产品标签
-  python skills/tools/api.py set-tags <product_id> --tag-ids 1,2,3
-  python skills/tools/api.py export                    导出 JSON
-  python skills/tools/api.py stats                     目录总览统计
-  python skills/tools/api.py health                    健康检查
-  python skills/tools/api.py env                       环境信息
-  python skills/tools/api.py --version                 显示版本
+  python skills/tools/api.py tools [--status S] [--topic-id N] [--featured] [--search K] [--page N] [--page-size N]  列出工具
+  python skills/tools/api.py tool <id>                      查看工具详情
+  python skills/tools/api.py add-tool --name <name> --tagline <一句话> --pricing <p> --origin <o> --access <a> --languages zh,en
+                                  [--slug <slug>] [--url <url>] [--topic-ids 1,2] [--primary-topic-id N]
+                                  [--tags a,b] [--open-source] [--featured] [--description <desc>] [--sort-order N]
+  python skills/tools/api.py update-tool <id> [--status S] [--name <name>] [--tagline <t>] [--description <desc>]
+                                  [--pricing <p>] [--origin <o>] [--access <a>] [--languages zh,en] [--tags a,b]
+                                  [--topic-ids 1,2] [--primary-topic-id N] [--open-source | --no-open-source]
+                                  [--featured | --no-featured] [--slug <slug>] [--sort-order N] [--last-updated-at YYYY-MM-DD]
+  python skills/tools/api.py delete-tool <id>
+  python skills/tools/api.py topics [--status {active,disabled}] [--page N] [--page-size N]   列出主题
+  python skills/tools/api.py topic <id>                 查看主题详情
+  python skills/tools/api.py add-topic --name <name> --slug <slug> [--icon <icon>] [--description <desc>] [--sort-order N] [--status {active,disabled}]
+  python skills/tools/api.py update-topic <id> [--name <name>] [--slug <slug>] [--icon] [--description] [--sort-order N] [--status {active,disabled}]
+  python skills/tools/api.py delete-topic <id>
+  python skills/tools/api.py topic-count <id>           主题下已发布工具数
+  python skills/tools/api.py topic-tools <id> [--page N] [--page-size N]   主题下全部工具
+  python skills/tools/api.py tool-links <id> [--status {active,broken,disabled}]   列出工具链接
+  python skills/tools/api.py add-link <tool_id> --url <url> [--label L] [--primary] [--status S] [--sort-order N]
+  python skills/tools/api.py update-link <tool_id> <link_id> [--url <url>] [--label L] [--primary | --no-primary] [--status S] [--sort-order N]
+  python skills/tools/api.py delete-link <tool_id> <link_id>
+  python skills/tools/api.py tags                       列出全部工具的标签（客户端聚合，无对应后端端点）
+  python skills/tools/api.py tool-tags <id>             查看工具标签
+  python skills/tools/api.py set-tags <tool_id> --tags a,b,c   全量替换工具标签
+  python skills/tools/api.py tool-topics <id>           查看工具主题归属
+  python skills/tools/api.py set-topics <tool_id> --topic-ids 1,2 [--primary-topic-id N]   全量替换主题归属
+  python skills/tools/api.py export                     导出 JSON（两个文件: topics-{env}.json / tools-{env}.json）
+  python skills/tools/api.py stats                      目录总览统计
+  python skills/tools/api.py health                     健康检查
+  python skills/tools/api.py env                        环境信息
+  python skills/tools/api.py --version                  显示版本
 
+状态取值（字符串，不再是 0/1/2/3）:
+  tool:  draft | pending | published | archived   （合法迁移: draft→pending, pending→draft/published,
+                                                     published→archived, archived→published；非法迁移返回 409）
+  topic: disabled | active
+  link:  active | broken | disabled
+
+标签（tags）是工具自身字段（字符串数组，最多 8 个），随工具一起读写，没有独立端点。
 所有写操作支持 --dry-run 预览、--op-id 幂等、自动重试、操作日志。
 注意: 写操作 (POST/PUT/DELETE) 不自动重试，避免重复写入。
 """
 
-__version__ = "1.1.0"
+__version__ = "2.0.0"
 
 import argparse
 import json
@@ -68,7 +78,26 @@ _RETRY_DELAYS = [1, 2, 4]
 _OP_IDS_MAX = 500
 _MAX_FETCH_PAGES = 50
 
-STATUS_NAMES = {0: "草稿", 1: "待审核", 2: "已发布", 3: "已下架"}
+# 三张表的 status 是三套互不相干的枚举，别跨表复用。
+TOOL_STATUS_NAMES = {
+    "draft": "草稿",
+    "pending": "待审核",
+    "published": "已发布",
+    "archived": "已下架",
+}
+TOPIC_STATUS_NAMES = {"disabled": "已禁用", "active": "启用"}
+LINK_STATUS_NAMES = {"active": "可用", "broken": "失效", "disabled": "已禁用"}
+
+LINK_LABELS = (
+    "website",
+    "api",
+    "docs",
+    "github",
+    "playground",
+    "pricing",
+    "plugin",
+    "other",
+)
 
 
 def _slugify(text: str) -> str:
@@ -133,6 +162,23 @@ class CancelledError(SystemExit):
 def _confirm(prompt: str) -> bool:
     resp = input(f"  ⚠ {prompt} [y/N] ").strip().lower()
     return resp in ("y", "yes")
+
+
+def _split_csv(raw: str) -> list[str]:
+    """逗号分隔字符串 → 去空白后的非空列表。"""
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
+def _split_int_csv(raw: str, flag: str) -> list[int]:
+    """逗号分隔字符串 → int 列表；格式错误时报错退出。"""
+    try:
+        return [int(item) for item in _split_csv(raw)]
+    except ValueError:
+        print(
+            f"错误: {flag} 格式无效，需逗号分隔的数字 (如 1,2,3)",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
 
 def _load_api_key_from_envfile(app_env: str) -> str:
@@ -379,139 +425,188 @@ def _print_total_info(resp_headers: dict):
         print(f"  (共 {total} 条)")
 
 
-def cmd_products(args):
+def _csv_of(items: list, key: str) -> str:
+    return ",".join(str(item.get(key, "")) for item in items)
+
+
+# ── 工具 ──────────────────────────────────────────────────────────────────────
+
+
+def cmd_tools(args):
     params = []
     if args.status is not None:
         params.append(f"status={args.status}")
-    if args.category_id:
-        params.append(f"category_id={args.category_id}")
+    if args.topic_id is not None:
+        params.append(f"topic_id={args.topic_id}")
     if args.featured:
         params.append("featured=true")
-    if args.search:
-        params.append(f"search={urllib.parse.quote(args.search)}")
     if args.page:
         params.append(f"page={args.page}")
     if args.page_size:
         params.append(f"page_size={args.page_size}")
     qs = "&".join(params)
     data, resp_headers = _request_with_headers(
-        "GET", f"/products?{qs}" if qs else "/products"
+        "GET", f"/tools?{qs}" if qs else "/tools"
     )
-    if args.search and "search" not in resp_headers.get("x-supported-params", ""):
-        all_data = _fetch_all("/products")
+    if args.search:
+        # 后端 /tools 没有 search 参数，拉全量后客户端过滤。
+        keyword = args.search.lower()
         data = [
-            p
-            for p in all_data
-            if args.search.lower() in p.get("name", "").lower()
-            or args.search.lower() in p.get("slug", "").lower()
+            t
+            for t in _fetch_all("/tools")
+            if keyword in (t.get("name") or "").lower()
+            or keyword in (t.get("slug") or "").lower()
+            or keyword in (t.get("tagline") or "").lower()
+            or any(keyword in tag.lower() for tag in (t.get("tags") or []))
         ]
         resp_headers = {}
     if args.json:
         _print_json(data)
     else:
-        for p in data:
-            p["status_name"] = STATUS_NAMES.get(p.get("status"), "?")
+        for t in data:
+            t["status_name"] = TOOL_STATUS_NAMES.get(t.get("status"), "?")
+            t["topic_names"] = _csv_of(t.get("topics") or [], "name")
         _print_table(
             data,
-            ["id", "name", "slug", "status_name", "pricing", "featured"],
+            [
+                "id",
+                "name",
+                "slug",
+                "status_name",
+                "pricing",
+                "is_featured",
+                "topic_names",
+            ],
             headers={
                 "id": "ID",
                 "name": "名称",
                 "slug": "Slug",
                 "status_name": "状态",
                 "pricing": "定价",
-                "featured": "精选",
+                "is_featured": "精选",
+                "topic_names": "主题",
             },
         )
         _print_total_info(resp_headers)
 
 
-def cmd_product(args):
-    data = _request("GET", f"/products/{args.id}")
+def cmd_tool(args):
+    data = _request("GET", f"/tools/{args.id}")
     _print_json(data)
 
 
-def cmd_add_product(args):
+def cmd_add_tool(args):
     payload = {
         "slug": args.slug if args.slug else _slugify(args.name),
         "name": args.name,
+        "tagline": args.tagline,
+        "pricing": args.pricing,
+        "origin": args.origin,
+        "access": args.access,
+        "languages": _split_csv(args.languages),
+        "status": args.status,
     }
+    if args.open_source:
+        payload["is_open_source"] = True
+    if args.featured:
+        payload["is_featured"] = True
     if args.url:
         payload["links"] = [{"url": args.url, "is_primary": True}]
-    if args.category_ids:
-        payload["category_ids"] = [
-            int(c.strip()) for c in args.category_ids.split(",") if c.strip()
+    if args.topic_ids:
+        payload["topic_ids"] = [
+            int(c.strip()) for c in args.topic_ids.split(",") if c.strip()
         ]
-    if args.pricing:
-        payload["pricing"] = args.pricing
-    if args.featured:
-        payload["featured"] = True
+    if args.primary_topic_id is not None:
+        payload["primary_topic_id"] = args.primary_topic_id
+    if args.tags:
+        payload["tags"] = _split_csv(args.tags)
     if args.description is not None:
         payload["description"] = args.description
     if args.sort_order is not None:
         payload["sort_order"] = args.sort_order
-    _, data = _write("POST", "/products", payload, summary=f"添加产品: {args.name}")
+    _, data = _write("POST", "/tools", payload, summary=f"添加工具: {args.name}")
     if data:
         _print_json(data)
 
 
-def cmd_update_product(args):
+def cmd_update_tool(args):
     payload = {}
     if args.status is not None:
         payload["status"] = args.status
     if args.name:
         payload["name"] = args.name
+    if args.tagline is not None:
+        payload["tagline"] = args.tagline
     if args.description is not None:
         payload["description"] = args.description
-    if args.category_ids is not None:
-        payload["category_ids"] = [
-            int(c.strip()) for c in args.category_ids.split(",") if c.strip()
-        ]
     if args.pricing:
         payload["pricing"] = args.pricing
+    if args.origin:
+        payload["origin"] = args.origin
+    if args.access:
+        payload["access"] = args.access
+    if args.languages is not None:
+        payload["languages"] = _split_csv(args.languages)
+    if args.tags is not None:
+        payload["tags"] = _split_csv(args.tags)
+    if args.topic_ids is not None:
+        payload["topic_ids"] = _split_int_csv(args.topic_ids, "--topic-ids")
+    if args.primary_topic_id is not None:
+        payload["primary_topic_id"] = args.primary_topic_id
+    if args.open_source is not None:
+        payload["is_open_source"] = args.open_source
     if args.featured is not None:
-        payload["featured"] = args.featured
+        payload["is_featured"] = args.featured
     if args.slug:
         payload["slug"] = args.slug
     if args.sort_order is not None:
         payload["sort_order"] = args.sort_order
+    if args.last_updated_at:
+        payload["last_updated_at"] = args.last_updated_at
 
     confirm_text = ""
-    if args.status is not None:
-        old = _request("GET", f"/products/{args.id}")
-        old_status_name = STATUS_NAMES.get(old.get("status"), "?")
-        new_status_name = STATUS_NAMES.get(args.status, "?")
-        summary = f"更新产品 {args.id}: 状态 {old_status_name}→{new_status_name}"
+    new_status_name = TOOL_STATUS_NAMES.get(args.status or "", "?")
+    if args.status is not None and not (_GLOBAL_ARGS and _GLOBAL_ARGS.dry_run):
+        # dry-run 不该碰网络：只在真正要写时才回读旧状态做确认文案。
+        old = _request("GET", f"/tools/{args.id}")
+        old_status_name = TOOL_STATUS_NAMES.get(old.get("status"), "?")
+        summary = f"更新工具 {args.id}: 状态 {old_status_name}→{new_status_name}"
         confirm_text = (
-            f"将产品 {args.id} 从「{old_status_name}」改为「{new_status_name}」?"
+            f"将工具 {args.id} 从「{old_status_name}」改为「{new_status_name}」?"
         )
+    elif args.status is not None:
+        summary = f"更新工具 {args.id}: 状态 →{new_status_name}"
     else:
         keys = ", ".join(payload.keys())
-        summary = f"更新产品 {args.id}: {keys}"
+        summary = f"更新工具 {args.id}: {keys}"
 
     _, data = _write(
-        "PUT", f"/products/{args.id}", payload, summary=summary, confirm=confirm_text
+        "PUT", f"/tools/{args.id}", payload, summary=summary, confirm=confirm_text
     )
     if data:
         _print_json(data)
 
 
-def cmd_delete_product(args):
-    old = _request("GET", f"/products/{args.id}")
-    name = old.get("name", f"ID={args.id}")
-    summary = f"删除产品: {name}"
+def cmd_delete_tool(args):
+    name = f"ID={args.id}"
+    if not (_GLOBAL_ARGS and _GLOBAL_ARGS.dry_run):
+        name = _request("GET", f"/tools/{args.id}").get("name", name)
+    summary = f"删除工具: {name}"
     executed, _ = _write(
         "DELETE",
-        f"/products/{args.id}",
+        f"/tools/{args.id}",
         {},
         summary=summary,
-        confirm=f"确认删除产品「{name}」? 此操作不可恢复!",
+        confirm=f"确认删除工具「{name}」? 此操作不可恢复!",
     )
     if executed:
-        print(f"产品 {args.id} 已删除")
+        print(f"工具 {args.id} 已删除")
 
 
-def cmd_categories(args):
+# ── 主题 ──────────────────────────────────────────────────────────────────────
+
+
+def cmd_topics(args):
     params = []
     if args.status is not None:
         params.append(f"status={args.status}")
@@ -521,84 +616,142 @@ def cmd_categories(args):
         params.append(f"page_size={args.page_size}")
     qs = "&".join(params)
     data, resp_headers = _request_with_headers(
-        "GET", f"/categories?{qs}" if qs else "/categories"
+        "GET", f"/topics?{qs}" if qs else "/topics"
     )
     if args.json:
         _print_json(data)
     else:
+        for t in data:
+            t["status_name"] = TOPIC_STATUS_NAMES.get(t.get("status"), "?")
         _print_table(
             data,
-            ["id", "name", "slug", "icon", "sort_order", "status"],
+            ["id", "name", "slug", "icon", "sort_order", "status_name", "tool_count"],
             headers={
                 "id": "ID",
                 "name": "名称",
                 "slug": "Slug",
                 "icon": "图标",
                 "sort_order": "排序",
-                "status": "状态",
+                "status_name": "状态",
+                "tool_count": "已发布工具数",
             },
         )
         _print_total_info(resp_headers)
 
 
-def cmd_add_category(args):
-    payload = {"slug": args.slug, "name": args.name, "icon": args.icon}
-    _, data = _write("POST", "/categories", payload, summary=f"添加分类: {args.name}")
+def cmd_topic(args):
+    data = _request("GET", f"/topics/{args.id}")
+    _print_json(data)
+
+
+def cmd_add_topic(args):
+    payload = {"slug": args.slug, "name": args.name}
+    if args.icon is not None:
+        payload["icon"] = args.icon
+    if args.description is not None:
+        payload["description"] = args.description
+    if args.sort_order is not None:
+        payload["sort_order"] = args.sort_order
+    if args.status is not None:
+        payload["status"] = args.status
+    _, data = _write("POST", "/topics", payload, summary=f"添加主题: {args.name}")
     if data:
         _print_json(data)
 
 
-def cmd_tags(args):
-    params = []
+def cmd_update_topic(args):
+    payload = {}
+    if args.name is not None:
+        payload["name"] = args.name
+    if args.slug is not None:
+        payload["slug"] = args.slug
+    if args.icon is not None:
+        payload["icon"] = args.icon
+    if args.description is not None:
+        payload["description"] = args.description
+    if args.sort_order is not None:
+        payload["sort_order"] = args.sort_order
     if args.status is not None:
-        params.append(f"status={args.status}")
+        payload["status"] = args.status
+    _, data = _write(
+        "PUT", f"/topics/{args.id}", payload, summary=f"更新主题: {args.id}"
+    )
+    if data:
+        _print_json(data)
+
+
+def cmd_delete_topic(args):
+    name = f"ID={args.id}"
+    if not (_GLOBAL_ARGS and _GLOBAL_ARGS.dry_run):
+        name = _request("GET", f"/topics/{args.id}").get("name", name)
+    executed, _ = _write(
+        "DELETE",
+        f"/topics/{args.id}",
+        {},
+        summary=f"删除主题: {name}",
+        confirm=f"确认删除主题「{name}」? 此操作不可恢复!",
+    )
+    if executed:
+        print(f"主题 {args.id} 已删除")
+
+
+def cmd_topic_count(args):
+    data = _request("GET", f"/topics/{args.id}/tool-count")
+    print(f"已发布工具数: {data.get('tool_count', 0)}")
+
+
+def cmd_topic_tools(args):
+    params = []
     if args.page:
         params.append(f"page={args.page}")
     if args.page_size:
         params.append(f"page_size={args.page_size}")
     qs = "&".join(params)
-    data, resp_headers = _request_with_headers("GET", f"/tags?{qs}" if qs else "/tags")
+    data, resp_headers = _request_with_headers(
+        "GET",
+        f"/topics/{args.id}/tools?{qs}" if qs else f"/topics/{args.id}/tools",
+    )
     if args.json:
         _print_json(data)
     else:
+        for t in data:
+            t["status_name"] = TOOL_STATUS_NAMES.get(t.get("status"), "?")
         _print_table(
             data,
-            ["id", "name", "slug", "sort_order", "status"],
+            ["id", "name", "slug", "status_name", "pricing"],
             headers={
                 "id": "ID",
                 "name": "名称",
                 "slug": "Slug",
-                "sort_order": "排序",
-                "status": "状态",
+                "status_name": "状态",
+                "pricing": "定价",
             },
         )
         _print_total_info(resp_headers)
 
 
-def cmd_add_tag(args):
-    payload = {"slug": args.slug, "name": args.name}
-    _, data = _write("POST", "/tags", payload, summary=f"添加标签: {args.name}")
-    if data:
-        _print_json(data)
+# ── 链接 ──────────────────────────────────────────────────────────────────────
 
 
-def cmd_product_links(args):
+def cmd_tool_links(args):
     params = []
     if args.status is not None:
         params.append(f"status={args.status}")
     qs = "&".join(params)
     data = _request(
-        "GET", f"/products/{args.id}/links?{qs}" if qs else f"/products/{args.id}/links"
+        "GET", f"/tools/{args.id}/links?{qs}" if qs else f"/tools/{args.id}/links"
     )
+    for link in data:
+        link["status_name"] = LINK_STATUS_NAMES.get(link.get("status"), "?")
     _print_table(
         data,
-        ["id", "url", "label", "is_primary", "status"],
+        ["id", "url", "label", "is_primary", "status_name"],
         headers={
             "id": "ID",
             "url": "URL",
-            "label": "标签",
+            "label": "类型",
             "is_primary": "主链接",
-            "status": "状态",
+            "status_name": "状态",
         },
     )
 
@@ -611,9 +764,11 @@ def cmd_add_link(args):
         payload["is_primary"] = True
     if args.status is not None:
         payload["status"] = args.status
+    if args.sort_order is not None:
+        payload["sort_order"] = args.sort_order
     _, data = _write(
         "POST",
-        f"/products/{args.product_id}/links",
+        f"/tools/{args.tool_id}/links",
         payload,
         summary=f"添加链接: {args.url}",
     )
@@ -621,33 +776,129 @@ def cmd_add_link(args):
         _print_json(data)
 
 
-def cmd_product_tags(args):
-    data = _request("GET", f"/products/{args.id}")
+def cmd_update_link(args):
+    payload = {}
+    if args.url is not None:
+        payload["url"] = args.url
+    if args.label is not None:
+        payload["label"] = args.label
+    if args.primary is not None:
+        payload["is_primary"] = args.primary
+    if args.status is not None:
+        payload["status"] = args.status
+    if args.sort_order is not None:
+        payload["sort_order"] = args.sort_order
+    _, data = _write(
+        "PUT",
+        f"/tools/{args.tool_id}/links/{args.link_id}",
+        payload,
+        summary=f"更新链接: {args.link_id}",
+    )
+    if data:
+        _print_json(data)
+
+
+def cmd_delete_link(args):
+    executed, _ = _write(
+        "DELETE",
+        f"/tools/{args.tool_id}/links/{args.link_id}",
+        {},
+        summary=f"删除链接: {args.link_id}",
+        confirm=f"确认删除链接 {args.link_id}?",
+    )
+    if executed:
+        print(f"链接 {args.link_id} 已删除")
+
+
+# ── 标签（工具字段，无独立端点） ───────────────────────────────────────────────
+
+
+def cmd_tags(args):
+    """列出全部工具的标签（客户端聚合）。
+
+    新模型里标签只是 xg_tool.tags JSON 列，没有 /tags 端点，所以这里拉全量工具
+    后自行去重计数。
+    """
+    counts: dict[str, int] = {}
+    for tool in _fetch_all("/tools"):
+        for tag in tool.get("tags") or []:
+            counts[tag] = counts.get(tag, 0) + 1
+    items = [
+        {"tag": tag, "tool_count": count}
+        for tag, count in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+    ]
+    if args.json:
+        _print_json(items)
+    else:
+        _print_table(
+            items,
+            ["tag", "tool_count"],
+            headers={"tag": "标签", "tool_count": "工具数"},
+        )
+
+
+def cmd_tool_tags(args):
+    data = _request("GET", f"/tools/{args.id}")
+    tags = data.get("tags") or []
     _print_table(
-        data.get("tags", []),
-        ["id", "name", "slug"],
-        headers={"id": "ID", "name": "名称", "slug": "Slug"},
+        [{"tag": tag} for tag in tags],
+        ["tag"],
+        headers={"tag": "标签"},
     )
 
 
 def cmd_set_tags(args):
-    try:
-        tag_ids = [int(t.strip()) for t in args.tag_ids.split(",") if t.strip()]
-    except ValueError:
-        print("错误: --tag-ids 格式无效，需逗号分隔的数字 (如 1,2,3)", file=sys.stderr)
-        sys.exit(1)
-    if not tag_ids:
-        print("错误: --tag-ids 不能为空", file=sys.stderr)
-        sys.exit(1)
-    payload = {"tag_ids": tag_ids}
+    tags = _split_csv(args.tags)
+    payload = {"tags": tags}
     _, data = _write(
         "PUT",
-        f"/products/{args.product_id}/tags",
+        f"/tools/{args.tool_id}",
         payload,
-        summary=f"设置标签: {args.product_id} → {tag_ids}",
+        summary=f"设置标签: {args.tool_id} → {tags}",
+        confirm=f"将工具 {args.tool_id} 的标签全量替换为 {tags}?",
     )
     if data:
         _print_json(data)
+
+
+def cmd_tool_topics(args):
+    data = _request("GET", f"/tools/{args.id}")
+    topics = data.get("topics") or []
+    primary_topic_id = data.get("primary_topic_id")
+    for topic in topics:
+        topic["is_primary"] = topic.get("id") == primary_topic_id
+    _print_table(
+        topics,
+        ["id", "name", "slug", "is_primary"],
+        headers={
+            "id": "ID",
+            "name": "名称",
+            "slug": "Slug",
+            "is_primary": "主主题",
+        },
+    )
+
+
+def cmd_set_topics(args):
+    topic_ids = _split_int_csv(args.topic_ids, "--topic-ids")
+    if not topic_ids:
+        print("错误: --topic-ids 不能为空", file=sys.stderr)
+        sys.exit(1)
+    payload = {"topic_ids": topic_ids}
+    if args.primary_topic_id is not None:
+        payload["primary_topic_id"] = args.primary_topic_id
+    _, data = _write(
+        "PUT",
+        f"/tools/{args.tool_id}/topics",
+        payload,
+        summary=f"设置主题归属: {args.tool_id} → {topic_ids}",
+        confirm=f"将工具 {args.tool_id} 的主题归属全量替换为 {topic_ids}?",
+    )
+    if data:
+        _print_json(data)
+
+
+# ── 系统 ──────────────────────────────────────────────────────────────────────
 
 
 def cmd_export(args):
@@ -670,22 +921,24 @@ def _fetch_all(path: str, page_size: int = 100) -> list:
 
 
 def cmd_stats(args):
-    all_products = _fetch_all("/products")
-    categories = _fetch_all("/categories", page_size=200)
-    tags = _fetch_all("/tags", page_size=500)
+    all_tools = _fetch_all("/tools")
+    topics = _fetch_all("/topics", page_size=200)
 
-    status_counts = {0: 0, 1: 0, 2: 0, 3: 0}
-    for p in all_products:
-        s = p.get("status", 0)
+    status_counts = dict.fromkeys(TOOL_STATUS_NAMES, 0)
+    for t in all_tools:
+        s = t.get("status", "draft")
         status_counts[s] = status_counts.get(s, 0) + 1
 
+    # 标签是工具字段，没有 /tags 端点：总数在客户端去重统计。
+    distinct_tags = {tag for t in all_tools for tag in (t.get("tags") or [])}
+
     print("═══ XiGee 统计 ═══")
-    print(f"  分类总数: {len(categories)}")
-    print(f"  标签总数: {len(tags)}")
-    print(f"  产品总数: {len(all_products)}")
+    print(f"  主题总数: {len(topics)}")
+    print(f"  标签总数(去重): {len(distinct_tags)}")
+    print(f"  工具总数: {len(all_tools)}")
     print()
-    print("  产品状态分布:")
-    for s, name in STATUS_NAMES.items():
+    print("  工具状态分布:")
+    for s, name in TOOL_STATUS_NAMES.items():
         print(f"    {name} (status={s}): {status_counts.get(s, 0)}")
 
 
@@ -703,116 +956,6 @@ def cmd_env(args):
     _print_json(data)
 
 
-def cmd_category(args):
-    data = _request("GET", f"/categories/{args.id}")
-    _print_json(data)
-
-
-def cmd_update_category(args):
-    payload = {}
-    if args.name is not None:
-        payload["name"] = args.name
-    if args.slug is not None:
-        payload["slug"] = args.slug
-    if args.icon is not None:
-        payload["icon"] = args.icon
-    if args.sort_order is not None:
-        payload["sort_order"] = args.sort_order
-    if args.status is not None:
-        payload["status"] = args.status
-    _, data = _write(
-        "PUT", f"/categories/{args.id}", payload, summary=f"更新分类: {args.id}"
-    )
-    if data:
-        _print_json(data)
-
-
-def cmd_delete_category(args):
-    executed, _ = _write(
-        "DELETE",
-        f"/categories/{args.id}",
-        {},
-        summary=f"删除分类: {args.id}",
-        confirm=f"确认删除分类 {args.id}? 此操作不可恢复!",
-    )
-    if executed:
-        print(f"分类 {args.id} 已删除")
-
-
-def cmd_category_count(args):
-    data = _request("GET", f"/categories/{args.id}/count")
-    print(f"产品数: {data.get('product_count', 0)}")
-
-
-def cmd_tag(args):
-    data = _request("GET", f"/tags/{args.id}")
-    _print_json(data)
-
-
-def cmd_update_tag(args):
-    payload = {}
-    if args.name is not None:
-        payload["name"] = args.name
-    if args.slug is not None:
-        payload["slug"] = args.slug
-    if args.sort_order is not None:
-        payload["sort_order"] = args.sort_order
-    if args.status is not None:
-        payload["status"] = args.status
-    _, data = _write("PUT", f"/tags/{args.id}", payload, summary=f"更新标签: {args.id}")
-    if data:
-        _print_json(data)
-
-
-def cmd_delete_tag(args):
-    executed, _ = _write(
-        "DELETE",
-        f"/tags/{args.id}",
-        {},
-        summary=f"删除标签: {args.id}",
-        confirm=f"确认删除标签 {args.id}?",
-    )
-    if executed:
-        print(f"标签 {args.id} 已删除")
-
-
-def cmd_tag_count(args):
-    data = _request("GET", f"/tags/{args.id}/count")
-    print(f"产品数: {data.get('product_count', 0)}")
-
-
-def cmd_update_link(args):
-    payload = {}
-    if args.url is not None:
-        payload["url"] = args.url
-    if args.label is not None:
-        payload["label"] = args.label
-    if args.primary is not None:
-        payload["is_primary"] = args.primary
-    if args.status is not None:
-        payload["status"] = args.status
-    _, data = _write(
-        "PUT",
-        f"/products/{args.product_id}/links/{args.link_id}",
-        payload,
-        summary=f"更新链接: {args.link_id}",
-    )
-    if data:
-        _print_json(data)
-
-
-def cmd_delete_link(args):
-    executed, _ = _write(
-        "DELETE",
-        f"/products/{args.product_id}/links/{args.link_id}",
-        {},
-        summary=f"删除链接: {args.link_id}",
-        confirm=f"确认删除链接 {args.link_id}?",
-    )
-    if executed:
-        print(f"链接 {args.link_id} 已删除")
-
-
 def main():
     parser = argparse.ArgumentParser(description="XiGee Studio API CLI")
     parser.add_argument(
@@ -828,171 +971,192 @@ def main():
     parser.add_argument("--op-id", help="幂等键，相同 op_id 的操作不会重复执行")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    # products
-    p = sub.add_parser("products", aliases=["p"], help="列出产品")
-    p.add_argument("--status", type=int, choices=[0, 1, 2, 3], help="按状态过滤")
-    p.add_argument("--category-id", type=int, help="按分类过滤")
+    tool_status = tuple(TOOL_STATUS_NAMES)
+    topic_status = tuple(TOPIC_STATUS_NAMES)
+    link_status = tuple(LINK_STATUS_NAMES)
+    pricing = ("free", "freemium", "paid")
+    origin = ("cn", "overseas")
+    access = ("direct", "proxy")
+
+    # tools
+    p = sub.add_parser("tools", aliases=["t"], help="列出工具")
+    p.add_argument("--status", choices=tool_status, help="按状态过滤")
+    p.add_argument("--topic-id", type=int, help="按主题过滤")
     p.add_argument("--featured", action="store_true", help="仅精选")
-    p.add_argument("--search", help="按名称/slug 搜索")
+    p.add_argument("--search", help="按名称/slug/tagline/标签搜索（客户端过滤）")
     p.add_argument("--page", type=int, default=1)
     p.add_argument("--page-size", type=int, default=20)
     p.add_argument("--json", action="store_true", help="输出 JSON")
-    p.set_defaults(func=cmd_products)
+    p.set_defaults(func=cmd_tools)
 
-    # product detail
-    p = sub.add_parser("product", help="查看产品详情")
+    # tool detail
+    p = sub.add_parser("tool", help="查看工具详情")
     p.add_argument("id", type=int)
-    p.set_defaults(func=cmd_product)
+    p.set_defaults(func=cmd_tool)
 
-    # add product
-    p = sub.add_parser("add-product", help="添加产品")
+    # add tool
+    p = sub.add_parser("add-tool", help="添加工具")
     p.add_argument("--name", required=True)
+    p.add_argument("--tagline", required=True, help="一句话简介，须以标点结尾")
+    p.add_argument("--pricing", required=True, choices=pricing)
+    p.add_argument("--origin", required=True, choices=origin)
+    p.add_argument("--access", required=True, choices=access)
+    p.add_argument("--languages", required=True, help="ISO 639-1 逗号分隔 (如 zh,en)")
     p.add_argument("--slug", help="默认从 name 生成")
-    p.add_argument("--url", help="产品链接")
-    p.add_argument("--category-ids", help="逗号分隔的分类 ID (如 1,2,3)")
-    p.add_argument("--pricing", choices=["free", "freemium", "paid", "opensource"])
+    p.add_argument("--url", help="工具主链接")
+    p.add_argument("--topic-ids", help="逗号分隔的主题 ID (如 1,2,3)")
+    p.add_argument("--primary-topic-id", type=int, default=None)
+    p.add_argument("--tags", help="逗号分隔的标签 (最多 8 个)")
+    p.add_argument("--open-source", action="store_true", help="标记为开源")
     p.add_argument("--featured", action="store_true")
     p.add_argument("--description")
     p.add_argument("--sort-order", type=int, default=None)
-    p.set_defaults(func=cmd_add_product)
+    p.add_argument(
+        "--status",
+        choices=("draft", "pending"),
+        default="draft",
+        help="新建只允许 draft/pending",
+    )
+    p.set_defaults(func=cmd_add_tool)
 
-    # update product
-    p = sub.add_parser("update-product", help="更新产品")
+    # update tool
+    p = sub.add_parser("update-tool", help="更新工具")
     p.add_argument("id", type=int)
-    p.add_argument("--status", type=int, choices=[0, 1, 2, 3])
+    p.add_argument("--status", choices=tool_status)
     p.add_argument("--name")
+    p.add_argument("--tagline")
     p.add_argument("--description")
-    p.add_argument("--category-ids", help="逗号分隔的分类 ID (如 1,2,3)，传空串清空")
-    p.add_argument("--pricing", choices=["free", "freemium", "paid", "opensource"])
+    p.add_argument("--pricing", choices=pricing)
+    p.add_argument("--origin", choices=origin)
+    p.add_argument("--access", choices=access)
+    p.add_argument("--languages", help="逗号分隔，全量替换")
+    p.add_argument("--tags", help="逗号分隔，全量替换；传空串清空")
+    p.add_argument("--topic-ids", help="逗号分隔的主题 ID，全量替换；传空串清空")
+    p.add_argument("--primary-topic-id", type=int, default=None)
+    p.add_argument("--open-source", action=argparse.BooleanOptionalAction, default=None)
     p.add_argument("--featured", action=argparse.BooleanOptionalAction, default=None)
     p.add_argument("--slug")
     p.add_argument("--sort-order", type=int, default=None)
-    p.set_defaults(func=cmd_update_product)
+    p.add_argument("--last-updated-at", help="YYYY-MM-DD")
+    p.set_defaults(func=cmd_update_tool)
 
-    # delete product
-    p = sub.add_parser("delete-product", help="删除产品")
+    # delete tool
+    p = sub.add_parser("delete-tool", help="删除工具")
     p.add_argument("id", type=int)
-    p.set_defaults(func=cmd_delete_product)
+    p.set_defaults(func=cmd_delete_tool)
 
-    # categories
-    p = sub.add_parser("categories", aliases=["c"], help="列出分类")
+    # topics
+    p = sub.add_parser("topics", aliases=["tp"], help="列出主题")
     p.add_argument("--page", type=int, default=1)
     p.add_argument("--page-size", type=int, default=50)
-    p.add_argument("--status", type=int, choices=[0, 1], default=None)
+    p.add_argument("--status", choices=topic_status, default=None)
     p.add_argument("--json", action="store_true")
-    p.set_defaults(func=cmd_categories)
+    p.set_defaults(func=cmd_topics)
 
-    # category detail
-    p = sub.add_parser("category", help="查看分类详情")
+    # topic detail
+    p = sub.add_parser("topic", help="查看主题详情")
     p.add_argument("id", type=int)
-    p.set_defaults(func=cmd_category)
+    p.set_defaults(func=cmd_topic)
 
-    # add category
-    p = sub.add_parser("add-category", help="添加分类")
+    # add topic
+    p = sub.add_parser("add-topic", help="添加主题")
     p.add_argument("--name", required=True)
     p.add_argument("--slug", required=True)
-    p.add_argument("--icon", required=True)
-    p.set_defaults(func=cmd_add_category)
+    p.add_argument("--icon", help="Lucide 组件名，默认 Box")
+    p.add_argument("--description")
+    p.add_argument("--sort-order", type=int, default=None)
+    p.add_argument("--status", choices=topic_status, default=None)
+    p.set_defaults(func=cmd_add_topic)
 
-    # update category
-    p = sub.add_parser("update-category", help="更新分类")
+    # update topic
+    p = sub.add_parser("update-topic", help="更新主题")
     p.add_argument("id", type=int)
     p.add_argument("--name")
     p.add_argument("--slug")
     p.add_argument("--icon")
+    p.add_argument("--description")
     p.add_argument("--sort-order", type=int)
-    p.add_argument("--status", type=int, choices=[0, 1])
-    p.set_defaults(func=cmd_update_category)
+    p.add_argument("--status", choices=topic_status)
+    p.set_defaults(func=cmd_update_topic)
 
-    # delete category
-    p = sub.add_parser("delete-category", help="删除分类")
+    # delete topic
+    p = sub.add_parser("delete-topic", help="删除主题")
     p.add_argument("id", type=int)
-    p.set_defaults(func=cmd_delete_category)
+    p.set_defaults(func=cmd_delete_topic)
 
-    # category count
-    p = sub.add_parser("category-count", help="分类下产品数")
+    # topic count
+    p = sub.add_parser("topic-count", help="主题下已发布工具数")
     p.add_argument("id", type=int)
-    p.set_defaults(func=cmd_category_count)
+    p.set_defaults(func=cmd_topic_count)
 
-    # tags
-    p = sub.add_parser("tags", aliases=["t"], help="列出标签")
+    # topic tools
+    p = sub.add_parser("topic-tools", help="主题下全部工具")
+    p.add_argument("id", type=int)
     p.add_argument("--page", type=int, default=1)
-    p.add_argument("--page-size", type=int, default=100)
-    p.add_argument("--status", type=int, choices=[0, 1], default=None)
+    p.add_argument("--page-size", type=int, default=20)
     p.add_argument("--json", action="store_true")
-    p.set_defaults(func=cmd_tags)
+    p.set_defaults(func=cmd_topic_tools)
 
-    # tag detail
-    p = sub.add_parser("tag", help="查看标签详情")
+    # tool links
+    p = sub.add_parser("tool-links", help="列出工具链接")
     p.add_argument("id", type=int)
-    p.set_defaults(func=cmd_tag)
-
-    # add tag
-    p = sub.add_parser("add-tag", help="添加标签")
-    p.add_argument("--name", required=True)
-    p.add_argument("--slug", required=True)
-    p.set_defaults(func=cmd_add_tag)
-
-    # update tag
-    p = sub.add_parser("update-tag", help="更新标签")
-    p.add_argument("id", type=int)
-    p.add_argument("--name")
-    p.add_argument("--slug")
-    p.add_argument("--sort-order", type=int)
-    p.add_argument("--status", type=int, choices=[0, 1])
-    p.set_defaults(func=cmd_update_tag)
-
-    # delete tag
-    p = sub.add_parser("delete-tag", help="删除标签")
-    p.add_argument("id", type=int)
-    p.set_defaults(func=cmd_delete_tag)
-
-    # tag count
-    p = sub.add_parser("tag-count", help="标签下产品数")
-    p.add_argument("id", type=int)
-    p.set_defaults(func=cmd_tag_count)
-
-    # product links
-    p = sub.add_parser("product-links", help="列出产品链接")
-    p.add_argument("id", type=int)
-    p.add_argument("--status", type=int, choices=[1, 2, 3], default=None)
-    p.set_defaults(func=cmd_product_links)
+    p.add_argument("--status", choices=link_status, default=None)
+    p.set_defaults(func=cmd_tool_links)
 
     # add link
-    p = sub.add_parser("add-link", help="添加产品链接")
-    p.add_argument("product_id", type=int)
+    p = sub.add_parser("add-link", help="添加工具链接")
+    p.add_argument("tool_id", type=int)
     p.add_argument("--url", required=True)
-    p.add_argument("--label")
+    p.add_argument("--label", choices=LINK_LABELS)
     p.add_argument("--primary", action="store_true")
-    p.add_argument("--status", type=int, choices=[1, 2, 3], default=None)
+    p.add_argument("--status", choices=link_status, default=None)
+    p.add_argument("--sort-order", type=int, default=None)
     p.set_defaults(func=cmd_add_link)
 
     # update link
-    p = sub.add_parser("update-link", help="更新产品链接")
-    p.add_argument("product_id", type=int)
+    p = sub.add_parser("update-link", help="更新工具链接")
+    p.add_argument("tool_id", type=int)
     p.add_argument("link_id", type=int)
     p.add_argument("--url")
-    p.add_argument("--label")
+    p.add_argument("--label", choices=LINK_LABELS)
     p.add_argument("--primary", action=argparse.BooleanOptionalAction, default=None)
-    p.add_argument("--status", type=int, choices=[1, 2, 3], default=None)
+    p.add_argument("--status", choices=link_status, default=None)
+    p.add_argument("--sort-order", type=int, default=None)
     p.set_defaults(func=cmd_update_link)
 
     # delete link
-    p = sub.add_parser("delete-link", help="删除产品链接")
-    p.add_argument("product_id", type=int)
+    p = sub.add_parser("delete-link", help="删除工具链接")
+    p.add_argument("tool_id", type=int)
     p.add_argument("link_id", type=int)
     p.set_defaults(func=cmd_delete_link)
 
-    # product tags
-    p = sub.add_parser("product-tags", help="查看产品标签")
+    # tags (aggregate)
+    p = sub.add_parser("tags", help="列出全部工具的标签（客户端聚合）")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_tags)
+
+    # tool tags
+    p = sub.add_parser("tool-tags", help="查看工具标签")
     p.add_argument("id", type=int)
-    p.set_defaults(func=cmd_product_tags)
+    p.set_defaults(func=cmd_tool_tags)
 
     # set tags
-    p = sub.add_parser("set-tags", help="设置产品标签")
-    p.add_argument("product_id", type=int)
-    p.add_argument("--tag-ids", required=True, help="逗号分隔的标签 ID")
+    p = sub.add_parser("set-tags", help="全量替换工具标签")
+    p.add_argument("tool_id", type=int)
+    p.add_argument("--tags", required=True, help="逗号分隔的标签；传空串清空")
     p.set_defaults(func=cmd_set_tags)
+
+    # tool topics
+    p = sub.add_parser("tool-topics", help="查看工具主题归属")
+    p.add_argument("id", type=int)
+    p.set_defaults(func=cmd_tool_topics)
+
+    # set topics
+    p = sub.add_parser("set-topics", help="全量替换工具主题归属")
+    p.add_argument("tool_id", type=int)
+    p.add_argument("--topic-ids", required=True, help="逗号分隔的主题 ID")
+    p.add_argument("--primary-topic-id", type=int, default=None)
+    p.set_defaults(func=cmd_set_topics)
 
     # export
     p = sub.add_parser("export", help="导出 JSON")

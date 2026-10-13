@@ -1,10 +1,10 @@
 ---
-description: 提交产品审核（草稿 → 待审核）
+description: 提交工具审核（草稿 → 待审核）
 ---
 
 # 提交审核
 
-要提交的产品 ID: $ARGUMENTS
+要提交的工具 ID: $ARGUMENTS
 
 ## 前置检查
 
@@ -16,27 +16,28 @@ description: 提交产品审核（草稿 → 待审核）
 
 ## 执行步骤
 
-1. 如果未提供 ID，列出草稿产品供用户选择:
+1. 如果未提供 ID，列出草稿工具供用户选择:
 
    ```
-   !`python skills/tools/api.py products --status 0`
+   !`python skills/tools/api.py tools --status draft`
    ```
 
-2. 查看产品详情，确认必要项齐全:
+2. 查看工具详情，确认必要项齐全:
 
    ```
-   !`python skills/tools/api.py product <产品ID>`
+   !`python skills/tools/api.py tool <工具ID>`
    ```
 
-3. 必填校验（缺一项即拦截，不调 update-product）:
+3. 必填校验（缺一项即拦截，不调 update-tool）:
    - **name** 非空
-   - **links** 数组至少1条
-     缺失时告知用户先用 `/std-enrich` 补全后再提交，不要把缺数据的产品推进待审核
+   - **tagline** 非空且以标点结尾
+   - **links** 数组至少 1 条
+     缺失时告知用户先用 `/std-enrich` 补全后再提交，不要把缺数据的工具推进待审核
 
-4. 提交审核 (0→1):
+4. 提交审核 (draft→pending):
 
    ```
-   !`python skills/tools/api.py --yes update-product <产品ID> --status 1`
+   !`python skills/tools/api.py --yes update-tool <工具ID> --status pending`
    ```
 
-5. 告知用户产品已提交审核，可用 `/std-review` 审核或 `/std-publish` 直接发布
+5. 告知用户工具已提交审核，可用 `/std-review` 审核或 `/std-publish` 直接发布

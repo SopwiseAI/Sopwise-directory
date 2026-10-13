@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# 触发 JSON 导出 — 输出 data-{env}.json 环境副本; 仅 prod 同步前端数据源 data.json
+# 触发 JSON 导出 — 输出 topics-{env}.json / tools-{env}.json 环境副本; 仅 prod 同步前端数据源 topics.json / tools.json
 # 用法:
-#   ./export.sh              # API 导出 (默认 dev, 不碰 data.json)
+#   ./export.sh              # API 导出 (默认 dev, 不碰 topics.json / tools.json)
 #   ./export.sh --cli        # CLI 导出
-#   APP_ENV=prod ./export.sh # prod 环境, 同步 data.json
+#   APP_ENV=prod ./export.sh # prod 环境, 同步 topics.json / tools.json
 set -euo pipefail
 source "$(dirname "$0")/lib.sh"
 
