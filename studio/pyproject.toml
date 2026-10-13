@@ -143,7 +143,7 @@ omit = ["app/exporters/__main__.py"]
 [tool.coverage.report]
 show_missing = true
 precision = 2
-# 实测值(dev 库 + MySQL 5.7, branch = true)是 75.47%。门槛压在它下面一点,
+# 定这个门槛时的实测值(dev 库 + MySQL 5.7, branch = true)是 76.12%。往下留两个点,
 # 起"棘轮"作用而不是每次微调都变红 —— 要往上抬就得先补测试。
 fail_under = 74
 exclude_also = [

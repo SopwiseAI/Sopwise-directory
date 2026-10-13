@@ -5,29 +5,32 @@
 #   make db-init APP_ENV=prod
 #   make dev PORT=9000
 #
-# 连接信息与监听地址都从 .env.<APP_ENV> 取, 取不到才落到下面的默认值 ——
-# 不要在别处再抄一份默认值, 否则改了 .env 这里还是旧的。
-#
-# 取值的口径刻意与 python-dotenv(即服务侧 app/core/config.py 用的解析器)对齐:
-# 吃掉 `export ` 前缀、`=` 两侧空白、值两侧的成对引号、行尾 CR, 同名取最后一个。
-# 少这几步会让 make 与服务的连接信息【不一致】: 例如 DB_PASSWORD="p@ss word" 时
-# mysql 客户端拿到的是带引号的串, 报 Access denied, 而服务连得上, 排查会绕远路。
-# 仍然不支持行内注释(python-dotenv 只在 `#` 前有空白时才算注释), .env.example 已写明。
-# 注意: 这里只服务 db-init 一个目标; 服务侧的唯一解析器始终是 app/core/config.py。
-_env = $(shell sed -n 's/^[[:space:]]*\(export[[:space:]]\{1,\}\)\{0,1\}$1[[:space:]]*=[[:space:]]*//p' .env.$(APP_ENV) 2>/dev/null | sed -e 's/[[:space:]]*$$//' -e 's/^"\(.*\)"$$/\1/' -e "s/^'\(.*\)'\$$/\1/" | tr -d '\r' | tail -n 1)
+# ⚠️ 这个文件【不解析 .env.<APP_ENV>】。服务侧的唯一解析器是 app/core/config.py,
+# 监听地址与库凭据都由 app 自己读(见 app/__main__.py 与 app/db_init.py)。
+# 以前这里用 sed 又抄了一套 dotenv 规则, 于是下面这几种写法会让 make 与服务拿到
+# 不同的值 —— db-init 报 Access denied 而服务连得上, 排查会绕远路:
+#   DB_PASSWORD="p@ss word"   引号没剥
+#   export DB_USER=alice      整行匹配不上, 拿到空
+#   DB_PORT=3306  # 主库     注释尾巴没剥
+# 抄第二遍就是错, 别再加回来。
 
 APP_ENV ?= dev
-HOST ?= $(or $(call _env,APP_HOST),127.0.0.1)
-PORT ?= $(or $(call _env,APP_PORT),8000)
-DB_HOST ?= $(or $(call _env,DB_HOST),127.0.0.1)
-DB_PORT ?= $(or $(call _env,DB_PORT),3306)
-DB_NAME ?= $(call _env,DB_NAME)
-DB_USER ?= $(call _env,DB_USER)
-DB_PASSWORD ?= $(call _env,DB_PASSWORD)
+
+# 命令行可覆盖 .env.<APP_ENV> 里的监听地址; 留空就整个参数都不传, 交给 app 读配置
+HOST ?=
+PORT ?=
+_HOST_ARG = $(if $(HOST),--host $(HOST),)
+_PORT_ARG = $(if $(PORT),--port $(PORT),)
 
 # prod 默认监听所有地址 (由前置的容器/反向代理转发); 要改成只听本机:
 #   make prod PROD_HOST=127.0.0.1
 PROD_HOST ?= 0.0.0.0
+
+# 命令行给的 DB_* / APP_HOST / APP_PORT 原样透传给 app —— pydantic-settings 里
+# 环境变量的优先级【高于】.env 文件(实测: DB_HOST=127.0.0.1 make db-init 生效),
+# 所以临时指向别的库这条老用法照旧。
+# 只透传确实有值的键: 没定义/空值的直接不出现, 免得把空串塞给 Settings 的必填校验。
+_ENV_PASSTHROUGH = $(foreach v,DB_HOST DB_PORT DB_NAME DB_USER DB_PASSWORD APP_HOST APP_PORT,$(if $($(v)),$(v)=$($(v)),))
 
 .PHONY: sync db-init dev sit prod lint typecheck format check test test-cov export-dev export-sit export-prod clean
 
@@ -38,36 +41,23 @@ PROD_HOST ?= 0.0.0.0
 # 这个变量只做透传, 默认空 —— 门禁的默认姿态仍然是"拒绝"。
 ALLOW_SHARED_DB ?=
 
-# 每个目标固定自己的 APP_ENV, 免得 make sit 却读了 .env.dev
-dev export-dev: APP_ENV = dev
-sit export-sit: APP_ENV = sit
-prod export-prod: APP_ENV = prod
-
 sync:
 	uv sync
 
 # 建表: 整份执行 sql/schema.sql (幂等, 可重复跑)。表结构的权威来源就是那个文件,
 # 改表结构要同时改它并重跑这个目标 —— 启动服务不会自动建表。
-# 密码走 MYSQL_PWD 而不是 -p<密码>: 后者会把密码暴露在 ps 的命令行里。
-# 客户端必须带 utf8mb4: 脚本里有中文种子数据 (misc / 未分类)。
+# 连接信息由 app/core/config.py 解析; 需要本机有 mysql 客户端(与目标库同版本)。
 db-init:
-	@command -v mysql >/dev/null 2>&1 || { echo "未找到 mysql 客户端, 请先安装 (与目标库同版本)"; exit 1; }
-	@if [ -z "$(DB_NAME)" ] || [ -z "$(DB_USER)" ]; then \
-		echo "DB_NAME / DB_USER 为空: 先 cp .env.example .env.$(APP_ENV) 并填写, 或命令行传入 (如 DB_NAME=x DB_USER=y make db-init)"; \
-		exit 1; \
-	fi
-	MYSQL_PWD="$(DB_PASSWORD)" mysql --host="$(DB_HOST)" --port="$(DB_PORT)" --user="$(DB_USER)" \
-		--default-character-set=utf8mb4 "$(DB_NAME)" < sql/schema.sql
-	@echo "已应用 sql/schema.sql → $(DB_USER)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)"
+	$(_ENV_PASSTHROUGH) APP_ENV=$(APP_ENV) uv run python -m app.db_init
 
 dev:
-	APP_ENV=dev uv run uvicorn app.main:app --reload --host $(HOST) --port $(PORT)
+	$(_ENV_PASSTHROUGH) APP_ENV=dev uv run python -m app --reload $(_HOST_ARG) $(_PORT_ARG)
 
 sit:
-	APP_ENV=sit uv run uvicorn app.main:app --host $(HOST) --port $(PORT)
+	$(_ENV_PASSTHROUGH) APP_ENV=sit uv run python -m app $(_HOST_ARG) $(_PORT_ARG)
 
 prod:
-	APP_ENV=prod uv run uvicorn app.main:app --host $(PROD_HOST) --port $(PORT)
+	$(_ENV_PASSTHROUGH) APP_ENV=prod uv run python -m app --host $(or $(HOST),$(PROD_HOST)) $(_PORT_ARG)
 
 # 与根目录 package.json 的 lint:py 保持同一范围 (app/ + tests/), 避免两套标准
 lint:
