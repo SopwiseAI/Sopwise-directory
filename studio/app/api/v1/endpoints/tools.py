@@ -3,15 +3,13 @@
 几个必须守住的坑(下面每处都有对应注释):
   1. status 迁移走 app.models.VALID_STATUS_TRANSITIONS —— draft→published 被拒,
      必须先经过 pending,否则库里那个"待审核"就只是装饰
-  2. published_at 只在【首次】转 published 时写一次(date.today()):它记的是
-     "收录进本站的日期",下架再上架也不该改写
+  2. published_at 只在【首次】转 published 时写一次(日期取库的会话时钟):
+     它记的是"收录进本站的日期",下架再上架也不该改写
   3. 每个工具【至多】一个主主题 / 一个主链接。schema.sql 精简后库层已经没有
      哨兵列和唯一索引了,这条不变量【只由 API 保证】,而"先清旧主、再设新主"
      这种三步 flush 本身挡不住并发(两个请求会同时读到"没有主"),所以真正
      的保证是 lock_tool_row 里的行锁,细节见该函数
 """
-
-from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import func, select
@@ -28,7 +26,7 @@ from app.models import (
     ToolTopic,
     Topic,
 )
-from app.schemas.models import ToolCreate, ToolResponse, ToolUpdate
+from app.schemas.models import MAX_URL_LENGTH, ToolCreate, ToolResponse, ToolUpdate
 from app.utils.db import check_unique, drop_none, published_tool_counts
 from app.utils.url import InvalidURLError, normalize_url, url_hash_normalized
 
@@ -62,10 +60,10 @@ def normalize_link_url(raw_url: str) -> tuple[str, str]:
     # 而它自己的文档要求"hash 与 normalized 必须来自同一次归一化"。
     # 另外这里补一个归一化后的长度校验: 长 URL 百分号编码后会膨胀
     # (一个汉字 1 字符 → 9 字符), 落库 VARCHAR(2048) 超长会报 1406(500)。
-    if len(normalized) > 2048:
+    if len(normalized) > MAX_URL_LENGTH:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="URL is too long after normalization (max 2048 characters)",
+            detail=f"URL is too long after normalization (max {MAX_URL_LENGTH} characters)",
         )
     return normalized, url_hash_normalized(normalized)
 
@@ -390,7 +388,10 @@ async def update_tool(tool_id: int, data: ToolUpdate, db: DbSession) -> Tool:
         # 条件只看 published_at 空不空,顺带把"已 published 但没日期"的脏行补上,
         # 否则导出里就会出现一条没有 publishedAt 的已发布工具。
         if new_status == ToolStatus.PUBLISHED and not tool.published_at:
-            tool.published_at = date.today()
+            # 日期取【库的会话时钟】而不是 date.today()(进程时钟): schema.sql 声明
+            # 时间来源就是服务器会话时区, updated_at 也由库生成 —— 两个时钟不一致时
+            # (容器 UTC + 库 +08), 同一次发布写出的 publishedAt 与 lastUpdatedAt 会差一天。
+            tool.published_at = await db.scalar(select(func.current_date()))
 
     for key, value in update_data.items():
         if key not in ("topic_ids", "primary_topic_id"):

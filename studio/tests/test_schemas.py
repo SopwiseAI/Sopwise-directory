@@ -113,6 +113,34 @@ def test_access_rejects_unknown_values(access):
         ToolCreate(**_tool_payload(access=access))
 
 
+# ── name ──────────────────────────────────────────────────────────────────────
+# 空名/纯空白名以前能 201 落库, 而导出端会把这些行【静默跳过】—— 也就是能建出
+# 一个永远不上站的工具/主题, 唯一线索只有 skipped_count。这一组是那条漏洞的钉子。
+
+
+def test_name_is_stripped():
+    assert ToolCreate(**_tool_payload(name="  DeepSeek  ")).name == "DeepSeek"
+    assert TopicCreate(slug="t", name="  对话 ").name == "对话"
+
+
+@pytest.mark.parametrize("name", ["", " ", "   ", "\t", "\n"])
+def test_name_rejects_blank(name):
+    with pytest.raises(ValidationError):
+        ToolCreate(**_tool_payload(name=name))
+    with pytest.raises(ValidationError):
+        ToolUpdate(name=name)
+    with pytest.raises(ValidationError):
+        TopicCreate(slug="t", name=name)
+    with pytest.raises(ValidationError):
+        TopicUpdate(name=name)
+
+
+def test_name_absent_on_update_is_still_allowed():
+    """没传 name 是"不改", 不是"改成空"—— None 不能被当成空值拦掉。"""
+    assert ToolUpdate(tagline="简介。").name is None
+    assert TopicUpdate(icon="Box").name is None
+
+
 # ── tagline ───────────────────────────────────────────────────────────────────
 
 
@@ -153,6 +181,9 @@ def test_languages_accepts_iso_639_1_codes(languages):
         ["zho"],
         [""],
         ["zh-CN"],
+        # 含数字的"两字母"码: islower()+isascii()+len==2 全满足, 必须靠 isalpha 拦下
+        ["z1"],
+        ["1z"],
         ["zh", "en", "fr", "de", "es", "ja", "ko", "ru", "it"],
     ],
 )

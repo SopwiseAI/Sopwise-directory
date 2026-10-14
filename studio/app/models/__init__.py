@@ -213,8 +213,15 @@ class Tool(Base):
         DateTime, server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    tool_topics: Mapped[list["ToolTopic"]] = relationship(back_populates="tool", cascade="all, delete-orphan")
-    links: Mapped[list["ToolLink"]] = relationship(back_populates="tool", cascade="all, delete-orphan")
+    # passive_deletes=True: 删除父行时交给库的 ON DELETE CASCADE, ORM 不再把子行
+    # 一条条读出来再 DELETE(见 schema.sql 的 fk_tt_tool / fk_tl_tool)。
+    # 从集合里显式移除子对象(删单条链接/归属)不受影响, 那条路径仍然由 ORM 删。
+    tool_topics: Mapped[list["ToolTopic"]] = relationship(
+        back_populates="tool", cascade="all, delete-orphan", passive_deletes=True
+    )
+    links: Mapped[list["ToolLink"]] = relationship(
+        back_populates="tool", cascade="all, delete-orphan", passive_deletes=True
+    )
 
 
 class ToolTopic(Base):

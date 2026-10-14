@@ -20,6 +20,24 @@ from app.utils.url import LOCAL_HOSTS
 _SLUG_PATTERN = r"^[a-z0-9]+(?:-[a-z0-9]+)*$"
 MAX_TAGS = 8
 MAX_LANGUAGES = 8
+MAX_TAG_LENGTH = 32
+# 与 xg_tool_link.url 的 VARCHAR(2048) 是同一个上限: 归一化后还会再校验一次
+# (长 URL 百分号编码会膨胀), 两处必须同值
+MAX_URL_LENGTH = 2048
+_LANG_CODE_LENGTH = 2
+
+
+def _check_name(value: str) -> str:
+    """显示名不能为空或纯空白, 返回去掉首尾空白后的值。
+
+    库层是 VARCHAR NOT NULL —— 空串是合法值, 能 201 落库; 而导出端把空 slug/name
+    的行【静默跳过】(见 json_exporter._invalid_reason)。不拦的话就能建出一个
+    "永远不上站"的工具/主题, 唯一线索只有导出响应里的 skipped_count。
+    min_length=1 挡不住 "  ", 所以必须 strip 后判空。
+    """
+    if not value.strip():
+        raise ValueError("name 不能为空或纯空白")
+    return value.strip()
 
 
 def _check_url(value: str) -> str:
@@ -45,7 +63,9 @@ def _check_languages(value: list[str]) -> list[str]:
     if len(set(value)) != len(value):
         raise ValueError("languages 不能重复")
     for code in value:
-        if not code or not code.isascii() or not code.islower() or len(code) != 2:
+        # isalpha 而不是 islower 单独判: "z1" / "1z" 都满足 islower()+isascii()+len==2,
+        # 但它们不是语言码(实测旧写法放行 z1)
+        if not code.isascii() or not code.isalpha() or not code.islower() or len(code) != _LANG_CODE_LENGTH:
             raise ValueError(f"语言码必须是 ISO 639-1 两字母小写: {code!r}")
     return value
 
@@ -58,8 +78,8 @@ def _check_tags(value: list[str]) -> list[str]:
     for tag in value:
         if not tag or tag != tag.strip():
             raise ValueError(f"标签首尾不能有空白且不能为空: {tag!r}")
-        if len(tag) > 32:
-            raise ValueError(f"单个标签最长 32 字符: {tag!r}")
+        if len(tag) > MAX_TAG_LENGTH:
+            raise ValueError(f"单个标签最长 {MAX_TAG_LENGTH} 字符: {tag!r}")
     return value
 
 
@@ -81,11 +101,13 @@ def _check_tagline(value: str) -> str:
 
 class TopicBase(BaseModel):
     slug: str = Field(..., max_length=64, pattern=_SLUG_PATTERN)
-    name: str = Field(..., max_length=64)
+    name: str = Field(..., min_length=1, max_length=64)
     icon: str = Field("Box", max_length=64)
     description: str | None = Field(None, max_length=500)
     sort_order: int = Field(0, ge=0)
     status: TopicStatus = TopicStatus.ACTIVE
+
+    _validate_name = field_validator("name")(_check_name)
 
 
 class TopicCreate(TopicBase):
@@ -94,11 +116,16 @@ class TopicCreate(TopicBase):
 
 class TopicUpdate(BaseModel):
     slug: str | None = Field(None, max_length=64, pattern=_SLUG_PATTERN)
-    name: str | None = Field(None, max_length=64)
+    name: str | None = Field(None, min_length=1, max_length=64)
     icon: str | None = Field(None, max_length=64)
     description: str | None = Field(None, max_length=500)
     sort_order: int | None = Field(None, ge=0)
     status: TopicStatus | None = None
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str | None) -> str | None:
+        return None if v is None else _check_name(v)
 
 
 class TopicResponse(TopicBase):
@@ -118,7 +145,7 @@ class TopicCountResponse(BaseModel):
 
 
 class ToolLinkBase(BaseModel):
-    url: str = Field(..., max_length=2048)
+    url: str = Field(..., max_length=MAX_URL_LENGTH)
     label: LinkLabel = LinkLabel.OTHER
     is_primary: bool = False
     status: LinkStatus = LinkStatus.ACTIVE
@@ -132,7 +159,7 @@ class ToolLinkCreate(ToolLinkBase):
 
 
 class ToolLinkUpdate(BaseModel):
-    url: str | None = Field(None, max_length=2048)
+    url: str | None = Field(None, max_length=MAX_URL_LENGTH)
     label: LinkLabel | None = None
     is_primary: bool | None = None
     status: LinkStatus | None = None
@@ -159,7 +186,7 @@ class ToolLinkResponse(ToolLinkBase):
 
 class ToolBase(BaseModel):
     slug: str = Field(..., max_length=64, pattern=_SLUG_PATTERN)
-    name: str = Field(..., max_length=128)
+    name: str = Field(..., min_length=1, max_length=128)
     tagline: str = Field(..., max_length=80)
     description: str | None = Field(None, max_length=500)
     pricing: Pricing
@@ -173,6 +200,7 @@ class ToolBase(BaseModel):
     sort_order: int = Field(0, ge=0)
     status: ToolStatus = ToolStatus.DRAFT
 
+    _validate_name = field_validator("name")(_check_name)
     _validate_tagline = field_validator("tagline")(_check_tagline)
     _validate_languages = field_validator("languages")(_check_languages)
     _validate_tags = field_validator("tags")(_check_tags)
@@ -205,7 +233,7 @@ class ToolCreate(ToolBase):
 
 class ToolUpdate(BaseModel):
     slug: str | None = Field(None, max_length=64, pattern=_SLUG_PATTERN)
-    name: str | None = Field(None, max_length=128)
+    name: str | None = Field(None, min_length=1, max_length=128)
     tagline: str | None = Field(None, max_length=80)
     description: str | None = Field(None, max_length=500)
     pricing: Pricing | None = None
@@ -220,6 +248,11 @@ class ToolUpdate(BaseModel):
     status: ToolStatus | None = None
     topic_ids: list[int] | None = None
     primary_topic_id: int | None = None
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str | None) -> str | None:
+        return None if v is None else _check_name(v)
 
     @field_validator("tagline")
     @classmethod

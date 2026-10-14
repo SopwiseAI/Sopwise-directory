@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -11,8 +12,10 @@ class EnvResponse(BaseModel):
 
 
 class HealthResponse(BaseModel):
-    status: str
-    database: str
+    # 两个字段都用 Literal 而不是裸 str: 写错一个字("conected")以前能过 mypy 并
+    # 静默改掉对外契约, 现在编译期就红, OpenAPI 里也会变成 enum
+    status: Literal["ok", "degraded"]
+    database: Literal["connected", "disconnected"]
     brand: str
     version: str
 

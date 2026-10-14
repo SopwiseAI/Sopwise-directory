@@ -6,32 +6,32 @@ prod 下额外同步一份无后缀的 topics.json / tools.json 给前端。
 
 import json
 from datetime import date
+from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from sqlalchemy import update
 
+from app.core.config import Settings
 from app.core.database import AsyncSessionLocal
 from app.exporters.json_exporter import _invalid_reason, _write_text_atomic, export_to_json
 from app.models import Access, Origin, Pricing, Tool, Topic
 from app.schemas.common import ExportResponse
-from tests.conftest import create_link, create_tool, create_topic
+from tests.conftest import create_link, create_tool, create_topic, isolated_settings
 
 
-def _mock_settings(tmp_path, app_env: str = "dev") -> MagicMock:
-    """把导出路径指到 tmp_path, 避免测试覆盖真实的 web/data 产物。"""
+def _mock_settings(tmp_path: Path, app_env: str = "dev") -> Settings:
+    """真 Settings, 只把导出目录指到 tmp_path(避免覆盖真实的 web/data 产物)。
 
-    def export_paths(*, frontend_names: bool = False) -> dict[str, Any]:
-        suffix = "" if frontend_names else f"-{app_env}"
-        return {
-            "topics": tmp_path / f"topics{suffix}.json",
-            "tools": tmp_path / f"tools{suffix}.json",
-        }
-
-    mock = MagicMock()
-    mock.app_env = app_env
-    mock.export_paths.side_effect = export_paths
-    return mock
+    以前这里用 MagicMock 复刻了一份 export_paths 的后缀逻辑 —— 于是"prod 额外同步
+    无后缀文件名"那条用例验的是 mock 自己: 把 config.export_paths 的命名规则改坏也
+    不会红。现在只替换【真实现依赖的那个字段】, 命名规则由被测代码自己算。
+    """
+    overrides: dict[str, Any] = {"export_output_dir": str(tmp_path)}
+    if app_env == "prod":
+        # prod 的配置校验要求 debug=False 且 api_key 不是默认值(同 test_db_safety)
+        overrides |= {"app_debug": False, "api_key": "prod-key"}
+    return isolated_settings(app_env=app_env, **overrides)
 
 
 def _read(path: Any) -> list[Any]:

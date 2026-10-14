@@ -95,9 +95,9 @@ async def export_to_json(session: AsyncSession) -> ExportResponse:
     except LookupError as exc:
         # 枚举取值越界: 读库读到脏值, 或绑定值不在枚举里(schema.sql 已经没有 ENUM/CHECK,
         # 值域只由 app 侧保证)。这里刻意不兜: 放它进产物会让前端整体校验失败, 比导出
-        # 中断更难收拾。原样抛出是为了保住 LookupError 里的"非法值 + 允许值", 只额外
-        # 补一条能定位的日志。
-        logger.error("枚举取值越界, 导出中断: %s", exc)
+        # 中断更难收拾。logger.exception 而不是 .error: 要同时保住"非法值 + 允许值"
+        # 和读取路径的堆栈(同包的 __main__ 也是这么做的)。
+        logger.exception("枚举取值越界, 导出中断: %s", exc)
         raise
 
     skips = topic_skips + tool_skips
