@@ -19,7 +19,7 @@
 //   name           string   必填  ≤128
 //   tagline        string   必填  ≤80
 //   description    string   可选  ≤500          NULL 时【省略该键】
-//   url            string   必填                必 https、无尾斜杠、无 www.
+//   url            string   必填                必 https、无 www.、根路径保留尾斜杠
 //   topics         string[] 必填  ≥1            值来自 xg_topic.slug，首个即主主题
 //   tags           string[] 必填  ≤8            可为空数组；卡片只展示前 3 个
 //   pricing        enum     必填                free | freemium | paid
@@ -64,7 +64,7 @@
     // 【已定】归一化在【写入端】完成（app/utils/url.py），导出端直取 xg_tool_link.url。
     // 库里那一列存的就是归一化后的串（不保留用户输入的原始串），所以这几条要求
     // 由写入端保证：能过 url_hash 唯一键的，一定已经是这个形状。
-    "url": "https://deepseek.com",
+    "url": "https://deepseek.com/",
 
     // 所属主题的 id 列表，至少 1 个。
     // 值来自 xg_topic.slug（【不是】主键 id——那是 BIGINT，对不上 topics[].id）。
@@ -116,8 +116,8 @@
     // ⚠ 主链接那一行的 label 不进这里（它是死数据），所以"主链接其实是 GitHub 仓库"
     //    这件事在导出物里表达不出来。
     "links": [
-      { "label": "docs", "url": "https://api-docs.deepseek.com" },
-      { "label": "api", "url": "https://platform.deepseek.com" },
+      { "label": "docs", "url": "https://api-docs.deepseek.com/" },
+      { "label": "api", "url": "https://platform.deepseek.com/" },
       { "label": "github", "url": "https://github.com/deepseek-ai" },
       { "label": "pricing", "url": "https://api-docs.deepseek.com/quick_start/pricing" },
     ],

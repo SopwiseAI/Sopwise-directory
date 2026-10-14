@@ -20,7 +20,7 @@ async def _db_links(tool_id: int) -> list[ToolLink]:
 async def test_add_link(async_client):
     tool = await create_tool(async_client, slug="t1", name="T1")
     link = await create_link(async_client, tool["id"], url="https://example.com", label="website")
-    assert link["url"] == "https://example.com"
+    assert link["url"] == "https://example.com/"  # 响应回的是归一化值: 根路径保留尾斜杠
     assert link["label"] == "website"
     assert link["is_primary"] is False
     assert link["status"] == "active"
@@ -249,7 +249,7 @@ async def test_update_link(async_client):
     assert resp.status_code == 200
     data = resp.json()
     assert data["label"] == "api"
-    assert data["url"] == "https://new.com"
+    assert data["url"] == "https://new.com/"
 
 
 async def test_update_link_status(async_client):
@@ -334,7 +334,7 @@ async def test_update_link_ignores_explicit_null(async_client):
     )
     assert resp.status_code == 200, resp.text
     data = resp.json()
-    assert data["url"] == "https://keep.com"
+    assert data["url"] == "https://keep.com/"
     assert data["label"] == "website"
     assert data["status"] == "active"
 
@@ -407,10 +407,10 @@ async def test_update_link_url_and_primary_together(async_client):
     )
     assert resp.status_code == 200, resp.text
     assert resp.json()["is_primary"] is True
-    assert resp.json()["url"] == "https://c.com"
+    assert resp.json()["url"] == "https://c.com/"
 
     rows = {row.id: row for row in await _db_links(tool["id"])}
     assert rows[old["id"]].is_primary is False
     assert rows[new["id"]].is_primary is True
-    assert rows[new["id"]].url == "https://c.com"
+    assert rows[new["id"]].url == "https://c.com/"
     assert rows[new["id"]].url_hash == url_hash("https://c.com")

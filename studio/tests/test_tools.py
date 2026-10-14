@@ -60,7 +60,7 @@ async def test_create_tool_with_links_and_topics(async_client):
         links=[{"url": "https://example.com", "label": "website", "is_primary": True}],
     )
     assert len(data["links"]) == 1
-    assert data["links"][0]["url"] == "https://example.com"
+    assert data["links"][0]["url"] == "https://example.com/"  # 归一化后根路径带尾斜杠
     assert data["links"][0]["label"] == "website"
     assert data["links"][0]["is_primary"] is True
     assert data["topic_ids"] == [topic["id"]]
