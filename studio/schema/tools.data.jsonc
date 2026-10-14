@@ -19,7 +19,7 @@
 //   name           string   必填  ≤128
 //   tagline        string   必填  ≤80
 //   description    string   可选  ≤500          NULL 时【省略该键】
-//   url            string   必填                必 https、无 www.、根路径保留尾斜杠
+//   url            string   必填  ≤2048        必 https、无 www.、根路径保留尾斜杠
 //   topics         string[] 必填  ≥1            值来自 xg_topic.slug，首个即主主题
 //   tags           string[] 必填  ≤8            可为空数组；卡片只展示前 3 个
 //   pricing        enum     必填                free | freemium | paid
@@ -60,11 +60,13 @@
     // 较长的补充说明，可选。供详情页与搜索索引使用，卡片不展示。NULL 时【省略该键】。
     "description": "由深度求索发布的开源权重模型系列，覆盖通用对话与代码专用模型。官方 API 按 token 计费，权重可下载离线自部署，适合成本敏感的生产级集成。",
 
-    // 官方主链接。必须 https，且不得以 / 结尾、不得带 www. 前缀【自觉】。
+    // 官方主链接。归一化后必为 https、去掉 www. 前缀，根路径保留尾斜杠（所以样本是
+    // https://deepseek.com/ 而不是 https://deepseek.com）【导出】——由写入端强制，
+    // 见 app/utils/url.py 的 11 条规则；能过 url_hash 唯一键的一定已经是这个形状。
+    // ⚠ 唯一没有代码能验的是「站点本身支持 https」：非本地地址一律被改写成 https，
+    //   站点若不支持，链接就是死的 —— 只能靠人核对【自觉】。
     // 取自 is_primary=1 且 status='active' 的那条链接；取不到则回退首个 active 链接。
-    // 【已定】归一化在【写入端】完成（app/utils/url.py），导出端直取 xg_tool_link.url。
-    // 库里那一列存的就是归一化后的串（不保留用户输入的原始串），所以这几条要求
-    // 由写入端保证：能过 url_hash 唯一键的，一定已经是这个形状。
+    // 【已定】归一化在【写入端】完成，导出端直取 xg_tool_link.url（库里不保留用户原始输入）。
     "url": "https://deepseek.com/",
 
     // 所属主题的 id 列表，至少 1 个。
