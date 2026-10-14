@@ -33,6 +33,15 @@ dependencies = [
     "url-normalize>=3.0.1,<4.0",
 ]
 
+# PEP 621 的链接字段。填的是 monorepo 根地址 —— studio 不是独立仓库, 单独指向
+# studio/ 会让 Homepage 与 Issues 落到错的地方; 与根 package.json 的
+# homepage / repository / bugs 保持同一组 URL。
+[project.urls]
+Homepage = "https://www.xigee.net"
+Repository = "https://github.com/sopwise-ai/xigee"
+Issues = "https://github.com/sopwise-ai/xigee/issues"
+Documentation = "https://github.com/sopwise-ai/xigee/tree/main/studio#readme"
+
 [build-system]
 # hatchling >= 1.27 才支持 PEP 639 的 license / license-files
 requires = ["hatchling>=1.27"]
@@ -53,6 +62,14 @@ dev = [
     # >= 2.4: 与 ruff/pytest 同一条口径 —— 只声明实测过的那条线
     "mypy>=2.4",
 ]
+
+[tool.uv]
+# uv 版本下限的唯一事实源。低于它 uv 自己会拒绝执行(sync / lock / build 全都过不去):
+#   error: Required uv version `>=0.11.30` does not match the running version ...
+# 取 0.11.30 是因为 CI 固定的就是它(studio-ci.yml 的 setup-uv version)。这个值是
+# README「环境要求」那一行的依据, 改动要连着 CI 一起改 —— 在此之前三处口径不一
+# (README 写 >= 0.11 / CONTRIBUTING 写 "最新" / CI 固定 0.11.30)且没有任何东西执行它。
+required-version = ">=0.11.30"
 
 [tool.ruff]
 target-version = "py313"

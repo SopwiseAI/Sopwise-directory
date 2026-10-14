@@ -1,5 +1,9 @@
 # Studio
 
+[![Studio CI](https://github.com/sopwise-ai/xigee/actions/workflows/studio-ci.yml/badge.svg)](https://github.com/sopwise-ai/xigee/actions/workflows/studio-ci.yml)
+[![Python](https://img.shields.io/badge/python-3.13-blue)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-green)](../LICENSE)
+
 XiGee (AI 工具目录站) 的数据管理后端:FastAPI + SQLAlchemy 2.0 (async) + MySQL。对外提供主题/工具的 CRUD 接口,并把库里的数据导出成前端直接消费的 JSON。
 
 数据模型只有两个实体:
@@ -9,12 +13,12 @@ XiGee (AI 工具目录站) 的数据管理后端:FastAPI + SQLAlchemy 2.0 (async
 
 ## 环境要求
 
-| 依赖         | 版本       | 说明                                                          |
-| ------------ | ---------- | ------------------------------------------------------------- |
-| Python       | >= 3.13    | `.python-version` 固定 3.13,`uv` 据此挑解释器                 |
-| uv           | >= 0.11    | 依赖管理与运行入口 (`make sync` / `uv run`);CI 固定 `0.11.30` |
-| MySQL        | 5.7 或 8.0 | dev 库是 5.7,prod 库是 8.0;DDL 只用两边都支持的写法;CI 跑 8.0 |
-| mysql 客户端 | 与库同版本 | 仅 `make db-init` 建表时用到                                  |
+| 依赖         | 版本       | 说明                                                                                        |
+| ------------ | ---------- | ------------------------------------------------------------------------------------------- |
+| Python       | >= 3.13    | `.python-version` 固定 3.13,`uv` 据此挑解释器                                               |
+| uv           | >= 0.11.30 | 依赖管理与运行入口 (`make sync` / `uv run`);`[tool.uv] required-version` 会强制,CI 固定同值 |
+| MySQL        | 5.7 或 8.0 | dev 库是 5.7,prod 库是 8.0;DDL 只用两边都支持的写法;CI 跑 8.0                               |
+| mysql 客户端 | 与库同版本 | 仅 `make db-init` 建表时用到                                                                |
 
 ## 数据流
 
@@ -60,7 +64,7 @@ uv run python -m app --help   # 直接看入口支持的参数
 - 权威 DDL 是 `sql/schema.sql`,一共 4 张表;`make db-init` 就是把它整份喂给 mysql 客户端
 - 脚本是幂等的 (`CREATE TABLE IF NOT EXISTS` + 幂等种子),重复执行安全
 - 连接信息按 `APP_ENV` 从 `.env.<APP_ENV>` 读 (默认 `dev`)。**解析器只有 `app/core/config.py` 一个** —— 服务、`db-init`、导出器都走它,Makefile 不再自己解析 `.env`(以前用 sed 抄过一套 dotenv 规则,导致 `DB_PASSWORD="p@ss word"` 这类写法会让 make 与服务拿到不同的值)
-- 要临时指向别的库,用环境变量覆盖(`pydantic-settings` 里环境变量优先于 `.env` 文件,Makefile 只做透传):`make db-init DB_HOST=127.0.0.1 DB_PORT=9999 DB_NAME=scratch`
+- 要临时指向别的库,用环境变量覆盖(`pydantic-settings` 里环境变量优先于 `.env` 文件;make 自己会把命令行变量原样传给 app,不需要 Makefile 再转发一遍):`make db-init DB_HOST=127.0.0.1 DB_PORT=9999 DB_NAME=scratch`
 - 密码通过 `MYSQL_PWD` 环境变量传给客户端,不出现在命令行里(`ps` 对同机器其他用户可见)
 - 客户端会带上 `--default-character-set=utf8mb4`:脚本里有中文种子数据 (`misc` / `未分类`),不指定字符集会写成乱码
 
@@ -80,21 +84,21 @@ uv run python -m app --help   # 直接看入口支持的参数
 
 模板是 `.env.example` (唯一可提交的 env 文件),`APP_ENV` 决定加载哪个 `.env.<env>`。
 
-**只有 `app/core/config.py` 解析这些文件。** Makefile 与 `scripts/` 都不再自己解析:进程环境变量优先于 `.env` 文件,所以临时覆盖用 `make dev PORT=9000` 或 `DB_NAME=scratch make db-init`。
+**Python 侧只有 `app/core/config.py` 解析这些文件。** Makefile 既不解析、也不转发 `DB_*`(make 自己会把命令行变量与已导出的环境变量原样传进 recipe,理由见 Makefile 顶部注释);`scripts/` 里只有 `scripts/mcp-mysql.sh` 用 bash `source` 读同一份文件去喂 MySQL MCP server —— 它的 `set -a; source` 会把整份文件 export 出去(**包括 `API_KEY`**),属于待收口项。进程环境变量优先于 `.env` 文件,所以临时覆盖用 `make dev PORT=9000` 或 `DB_NAME=scratch make db-init`。
 
-| 变量                                  | 默认值                                        | 说明                                                                                                    |
-| ------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `APP_ENV`                             | `dev`                                         | `dev` / `sit` / `prod`;决定加载哪个 `.env.<env>`,也决定导出产物后缀                                     |
-| `APP_DEBUG`                           | `true`                                        | prod 下必须为 `false`,否则启动直接失败                                                                  |
-| `APP_HOST` / `APP_PORT`               | `127.0.0.1` / `8000`                          | `python -m app` 的监听地址(`--host` / `--port` 或 `make dev PORT=9000` 覆盖);`make prod` 默认 `0.0.0.0` |
-| `LOG_LEVEL`                           | `INFO`                                        | 日志级别:`DEBUG` / `INFO` / `WARNING` / `ERROR` / `CRITICAL`,大小写不敏感                               |
-| `DB_HOST` / `DB_PORT`                 | `localhost` / `3306`                          | MySQL 地址                                                                                              |
-| `DB_NAME` / `DB_USER` / `DB_PASSWORD` | 空                                            | 必填 (`DB_PASSWORD` 可以是空串);为空时**启动即失败**,不等第一次查询                                     |
-| `DB_POOL_SIZE` / `DB_MAX_OVERFLOW`    | `5` / `10`                                    | 连接池;测试进程用 `NullPool`,这两个值不生效                                                             |
-| `DB_ECHO`                             | `false`                                       | 打印 SQL;只在本地排查问题时打开                                                                         |
-| `EXPORT_OUTPUT_DIR`                   | `../web/data`                                 | 导出目录,相对路径按 `studio/` 解析 (与 cwd 无关)                                                        |
-| `CORS_ORIGINS`                        | `http://localhost:3000,http://localhost:5173` | 逗号分隔白名单,**`*` 与空值都会被启动校验拒绝**                                                         |
-| `API_KEY`                             | `dev-secret-key`                              | 写操作的 `X-API-Key`;`sit` / `prod` 不允许留默认值                                                      |
+| 变量                                  | 默认值                                        | 说明                                                                                                                                                                                     |
+| ------------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `APP_ENV`                             | `dev`                                         | `dev` / `sit` / `prod`;决定加载哪个 `.env.<env>`,也决定导出产物后缀。**必须由进程环境变量提供**(`APP_ENV=sit make dev`):写进 `.env.<env>` 不会切换加载的文件,只会覆盖 `Settings.app_env` |
+| `APP_DEBUG`                           | `true`                                        | prod 下必须为 `false`,否则启动直接失败                                                                                                                                                   |
+| `APP_HOST` / `APP_PORT`               | `127.0.0.1` / `8000`                          | `python -m app` 的监听地址(`--host` / `--port` 或 `make dev PORT=9000` 覆盖);`make prod` 默认 `0.0.0.0`                                                                                  |
+| `LOG_LEVEL`                           | `INFO`                                        | 日志级别:`DEBUG` / `INFO` / `WARNING` / `ERROR` / `CRITICAL`,大小写不敏感                                                                                                                |
+| `DB_HOST` / `DB_PORT`                 | `localhost` / `3306`                          | MySQL 地址                                                                                                                                                                               |
+| `DB_NAME` / `DB_USER` / `DB_PASSWORD` | 空                                            | 必填 (`DB_PASSWORD` 可以是空串);为空时**启动即失败**,不等第一次查询                                                                                                                      |
+| `DB_POOL_SIZE` / `DB_MAX_OVERFLOW`    | `5` / `10`                                    | 连接池;测试进程用 `NullPool`,这两个值不生效                                                                                                                                              |
+| `DB_ECHO`                             | `false`                                       | 打印 SQL;只在本地排查问题时打开                                                                                                                                                          |
+| `EXPORT_OUTPUT_DIR`                   | `../web/data`                                 | 导出目录,相对路径按 `studio/` 解析 (与 cwd 无关)                                                                                                                                         |
+| `CORS_ORIGINS`                        | `http://localhost:3000,http://localhost:5173` | 逗号分隔白名单,**`*` 与空值都会被启动校验拒绝**                                                                                                                                          |
+| `API_KEY`                             | `dev-secret-key`                              | 写操作的 `X-API-Key`;`sit` / `prod` 不允许留默认值                                                                                                                                       |
 
 两个必须知道的坑:
 
@@ -168,6 +172,7 @@ make test-cov ALLOW_SHARED_DB=1   # 加覆盖率; pyproject 里 fail_under = 74
 ```
 
 - 测试连**真数据库**:`tests/conftest.py` 每个用例前 `TRUNCATE` 四张 `xg_*` 表。必须指向一个可以随便清空的 dev/sit 库,不要指向有数据的库
+- `APP_ENV` 与其它目标同源(默认 `dev`):`APP_ENV=sit make test` 跑的就是 `.env.sit` 那套凭据。以前 `make test` 里写死了 `dev`,命令行给 `sit` 会被**静默盖掉**(实测 `APP_ENV=sit make -n test` 打出的是 `APP_ENV=dev`);现在不会了,而 `prod` 由门禁无条件拒绝,不依赖这个变量兜底
 - 默认的 dev 库是共享 SIT 库,所以 `conftest.py` 里有一道破坏性门禁:`app_env=prod` 或库名/主机名命中 `prod|prd|production` **永远拒绝**(不接受任何环境变量豁免);库名含 `test` 直接放行;其余情况要设 `STUDIO_ALLOW_SHARED_DB_TRUNCATE=1`(即 `make test ALLOW_SHARED_DB=1`)。门禁在 `TRUNCATE` **之前**退出,不碰库
 - 跑测试前同样要先建表 (`make db-init`)
 - 测试进程自动用 `NullPool` (见 `app/core/database.py`),避免 pytest-asyncio 每个用例换事件循环时报连接挂到别的 loop
@@ -175,16 +180,16 @@ make test-cov ALLOW_SHARED_DB=1   # 加覆盖率; pyproject 里 fail_under = 74
 
 ## 常用命令
 
-| 命令                                             | 作用                                                               |
-| ------------------------------------------------ | ------------------------------------------------------------------ |
-| `make sync`                                      | `uv sync` 安装/同步依赖                                            |
-| `make db-init`                                   | 建表 (`python -m app.db_init`,幂等;需 mysql 客户端)                |
-| `make dev` / `sit` / `prod`                      | 按环境启动服务 (`python -m app`)                                   |
-| `make lint` / `typecheck` / `format`             | ruff 检查 / mypy 类型检查 / ruff 格式化                            |
-| `make check`                                     | 上面三项 + 格式校验一起跑 (CI 的 lint 段就是它)                    |
-| `make test` / `test-cov`                         | 测试 (可带覆盖率);共享库要加 `ALLOW_SHARED_DB=1`                   |
-| `make export-dev` / `export-sit` / `export-prod` | 导出 JSON                                                          |
-| `make clean`                                     | 清掉 `.ruff_cache` / `.pytest_cache` / `.coverage` / `__pycache__` |
+| 命令                                             | 作用                                                                               |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `make sync`                                      | `uv sync` 安装/同步依赖                                                            |
+| `make db-init`                                   | 建表 (`python -m app.db_init`,幂等;需 mysql 客户端)                                |
+| `make dev` / `sit` / `prod`                      | 按环境启动服务 (`python -m app`)                                                   |
+| `make lint` / `typecheck` / `format`             | ruff 检查 / mypy 类型检查 / ruff 格式化                                            |
+| `make check`                                     | 上面三项 + 格式校验一起跑 (CI 的 lint 段就是它)                                    |
+| `make test` / `test-cov`                         | 测试 (可带覆盖率);共享库要加 `ALLOW_SHARED_DB=1`                                   |
+| `make export-dev` / `export-sit` / `export-prod` | 导出 JSON                                                                          |
+| `make clean`                                     | 清掉 `.ruff_cache` / `.pytest_cache` / `.mypy_cache` / `.coverage` / `__pycache__` |
 
 三个 `make` 目标只是 `uv run python -m <模块>` 的薄封装(它们不解析 `.env`,全靠 app 自己读),所以直接用入口也完全等价:`uv run python -m app --help`、`uv run python -m app.db_init`、`uv run python -m app.exporters`。
 
@@ -199,17 +204,17 @@ make test-cov ALLOW_SHARED_DB=1   # 加覆盖率; pyproject 里 fail_under = 74
 
 改了下面这些地方,记得同步对应文件,否则文档会静默过期:
 
-| 改了什么                                   | 要一起改                                          |
-| ------------------------------------------ | ------------------------------------------------- |
-| 路由 (新增 / 改名 / 删除接口)              | 本文件「路由概览」                                |
-| `app/core/config.py` 的 `Settings` 字段    | `.env.example` 与本文件「环境变量」               |
-| 导出产物命名或目录 (`config.export_paths`) | 本文件「导出产物」,`.env.example` 注释            |
-| 表结构或导出投影 (`sql/schema.sql`)        | `schema/*.data.jsonc`,`app/models`,`app/schemas`  |
-| Makefile 目标                              | 本文件「快速开始」「常用命令」                    |
-| 依赖或工具链 (`pyproject.toml`)            | `.github/workflows/studio-ci.yml`(固定了 uv 版本) |
-| `tests/conftest.py` 的破坏性门禁           | 本文件「测试」,`Makefile` 的 `ALLOW_SHARED_DB`    |
-| `[tool.mypy]` 的 strict 范围或豁免         | 本文件「代码风格」,CI 的 Type check 步骤          |
-| 命令行入口 (`app/__main__.py` / `db_init`) | `Makefile` 目标,本文件「快速开始」「常用命令」    |
+| 改了什么                                   | 要一起改                                                                                                        |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| 路由 (新增 / 改名 / 删除接口)              | 本文件「路由概览」                                                                                              |
+| `app/core/config.py` 的 `Settings` 字段    | `.env.example` 与本文件「环境变量」                                                                             |
+| 导出产物命名或目录 (`config.export_paths`) | 本文件「导出产物」,`.env.example` 注释                                                                          |
+| 表结构或导出投影 (`sql/schema.sql`)        | `schema/*.data.jsonc`,`app/models`,`app/schemas`                                                                |
+| Makefile 目标                              | 本文件「快速开始」「常用命令」「测试」                                                                          |
+| 依赖或工具链 (`pyproject.toml`)            | `.github/workflows/studio-ci.yml`(固定 uv 版本),本文件「环境要求」(uv 下限由 `[tool.uv] required-version` 强制) |
+| `tests/conftest.py` 的破坏性门禁           | 本文件「测试」,`Makefile` 的 `ALLOW_SHARED_DB`                                                                  |
+| `[tool.mypy]` 的 strict 范围或豁免         | 本文件「代码风格」,CI 的 Type check 步骤                                                                        |
+| 命令行入口 (`app/__main__.py` / `db_init`) | `Makefile` 目标,本文件「快速开始」「常用命令」                                                                  |
 
 ## 代码风格
 
@@ -225,3 +230,12 @@ make check       # 上面三项 + 格式校验
 类型检查是 mypy(`[tool.mypy]`):`app/` 走 `strict = true` 全量;`tests/` 走放宽的一层 —— 只查会真的出错的类型问题,不强制每个用例写签名(pytest 本来就用 fixture 注入参数,全量 strict 在 `tests/` 上是 311 个纯噪音的 `no-untyped-def`)。这一层不是摆设:它已经抓出 `conftest.py` 里 `app_env == "test"` 的**死分支**(`APP_ENV=test` 会被 `Settings` 直接拒绝)、一条替该死分支背书的**假绿用例**、以及 `test_health.py` 里拿字符串冒充 DBAPI 异常。所以别把 `tests/` 从类型门禁里摘出去。
 
 pytest 侧另外两条硬约定:未知 ini 键直接报错 (`--strict-config`),弃用警告一律升级为错误 (`filterwarnings = ["error"]`)。只有已经定位到具体来源、短期修不掉的警告才允许逐条放行 —— 之前这里是 `ignore::DeprecationWarning`,把自己代码里的弃用调用也一起吞了。
+
+## 许可与贡献
+
+studio 是 [XiGee](https://github.com/sopwise-ai/xigee) monorepo 的一部分,许可与协作规则以仓库根目录为准:
+
+- 许可:MIT,见 [`LICENSE`](../LICENSE)
+- 提交 PR 前请读 [`CONTRIBUTING.md`](../CONTRIBUTING.md)(含本地环境准备、提交信息规范与 `make test ALLOW_SHARED_DB=1` 这类约定)
+- 安全漏洞请走 [`SECURITY.md`](../SECURITY.md) 的私下渠道,不要开公开 issue
+- 其它求助与提问见 [`SUPPORT.md`](../SUPPORT.md)
