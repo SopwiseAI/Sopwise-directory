@@ -30,6 +30,31 @@ class TestNormalizeUrl:
         """规则文档里的示例: http://www.Example.com:443/foo/#top -> https://example.com/foo"""
         assert normalize_url("http://www.Example.com:443/foo/#top") == "https://example.com/foo"
 
+    @pytest.mark.parametrize(
+        "raw",
+        [
+            "https://example.com",
+            "http://www.Example.com:80/foo?b=2&a=1",
+            "https://example.com/a/../b",
+            "https://example.com/%7Euser",
+            "https://example.com//foo///bar",
+            "https://user:pass@example.com/x",
+            "http://localhost:3000/app",
+            "https://example.com:8443/x",
+            "https://example.com/?a=1",
+            "example.com/foo",
+        ],
+    )
+    def test_idempotent(self, raw: str):
+        """归一化必须幂等: normalize(normalize(x)) == normalize(x)。
+
+        这不是洁癖, 是写入端的正确性前提: 改链接时拿"客户端原始串归一化后的值"和
+        库里存的值比较(见 endpoints/tool_links.update_tool_link), 不幂等就会把每次
+        PUT 都判成"改了", 白刷一遍 url_hash 与 updated_at。
+        """
+        once = normalize_url(raw)
+        assert normalize_url(once) == once
+
     def test_empty_string(self):
         assert normalize_url("") == ""
 

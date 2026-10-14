@@ -59,9 +59,10 @@ async def check_unique(
 def active_link_exists() -> ColumnElement[bool]:
     """相关子查询:该工具存在 status='active' 的链接。
 
-    抽出来是为了让 /topics 与 /tools 的计数口径只写一次。注意导出器【不用】它:
-    导出端的 toolCount 是在最终的 tools[] 上就地聚合的(见 json_exporter._fill_tool_counts),
-    比再跑一条 SQL 更能保证"徽标数与主题页条数"逐字一致。
+    只在 published_tool_counts 里用 —— 真正让 /topics 与 /tools 共用同一口径的是
+    那个批量函数(两个端点都调它)。导出器【不用】这一套: 导出端的 toolCount 是在
+    最终 tools[] 上就地聚合的(见 json_exporter._fill_tool_counts), 比再跑一条 SQL
+    更能保证"徽标数与主题页条数"逐字一致。
     """
     return select(ToolLink.id).where(ToolLink.tool_id == Tool.id, ToolLink.status == LinkStatus.ACTIVE).exists()
 
@@ -72,6 +73,11 @@ async def published_tool_counts(db: AsyncSession, topic_ids: Iterable[int]) -> d
     成员规则与 studio/sql/schema.sql 的【导出投影】逐字一致:
         status='published' AND 存在 status='active' 的链接
     少任何一个条件,导出的 toolCount 就会和主题页实际条数对不上。
+
+    这里只管【成员规则】这一层; 导出端在它之上还会把 _invalid_reason 判掉的行跳过
+    (空 slug/name/tagline/url/languages 这类脏行, 只有直连改库才造得出来)。所以库里
+    存在脏行时, 本函数会比产物里的 toolCount 多算几行 —— 产物一律以导出端的就地聚合
+    为准(见 json_exporter._fill_tool_counts), 那个数才是导航徽标用的。
 
     按关联行统计,不看主题自己是不是 active —— 禁用主题不进导出,所以这里多算的那点
     不会出现在产物里。传入空集合时直接返回 {},不产生无意义的 IN () 查询。
