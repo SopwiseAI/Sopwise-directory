@@ -207,7 +207,6 @@ class Tool(Base):
         nullable=False,
         server_default=ToolStatus.DRAFT.value,
     )
-    last_updated_at: Mapped[date | None] = mapped_column(Date, nullable=True)
     published_at: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
@@ -244,7 +243,11 @@ class ToolTopic(Base):
 
 
 class ToolLink(Base):
-    """工具链接(1:N)。url 存原始 URL,url_normalized 是导出直取的值,url_hash 是它的 SHA-256。"""
+    """工具链接(1:N)。url 是【已归一化】的串,url_hash 是它的 SHA-256。
+
+    库里不保留用户输入的原始串:唯一键与导出都只看归一化结果,留一份原始串既没有
+    消费者,又要多维护一处"两列必须同时更新"的一致性(见 tool_links.py 的写入端)。
+    """
 
     __tablename__ = "xg_tool_link"
     # (tool_id, url_hash) 的唯一性写在 schema.sql 里, 写入端也靠它去重(见 tool_links.py);
@@ -257,7 +260,6 @@ class ToolLink(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     tool_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("xg_tool.id", ondelete="CASCADE"), nullable=False)
     url: Mapped[str] = mapped_column(String(2048), nullable=False)
-    url_normalized: Mapped[str] = mapped_column(String(2048), nullable=False)
     # 定长十六进制:CHAR 而不是 VARCHAR, 与 schema.sql 一致
     url_hash: Mapped[str] = mapped_column(CHAR(64), nullable=False)
     label: Mapped[LinkLabel] = mapped_column(

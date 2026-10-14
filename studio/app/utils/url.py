@@ -36,8 +36,8 @@ def normalize_url(raw_url: str) -> str:
      11. query 参数排序
 
     8~10 交给 url-normalize 库;5、6、7、11 库不做(实测:库会保留尾斜杠、fragment 与
-    参数顺序,也不会剥 userinfo),所以这几条在这里补。写入端落库前必须调一次:导出端
-    直接取 url_normalized,不会再归一化第二遍。
+    参数顺序,也不会剥 userinfo),所以这几条在这里补。写入端落库前必须调一次:
+    导出端直接取库里那一列,不会再归一化第二遍。
     """
     url = raw_url.strip()
     if not url:
@@ -90,8 +90,8 @@ def normalize_url(raw_url: str) -> str:
 def url_hash_normalized(normalized_url: str) -> str:
     """对【已归一化】的 URL 串算 SHA-256 —— 写入端的推荐入口。
 
-    调用方先调一次 normalize_url(),把结果同时写进 url_normalized 与这里:
-    两个落库值出自同一次归一化,唯一键(xg_tool_link.uk_tl_url)和导出值才不可能各说各话。
+    调用方先调一次 normalize_url(),把结果同时写进 xg_tool_link.url 与这里:
+    两个落库值出自同一次归一化,唯一键(uk_tl_url)和导出值才不可能各说各话。
     """
     return hashlib.sha256(normalized_url.encode("utf-8")).hexdigest()
 
@@ -101,6 +101,6 @@ def url_hash(raw_url: str) -> str:
 
     内部会自己调一次 normalize_url —— 已经归一化过的调用方请直接用
     url_hash_normalized(),否则同一个 URL 要归一化两遍(纯浪费,且两次之间若有
-    非幂等差异就会让 url_normalized 与 url_hash 对不上)。
+    非幂等差异就会让 url 与 url_hash 对不上)。
     """
     return url_hash_normalized(normalize_url(raw_url))

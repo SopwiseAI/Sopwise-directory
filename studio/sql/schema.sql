@@ -23,7 +23,7 @@
 --             id 取 slug；toolCount 由导出端按最终的 tools[] 就地聚合
 --   tools[]   WHERE status='published' AND 存在 status='active' 的链接
 --             ORDER BY sort_order DESC, published_at DESC, id ASC
---             url      ← 主链接的 url_normalized（取不到则回退首个 active 链接）
+--             url      ← 主链接的 url（库里已是归一化值；取不到则回退首个 active 链接）
 --             topics[] ← xg_topic.slug（【不是】topic_id）；首个即主主题（is_primary=1）
 --             links[]  ← 非主链接且 active，且排除已被选作 url 的那一条
 --             无有效主题时 topics 回退 ['misc']
@@ -89,7 +89,6 @@ CREATE TABLE IF NOT EXISTS xg_tool (
   is_featured          TINYINT(1)   NOT NULL DEFAULT 0    COMMENT '是否精选',
   sort_order           INT          NOT NULL DEFAULT 0    COMMENT '排序权重（越大越靠前）；决定 tools 数组顺序',
   status               VARCHAR(16)  NOT NULL DEFAULT 'draft' COMMENT 'draft | pending | published | archived；仅 published 导出',
-  last_updated_at      DATE         DEFAULT NULL          COMMENT '工具自身的最后更新日期（外部事实；与审计列 updated_at 无关）',
   published_at         DATE         DEFAULT NULL          COMMENT '收录进本站的日期（首次转为 published 时写入一次）',
   created_at           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间（审计，不导出）',
   updated_at           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新',
@@ -125,11 +124,12 @@ CREATE TABLE IF NOT EXISTS xg_tool_topic (
 
 -- ----------------------------------------------------------------------------
 -- 4、工具链接表（1:N）
---    url            用户输入的原始 URL（内部保留，不导出）
---    url_normalized normalize_url(url) 的结果（导出用它；已满足 https、无尾斜杠、无 www.）
---    url_hash       SHA-256(url_normalized)，用于产品内去重
---                   归一化实现在 app/utils/url.py；在【写入端】做，导出端只直取
---    长 URL 无法直接建唯一索引（utf8mb4 下 2048 字符超出键长上限），故用 hash
+--    url            【已归一化】的链接。写入端落库前调一次 normalize_url()，
+--                   库里不保留用户输入的原始串 —— 唯一键认的是归一化结果，
+--                   导出也直接取它，"原始串"没有任何消费者（要求见 app/utils/url.py
+--                   的 11 条规则；写入端在 app/api/v1/endpoints/tools.py）
+--    url_hash       SHA-256(url)，用于工具内去重
+--                   长 URL 无法直接建唯一索引（utf8mb4 下 2048 字符超出键长上限），故用 hash
 --    is_primary     每个工具至多一个【由 app 保证】；导出为 tools[].url
 --                   注意主链接那一行的 label 不导出（links[] 只取非主链接）
 --    status         active | broken | disabled；仅 active 导出
@@ -137,9 +137,8 @@ CREATE TABLE IF NOT EXISTS xg_tool_topic (
 CREATE TABLE IF NOT EXISTS xg_tool_link (
   id                 BIGINT        NOT NULL AUTO_INCREMENT,
   tool_id            BIGINT        NOT NULL              COMMENT '所属工具 id',
-  url                VARCHAR(2048) NOT NULL              COMMENT '用户输入的原始 URL（内部保留，不导出）',
-  url_normalized     VARCHAR(2048) NOT NULL              COMMENT '归一化后的 URL（导出用它）',
-  url_hash           CHAR(64)      NOT NULL              COMMENT 'SHA-256(url_normalized)，十六进制',
+  url                VARCHAR(2048) NOT NULL              COMMENT '已归一化的 URL（写入端保证；导出直接取用）',
+  url_hash           CHAR(64)      NOT NULL              COMMENT 'SHA-256(url)，十六进制',
   label              VARCHAR(20)   NOT NULL DEFAULT 'other' COMMENT 'website | api | docs | github | playground | pricing | plugin | other',
   is_primary         TINYINT(1)    NOT NULL DEFAULT 0    COMMENT '是否主链接（每个工具至多一个，app 保证）',
   status             VARCHAR(16)   NOT NULL DEFAULT 'active' COMMENT 'active | broken | disabled；仅 active 导出',

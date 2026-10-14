@@ -172,7 +172,6 @@ class ToolBase(BaseModel):
     is_featured: bool = False
     sort_order: int = Field(0, ge=0)
     status: ToolStatus = ToolStatus.DRAFT
-    last_updated_at: date | None = None
 
     _validate_tagline = field_validator("tagline")(_check_tagline)
     _validate_languages = field_validator("languages")(_check_languages)
@@ -219,7 +218,6 @@ class ToolUpdate(BaseModel):
     is_featured: bool | None = None
     sort_order: int | None = Field(None, ge=0)
     status: ToolStatus | None = None
-    last_updated_at: date | None = None
     topic_ids: list[int] | None = None
     primary_topic_id: int | None = None
 

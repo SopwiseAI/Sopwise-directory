@@ -569,21 +569,19 @@ async def test_filter_by_unknown_topic_returns_empty(async_client):
     assert resp.json() == []
 
 
-async def test_create_tool_accepts_audit_dates(async_client):
-    """last_updated_at / last_access_check_at 是外部事实日期, 可写可清空。"""
+async def test_create_tool_accepts_audit_date_and_clears_it(async_client):
+    """last_access_check_at 是外部事实日期: 可写, 也可以显式 null 清空(见 keep_none)。"""
     resp = await async_client.post(
         "/api/v1/tools",
         json={
             **_MINIMAL,
             "slug": "dated",
             "name": "带日期",
-            "last_updated_at": "2026-09-30",
             "last_access_check_at": "2026-08-01",
         },
     )
     assert resp.status_code == 201, resp.text
     data = resp.json()
-    assert data["last_updated_at"] == "2026-09-30"
     assert data["last_access_check_at"] == "2026-08-01"
 
     resp = await async_client.put(f"/api/v1/tools/{data['id']}", json={"last_access_check_at": None})

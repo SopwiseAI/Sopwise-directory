@@ -39,13 +39,15 @@ router = APIRouter()
 _VALID_INITIAL_STATUSES = {ToolStatus.DRAFT, ToolStatus.PENDING}
 
 
-def split_link_url(raw_url: str) -> tuple[str, str, str]:
-    """把原始 URL 拆成要落库的三件套: (url, url_normalized, url_hash)。
+def normalize_link_url(raw_url: str) -> tuple[str, str]:
+    """把客户端给的原始 URL 收口成要落库的两件套: (url, url_hash)。
 
-    xg_tool_link 三列必须一起写, 少写 url_normalized 会直接违反 NOT NULL:
-      url             原始输入, 内部留档、不导出
-      url_normalized  normalize_url() 的结果, 导出端直取(已满足 https、无尾斜杠、无 www.)
-      url_hash        SHA-256(url_normalized), 只在同一工具内做唯一键
+    url 就是【归一化之后】的串 —— xg_tool_link 只有这一列 URL, 库里不保留用户输入:
+      url       normalize_url() 的结果(已满足 https、无尾斜杠、无 www.)
+      url_hash  SHA-256(url), 只在同一工具内做唯一键
+
+    这里是 URL 唯一的写入口: 三个写入点(单独建链接 / 改链接 / 建工具时带链接)都走它。
+    任何一处绕过它, 未归一化的串就会被写进唯一键与导出都认的那一列。
     """
     try:
         normalized = normalize_url(raw_url)
@@ -65,7 +67,7 @@ def split_link_url(raw_url: str) -> tuple[str, str, str]:
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="URL is too long after normalization (max 2048 characters)",
         )
-    return raw_url, normalized, url_hash_normalized(normalized)
+    return normalized, url_hash_normalized(normalized)
 
 
 async def load_tool(db: AsyncSession, tool_id: int, *, for_update: bool = False) -> Tool | None:
@@ -312,8 +314,8 @@ async def create_tool(data: ToolCreate, db: DbSession) -> Tool:
 
     # url_hash 是 (tool_id, url_hash) 唯一键的一半:同一次 payload 里两个不同的 URL
     # 归一化后可能撞成同一个 key,靠 500 兜底不如在这里拦成 400
-    link_urls = [split_link_url(link.url) for link in data.links]
-    link_hashes = [url_hash_value for _, _, url_hash_value in link_urls]
+    link_urls = [normalize_link_url(link.url) for link in data.links]
+    link_hashes = [url_hash_value for _, url_hash_value in link_urls]
     if len(set(link_hashes)) != len(link_hashes):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -328,12 +330,11 @@ async def create_tool(data: ToolCreate, db: DbSession) -> Tool:
     # 先 flush 拿到自增 id:下面的链接行与关联行都要用它
     await db.flush()
 
-    for link_data, (raw_url, normalized, url_hash_value) in zip(data.links, link_urls, strict=True):
+    for link_data, (normalized_url, url_hash_value) in zip(data.links, link_urls, strict=True):
         db.add(
             ToolLink(
                 tool_id=tool.id,
-                url=raw_url,
-                url_normalized=normalized,
+                url=normalized_url,
                 url_hash=url_hash_value,
                 label=link_data.label,
                 is_primary=link_data.is_primary,
@@ -357,11 +358,11 @@ async def update_tool(tool_id: int, data: ToolUpdate, db: DbSession) -> Tool:
     if not tool:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tool not found")
 
-    # 只有真正可空的列允许显式 null 清空(description 与两个复检日期);
+    # 只有真正可空的列允许显式 null 清空(description 与 access 复检日期);
     # 其余 None 一律忽略——把 None 写进 NOT NULL 的列只会换来一个 500
     update_data = drop_none(
         data.model_dump(exclude_unset=True),
-        keep_none=("description", "last_updated_at", "last_access_check_at"),
+        keep_none=("description", "last_access_check_at"),
     )
 
     if "slug" in update_data and update_data["slug"] != tool.slug:

@@ -1,8 +1,9 @@
 """工具链接端点 + 工具主题归属端点(两者都挂在 /tools 前缀下)。
 
 链接的三条坑:
-  1. 写链接必须落三列 url / url_normalized / url_hash(见 tools.split_link_url):
-     url_normalized 是导出端直取的值, url_hash 基于它算, (tool_id, url_hash) 是唯一键
+  1. 写链接必须落 url / url_hash 两列(见 tools.normalize_link_url): url 是【归一化后】
+     的值, url_hash 基于它算, (tool_id, url_hash) 是唯一键 —— 所以任何写入点都不能
+     把客户端给的原始串直接塞进 url
   2. 每个工具至多一个主链接, 这条【只由 API 保证】——schema.sql 精简后库层已经没有
      uk_tl_primary 之类的东西了。所以换主链接时除了"先清旧主", 还必须先用
      tools.lock_tool_row 锁住父行: 两个并发请求各自读到"没有主链接"再各插一条,
@@ -16,9 +17,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.endpoints.tools import (
     lock_tool_row,
+    normalize_link_url,
     ordered_topic_ids,
     replace_tool_topics,
-    split_link_url,
 )
 from app.core.deps import DbSession
 from app.core.security import require_write
@@ -78,7 +79,7 @@ async def add_tool_link(tool_id: int, data: ToolLinkCreate, db: DbSession) -> To
     # 存在性检查和加锁合成一条语句: 下面既可能写 is_primary, 又要读旧链接查重
     await lock_tool_row(db, tool_id)
 
-    raw_url, normalized, new_hash = split_link_url(data.url)
+    normalized, new_hash = normalize_link_url(data.url)
     existing = await db.execute(
         select(ToolLink).where(
             ToolLink.tool_id == tool_id,
@@ -96,8 +97,7 @@ async def add_tool_link(tool_id: int, data: ToolLinkCreate, db: DbSession) -> To
 
     link = ToolLink(
         tool_id=tool_id,
-        url=raw_url,
-        url_normalized=normalized,
+        url=normalized,
         url_hash=new_hash,
         label=data.label,
         is_primary=data.is_primary,
@@ -127,22 +127,25 @@ async def update_tool_link(tool_id: int, link_id: int, data: ToolLinkUpdate, db:
     # 不保留任何 None:status / label 都是 NOT NULL, 显式 null 只能忽略
     update_data = drop_none(data.model_dump(exclude_unset=True))
 
-    if "url" in update_data and update_data["url"] != link.url:
-        raw_url, normalized, new_hash = split_link_url(update_data["url"])
-        existing = await db.execute(
-            select(ToolLink).where(
-                ToolLink.tool_id == tool_id,
-                ToolLink.url_hash == new_hash,
-                ToolLink.id != link_id,
+    if "url" in update_data:
+        # 客户端发的是原始输入, 库里存的是归一化值 —— 两边必须在同一口径下比较,
+        # 否则同一个地址换个写法(带 www. / 尾斜杠 / fragment)就会被当成"改了",
+        # 白重算一次并触发 ON UPDATE CURRENT_TIMESTAMP
+        normalized, new_hash = normalize_link_url(update_data["url"])
+        if normalized != link.url:
+            existing = await db.execute(
+                select(ToolLink).where(
+                    ToolLink.tool_id == tool_id,
+                    ToolLink.url_hash == new_hash,
+                    ToolLink.id != link_id,
+                )
             )
-        )
-        if existing.scalar_one_or_none():
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="URL already exists in this tool")
-        # 三列必须成对更新:只改 url 会让 url_normalized / url_hash 停在旧值,
-        # 唯一键和导出值就各自说各话了
-        link.url = raw_url
-        link.url_normalized = normalized
-        link.url_hash = new_hash
+            if existing.scalar_one_or_none():
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="URL already exists in this tool")
+            # url 与 url_hash 必须成对更新:只改 url 会让 hash 停在旧值,
+            # 唯一键 (tool_id, url_hash) 和导出值就各自说各话了
+            link.url = normalized
+            link.url_hash = new_hash
 
     for key, value in update_data.items():
         if key not in ("url", "is_primary"):

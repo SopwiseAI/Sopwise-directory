@@ -235,9 +235,9 @@ async def _fetch_tools(session: AsyncSession) -> tuple[list[ExportItem], Counter
     for row in rows:
         active_links = _sorted_links(row.links)
         # 投影里的"取不到主链接就回退首个 active 链接"包含【取到了但值不可用】:
-        # url_normalized 为空的行(直连改库才会出现)既不能当 url 也不能进 links[],
+        # url 为空的行(直连改库才会出现)既不能当 url 也不能进 links[],
         # 否则产物里会出现空 URL,前端构建会整体失败
-        usable = [lnk for lnk in active_links if not _blank(lnk.url_normalized)]
+        usable = [lnk for lnk in active_links if not _blank(lnk.url)]
         if not usable:
             logger.warning("跳过工具 id=%s slug=%s: 无可用链接(无 active 链接或归一化 URL 为空)", row.id, row.slug)
             skipped["工具无可用链接"] += 1
@@ -246,7 +246,7 @@ async def _fetch_tools(session: AsyncSession) -> tuple[list[ExportItem], Counter
         primary = next((lnk for lnk in usable if lnk.is_primary), None)
         url_link = primary or usable[0]
 
-        if reason := _invalid_reason(row, url_link.url_normalized):
+        if reason := _invalid_reason(row, url_link.url):
             logger.warning("跳过工具 id=%s: %s", row.id, reason)
             skipped[f"工具 {reason}"] += 1
             continue
@@ -265,7 +265,7 @@ async def _fetch_tools(session: AsyncSession) -> tuple[list[ExportItem], Counter
             "id": row.slug,
             "name": row.name,
             "tagline": row.tagline,
-            "url": url_link.url_normalized,
+            "url": url_link.url,
             "topics": topic_slugs or [UNCATEGORIZED_SLUG],
             "tags": list(row.tags or []),
             "pricing": str(row.pricing),
@@ -279,14 +279,12 @@ async def _fetch_tools(session: AsyncSession) -> tuple[list[ExportItem], Counter
             item["description"] = row.description
         if row.published_at:
             item["publishedAt"] = row.published_at.strftime("%Y-%m-%d")
-        if row.last_updated_at:
-            item["lastUpdatedAt"] = row.last_updated_at.strftime("%Y-%m-%d")
 
         # 次要链接:排除【已被选作 url 的那一条】——否则当 url 回退到某个
         # is_primary=0 的链接时,同一个 URL 会在工具对象里出现两次
         secondary = [lnk for lnk in usable if not lnk.is_primary and lnk.id != url_link.id]
         if secondary:
-            item["links"] = [{"label": str(lnk.label), "url": lnk.url_normalized} for lnk in secondary]
+            item["links"] = [{"label": str(lnk.label), "url": lnk.url} for lnk in secondary]
 
         tools.append(item)
 

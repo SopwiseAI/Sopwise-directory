@@ -277,8 +277,6 @@ async def test_export_data_format(async_client, tmp_path):
         primary_topic_id=topic["id"],
         links=[{"url": "https://www.chat.openai.com:443/#top", "label": "website", "is_primary": True}],
     )
-    resp = await async_client.put(f"/api/v1/tools/{tool['id']}", json={"last_updated_at": "2026-09-30"})
-    assert resp.status_code == 200, resp.text
     await create_link(async_client, tool["id"], url="https://docs.example.com/guide/", label="docs")
 
     mock = _mock_settings(tmp_path)
@@ -301,7 +299,7 @@ async def test_export_data_format(async_client, tmp_path):
     assert prod["name"] == "ChatGPT"
     assert prod["tagline"] == "通用对话助手与知识问答工具。"
     assert prod["description"] == "AI 对话助手"
-    # url 取的是 url_normalized: 去 www、去默认端口、去 fragment、去尾斜杠(根路径保留)
+    # url 是写入端归一化的结果: 去 www、去默认端口、去 fragment、去尾斜杠(根路径保留)
     assert prod["url"] == "https://chat.openai.com/"
     assert prod["topics"] == ["chat"]
     assert prod["tags"] == ["chat", "llm"]
@@ -312,12 +310,11 @@ async def test_export_data_format(async_client, tmp_path):
     assert prod["languages"] == ["zh", "en"]
     assert prod["featured"] is True
     assert prod["publishedAt"] == tool["published_at"]
-    assert prod["lastUpdatedAt"] == "2026-09-30"
     assert prod["links"] == [{"label": "docs", "url": "https://docs.example.com/guide"}]
 
 
 async def test_export_omits_null_optional_keys(async_client, tmp_path):
-    """description / lastUpdatedAt 为 NULL 时【省略键】, 不输出 null。"""
+    """description 为 NULL 时【省略键】, 不输出 null。"""
     topic = await create_topic(async_client, slug="bare", name="无描述")
     await create_tool(
         async_client,
@@ -338,7 +335,6 @@ async def test_export_omits_null_optional_keys(async_client, tmp_path):
 
     prod = _read(tmp_path / "tools-dev.json")[0]
     assert "description" not in prod
-    assert "lastUpdatedAt" not in prod
 
 
 # ── 主题归属 + 计数口径 ───────────────────────────────────────────────────────

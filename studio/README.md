@@ -63,6 +63,9 @@ uv run python -m app --help   # 直接看入口支持的参数
 
 - 权威 DDL 是 `sql/schema.sql`,一共 4 张表;`make db-init` 就是把它整份喂给 mysql 客户端
 - 脚本是幂等的 (`CREATE TABLE IF NOT EXISTS` + 幂等种子),重复执行安全
+- **但它不是迁移工具**:`CREATE TABLE IF NOT EXISTS` 不会改已存在的表,所以删/改列之后,老库重跑 `db-init` 不会有任何变化(表还在旧结构上,服务会报 `Unknown column`)。仓库刻意没有引入 alembic —— 表结构只有 4 张、且要兼顾 5.7/8.0,加一层迁移框架的收益不抵它的维护面。改列的落地方式二选一:
+  - 数据不要了(dev/sit 常见):`DROP TABLE xg_tool_link, xg_tool_topic, xg_tool;` 再 `make db-init`(一条语句里一起删,否则外键会拦住 `xg_tool`)。
+  - 要留数据:自己写 `ALTER TABLE`(`CHANGE COLUMN` 改名不会丢数据;`DROP COLUMN` 会)。
 - 连接信息按 `APP_ENV` 从 `.env.<APP_ENV>` 读 (默认 `dev`)。**解析器只有 `app/core/config.py` 一个** —— 服务、`db-init`、导出器都走它,Makefile 不再自己解析 `.env`(以前用 sed 抄过一套 dotenv 规则,导致 `DB_PASSWORD="p@ss word"` 这类写法会让 make 与服务拿到不同的值)
 - 要临时指向别的库,用环境变量覆盖(`pydantic-settings` 里环境变量优先于 `.env` 文件;make 自己会把命令行变量原样传给 app,不需要 Makefile 再转发一遍):`make db-init DB_HOST=127.0.0.1 DB_PORT=9999 DB_NAME=scratch`
 - 密码通过 `MYSQL_PWD` 环境变量传给客户端,不出现在命令行里(`ps` 对同机器其他用户可见)
@@ -73,7 +76,7 @@ uv run python -m app --help   # 直接看入口支持的参数
 | `xg_topic`      | 主题 (导航骨架)                            | 被 `xg_tool_topic` 外键 RESTRICT,不能直接删还有工具的主题 |
 | `xg_tool`       | 工具主表,`tags` / `languages` 都是 JSON 列 | 删除时级联删关联与链接                                    |
 | `xg_tool_topic` | 工具-主题 N:M,`is_primary` 标记主主题      | 每个工具至多一个主主题 (app 保证)                         |
-| `xg_tool_link`  | 工具链接 1:N,`url_normalized` 是导出用的值 | 每个工具至多一个主链接 (app 保证)                         |
+| `xg_tool_link`  | 工具链接 1:N,`url` 存的就是归一化后的地址  | 每个工具至多一个主链接 (app 保证)                         |
 
 两条容易踩的设计约定:
 

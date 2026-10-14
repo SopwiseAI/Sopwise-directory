@@ -10,7 +10,7 @@
   python skills/tools/api.py update-tool <id> [--status S] [--name <name>] [--tagline <t>] [--description <desc>]
                                   [--pricing <p>] [--origin <o>] [--access <a>] [--languages zh,en] [--tags a,b]
                                   [--topic-ids 1,2] [--primary-topic-id N] [--open-source | --no-open-source]
-                                  [--featured | --no-featured] [--slug <slug>] [--sort-order N] [--last-updated-at YYYY-MM-DD]
+                                  [--featured | --no-featured] [--slug <slug>] [--sort-order N]
   python skills/tools/api.py delete-tool <id>
   python skills/tools/api.py topics [--status {active,disabled}] [--page N] [--page-size N]   列出主题
   python skills/tools/api.py topic <id>                 查看主题详情
@@ -561,8 +561,6 @@ def cmd_update_tool(args):
         payload["slug"] = args.slug
     if args.sort_order is not None:
         payload["sort_order"] = args.sort_order
-    if args.last_updated_at:
-        payload["last_updated_at"] = args.last_updated_at
 
     confirm_text = ""
     new_status_name = TOOL_STATUS_NAMES.get(args.status or "", "?")
@@ -1037,7 +1035,6 @@ def main():
     p.add_argument("--featured", action=argparse.BooleanOptionalAction, default=None)
     p.add_argument("--slug")
     p.add_argument("--sort-order", type=int, default=None)
-    p.add_argument("--last-updated-at", help="YYYY-MM-DD")
     p.set_defaults(func=cmd_update_tool)
 
     # delete tool

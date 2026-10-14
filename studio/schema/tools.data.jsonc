@@ -14,7 +14,7 @@
 //
 // 数组顺序：库里的 sort_order DESC → published_at DESC → id 升序做 tie-break。
 //
-// 字段清单（16 个）:
+// 字段清单（15 个）:
 //   id             string   必填  ≤64           kebab-case
 //   name           string   必填  ≤128
 //   tagline        string   必填  ≤80
@@ -29,7 +29,6 @@
 //   languages      string[] 必填  ≥1 且 ≤8      ISO 639-1 两字母小写，首项为主语言
 //   featured       boolean  必填
 //   publishedAt    string   可选  YYYY-MM-DD    正常由端点首次转 published 时写入；直连改库可造出缺失行，导出端会【省略该键】
-//   lastUpdatedAt  string   可选  YYYY-MM-DD    NULL 时【省略该键】
 //   links          object[] 可选                可为空数组或省略
 //
 // 校验归属：app 是唯一关卡 —— 库层没有 CHECK / ENUM（为兼容 MySQL 5.7 且便于加值），
@@ -60,10 +59,11 @@
     // 较长的补充说明，可选。供详情页与搜索索引使用，卡片不展示。NULL 时【省略该键】。
     "description": "由深度求索发布的开源权重模型系列，覆盖通用对话与代码专用模型。官方 API 按 token 计费，权重可下载离线自部署，适合成本敏感的生产级集成。",
 
-    // 官方主链接。必须 https，且不得以 / 结尾、不得带 www. 前缀。
+    // 官方主链接。必须 https，且不得以 / 结尾、不得带 www. 前缀【自觉】。
     // 取自 is_primary=1 且 status='active' 的那条链接；取不到则回退首个 active 链接。
-    // 【已定】归一化在【写入端】完成（app/utils/url.py），导出端直取 url_normalized。
-    // 所以这几条要求由写入端保证：库里 url 是原始输入（不导出），url_normalized 才是导出值。
+    // 【已定】归一化在【写入端】完成（app/utils/url.py），导出端直取 xg_tool_link.url。
+    // 库里那一列存的就是归一化后的串（不保留用户输入的原始串），所以这几条要求
+    // 由写入端保证：能过 url_hash 唯一键的，一定已经是这个形状。
     "url": "https://deepseek.com",
 
     // 所属主题的 id 列表，至少 1 个。
@@ -110,10 +110,6 @@
     // 收录进本站的日期（首次转为 published 时写入一次，之后不再变）。格式 YYYY-MM-DD。
     // 由端点保证：转 published 时写入。库层没有耦合，直连改库能造出 published 却没日期的行。
     "publishedAt": "2026-01-15",
-
-    // 工具自身的最后更新日期（外部事实，编辑器维护）。格式 YYYY-MM-DD。
-    // 与库里的审计列 updated_at（改库时间）无关，不要混。
-    "lastUpdatedAt": "2026-09-30",
 
     // 官网之外的次要链接，可选。顺序：sort_order DESC → id 升序。
     // label 取值：website | api | docs | github | playground | pricing | plugin | other

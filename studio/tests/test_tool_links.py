@@ -11,7 +11,7 @@ from tests.conftest import create_link, create_tool
 
 
 async def _db_links(tool_id: int) -> list[ToolLink]:
-    """直连读回链接行 -- 响应 schema 不含 url_normalized / url_hash, 只能看库。"""
+    """直连读回链接行 -- 响应里的 url 是归一化值, 且响应不含 url_hash, 核对 hash 只能看库。"""
     async with AsyncSessionLocal() as session:
         stmt = select(ToolLink).where(ToolLink.tool_id == tool_id).order_by(ToolLink.id)
         return list((await session.execute(stmt)).scalars().all())
@@ -138,22 +138,21 @@ async def test_url_normalization_dedup(async_client):
     assert "URL already exists" in resp.json()["detail"]
 
 
-async def test_url_normalized_and_hash_are_stored(async_client):
-    """三列必须一起写: url 存原始输入, url_normalized 存归一化结果, url_hash = sha256(归一化)。"""
+async def test_url_is_stored_normalized_and_hash_matches(async_client):
+    """库里【只】存归一化后的 url(不保留原始输入), 响应也回归一化值; url_hash = sha256(它)。"""
     tool = await create_tool(async_client, slug="t1", name="T1")
     raw = "https://www.Example.com:443/foo/#top"
     link = await create_link(async_client, tool["id"], url=raw)
-    assert link["url"] == raw
+    assert link["url"] == "https://example.com/foo"
 
     row = (await _db_links(tool["id"]))[0]
-    assert row.url == raw
-    assert row.url_normalized == "https://example.com/foo"
+    assert row.url == "https://example.com/foo"
     assert row.url_hash == hashlib.sha256(b"https://example.com/foo").hexdigest()
     assert row.url_hash == url_hash(raw)
 
 
-async def test_update_link_url_rewrites_normalized_and_hash(async_client):
-    """改 url 时三列成对更新, 不能只改 url 让 hash 停在旧值。"""
+async def test_update_link_url_rewrites_url_and_hash(async_client):
+    """改 url 时 url 与 url_hash 成对更新, 不能只改 url 让 hash 停在旧值。"""
     tool = await create_tool(async_client, slug="t1", name="T1")
     link = await create_link(async_client, tool["id"], url="https://old.example.com")
     resp = await async_client.put(
@@ -163,8 +162,7 @@ async def test_update_link_url_rewrites_normalized_and_hash(async_client):
     assert resp.status_code == 200, resp.text
 
     row = (await _db_links(tool["id"]))[0]
-    assert row.url == "https://new.example.com/path/"
-    assert row.url_normalized == "https://new.example.com/path"
+    assert row.url == "https://new.example.com/path"
     assert row.url_hash == url_hash("https://new.example.com/path/")
 
 
@@ -185,7 +183,7 @@ async def test_http_url_allowed_for_localhost(async_client):
     assert link["url"] == "http://localhost:3000/app"
 
     row = (await _db_links(tool["id"]))[0]
-    assert row.url_normalized == "http://localhost:3000/app"
+    assert row.url == "http://localhost:3000/app"
 
 
 async def test_url_dedup_cross_tools(async_client):
@@ -368,20 +366,21 @@ async def test_link_status_enum_matches_db(async_client):
     assert {status.value for status in LinkStatus} == {"active", "broken", "disabled"}
 
 
-async def test_update_link_with_same_url_keeps_normalized_and_hash(async_client):
-    """原样重发同一个 url 不应触发 409(排除自身的去重), 三列都不动。"""
+async def test_update_link_with_equivalent_url_keeps_url_and_hash(async_client):
+    """换个写法但归一化后相同的 url 不算改: 不 409(排除自身)、也不重写 url/hash。"""
     tool = await create_tool(async_client, slug="t1", name="T1")
     link = await create_link(async_client, tool["id"], url="https://same.example.com/path/")
     before = (await _db_links(tool["id"]))[0]
 
     resp = await async_client.put(
         f"/api/v1/tools/{tool['id']}/links/{link['id']}",
-        json={"url": "https://same.example.com/path/"},
+        json={"url": "https://www.same.example.com/path/#top"},
     )
     assert resp.status_code == 200, resp.text
+    assert resp.json()["url"] == "https://same.example.com/path"
 
     after = (await _db_links(tool["id"]))[0]
-    assert after.url_normalized == before.url_normalized
+    assert after.url == before.url
     assert after.url_hash == before.url_hash
 
 
@@ -413,5 +412,5 @@ async def test_update_link_url_and_primary_together(async_client):
     rows = {row.id: row for row in await _db_links(tool["id"])}
     assert rows[old["id"]].is_primary is False
     assert rows[new["id"]].is_primary is True
-    assert rows[new["id"]].url_normalized == "https://c.com/"
+    assert rows[new["id"]].url == "https://c.com"
     assert rows[new["id"]].url_hash == url_hash("https://c.com")
