@@ -14,7 +14,7 @@
 //
 // 数组顺序：库里的 sort_order DESC → published_at DESC → id 升序做 tie-break。
 //
-// 字段清单（15 个）:
+// 字段清单（16 个）:
 //   id             string   必填  ≤64           kebab-case
 //   name           string   必填  ≤128
 //   tagline        string   必填  ≤80
@@ -29,6 +29,7 @@
 //   languages      string[] 必填  ≥1 且 ≤8      ISO 639-1 两字母小写，首项为主语言
 //   featured       boolean  必填
 //   publishedAt    string   可选  YYYY-MM-DD    正常由端点首次转 published 时写入；直连改库可造出缺失行，导出端会【省略该键】
+//   lastUpdatedAt  string   必填  YYYY-MM-DD    取自审计列 updated_at（改库时间）；不适用"NULL 时省略键"
 //   links          object[] 可选                可为空数组或省略
 //
 // 校验归属：app 是唯一关卡 —— 库层没有 CHECK / ENUM（为兼容 MySQL 5.7 且便于加值），
@@ -110,6 +111,11 @@
     // 收录进本站的日期（首次转为 published 时写入一次，之后不再变）。格式 YYYY-MM-DD。
     // 由端点保证：转 published 时写入。库层没有耦合，直连改库能造出 published 却没日期的行。
     "publishedAt": "2026-01-15",
+
+    // 最后改库时间（审计列 updated_at 的日期部分，如 2026-09-30）。格式 YYYY-MM-DD。
+    // ⚠ 它【不是】工具自身在上游的更新日期 —— 那个字段（原 xg_tool.last_updated_at）
+    //   没有任何消费者，已从库里删掉。updated_at 是 NOT NULL，所以这个键永远存在。
+    "lastUpdatedAt": "2026-09-30",
 
     // 官网之外的次要链接，可选。顺序：sort_order DESC → id 升序。
     // label 取值：website | api | docs | github | playground | pricing | plugin | other

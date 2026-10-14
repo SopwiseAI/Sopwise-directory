@@ -279,6 +279,10 @@ async def _fetch_tools(session: AsyncSession) -> tuple[list[ExportItem], Counter
             item["description"] = row.description
         if row.published_at:
             item["publishedAt"] = row.published_at.strftime("%Y-%m-%d")
+        # lastUpdatedAt 取【审计列】updated_at(改库时间), 不是"工具自身在上游的更新日期"
+        # ——那个字段(原 xg_tool.last_updated_at)没有任何消费者, 已从库里删掉。
+        # updated_at 是 NOT NULL, 所以这个键【永远存在】, 不适用"NULL 时省略键"的规则。
+        item["lastUpdatedAt"] = row.updated_at.strftime("%Y-%m-%d")
 
         # 次要链接:排除【已被选作 url 的那一条】——否则当 url 回退到某个
         # is_primary=0 的链接时,同一个 URL 会在工具对象里出现两次

@@ -26,6 +26,9 @@
 --             url      ← 主链接的 url（库里已是归一化值；取不到则回退首个 active 链接）
 --             topics[] ← xg_topic.slug（【不是】topic_id）；首个即主主题（is_primary=1）
 --             links[]  ← 非主链接且 active，且排除已被选作 url 的那一条
+--             publishedAt   ← 日期列 published_at（可空；NULL 时省略键）
+--             lastUpdatedAt ← 审计列 updated_at 的日期部分（改库时间；NOT NULL 所以【永远存在】）
+--                             它【不是】工具自身在上游的更新日期——那个字段没有消费者，已删
 --             无有效主题时 topics 回退 ['misc']
 --   可空字段为 NULL 时【省略该键】，不输出 null
 --

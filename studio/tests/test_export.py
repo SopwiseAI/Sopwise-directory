@@ -310,6 +310,8 @@ async def test_export_data_format(async_client, tmp_path):
     assert prod["languages"] == ["zh", "en"]
     assert prod["featured"] is True
     assert prod["publishedAt"] == tool["published_at"]
+    # lastUpdatedAt 来自审计列 updated_at(改库时间), 不是工具在上游的更新日期
+    assert prod["lastUpdatedAt"] == tool["updated_at"][:10]
     assert prod["links"] == [{"label": "docs", "url": "https://docs.example.com/guide"}]
 
 
@@ -335,6 +337,8 @@ async def test_export_omits_null_optional_keys(async_client, tmp_path):
 
     prod = _read(tmp_path / "tools-dev.json")[0]
     assert "description" not in prod
+    # 反面: lastUpdatedAt 取自 NOT NULL 的审计列 updated_at, 永远存在, 不参与"省略键"
+    assert prod["lastUpdatedAt"]
 
 
 # ── 主题归属 + 计数口径 ───────────────────────────────────────────────────────
