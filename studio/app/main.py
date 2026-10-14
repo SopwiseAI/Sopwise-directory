@@ -5,7 +5,6 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response, status
-from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError, OperationalError
@@ -86,6 +85,14 @@ async def add_request_id(request: Request, call_next: RequestResponseEndpoint) -
     return response
 
 
+# 刻意【不】注册 RequestValidationError 处理器: FastAPI 默认的 422 形态是
+#   {"detail": [{"loc": [...], "msg": "...", "type": "..."}]}
+# 与生成的 OpenAPI(422 -> HTTPValidationError)逐字一致。以前这里把它拍平成
+# "path.topic_id: Input should be ..." 这样一根字符串, 人读着顺, 但契约对不上:
+# 照 OpenAPI 写的客户端拿到 422 会解析失败。要改形态就得同时改 OpenAPI 声明
+# (逐路由 responses= 或覆写 openapi()), 别只改一半 —— 那正是这次删掉它的原因。
+
+
 @app.exception_handler(InvalidURLError)
 async def invalid_url_handler(request: Request, exc: InvalidURLError) -> JSONResponse:
     """非法 URL 的通用兜底 —— 回 400。
@@ -98,19 +105,6 @@ async def invalid_url_handler(request: Request, exc: InvalidURLError) -> JSONRes
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content={"detail": str(exc)},
-        headers={"X-Request-ID": getattr(request.state, "request_id", "-")},
-    )
-
-
-@app.exception_handler(RequestValidationError)
-async def validation_error_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
-    errors = []
-    for err in exc.errors():
-        loc = ".".join(str(p) for p in err.get("loc", []))
-        errors.append(f"{loc}: {err.get('msg', '')}")
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-        content={"detail": "; ".join(errors)},
         headers={"X-Request-ID": getattr(request.state, "request_id", "-")},
     )
 

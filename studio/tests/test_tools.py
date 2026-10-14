@@ -335,7 +335,8 @@ async def test_create_tool_rejects_tagline_without_terminal_punctuation(async_cl
         json={**_MINIMAL, "slug": "no-punct", "tagline": "没有标点结尾的简介"},
     )
     assert resp.status_code == 422, resp.text
-    assert "标点" in resp.json()["detail"]
+    # 422 用 FastAPI 默认形态(detail 是错误对象数组, 与 OpenAPI 的 HTTPValidationError 一致)
+    assert any("标点" in err["msg"] for err in resp.json()["detail"])
 
 
 async def test_tagline_accepts_allowed_terminal_punctuation(async_client):

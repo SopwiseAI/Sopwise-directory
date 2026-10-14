@@ -34,6 +34,23 @@ async def test_cors_exposes_pagination_and_request_id_headers(anon_client: Async
     assert "X-Request-ID" in exposed
 
 
+async def test_validation_error_keeps_fastapi_default_shape(anon_client: AsyncClient):
+    """422 必须是 FastAPI 默认形态: detail 是错误对象数组。
+
+    我们刻意【不】注册 RequestValidationError 处理器。曾经把它拍平成
+    "path.topic_id: Input should be ..." 一根字符串 —— 人读着顺, 但生成的
+    OpenAPI 里 422 仍然指向 HTTPValidationError, 照契约写的客户端会解析失败。
+    这条用例同时钉住"响应形态"和"OpenAPI 声明"两边。
+    """
+    resp = await anon_client.get("/api/v1/topics/not-an-int")
+    assert resp.status_code == 422
+
+    detail = resp.json()["detail"]
+    assert isinstance(detail, list)
+    assert {"loc", "msg", "type"} <= set(detail[0])
+    assert detail[0]["loc"][-1] == "topic_id"
+
+
 async def test_global_exception_handler_attaches_request_id():
     """500 兜底响应应带上 X-Request-ID 以便与日志关联。
 
