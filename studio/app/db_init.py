@@ -37,6 +37,10 @@ def _mysql_command(settings: Settings) -> list[str]:
         f"--host={settings.db_host}",
         f"--port={settings.db_port}",
         f"--user={settings.db_user}",
+        # 建连超时: 库在远端 / 挂在 VPN 后面时, TCP 黑洞会让 mysql 客户端卡很久,
+        # 表现为 make db-init 一直挂着不出声。只约束【建连】, 不约束 DDL 执行本身
+        # (所以长事务/大表也不会被误杀)。
+        "--connect-timeout=10",
         # 客户端必须带 utf8mb4: 脚本里有中文种子数据 (misc / 未分类), 不指定会写成乱码
         "--default-character-set=utf8mb4",
         settings.db_name,

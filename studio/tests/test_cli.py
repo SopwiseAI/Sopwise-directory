@@ -9,6 +9,9 @@ host/port 会悄悄跟 .env 脱钩; 所以另外用一条用例盯住 Settings �
 import subprocess
 from typing import Any
 
+import pytest
+from pydantic import ValidationError
+
 from app.__main__ import main as serve_main
 from app.core.config import Settings, get_settings
 from app.db_init import _mysql_command
@@ -43,6 +46,8 @@ def test_mysql_command_follows_settings_and_keeps_password_off_argv():
     assert "--host=db.internal" in command
     assert "--port=3307" in command
     assert "--user=u" in command
+    # 建连超时: 远端库 / VPN 不通时要快速失败, 不能挂着不出声
+    assert "--connect-timeout=10" in command
     assert "--default-character-set=utf8mb4" in command
     assert command[-1] == "xigee"
     # 密码【不能】出现在命令行里: ps 对同机器所有用户可见
@@ -121,3 +126,38 @@ def test_serve_cli_overrides_env(monkeypatch):
 
     assert seen["host"] == "0.0.0.0"
     assert seen["port"] == 9000
+
+
+def test_serve_help_works_without_a_valid_env(monkeypatch, capsys):
+    """--help 不该因为 .env 还没填就炸出 pydantic 的 traceback。
+
+    README 把 `python -m app --help` 写成"直接看入口支持的参数", 而新克隆下来
+    .env.<env> 还不存在(或没填全), 那时恰好最需要看帮助。
+    """
+
+    def failing(*_args: Any, **_kwargs: Any) -> Settings:
+        # 显式传空值: 进程环境里也可能带着 DB_* (CI 就是), 光靠 _env_file=None 挡不住
+        return Settings(_env_file=None, db_host="", db_name="", db_user="", api_key="k")
+
+    monkeypatch.setattr("app.__main__.get_settings", failing)
+
+    with pytest.raises(SystemExit) as exc_info:
+        serve_main(["--help"])
+
+    assert exc_info.value.code == 0
+    out = capsys.readouterr().out
+    assert "--host" in out
+    assert "--port" in out
+    assert "--reload" in out
+
+
+def test_serve_still_fails_fast_when_config_is_invalid(monkeypatch):
+    """--help 之外仍要 fail fast: 配置非法时不能拿占位值把服务起起来。"""
+
+    def failing(*_args: Any, **_kwargs: Any) -> Settings:
+        return Settings(_env_file=None, db_host="", db_name="", db_user="", api_key="k")
+
+    monkeypatch.setattr("app.__main__.get_settings", failing)
+
+    with pytest.raises(ValidationError):
+        serve_main([])
