@@ -57,6 +57,20 @@ jobs:
           tar xzf "$ARCHIVE" actionlint
           ./actionlint -color -shellcheck="$PWD/shellcheck-v${SHELLCHECK_VERSION}/shellcheck"
 
+      # scripts/*.sh 以前没有任何静态检查：actionlint 只看 workflow 里的 run: 片段，
+      # prettier/markdownlint/lint-staged 都不碰 .sh。用上面刚装好的同一个 shellcheck
+      # 二进制顺手检查（不额外下载、不引第三方 action）。
+      # -x 跟随 source；-P SCRIPTDIR 让 `# shellcheck source=lib.sh` 按【脚本自身目录】
+      # 解析（默认按 CWD 解析，那样从别处调用就会报 SC1091）。
+      # check-unassigned-uppercase 是可选检查，正好抓"引用了没赋值的全大写变量"——
+      # 重构时把 $STUDIO_PORT 换成 studio_port() 后漏改一处引用，就是它抓到的。
+      - name: Run shellcheck on scripts
+        run: |
+          set -euo pipefail
+          SHELLCHECK_VERSION="0.11.0"
+          ./shellcheck-v${SHELLCHECK_VERSION}/shellcheck -x -P SCRIPTDIR \
+            --enable=check-unassigned-uppercase scripts/*.sh
+
   zizmor:
     name: zizmor（workflow 安全审计）
     runs-on: ubuntu-latest
