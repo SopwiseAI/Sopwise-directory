@@ -251,11 +251,10 @@ class ToolLink(Base):
 
     __tablename__ = "xg_tool_link"
     # (tool_id, url_hash) 的唯一性写在 schema.sql 里, 写入端也靠它去重(见 tool_links.py);
-    # 这里声明一份, 免得模型看过去像是"允许同一个工具挂两条相同 URL"
-    __table_args__ = (
-        UniqueConstraint("tool_id", "url_hash", name="uk_tl_url"),
-        Index("idx_tl_tool", "tool_id"),
-    )
+    # 这里声明一份, 免得模型看过去像是"允许同一个工具挂两条相同 URL"。
+    # 刻意【不】再给 tool_id 单建索引: 它是 uk_tl_url 的最左前缀, 按工具过滤走它就够
+    # (schema.sql 里也删了 idx_tl_tool, 别再加回来)
+    __table_args__ = (UniqueConstraint("tool_id", "url_hash", name="uk_tl_url"),)
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     tool_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("xg_tool.id", ondelete="CASCADE"), nullable=False)

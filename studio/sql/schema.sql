@@ -133,6 +133,8 @@ CREATE TABLE IF NOT EXISTS xg_tool_topic (
 --                   的 11 条规则；写入端在 app/api/v1/endpoints/tools.py）
 --    url_hash       SHA-256(url)，用于工具内去重
 --                   长 URL 无法直接建唯一索引（utf8mb4 下 2048 字符超出键长上限），故用 hash
+--    索引          只有 uk_tl_url (tool_id, url_hash) 与主键，刻意【不】给 tool_id 单建一棵：
+--                   它是 uk_tl_url 的最左前缀，"按工具取链接"走它就够（曾经有过 idx_tl_tool）
 --    is_primary     每个工具至多一个【由 app 保证】；导出为 tools[].url
 --                   注意主链接那一行的 label 不导出（links[] 只取非主链接）
 --    status         active | broken | disabled；仅 active 导出
@@ -151,7 +153,6 @@ CREATE TABLE IF NOT EXISTS xg_tool_link (
   updated_at         DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新',
   PRIMARY KEY (id),
   UNIQUE KEY uk_tl_url (tool_id, url_hash),
-  KEY idx_tl_tool (tool_id),
   CONSTRAINT fk_tl_tool FOREIGN KEY (tool_id) REFERENCES xg_tool (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='工具链接表';
 

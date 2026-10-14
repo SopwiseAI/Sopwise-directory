@@ -2,7 +2,7 @@
 
 import hashlib
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from app.core.database import AsyncSessionLocal
 from app.models import LinkStatus, ToolLink
@@ -364,6 +364,20 @@ async def test_link_rejects_unknown_label(async_client):
 async def test_link_status_enum_matches_db(async_client):
     """LinkStatus 的取值应与库里 ENUM 一致(active/broken/disabled)。"""
     assert {status.value for status in LinkStatus} == {"active", "broken", "disabled"}
+
+
+async def test_link_table_indexes_stay_minimal(async_client):
+    """xg_tool_link 的索引就是设计里那两个, 不多不少。
+
+    断言集合而不是顺序, 盯的是两件事:
+      1. 没有 idx_tl_tool —— tool_id 是 uk_tl_url 的最左前缀, 单建一棵只是让写入多
+         维护一棵 B 树
+      2. 外键 fk_tl_tool 没有触发 InnoDB 自动补索引 —— 它认的就是 uk_tl_url 的前缀。
+         哪天这里多出一个 fk_* 索引, 说明"前缀够用"这个前提被改坏了
+    """
+    async with AsyncSessionLocal() as session:
+        rows = (await session.execute(text("SHOW INDEX FROM xg_tool_link"))).mappings().all()
+    assert {row["Key_name"] for row in rows} == {"PRIMARY", "uk_tl_url"}
 
 
 async def test_update_link_with_equivalent_url_keeps_url_and_hash(async_client):
