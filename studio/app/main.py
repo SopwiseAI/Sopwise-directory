@@ -88,6 +88,13 @@ async def add_request_id(request: Request, call_next: RequestResponseEndpoint) -
 
 @app.exception_handler(InvalidURLError)
 async def invalid_url_handler(request: Request, exc: InvalidURLError) -> JSONResponse:
+    """非法 URL 的通用兜底 —— 回 400。
+
+    注意: 当前【唯一】的调用方 tools.normalize_link_url 自己就把 InvalidURLError
+    转成了 422(为了和 Pydantic 对 URL 的校验用同一个状态码), 所以走 HTTP 的非法
+    URL 看到的是 422, 不是这里。留着这个处理器是给"以后新加的调用方忘了转"兜网:
+    回 400 总比漏成 500 强。
+    """
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content={"detail": str(exc)},
@@ -138,15 +145,47 @@ async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSON
     )
 
 
+# OperationalError 里混着两类东西, 必须分开口径:
+#   依赖暂时不可用(连不上 / 抖动 / 锁等待超时) => 503, 该重试
+#   库结构和代码对不上(少了迁移)               => 500, 重试一万次也一样
+# 下面这几个码全是后者。实测: SELECT 一个不存在的列, pymysql 抛的就是
+# OperationalError 1054 —— 只看异常类型会把它当成"库挂了, 请重试", 把人往错方向带
+# (最典型的触发场景就是改了表结构却忘了在老库上跑迁移)。
+_SCHEMA_MISMATCH_CODES = frozenset({1051, 1054, 1064, 1146})  # 未知表 / 未知列 / 语法错 / 表不存在
+
+
+def _mysql_error_code(exc: OperationalError | SATimeoutError) -> int | None:
+    """取 MySQL 错误码; 连接池超时那类不是 DBAPI 错误, 拿不到码。"""
+    args = getattr(getattr(exc, "orig", None), "args", ())
+    first = args[0] if args else None
+    return first if isinstance(first, int) else None
+
+
 @app.exception_handler(OperationalError)
 @app.exception_handler(SATimeoutError)
 async def database_unavailable_handler(request: Request, exc: OperationalError | SATimeoutError) -> JSONResponse:
-    """库连不上 / 锁等待超时 / 连接池取不到连接 => 503, 不是 500。
+    """库连不上 / 锁等待超时 / 连接池取不到连接 => 503; 库结构过期 => 500。
 
     "服务器自己写错了"和"依赖暂时不可用"要能区分开: 前者报警给人看, 后者应该
-    重试。把 OperationalError 归到 500 会让监控把每次数据库抖动都当成代码回归。
+    重试。把 OperationalError 一律归到 500 会让监控把每次数据库抖动都当成代码回归;
+    反过来一律归到 503, 又会把"忘了迁移"伪装成"稍后重试就好"。
     """
     request_id = getattr(request.state, "request_id", "-")
+    code = _mysql_error_code(exc)
+    if code in _SCHEMA_MISMATCH_CODES:
+        logger.error(
+            "Database schema mismatch [%s] on %s %s (MySQL %s): %s",
+            request_id,
+            request.method,
+            request.url.path,
+            code,
+            exc,
+        )
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Database schema is out of date"},
+            headers={"X-Request-ID": request_id},
+        )
     logger.error(
         "Database unavailable [%s] on %s %s: %s",
         request_id,

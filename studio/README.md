@@ -164,7 +164,8 @@ curl -X POST http://127.0.0.1:8000/api/v1/export -H "X-API-Key: $API_KEY"
 
 - 分页响应带 `X-Total-Count`,响应带 `X-Request-ID` (客户端可传入 `X-Request-ID`,不合法会被换成服务端生成的)
 - 列表项 `{tool_id}` / `{topic_id}` 用的是自增 `id`;**导出产物里的 `id` 是 `slug`**,两者不要混
-- 库连不上,连接池取不到连接返回 503 (不是 500);唯一键冲突返回 409
+- 库连不上 / 锁等待超时 / 连接池取不到连接返回 503 (不是 500);唯一键冲突返回 409
+- 但**库结构没跟上**(少了迁移时的 `Unknown column` / `Table doesn't exist`)返回 **500** `Database schema is out of date`,不是 503 —— 重试不会好,这是"忘了跑 `make db-init` 或迁移"的信号
 
 ## 测试
 
