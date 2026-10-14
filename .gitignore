@@ -67,6 +67,7 @@ venv/
 .pytest_cache/
 .mypy_cache/
 .coverage
+coverage.json
 htmlcov/
 
 # IDE（.vscode 只白名单化团队共享的两个文件，避免 .vscode/mcp.json 等带凭据的文件入库）

@@ -127,5 +127,18 @@ jobs:
           asyncio.run(main())
           PY
 
+      # term-missing 的表在 CI 日志里会换行, 逐文件行号读不出来(踩过: 同一个文件里
+      # "44 行缺失而 45 行有覆盖"这种自相矛盾)。所以另外产出 JSON 并上传 artifact:
+      # 要按覆盖率挑弱文件时, 以那份 JSON 为准, 别读日志里的表。
       - name: Test
-        run: uv run pytest -q --cov=app --cov-report=term-missing
+        run: uv run pytest -q --cov=app --cov-report=term-missing --cov-report=json:coverage.json
+
+      - name: Upload coverage data
+        # 失败时更要看覆盖率(用例没跑到的分支往往就是失败的原因), 所以 always()
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: studio-coverage
+          path: studio/coverage.json
+          if-no-files-found: warn
+          retention-days: 7
