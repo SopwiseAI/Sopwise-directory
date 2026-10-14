@@ -87,7 +87,7 @@ uv run python -m app --help   # 直接看入口支持的参数
 
 模板是 `.env.example` (唯一可提交的 env 文件),`APP_ENV` 决定加载哪个 `.env.<env>`。
 
-**Python 侧只有 `app/core/config.py` 解析这些文件。** Makefile 既不解析、也不转发 `DB_*`(make 自己会把命令行变量与已导出的环境变量原样传进 recipe,理由见 Makefile 顶部注释);`scripts/` 里只有 `scripts/mcp-mysql.sh` 用 bash `source` 读同一份文件去喂 MySQL MCP server —— 它的 `set -a; source` 会把整份文件 export 出去(**包括 `API_KEY`**),属于待收口项。进程环境变量优先于 `.env` 文件,所以临时覆盖用 `make dev PORT=9000` 或 `DB_NAME=scratch make db-init`。
+**Python 侧只有 `app/core/config.py` 解析这些文件。** Makefile 既不解析、也不转发 `DB_*`(make 自己会把命令行变量与已导出的环境变量原样传进 recipe,理由见 Makefile 顶部注释);`scripts/` 里只有 `scripts/mcp-mysql.sh` 要读同一份文件去喂 MySQL MCP server,它也只按需挑 `DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD` 五个键(不 `source`、不导出 `API_KEY`,且不执行文件里的 `$(...)`)。进程环境变量优先于 `.env` 文件,所以临时覆盖用 `make dev PORT=9000` 或 `DB_NAME=scratch make db-init`。`scripts/` 下其余的脚本连读都不读:studio 的监听端口与 API Key 都由 `scripts/lib.sh` 向 app 问(`studio_port` / `studio_api_key`),不抄第二份解析器。
 
 | 变量                                  | 默认值                                        | 说明                                                                                                                                                                                     |
 | ------------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
