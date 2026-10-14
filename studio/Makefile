@@ -13,6 +13,17 @@
 #   export DB_USER=alice      整行匹配不上, 拿到空
 #   DB_PORT=3306  # 主库     注释尾巴没剥
 # 抄第二遍就是错, 别再加回来。
+#
+# 同理, 这里【没有】把 DB_* 逐个转发给 app 的中间变量: make 本来就会把命令行变量
+# (DB_HOST=127.0.0.1 make db-init) 与已导出的环境变量原样放进 recipe 的环境, 转发
+# 是多余的; 而转发一旦写成 recipe 前缀, DB_PASSWORD 会被 make 连名带值回显到终端
+# 与 CI 日志里(实测: make -n db-init 打出 DB_PASSWORD=hunter2), 与 README 承诺的
+# "密码不出现在命令行里"直接矛盾。所以 DB_* 只走环境变量, 别再把值拼回 recipe 行。
+# 密码请只写进 .env.<APP_ENV>: 从命令行传(DB_PASSWORD=x make ...)的写法, 无论如何
+# 都会出现在 make 自己的 argv 里(ps 对同机其他用户可见)。
+#
+# 注意 APP_ENV 每个 recipe 都显式写成前缀: make 只自动导出"来自命令行或环境"的变量,
+# 下面 APP_ENV ?= dev 是 Makefile 内部的赋值, 不写前缀就不会传给 app(实测如此)。
 
 APP_ENV ?= dev
 
@@ -26,20 +37,15 @@ _PORT_ARG = $(if $(PORT),--port $(PORT),)
 #   make prod PROD_HOST=127.0.0.1
 PROD_HOST ?= 0.0.0.0
 
-# 命令行给的 DB_* / APP_HOST / APP_PORT 原样透传给 app —— pydantic-settings 里
-# 环境变量的优先级【高于】.env 文件(实测: DB_HOST=127.0.0.1 make db-init 生效),
-# 所以临时指向别的库这条老用法照旧。
-# 只透传确实有值的键: 没定义/空值的直接不出现, 免得把空串塞给 Settings 的必填校验。
-_ENV_PASSTHROUGH = $(foreach v,DB_HOST DB_PORT DB_NAME DB_USER DB_PASSWORD APP_HOST APP_PORT,$(if $($(v)),$(v)=$($(v)),))
-
-.PHONY: sync db-init dev sit prod lint typecheck format check test test-cov export-dev export-sit export-prod clean
-
 # 测试会 TRUNCATE .env.<APP_ENV> 指向的那 4 张 xg_* 表, conftest.py 里有一道门禁:
 # 目标库名字里没有 test 时必须显式放行, 否则 pytest 直接以退出码 3 退出(不碰库)。
 # 默认的 dev 库是 10.182.32.31 上的共享 SIT 库, 所以需要显式:
 #   make test ALLOW_SHARED_DB=1
-# 这个变量只做透传, 默认空 —— 门禁的默认姿态仍然是"拒绝"。
+# 这个 Makefile 变量不会被 make 自动导出(自动导出只覆盖命令行变量与环境变量),
+# 所以必须显式写成 recipe 前缀; 默认空 —— 门禁的默认姿态仍然是"拒绝"。
 ALLOW_SHARED_DB ?=
+
+.PHONY: sync db-init dev sit prod lint typecheck format check test test-cov export-dev export-sit export-prod clean
 
 sync:
 	uv sync
@@ -48,16 +54,16 @@ sync:
 # 改表结构要同时改它并重跑这个目标 —— 启动服务不会自动建表。
 # 连接信息由 app/core/config.py 解析; 需要本机有 mysql 客户端(与目标库同版本)。
 db-init:
-	$(_ENV_PASSTHROUGH) APP_ENV=$(APP_ENV) uv run python -m app.db_init
+	APP_ENV=$(APP_ENV) uv run python -m app.db_init
 
 dev:
-	$(_ENV_PASSTHROUGH) APP_ENV=dev uv run python -m app --reload $(_HOST_ARG) $(_PORT_ARG)
+	APP_ENV=dev uv run python -m app --reload $(_HOST_ARG) $(_PORT_ARG)
 
 sit:
-	$(_ENV_PASSTHROUGH) APP_ENV=sit uv run python -m app $(_HOST_ARG) $(_PORT_ARG)
+	APP_ENV=sit uv run python -m app $(_HOST_ARG) $(_PORT_ARG)
 
 prod:
-	$(_ENV_PASSTHROUGH) APP_ENV=prod uv run python -m app --host $(or $(HOST),$(PROD_HOST)) $(_PORT_ARG)
+	APP_ENV=prod uv run python -m app --host $(or $(HOST),$(PROD_HOST)) $(_PORT_ARG)
 
 # 与根目录 package.json 的 lint:py 保持同一范围 (app/ + tests/), 避免两套标准
 lint:
@@ -77,11 +83,14 @@ check: lint typecheck
 # 测试连真库: 每个用例前会 TRUNCATE 四张 xg_* 表, 见 tests/conftest.py。
 # 必须指向可以随便清空的 dev/sit 库, 且先跑过 make db-init。
 # 共享库(如默认 dev)还要显式放行: make test ALLOW_SHARED_DB=1
+# APP_ENV 与其它目标同源(默认 dev): APP_ENV=sit make test 跑的就是 .env.sit 那套
+# 凭据, 不会被这里写死的值悄悄盖掉(以前写死 dev, 命令行给 sit 也没用); prod 由
+# conftest 的门禁无条件拒绝, 不靠这个变量兜。
 test:
-	APP_ENV=dev STUDIO_ALLOW_SHARED_DB_TRUNCATE=$(ALLOW_SHARED_DB) uv run pytest -v
+	APP_ENV=$(APP_ENV) STUDIO_ALLOW_SHARED_DB_TRUNCATE=$(ALLOW_SHARED_DB) uv run pytest -v
 
 test-cov:
-	APP_ENV=dev STUDIO_ALLOW_SHARED_DB_TRUNCATE=$(ALLOW_SHARED_DB) uv run pytest --cov=app --cov-report=term-missing -v
+	APP_ENV=$(APP_ENV) STUDIO_ALLOW_SHARED_DB_TRUNCATE=$(ALLOW_SHARED_DB) uv run pytest --cov=app --cov-report=term-missing -v
 
 # 导出产物是【两个文件】: topics-{env}.json / tools-{env}.json
 # (prod 额外同步无后缀的 topics.json / tools.json 给前端)。
@@ -96,5 +105,5 @@ export-prod:
 	APP_ENV=prod uv run python -m app.exporters
 
 clean:
-	rm -rf .ruff_cache .pytest_cache .coverage
+	rm -rf .ruff_cache .pytest_cache .mypy_cache .coverage
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
