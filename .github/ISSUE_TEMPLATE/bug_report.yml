@@ -24,7 +24,7 @@ body:
       label: 影响范围
       options:
         - 前端页面（web/）
-        - 数据内容（data.json）
+        - 数据内容（web/data/topics.json / tools.json）
         - 构建 / 部署 / CI
         - studio 后端
         - 文档

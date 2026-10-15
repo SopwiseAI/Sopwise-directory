@@ -1,4 +1,4 @@
-# 产品采集 Prompt
+# 工具采集 Prompt
 
 ## 解析器选择决策树
 
@@ -16,11 +16,11 @@
 ### 网页抓取
 
 - 调用 agent-browser skill 抓取页面
-- **产品名生成（关键）**: 不直接用 `<title>`，综合 h1/meta description/页面可见文本，由 LLM 生成规范化名称:
+- **工具名生成（关键）**: 不直接用 `<title>`，综合 h1/meta description/页面可见文本，由 LLM 生成规范化名称:
   - 优先用品牌官方名（如 "Cursor"、"Notion"）
   - 品牌名不明确时用"品牌 + 定位"（如 "Adobe Firefly"）
   - 去掉无意义后缀（| 首页、- 官网等）
-- **URL 经归一化后作为产品链接**（见下方"URL 归一化"），不直接用原始 URL
+- **URL 经归一化后作为工具链接**（见下方"URL 归一化"），不直接用原始 URL
 
 ### 列表/CSV
 
@@ -35,14 +35,14 @@
 
 - 对象数组: 提取每项的 name/url 字段
 - 字段名兼容: name/names/title, url/link/website/homepage 均识别
-- 嵌套: 若有 products 字段，进入取值
+- 嵌套: 若有 tools 字段，进入取值
 - 字段缺失处理: name 缺失 → 标记无效跳过；url 缺失 → 入库仅 name 无链接
 
 ### 文本抽取
 
-- LLM 识别文本中的产品实体 + 对应 URL
+- LLM 识别文本中的工具实体 + 对应 URL
 - URL 可能是裸文本，需识别 `http(s)://` 模式
-- 产品名可能中英文混合，按官方名规范
+- 工具名可能中英文混合，按官方名规范
 - 输出结构化候选列表
 
 ## 清洗规范
@@ -79,10 +79,22 @@
 - **不直接丢弃中文**: 中文 name 必须生成有效 slug，不可 fallback 到 `item-{随机}`
 - 无法确定时: 询问用户指定，不要自动生成无意义 slug
 
+## 创建所需必填集
+
+新模型下创建工具时 `tagline` / `pricing` / `origin` / `access` / `languages` 是后端必填字段，采集阶段必须给出:
+
+- `tagline`: 一句话简介，须以标点结尾
+- `pricing`: free / freemium / paid（`opensource` 已移除，开源与否是独立字段 `is_open_source`）
+- `origin`: cn / overseas
+- `access`: direct / proxy
+- `languages`: ISO 639-1 两字母小写，1~8 项，逗号分隔
+
+其中 `origin` / `access` 强烈依赖事实，**无法从输入判断时不要替用户猜**，列入待确认清单询问用户。
+
 ## 去重判定
 
 - **跨条去重**: name 完全相同（忽略大小写）或 **归一化后的 url** 完全相同，保留首条
-- **查库**: `products` 全量，比对 name 和归一化 url 相同的标记"重复-跳过"
+- **查库**: `tools` 全量，比对 name 和归一化 url 相同的标记"重复-跳过"
 
 ## 预览表格式
 

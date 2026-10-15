@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # 一键安装所有依赖
 set -euo pipefail
+# shellcheck source=lib.sh
 source "$(dirname "$0")/lib.sh"
 
 echo -e "${CYAN}════════════════════════════════════════════${NC}"

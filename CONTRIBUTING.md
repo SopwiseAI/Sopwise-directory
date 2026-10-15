@@ -17,14 +17,14 @@ pnpm-workspace.yaml  pnpm 行为设置（非敏感项）
 
 ## 前置要求
 
-| 依赖    | 版本             | 依据                                                        |
-| ------- | ---------------- | ----------------------------------------------------------- |
-| Node.js | 24（Active LTS） | `.nvmrc`、`package.json` 的 engines（`>=24.0.0`）           |
-| pnpm    | >= 12            | `package.json` 的 engines、`packageManager`（当前 12.11.2） |
-| Python  | >= 3.13          | `studio/pyproject.toml`                                     |
-| uv      | 最新             | studio 依赖管理（`uv sync` / `uv run`）                     |
-| MySQL   | >= 5.7           | `studio/sql/schema.sql`、后端测试必需                       |
-| git     | >= 2.32          | husky 钩子与 lint-staged 17（后者硬性要求 git >= 2.32）     |
+| 依赖    | 版本             | 依据                                                                                             |
+| ------- | ---------------- | ------------------------------------------------------------------------------------------------ |
+| Node.js | 24（Active LTS） | `.nvmrc`、`package.json` 的 engines（`>=24.0.0`）                                                |
+| pnpm    | >= 12            | `package.json` 的 engines、`packageManager`（当前 12.11.2）                                      |
+| Python  | >= 3.13          | `studio/pyproject.toml`                                                                          |
+| uv      | >= 0.11.30       | `studio/pyproject.toml` 的 `[tool.uv] required-version`（低于它 uv 会直接拒绝执行；CI 固定同值） |
+| MySQL   | >= 5.7           | `studio/sql/schema.sql`、后端测试必需                                                            |
+| git     | >= 2.32          | husky 钩子与 lint-staged 17（后者硬性要求 git >= 2.32）                                          |
 
 首次克隆后 `pnpm install` 会自动安装 husky 钩子。Node 或 git 版本过低时，提交钩子会在
 `lint-staged` 一步失败（此时 `nvm install 24` / 升级 git 即可）；CI 使用 `node-version-file: .nvmrc`，
@@ -81,7 +81,7 @@ fix/<name>       缺陷修复
 refactor/<name>  重构
 chore/<name>     工程化/工具链变更
 docs/<name>      文档
-data/<name>      数据同步（唯一允许提交 web/data/data.json 的功能分支）
+data/<name>      数据同步（唯一允许提交 web/data/topics.json 与 tools.json 的功能分支）
 ```
 
 ### 提交规范 (Conventional Commits)
@@ -108,17 +108,17 @@ revert: 回退
 
 **scope 白名单**（commitlint 的 `scope-enum` 为强制校验，未列出的 scope 会被拒绝）：
 
-| scope               | 适用范围                                |
-| ------------------- | --------------------------------------- |
-| `web`               | `web/` 前端                             |
-| `studio`            | `studio/` 后端                          |
-| `skills`            | `skills/` AI 套件                       |
-| `scripts`           | `scripts/` 脚本                         |
-| `root`              | 根目录文件与仓库工程化（含 `.github/`） |
-| `docs`              | 文档                                    |
-| `data`              | `web/data/data.json` 数据同步分支专用   |
-| `deps` / `deps-dev` | 依赖升级（Dependabot 自动生成的 scope） |
-| `ci`                | CI / 工作流相关改动                     |
+| scope               | 适用范围                                               |
+| ------------------- | ------------------------------------------------------ |
+| `web`               | `web/` 前端                                            |
+| `studio`            | `studio/` 后端                                         |
+| `skills`            | `skills/` AI 套件                                      |
+| `scripts`           | `scripts/` 脚本                                        |
+| `root`              | 根目录文件与仓库工程化（含 `.github/`）                |
+| `docs`              | 文档                                                   |
+| `data`              | `web/data/topics.json` / `tools.json` 数据同步分支专用 |
+| `deps` / `deps-dev` | 依赖升级（Dependabot 自动生成的 scope）                |
+| `ci`                | CI / 工作流相关改动                                    |
 
 scope 可以省略（例如 `chore: 更新 CI`），省略时不做校验。
 
@@ -128,11 +128,14 @@ scope 可以省略（例如 `chore: 更新 CI`），省略时不做校验。
 | ----------------------------------------------------------- | ------------------ | -------------------------------------- |
 | 全仓库 Markdown / JSON / JSONC / YAML / TS / TSX / JS / CSS | prettier           | `pnpm run format` / `format:check`     |
 | Markdown 规则（`**/*.md`）                                  | markdownlint-cli2  | `pnpm run lint:md` / `lint:md:fix`     |
-| Python                                                      | ruff               | `pnpm run lint:py` / `format:py:check` |
+| Python 静态检查                                             | ruff               | `pnpm run lint:py` / `format:py:check` |
+| Python 类型                                                 | mypy（strict）     | `pnpm run typecheck:py`                |
 | TypeScript / TSX 语义                                       | eslint（web 内置） | `pnpm run lint:web`                    |
 | Shell                                                       | 暂无               | 遵循 `.editorconfig`（4 空格缩进）     |
 
 行宽只有一套标准：`.prettierrc` 的 `printWidth`（Markdown 为 200）；`.editorconfig` 不再声明行宽。
+
+Python 的类型门禁配置在 `studio/pyproject.toml` 的 `[tool.mypy]`：`app/` 是 `strict = true`，`tests/` 走放宽的一层（只查会真的出错的类型问题，不强制每个用例写签名）。CI 与本地走的是同一份配置，不存在两套标准。
 
 ### 提交流程
 
@@ -144,7 +147,7 @@ husky pre-commit 自动执行 lint-staged：
 - `.py` → ruff check + format（依赖 `studio/.venv`，由 `./scripts/install.sh` 创建）
 
 husky commit-msg 自动执行 commitlint 校验提交信息格式（type 与 scope 规则见上文）。
-分支名规范与 `web/data/data.json` 的提交限制由 husky pre-commit 钩子把关，不通过则拒绝提交。
+分支名规范与 `web/data/topics.json` / `web/data/tools.json` 的提交限制由 husky pre-commit 钩子把关，不通过则拒绝提交。
 
 ## Pull Request 流程
 
@@ -152,20 +155,21 @@ husky commit-msg 自动执行 commitlint 校验提交信息格式（type 与 sco
    `docs/<name>`，数据同步用 `data/<name>`
 2. 提交代码（提交信息遵循上文 type 与 scope 规则）并推送至远程
 3. 创建 Pull Request，标题遵循 Conventional Commits 格式
-4. 通过 CI 检查（根检查 markdownlint + prettier、web 的 lint / typecheck / test / build）后合并
+4. 通过 CI 检查（根检查 markdownlint + prettier、web 的 lint / typecheck / test / build、studio 的 ruff + mypy + pytest）后合并
 
-`web/data/data.json` 是生产数据源：只有 `main` 与 `data/<name>` 分支允许提交，其余分支会被
+`web/data/topics.json` 与 `web/data/tools.json` 是生产数据源：只有 `main` 与 `data/<name>` 分支允许提交，其余分支会被
 `.husky/pre-commit` 拒绝。
 
 ## 测试
 
-后端测试**前置条件**：本机 MySQL 已启动，且 `studio/.env.dev` 已按上文配置（conftest 每个用例前会 TRUNCATE `sd_*` 表，无库则全部报连接错误）；可用 `studio/sql/schema.sql` 初始化表结构。
+后端测试**前置条件**：本机 MySQL 已启动，且 `studio/.env.dev` 已按上文配置（conftest 每个用例前会 TRUNCATE `xg_*` 表，无库则全部报连接错误）；可用 `studio/sql/schema.sql` 初始化表结构。默认 dev 库不是专用测试库，所以还要显式放行破坏性清理（`make test ALLOW_SHARED_DB=1`，等价于 `STUDIO_ALLOW_SHARED_DB_TRUNCATE=1`）；不设这个开关时 pytest 以退出码 3 直接退出，不会碰库。
 
 ```bash
 # 后端测试（需 MySQL，见上方前置条件）
 pnpm run lint:py                 # ruff check
 pnpm run format:py:check         # ruff format 校验
-cd studio && APP_ENV=dev uv run pytest -v
+pnpm run typecheck:py            # mypy (app/ strict, tests/ 放宽)
+cd studio && make test ALLOW_SHARED_DB=1
 
 # 前端测试与类型检查（需先 ./scripts/install.sh）
 pnpm run test:web                # vitest

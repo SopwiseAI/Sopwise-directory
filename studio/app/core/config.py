@@ -4,15 +4,16 @@ from functools import lru_cache
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as pkg_version
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 from urllib.parse import quote
 
-from pydantic import Field, field_validator
+from pydantic import Field, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
 
 AppEnv = Literal["dev", "sit", "prod"]
+LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 
 def get_app_version() -> str:
@@ -31,6 +32,9 @@ class Settings(BaseSettings):
     app_host: str = "127.0.0.1"
     app_port: int = 8000
 
+    # 只影响 root logger 的级别(见 app/core/logging.py); 取值必须是大写字面量之一
+    log_level: LogLevel = "INFO"
+
     db_host: str = "localhost"
     db_port: int = 3306
     db_name: str = ""
@@ -40,7 +44,9 @@ class Settings(BaseSettings):
     db_max_overflow: int = Field(10, ge=0)
     db_echo: bool = False
 
-    export_output_path: str = "../web/data/data.json"
+    # 导出目录。产物是【两个文件】——与 studio/schema/*.data.jsonc 的顶层数组一致:
+    #   topics-{env}.json / tools-{env}.json;prod 额外同步一份无后缀的 topics.json / tools.json
+    export_output_dir: str = "../web/data"
 
     cors_origins: str = "http://localhost:3000,http://localhost:5173"
 
@@ -51,9 +57,25 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
     )
 
+    @field_validator("log_level", mode="before")
+    @classmethod
+    def normalize_log_level(cls, v: Any) -> Any:
+        # LOG_LEVEL=info 是最顺手的写法, 但 Literal 只做精确匹配, 这里统一成大写
+        return v.upper() if isinstance(v, str) else v
+
+    @field_validator("db_host", "db_name", "db_user")
+    @classmethod
+    def validate_db_identity(cls, v: str, info: ValidationInfo) -> str:
+        # 这三个键空着不会在启动时报错, 而是等到第一次查询才炸出 aiomysql 的原始
+        # 错误("No database selected" / "Access denied"), 排查成本高得多。
+        # db_password 刻意不校验: 本地库允许空密码, 那是合法配置。
+        if not v.strip():
+            raise ValueError(f"{info.field_name} 不能为空(在 .env.<APP_ENV> 里配置)")
+        return v.strip()
+
     @field_validator("app_debug")
     @classmethod
-    def validate_app_debug(cls, v, info):
+    def validate_app_debug(cls, v: bool, info: ValidationInfo) -> bool:
         env = info.data.get("app_env", "dev")
         if env == "prod" and v:
             raise ValueError("app_debug must be False in prod (configure APP_DEBUG=false in .env.prod)")
@@ -61,7 +83,7 @@ class Settings(BaseSettings):
 
     @field_validator("api_key")
     @classmethod
-    def validate_api_key(cls, v, info):
+    def validate_api_key(cls, v: str, info: ValidationInfo) -> str:
         env = info.data.get("app_env", "dev")
         if not v:
             raise ValueError(f"api_key must not be empty (configure API_KEY in .env.{env})")
@@ -69,6 +91,29 @@ class Settings(BaseSettings):
             raise ValueError(
                 f"api_key must be set to a non-default value in {env} environment (configure API_KEY in .env.{env})"
             )
+        return v
+
+    @field_validator("export_output_dir")
+    @classmethod
+    def validate_export_output_dir(cls, v: str) -> str:
+        # 空串会被 Path("") 解析成"."(studio/ 本身), 产物静默落到源码目录里, 必须拦下
+        if not v.strip():
+            raise ValueError("export_output_dir 不能为空(默认 ../web/data)")
+        return v.strip()
+
+    @field_validator("cors_origins")
+    @classmethod
+    def validate_cors_origins(cls, v: str) -> str:
+        # main.py 里 allow_credentials=True 是写死的。Starlette 在这个组合下遇到 "*" 会把
+        # 请求的 Origin 原样回显,等于对任意站点开放凭证;现在只用 X-API-Key(不是浏览器
+        # 自动携带的凭证)所以风险有限,但哪天加了 Cookie 会话就是真漏洞。宁可启动失败。
+        origins = [origin.strip() for origin in v.split(",") if origin.strip()]
+        if "*" in origins:
+            raise ValueError("cors_origins 不能用 *(allow_credentials=True 下会回显任意 Origin), 请逐个列白名单")
+        # 空值同样是坑: CORS_ORIGINS= 不会报错, 只是浏览器请求全被挡下, 前端只看到
+        # 一个没有细节的 CORS 错误。.env.example 写明这是必填项, 这里兑现它。
+        if not origins:
+            raise ValueError("cors_origins 不能为空(如 http://localhost:3000, 多个用逗号分隔)")
         return v
 
     @property
@@ -83,11 +128,28 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @property
-    def export_full_path(self) -> Path:
-        path = Path(self.export_output_path)
-        if not path.is_absolute():
-            path = _STUDIO_ROOT / path
-        return path.with_stem(f"{path.stem}-{self.app_env}")
+    def export_dir(self) -> Path:
+        """导出目录(绝对路径)。
+
+        相对路径按 studio/ 解析而不是进程 cwd —— 产物落在哪儿不该取决于谁在哪个目录下
+        敲的命令;resolve() 只是把 studio/../web/data 里的 ".." 折掉, 让日志与
+        ExportResponse.output_path 里的路径可读。
+        """
+        path = Path(self.export_output_dir)
+        return (path if path.is_absolute() else _STUDIO_ROOT / path).resolve()
+
+    def export_paths(self, *, frontend_names: bool = False) -> dict[str, Path]:
+        """导出产物路径。
+
+        frontend_names=True 时用无环境后缀的名字(topics.json / tools.json),
+        只在 prod 下额外同步——开发产物带 -dev/-sit 后缀,避免误覆盖前端数据源。
+        """
+        suffix = "" if frontend_names else f"-{self.app_env}"
+        directory = self.export_dir
+        return {
+            "topics": directory / f"topics{suffix}.json",
+            "tools": directory / f"tools{suffix}.json",
+        }
 
 
 @lru_cache

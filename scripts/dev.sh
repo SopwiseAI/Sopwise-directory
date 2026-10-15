@@ -5,6 +5,7 @@
 #   ./dev.sh --web-only   # 仅前端
 #   ./dev.sh --studio-only # 仅后端
 set -euo pipefail
+# shellcheck source=lib.sh
 source "$(dirname "$0")/lib.sh"
 
 cleanup() {
@@ -43,7 +44,7 @@ fi
 
 info "开发环境已就绪"
 [[ "$START_WEB" == true ]]     && echo -e "  ${BLUE}web${NC}     → http://localhost:$WEB_PORT"
-[[ "$START_STUDIO" == true ]]  && echo -e "  ${BLUE}studio${NC}  → http://localhost:$STUDIO_PORT/docs"
+[[ "$START_STUDIO" == true ]]  && echo -e "  ${BLUE}studio${NC}  → http://localhost:$(studio_port)/docs"
 echo ""
 warn "停止服务: ./scripts/stop.sh"
 warn "查看状态: ./scripts/status.sh"

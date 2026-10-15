@@ -1,19 +1,25 @@
 #!/usr/bin/env sh
-# 防止污染生产数据源 data.json (测试数据污染防护)
-# 允许提交 data.json 的分支: main 与 data/* (数据同步分支)
+# 防止污染生产数据源 (测试数据污染防护)
+# 生产数据源: web/data/topics.json 与 web/data/tools.json (仅 prod 导出才会同步)
+# 允许提交它们的分支: main 与 data/* (数据同步分支)
 #   —— main 禁止直推(分支保护)，数据同步走 data/* 分支 + PR
+# 过渡期额外挡着旧命名的 web/data/data.json: web/ 目前仍从它取数（见 web/lib/data.ts），
+# 在 web/ 切到 topics.json / tools.json 之前，它依然是生产数据源，不能放开。
 branch=$(git symbolic-ref --short HEAD 2>/dev/null || echo "")
 case "$branch" in
     main | data/*)
         # 允许
         ;;
     *)
-        if git diff --cached --name-only | grep -q "^web/data/data.json$"; then
-            echo "拒: 禁止在非 main 分支提交 web/data/data.json (生产数据源)"
-            echo "    data.json 仅 prod 环境导出同步, 更新请用 data/<name> 分支提 PR"
-            echo "    本地测试前端: cp web/data/data-dev.json web/data/data.json (勿提交)"
-            exit 1
-        fi
+        staged=$(git diff --cached --name-only)
+        for f in web/data/topics.json web/data/tools.json web/data/data.json; do
+            if printf '%s\n' "$staged" | grep -Fxq "$f"; then
+                echo "拒: 禁止在非 main 分支提交 $f (生产数据源)"
+                echo "    topics.json / tools.json 仅 prod 环境导出同步, 更新请用 data/<name> 分支提 PR"
+                echo "    本地测试前端: 用带环境后缀的副本 (web/data/topics-dev.json + tools-dev.json, 勿提交)"
+                exit 1
+            fi
+        done
         ;;
 esac
 

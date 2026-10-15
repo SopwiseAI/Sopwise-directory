@@ -4,20 +4,56 @@ import pytest
 from fastapi import HTTPException
 
 from app.core.database import AsyncSessionLocal
-from app.models import Category
+from app.models import Topic
 from app.utils.db import check_unique
 from app.utils.url import InvalidURLError, normalize_url, url_hash
-from tests.conftest import create_category
+from tests.conftest import create_topic
 
 # -- normalize_url ---------------------------------------------------------------
 
 
-class TestNormalizeUrl:
-    """schema.sql 归一化规则: 小写域名 / 去 www / 去默认端口 / 去尾斜杠(根路径保留) / 去 fragment / query 排序."""
+def test_normalize_url_raises_when_library_returns_nothing(monkeypatch):
+    """url_normalize 的声明是 str | None; 它回空值时必须变成 400, 不能是 500。
 
-    def test_schema_doc_example(self):
-        """schema 文档示例: http://www.Example.com:443/foo/#top -> https://example.com/foo"""
+    不挡这一步的话 urlsplit(None) 抛的是 TypeError, 会绕过 main.py 的
+    InvalidURLError 处理器漏成 500。这个分支正常输入走不到, 只能这样钉住。
+    """
+    monkeypatch.setattr("app.utils.url.url_normalize", lambda *_args, **_kwargs: "")
+    with pytest.raises(InvalidURLError):
+        normalize_url("https://example.com")
+
+
+class TestNormalizeUrl:
+    """app/utils/url.py 的归一化规则: 小写域名 / 去 www / 去默认端口 / 去尾斜杠 / 去 fragment / query 排序."""
+
+    def test_normalization_doc_example(self):
+        """规则文档里的示例: http://www.Example.com:443/foo/#top -> https://example.com/foo"""
         assert normalize_url("http://www.Example.com:443/foo/#top") == "https://example.com/foo"
+
+    @pytest.mark.parametrize(
+        "raw",
+        [
+            "https://example.com",
+            "http://www.Example.com:80/foo?b=2&a=1",
+            "https://example.com/a/../b",
+            "https://example.com/%7Euser",
+            "https://example.com//foo///bar",
+            "https://user:pass@example.com/x",
+            "http://localhost:3000/app",
+            "https://example.com:8443/x",
+            "https://example.com/?a=1",
+            "example.com/foo",
+        ],
+    )
+    def test_idempotent(self, raw: str):
+        """归一化必须幂等: normalize(normalize(x)) == normalize(x)。
+
+        这不是洁癖, 是写入端的正确性前提: 改链接时拿"客户端原始串归一化后的值"和
+        库里存的值比较(见 endpoints/tool_links.update_tool_link), 不幂等就会把每次
+        PUT 都判成"改了", 白刷一遍 url_hash 与 updated_at。
+        """
+        once = normalize_url(raw)
+        assert normalize_url(once) == once
 
     def test_empty_string(self):
         assert normalize_url("") == ""
@@ -48,7 +84,7 @@ class TestNormalizeUrl:
         assert normalize_url("http://example.com:3000/foo") == "https://example.com:3000/foo"
 
     def test_root_path_kept(self):
-        """根路径 '/' 应保留 (schema: 根路径除外)."""
+        """根路径 '/' 应保留 (根路径除外)."""
         assert normalize_url("https://example.com/") == "https://example.com/"
         assert normalize_url("https://example.com") == "https://example.com/"
 
@@ -188,7 +224,8 @@ class TestUrlHash:
     def test_empty_string_hash(self):
         """空字符串不应抛异常."""
         h = url_hash("")
-        assert isinstance(h, str) and len(h) == 64
+        assert isinstance(h, str)
+        assert len(h) == 64
 
     def test_hash_length(self):
         assert len(url_hash("https://example.com")) == 64
@@ -208,34 +245,45 @@ class TestUrlHash:
 async def test_check_unique_available(async_client):
     """字段值不存在时不应抛异常."""
     async with AsyncSessionLocal() as session:
-        await check_unique(session, Category, Category.slug, "unique-slug", label="Slug")
+        await check_unique(session, Topic, Topic.slug, "unique-slug", label="Slug")
 
 
 async def test_check_unique_conflict(async_client):
     """字段值已存在时应抛 409."""
-    await create_category(async_client, slug="dup-slug", name="重复Slug")
+    await create_topic(async_client, slug="dup-slug", name="重复Slug")
 
     async with AsyncSessionLocal() as session:
         with pytest.raises(HTTPException) as exc_info:
-            await check_unique(session, Category, Category.slug, "dup-slug", label="Slug")
+            await check_unique(session, Topic, Topic.slug, "dup-slug", label="Slug")
         assert exc_info.value.status_code == 409
         assert "Slug already exists" in exc_info.value.detail
 
 
 async def test_check_unique_exclude_id(async_client):
     """更新场景: exclude_id 应排除自身记录."""
-    cat = await create_category(async_client, slug="keep-slug", name="保留Slug")
+    topic = await create_topic(async_client, slug="keep-slug", name="保留Slug")
 
     async with AsyncSessionLocal() as session:
-        await check_unique(session, Category, Category.slug, "keep-slug", exclude_id=cat["id"], label="Slug")
+        await check_unique(session, Topic, Topic.slug, "keep-slug", exclude_id=topic["id"], label="Slug")
 
 
 async def test_check_unique_exclude_id_still_conflicts(async_client):
     """更新场景: exclude_id 排除自身后, 与其他记录冲突仍应抛 409."""
-    cat1 = await create_category(async_client, slug="slug-a", name="Slug A")
-    await create_category(async_client, slug="slug-b", name="Slug B")
+    topic_a = await create_topic(async_client, slug="slug-a", name="Slug A")
+    await create_topic(async_client, slug="slug-b", name="Slug B")
 
     async with AsyncSessionLocal() as session:
         with pytest.raises(HTTPException) as exc_info:
-            await check_unique(session, Category, Category.slug, "slug-b", exclude_id=cat1["id"], label="Slug")
+            await check_unique(session, Topic, Topic.slug, "slug-b", exclude_id=topic_a["id"], label="Slug")
         assert exc_info.value.status_code == 409
+
+
+async def test_check_unique_on_name_field(async_client):
+    """唯一性检查是按列做的: 换成 name 列同样生效."""
+    await create_topic(async_client, slug="name-slug", name="唯一名")
+
+    async with AsyncSessionLocal() as session:
+        with pytest.raises(HTTPException) as exc_info:
+            await check_unique(session, Topic, Topic.name, "唯一名", label="Topic name")
+        assert exc_info.value.status_code == 409
+        assert "Topic name already exists" in exc_info.value.detail

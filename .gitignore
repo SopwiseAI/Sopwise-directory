@@ -65,7 +65,9 @@ dist/
 venv/
 .ruff_cache/
 .pytest_cache/
+.mypy_cache/
 .coverage
+coverage.json
 htmlcov/
 
 # IDE（.vscode 只白名单化团队共享的两个文件，避免 .vscode/mcp.json 等带凭据的文件入库）
@@ -87,7 +89,12 @@ opencode.local.json
 # scripts runtime
 scripts/.state/
 
-# export artifacts (data-{env}.json, 保留 data.json)
+# export artifacts
+# 环境副本（dev/sit 只有这两份，prod 会多写一份）不入库：
+web/data/topics-*.json
+web/data/tools-*.json
+# 无后缀的 topics.json / tools.json 是 prod 同步出来的前端数据源，必须入库（不设忽略规则即可）。
+# 旧命名产物（data.json 系列）在 web/ 完成前端切换前继续挡住，避免旧副本被误提交。
 web/data/data-*.json
 
 # skills api runtime

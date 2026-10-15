@@ -5,6 +5,9 @@
     "DavidAnson.vscode-markdownlint",
     "bradlc.vscode-tailwindcss",
     "ms-python.python",
+    // CI 的类型门禁是 mypy(studio/pyproject.toml 的 [tool.mypy]); 装它编辑器里看到的
+    // 就是 CI 会拦的那些错, 不用等推送才发现。Pylance 的类型检查默认关闭, 不会打两套架
+    "ms-python.mypy-type-checker",
     "dbaeumer.vscode-eslint",
     // VS Code 原生不读 .editorconfig，缺这个扩展则仓库的缩进/行尾/尾随空白约定在编辑器里不生效
     "EditorConfig.EditorConfig",

@@ -44,7 +44,9 @@ async def test_health_status_is_ok_when_db_connected(async_client):
 async def test_health_db_disconnected(async_client):
     """当数据库不可用时返回 503 degraded。"""
     with patch("app.api.v1.endpoints.health.engine") as mock_engine:
-        mock_engine.connect.side_effect = OperationalError("mock", "mock", "mock")
+        # 第三个参数是 DBAPI 原始异常(SQLAlchemy 就是这么包的), 传字符串的话
+        # 任何读 exc.orig.args 的处理器都会 AttributeError —— 用真异常才模拟得像
+        mock_engine.connect.side_effect = OperationalError("mock", {}, Exception("mock"))
         resp = await async_client.get("/api/v1/health")
     assert resp.status_code == 503
     data = resp.json()
