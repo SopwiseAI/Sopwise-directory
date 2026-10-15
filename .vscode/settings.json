@@ -53,7 +53,7 @@
     "studio/.venv": true,
     "studio/.ruff_cache": true,
     "studio/.pytest_cache": true,
-    "scripts/.state": true,
+    "scripts/.run": true,
     ".dsh-artifacts": true,
     "**/.pnpm-store": true
   },

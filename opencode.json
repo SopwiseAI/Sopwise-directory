@@ -11,7 +11,7 @@
       "**/.venv/**",
       "**/.next/**",
       ".dsh-artifacts/**",
-      "scripts/.state/**"
+      "scripts/.run/**"
     ]
   },
   "snapshot": false,
