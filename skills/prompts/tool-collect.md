@@ -49,20 +49,27 @@
 
 ### URL 归一化
 
-所有 URL（无论来自哪个解析器）入库前必须归一化:
+所有 URL（无论来自哪个解析器）入库前必须归一化。归一化由后端写入端完成（`studio/app/utils/url.py:normalize_url`），共 11 条规则:
 
-1. **去追踪参数**: 删除 query 中所有 `utm_` 前缀参数、`fbclid`、`gclid`、`mc_eid`、`mc_cid`、`ref`、`srk`、`_hsenc`、`_hsmi`、`igshid`、`spm` 等
-2. **补全 scheme**: 无 `http(s)://` 前缀时补 `https://`
-3. **域名小写**: `WWW.Example.com` → `www.example.com`
-4. **去默认端口**: `:443`(https) / `:80`(http) 删除
-5. **去尾斜杠**: `example.com/` → `example.com`
+1. **scheme 归一**: 非本地地址强制 `https`（`http://example.com/x` → `https://example.com/x`；无 scheme 的裸域名补 `https://`）；`localhost` / `127.0.0.1` / `::1` / `0.0.0.0` 用 `http`
+2. **域名小写**: `https://Example.COM/Path` → `https://example.com/Path`
+3. **去 `www.` 前缀**: `https://www.notion.ai` → `https://notion.ai/`
+4. **去默认端口**: `:443`(https) / `:80`(http) 删除，其余端口保留
+5. **去尾斜杠**: `example.com/docs/` → `example.com/docs`（根路径归一化为 `example.com/`）
 6. **去片段**: 删除 `#` 及之后内容
-7. **空 query 清理**: 去参后若 query 为空，删除 `?`
+7. **去 userinfo**: `user:pass@` 前缀删除
+8. **解析 dot-segment**: `/a/../b` → `/b`
+9. **归一化 percent-encoding**: `%7E` → `~`
+10. **折叠多斜杠**: `//foo` → `/foo`
+11. **query 参数排序**: `?b=2&a=1` → `?a=1&b=2`
+
+**注意**: 后端**不删追踪参数**。`utm_*` / `fbclid` / `gclid` 等会原样保留在归一化结果里并进入导出物；如需去掉，必须在调用 CLI 前由调用方自行清洗。另外，`www.` 规则只在能解析出 host（即输入带 scheme）时生效：裸域名 `www.example.com` 会被补成 `https://www.example.com/`，`www.` 不会被去掉。
 
 示例:
 
-- `https://cursor.com/?utm_source=ad&gclid=xxx#top` → `https://cursor.com`
-- `HTTP://WWW.NOTION.AI:443/` → `https://www.notion.ai`
+- `HTTP://WWW.NOTION.AI:443/` → `https://notion.ai/`
+- `https://example.com/?b=2&a=1#top` → `https://example.com/?a=1&b=2`
+- `https://cursor.com/?utm_source=ad` → `https://cursor.com/?utm_source=ad`（追踪参数保留）
 
 ### name 清洗
 
@@ -83,11 +90,16 @@
 
 新模型下创建工具时 `tagline` / `pricing` / `origin` / `access` / `languages` 是后端必填字段，采集阶段必须给出:
 
-- `tagline`: 一句话简介，须以标点结尾
+- `name`: 非空白，≤128 字符
+- `slug`: ≤64 字符，kebab-case（`^[a-z0-9]+(?:-[a-z0-9]+)*$`）
+- `tagline`: 一句话简介，≤100 字符，须以标点结尾
+- `description`: ≤500 字符，可空
 - `pricing`: free / freemium / paid（`opensource` 已移除，开源与否是独立字段 `is_open_source`）
 - `origin`: cn / overseas
 - `access`: direct / proxy
 - `languages`: ISO 639-1 两字母小写，1~8 项，逗号分隔
+- `url`: ≤2048 字符，http(s)
+- `tags`: 最多 8 个，单个 ≤32 字符
 
 其中 `origin` / `access` 强烈依赖事实，**无法从输入判断时不要替用户猜**，列入待确认清单询问用户。
 

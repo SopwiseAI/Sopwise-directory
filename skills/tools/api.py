@@ -2,28 +2,29 @@
 """XiGee Studio API CLI — AI 调用 studio 接口的命令行工具。
 
 用法:
-  python skills/tools/api.py tools [--status S] [--topic-id N] [--featured] [--search K] [--page N] [--page-size N]  列出工具
+  python skills/tools/api.py tools [--status S] [--topic-id N] [--featured] [--search K] [--page N] [--page-size N] [--json]  列出工具
   python skills/tools/api.py tool <id>                      查看工具详情
   python skills/tools/api.py add-tool --name <name> --tagline <一句话> --pricing <p> --origin <o> --access <a> --languages zh,en
                                   [--slug <slug>] [--url <url>] [--topic-ids 1,2] [--primary-topic-id N]
                                   [--tags a,b] [--open-source] [--featured] [--description <desc>] [--sort-order N]
+                                  [--status {draft,pending}]
   python skills/tools/api.py update-tool <id> [--status S] [--name <name>] [--tagline <t>] [--description <desc>]
                                   [--pricing <p>] [--origin <o>] [--access <a>] [--languages zh,en] [--tags a,b]
                                   [--topic-ids 1,2] [--primary-topic-id N] [--open-source | --no-open-source]
                                   [--featured | --no-featured] [--slug <slug>] [--sort-order N]
   python skills/tools/api.py delete-tool <id>
-  python skills/tools/api.py topics [--status {active,disabled}] [--page N] [--page-size N]   列出主题
+  python skills/tools/api.py topics [--status {active,disabled}] [--page N] [--page-size N] [--json]   列出主题
   python skills/tools/api.py topic <id>                 查看主题详情
   python skills/tools/api.py add-topic --name <name> --slug <slug> [--icon <icon>] [--description <desc>] [--sort-order N] [--status {active,disabled}]
   python skills/tools/api.py update-topic <id> [--name <name>] [--slug <slug>] [--icon] [--description] [--sort-order N] [--status {active,disabled}]
   python skills/tools/api.py delete-topic <id>
   python skills/tools/api.py topic-count <id>           主题下已发布工具数
-  python skills/tools/api.py topic-tools <id> [--page N] [--page-size N]   主题下全部工具
+  python skills/tools/api.py topic-tools <id> [--page N] [--page-size N] [--json]   主题下全部工具
   python skills/tools/api.py tool-links <id> [--status {active,broken,disabled}]   列出工具链接
   python skills/tools/api.py add-link <tool_id> --url <url> [--label L] [--primary] [--status S] [--sort-order N]
   python skills/tools/api.py update-link <tool_id> <link_id> [--url <url>] [--label L] [--primary | --no-primary] [--status S] [--sort-order N]
   python skills/tools/api.py delete-link <tool_id> <link_id>
-  python skills/tools/api.py tags                       列出全部工具的标签（客户端聚合，无对应后端端点）
+  python skills/tools/api.py tags [--json]              列出全部工具的标签（客户端聚合，无对应后端端点）
   python skills/tools/api.py tool-tags <id>             查看工具标签
   python skills/tools/api.py set-tags <tool_id> --tags a,b,c   全量替换工具标签
   python skills/tools/api.py tool-topics <id>           查看工具主题归属
@@ -41,8 +42,8 @@
   link:  active | broken | disabled
 
 标签（tags）是工具自身字段（字符串数组，最多 8 个），随工具一起读写，没有独立端点。
-所有写操作支持 --dry-run 预览、--op-id 幂等、自动重试、操作日志。
-注意: 写操作 (POST/PUT/DELETE) 不自动重试，避免重复写入。
+所有写操作支持 --dry-run 预览、--op-id 幂等、操作日志。
+注意: 只有读请求 (GET) 会自动退避重试；写操作 (POST/PUT/DELETE) 不重试，避免重复写入。
 """
 
 __version__ = "2.0.0"

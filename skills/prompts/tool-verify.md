@@ -15,6 +15,7 @@
 ### 1. name 异常 — ERROR
 
 - 判定: name 为 null/空串/纯空白 → ERROR
+- 判定: name 长度 >128 → ERROR
 - 判定: name 含 HTML 标签（`<...>`）→ ERROR
 - 判定: name 含明显拼写错乱（连续乱码）→ ERROR
 - 修复: 清洗后 `update-tool`
@@ -24,13 +25,15 @@
 - 判定: name 为中文但 slug 为 `item-xxxx`（fallback）→ WARN
 - 判定: name 为中文但 slug 含不可识别字符残留 → WARN
 - 判定: slug 与 name 无任何关联 → WARN
+- 判定: slug 长度 >64 → ERROR
 - 通过: name 为 "ChatGPT" slug 为 "chatgpt"
 - 修复: 重新生成 slug（优先官方英文名，无则拼音）
 
 ### 3. tagline — ERROR
 
 - 判定: tagline 为空 → ERROR
-- 判定: tagline 不以标点（。 . ! ? … 等）结尾 → ERROR
+- 判定: tagline 不以标点（。 . ! ? ！ ？ … 等）结尾 → ERROR
+- 判定: tagline 长度 >100 → ERROR
 - 修复: 补写一句话简介并加句末标点后 `update-tool --tagline`
 
 ### 4. links — ERROR
@@ -43,6 +46,8 @@
 ### 5. URL 格式 — ERROR
 
 - 判定: 不匹配 `^https?://.+` → ERROR（格式错无法发布）
+- 判定: 非本地地址用 `http`（如 `http://example.com`）→ ERROR（写入端只放行 https；仅 `localhost` / `127.0.0.1` / `::1` / `0.0.0.0` 可用 http）
+- 判定: 长度 >2048 → ERROR
 - 修复: 引导修正
 
 ### 6. URL 正确性 — WARN
@@ -57,11 +62,11 @@
 - 方法: 归一化 url 相同 → ERROR
 - 修复: 引导删除重复项（保留较早创建的）
 
-### 8. URL 未归一化 — WARN
+### 8. URL 追踪参数 — WARN
 
-- 判定: URL 含 utm_*、fbclid、gclid 等追踪参数 → WARN
-- 判定: 域名含大写、有尾斜杠、带片段 → WARN
-- 修复: 归一化后 `update-link`
+- 判定: URL 含 utm_*、fbclid、gclid 等追踪参数 → WARN（后端归一化**不删**这些参数，会原样入库并进导出物）
+- 判定: 域名含大写、有尾斜杠、带片段、带 `www.` 等未归一化形态 → WARN（正常不会出现，写入端已归一化；多为直连改库的脏行）
+- 修复: 追踪参数手动去掉后 `update-link`；未归一化形态 `update-link` 重写即可触发后端归一化
 - 归一化规则见 tool-collect.md 的 URL 归一化段
 
 ### 9. description 为空 — INFO
@@ -132,7 +137,7 @@ Claude (id=38)      tags 为空                           建议补全
 | tagline 缺标点      | 是       | 补标点 + update        |
 | links 空            | 否       | 引导人工               |
 | URL 格式错          | 否       | 引导修正               |
-| URL 未归一化        | 是       | 归一化 + update-link   |
+| URL 追踪参数        | 是       | 去参 + update-link     |
 | URL 非官网          | 否       | 引导修正               |
 | 重复                | 是       | 删除重复项（保留较早） |
 | pricing 非法/不符   | 半       | 询用户核实后 update    |
