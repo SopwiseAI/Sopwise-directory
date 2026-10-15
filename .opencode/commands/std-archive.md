@@ -19,8 +19,8 @@ description: 下架或重新发布工具（已发布 ↔ 已下架）
 1. 如果未提供 ID，列出已发布和已下架工具供用户选择:
 
    ```
-   !`python skills/tools/api.py tools --status published`
-   !`python skills/tools/api.py tools --status archived`
+   !`python skills/tools/api.py tools --status published --page-size 100`
+   !`python skills/tools/api.py tools --status archived --page-size 100`
    ```
 
    如果两者均为空，告知用户"暂无已发布/已下架工具，下架操作需先有已发布工具"，建议 `/std-publish`。

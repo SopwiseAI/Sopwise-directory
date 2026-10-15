@@ -55,11 +55,12 @@ cd studio && make check                                 # ruff + mypy + 格式�
 cd studio && make test ALLOW_SHARED_DB=1                # 默认 dev 是共享库: 直接 uv run pytest 会被门禁以退出码 3 拦住
 ```
 
-非 prod 环境没有 `--yes` 强制要求, 但 `update-tool` / `set-tags` / `set-topics` /
-`delete-tool` / `delete-topic` / `delete-link` 会交互式二次确认 (y/N) —— 在 agent
-的非交互场景下必须带 `--yes`, 否则 `input()` 抛 EOFError 退出 1。`add-tool` /
-`add-topic` / `add-link` 无确认提示, 会直接写库。`export` 不走 `_write`, 因此既无
-`--dry-run` 也无 `--op-id` (加了也会被忽略, 仍然写盘)。
+非 prod 环境没有 `--yes` 强制要求。交互式二次确认 (y/N) 的真实范围很窄: 只有**带 `--status` 的
+`update-tool`**, 以及 `set-tags` / `set-topics` / `delete-tool` / `delete-topic` /
+`delete-link` —— 在 agent 的非交互场景下这几条必须带 `--yes`, 否则 `input()` 抛 EOFError 退出 1。
+`update-tool` **不带 `--status`** (改名/改 slug/改描述/改主题/改定价等) 没有任何确认, 直接落库退出 0;
+`add-tool` / `add-topic` / `add-link` 同样无确认, 会直接写库。`export` 不走 `_write`, 因此
+`--dry-run` / `--op-id` 会被忽略 (仍然写盘), 也不触发 prod 的 `--yes` 门槛。
 
 ## Studio API 端点
 
@@ -95,9 +96,9 @@ cd studio && make test ALLOW_SHARED_DB=1                # 默认 dev 是共享�
 - `tags` ≤8 个, 单个 ≤32 字符, 不可重复/为空/首尾带空白; `languages` 1~8 项, 两字母小写 ISO 639-1, 不可重复
 - `description` 为 NULL 时导出物**省略该键** (不是输出 null)
 - 工具的主题归属用 `topic_ids: [int]` + 可选 `primary_topic_id` (后者必须在 `topic_ids` 里)
-- URL 去重通过归一化 + SHA-256 hash; `url` 必须显式带 `http(s)://` (裸域名 `www.example.com` 直接 422, 不会自动补 scheme); 归一化**不做**追踪参数清洗 (`utm_*` / `gclid` / `fbclid` 原样保留), 只排序 query、丢 fragment、去 `www.`、非本地强制 https (localhost/127.0.0.1/::1/0.0.0.0 用 http)
+- URL 去重通过归一化 + SHA-256 hash; `url` 必须显式带 `http(s)://` (裸域名 `www.example.com` 直接 422, 不会自动补 scheme); **非本地地址必须 https**, `http://` 非本地直接 422 (只有 localhost/127.0.0.1/::1/0.0.0.0 可用 http); 归一化**不做**追踪参数清洗 (`utm_*` / `gclid` / `fbclid` 原样保留), 只排序 query、丢 fragment、去 `www.`
 - is_primary 唯一性由应用层保证 (新设主链接会把旧主链接降级, 不报 409)
-- 列表接口返回**裸数组**, 总数在响应头 `X-Total-Count`; 分页参数是 `page`(≥1) / `page_size` (`tools` ≤100, `topics` ≤200), **不是 `limit`/`offset`**; `/tools/{id}/links` 无分页也无 `X-Total-Count`, 且工具不存在时返回 `[]` 而非 404
+- 列表接口返回**裸数组**, 总数在响应头 `X-Total-Count` (CLI 不打印响应头, 只在表格尾部打印 `(共 N 条)`); 分页参数是 `page`(≥1) / `page_size` (`tools` ≤100, `topics` ≤200), **不是 `limit`/`offset`**; `/tools/{id}/links` 无分页也无 `X-Total-Count`, 且工具不存在时返回 `[]` 而非 404
 - 环境配置: `studio/.env.dev` / `.env.sit` / `.env.prod`, 通过 `APP_ENV` 切换
 - `.opencode/commands/*.md` 里的 `` !`...` `` 块在命令被调用时**立即执行** (openCode 用 ``/!`([^`]+)`/g`` 在整份模板上匹配, 不区分代码块), 所以只有无副作用的只读检查才用 `` !` ``; 写操作/带占位符的模板一律用普通代码块
 

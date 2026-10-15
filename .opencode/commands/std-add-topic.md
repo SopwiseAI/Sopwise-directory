@@ -25,7 +25,7 @@ description: 添加主题
 3. 查询现有主题，检查 name 和 slug 是否重复:
 
    ```
-   !`python skills/tools/api.py topics --json`
+   !`python skills/tools/api.py topics --page-size 200 --json`
    ```
 
    重复判定: name 完全相同（忽略大小写）→ 拒；slug 完全相同 → 拒。任一命中即告知用户并停止，不发起创建请求。

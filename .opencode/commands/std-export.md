@@ -32,7 +32,8 @@ description: 导出 JSON 数据到 web 目录
    - 跳过统计 (`skipped_count` / `skipped_reasons`): 被跳过的行数与每类原因各多少，用于判断这次导出是否干净
    - 前端同步状态 (`synced_frontend`):
      - **dev/sit**: `false` — 仅写带环境后缀的两个副本，**未改动 topics.json / tools.json**（保护生产数据源）
-       - 本地测前端时把两份文件都拷过去: `cp web/data/topics-dev.json web/data/topics.json && cp web/data/tools-dev.json web/data/tools.json`
+       - 无后缀的那一对只由 prod 导出自动同步，**不要手工 `cp` 造**: 它们不在 .gitignore 里，
+         手工 cp 会留下 untracked 文件，提交时也会被 `.husky/pre-commit` 挡下（见「安全说明」）
      - **prod**: `true` — 已同步 `web/data/topics.json` 与 `web/data/tools.json`
        - 下一步: 提交这两个文件到 main 分支并部署到 Vercel
 

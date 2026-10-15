@@ -67,6 +67,8 @@ description: 工具管理（查看/改名/改 slug/改主题/改定价/改标签
 
    状态取值: `draft` / `pending` / `published` / `archived`（不再是 0/1/2/3）
 
+   `--status` 传**同值**（如把已发布的工具再设为 published）是静默 no-op，exit 0，不报错。
+
    slug 修改须遵守统一 slug 规范（见末尾）。
 
    **管理链接**:
@@ -111,6 +113,13 @@ description: 工具管理（查看/改名/改 slug/改主题/改定价/改标签
 
    ```
    python skills/tools/api.py --yes set-topics <工具ID> --topic-ids 1,2 --primary-topic-id 1
+   ```
+
+   清空归属**唯一可行**的路径是 `update-tool`（`set-topics --topic-ids ""` 会被 CLI 直接拒绝:
+   `--topic-ids 不能为空`，exit 1）:
+
+   ```
+   python skills/tools/api.py --yes update-tool <工具ID> --topic-ids ""
    ```
 
    **管理标签**（标签是工具字段，全量替换）:
