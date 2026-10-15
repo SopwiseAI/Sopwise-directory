@@ -29,7 +29,7 @@ description: 审核待审核工具，AI 辅助判断是否通过
    a. 查看工具详情:
 
    ```
-   !`python skills/tools/api.py tool <工具ID>`
+   python skills/tools/api.py tool <工具ID>
    ```
 
    b. 逐项检查必要项（缺一项即打回）:
@@ -53,13 +53,13 @@ description: 审核待审核工具，AI 辅助判断是否通过
 5. 对通过的工具发布（pending→published 合法）:
 
    ```
-   !`python skills/tools/api.py --yes update-tool <工具ID> --status published`
+   python skills/tools/api.py --yes update-tool <工具ID> --status published
    ```
 
 6. 对打回的工具退回草稿（pending→draft 合法）:
 
    ```
-   !`python skills/tools/api.py --yes update-tool <工具ID> --status draft`
+   python skills/tools/api.py --yes update-tool <工具ID> --status draft
    ```
 
 7. 汇总审核结果（通过 N 个，打回 M 个）

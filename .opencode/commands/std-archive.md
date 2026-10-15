@@ -28,7 +28,7 @@ description: 下架或重新发布工具（已发布 ↔ 已下架）
 2. 查看工具详情确认当前状态:
 
    ```
-   !`python skills/tools/api.py tool <工具ID>`
+   python skills/tools/api.py tool <工具ID>
    ```
 
 3. 根据返回数据的 `status` 字段决定操作路径:
@@ -36,13 +36,13 @@ description: 下架或重新发布工具（已发布 ↔ 已下架）
    - **status=published (已发布)** → 下架 (published→archived):
 
      ```
-     !`python skills/tools/api.py --yes update-tool <工具ID> --status archived`
+     python skills/tools/api.py --yes update-tool <工具ID> --status archived
      ```
 
    - **status=archived (已下架)** → 重新发布 (archived→published):
 
      ```
-     !`python skills/tools/api.py --yes update-tool <工具ID> --status published`
+     python skills/tools/api.py --yes update-tool <工具ID> --status published
      ```
 
    - **status=draft 或 pending** → 告知用户该工具尚未发布，建议使用 `/std-publish`

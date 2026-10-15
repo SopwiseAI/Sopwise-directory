@@ -33,7 +33,7 @@ description: 添加主题
 4. 创建主题（name 和 slug 必填，其余可选）:
 
    ```
-   !`python skills/tools/api.py add-topic --name "主题名" --slug "english-slug" [--icon "IconName"]`
+   python skills/tools/api.py add-topic --name "主题名" --slug "english-slug" [--icon "IconName"]
    ```
 
    图标名使用 lucide-react 图标库，常用参考:

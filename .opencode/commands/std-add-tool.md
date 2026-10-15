@@ -34,10 +34,12 @@ description: 添加 AI 工具到目录（创建为草稿状态）
 
 3. 如果主题列表为空，询问用户是否先创建主题 (`/std-add-topic`)
 
-4. 创建工具。**以下参数是后端必填，缺失会 422**: `--tagline` `--pricing` `--origin` `--access` `--languages`
+4. 创建工具。以下 5 个参数必填: `--tagline` `--pricing` `--origin` `--access` `--languages`
+   （缺任意一个时 CLI 的 argparse 直接 exit 2 并列出缺哪几个，请求根本不会发出；
+   后端 422 只用于取值非法，例如 `--tagline` 句末没有标点）
 
    ```
-   !`python skills/tools/api.py add-tool --name "工具名" --tagline "一句话简介。" --pricing free --origin cn --access direct --languages zh,en`
+   python skills/tools/api.py add-tool --name "工具名" --tagline "一句话简介。" --pricing free --origin cn --access direct --languages zh,en
    ```
 
    可选参数（仅在用户提供时追加）:
