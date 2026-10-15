@@ -74,7 +74,7 @@ studio 侧导出的是 `topics.json` / `tools.json`（只有 `prod` 导出会同
 页面与组件都通过它取数。
 
 **2) 内容搬家（真正的工作量）**：`data.json` 里的 85 条工具**一条都没进过 studio 库**（dev 库实测 1 主题 / 0 工具），
-而导出的成员规则要求 `tagline`（≤80 字、句末带标点）、`origin`、`access`、`languages`、`openSource`，以及
+而导出的成员规则要求 `tagline`（≤100 字、句末带标点）、`origin`、`access`、`languages`、`openSource`，以及
 至少一条 `status='active'` 的链接 —— 这些字段旧数据里**一个都没有**，必须逐条补。也就是说：切换的前提是
 **先把内容迁进库并补齐必填字段**，而不是改一行 import。
 

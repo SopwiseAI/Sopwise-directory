@@ -17,7 +17,7 @@
 // 字段清单（16 个）:
 //   id             string   必填  ≤64           kebab-case
 //   name           string   必填  ≤128
-//   tagline        string   必填  ≤80
+//   tagline        string   必填  ≤100
 //   description    string   可选  ≤500          NULL 时【省略该键】
 //   url            string   必填  ≤2048        必 https、无 www.、根路径保留尾斜杠
 //   topics         string[] 必填  ≥1            值来自 xg_topic.slug，首个即主主题

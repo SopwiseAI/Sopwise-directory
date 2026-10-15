@@ -159,9 +159,22 @@ def test_tagline_rejects_missing_terminal_punctuation(tagline):
         ToolUpdate(tagline=tagline)
 
 
+def test_tagline_accepts_max_length():
+    """边界内(正好 100 字符)必须放行。中文习惯 21~47 字, 同样信息量的英文约为 2 倍字符。"""
+    tagline = "长" * 99 + "。"
+    assert len(tagline) == 100
+    assert ToolCreate(**_tool_payload(tagline=tagline)).tagline == tagline
+    assert ToolUpdate(tagline=tagline).tagline == tagline
+
+
 def test_tagline_rejects_too_long():
+    """101 字符必须拒。这里刻意写死 100/101 而不是引用常量: 常量被误改时这条要能报警。"""
+    tagline = "长" * 100 + "。"
+    assert len(tagline) == 101
     with pytest.raises(ValidationError):
-        ToolCreate(**_tool_payload(tagline="长" * 80 + "。"))
+        ToolCreate(**_tool_payload(tagline=tagline))
+    with pytest.raises(ValidationError):
+        ToolUpdate(tagline=tagline)
 
 
 # ── languages ─────────────────────────────────────────────────────────────────
