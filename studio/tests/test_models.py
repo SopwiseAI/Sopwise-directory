@@ -1,5 +1,7 @@
 """模型层业务规则守卫。"""
 
+from sqlalchemy import inspect
+
 from app.models import (
     ACCESSES,
     LINK_LABELS,
@@ -12,6 +14,7 @@ from app.models import (
     Origin,
     Pricing,
     ToolStatus,
+    Topic,
     TopicStatus,
 )
 
@@ -64,3 +67,12 @@ def test_topic_and_tool_status_are_separate_enums():
     assert {status.value for status in TopicStatus} == {"disabled", "active"}
     assert {status.value for status in ToolStatus} == {"draft", "pending", "published", "archived"}
     assert {status.value for status in LinkStatus} == {"active", "broken", "disabled"}
+
+
+def test_topic_tool_topics_uses_passive_deletes():
+    """删主题必须交给库的 fk_tt_topic(RESTRICT) 拦, 而不是由 ORM 先把子行 topic_id 置空。
+
+    少了 passive_deletes: ORM 有子行时抛 AssertionError(不允许把主键列置空) -> 500, 绕过了
+    endpoints/topics.py 承诺的 IntegrityError -> 409; 无子行时还白搭一条子表 SELECT。
+    """
+    assert inspect(Topic).relationships["tool_topics"].passive_deletes is True

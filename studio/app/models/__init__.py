@@ -165,7 +165,11 @@ class Topic(Base):
         DateTime, server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    tool_topics: Mapped[list["ToolTopic"]] = relationship(back_populates="topic")
+    # passive_deletes=True: 删主题时不要由 ORM 先把子行 topic_id 置空 —— 有子行时会抛
+    # AssertionError(ORM 不允许把主键列置空) -> 500, 绕过了 endpoints/topics.py 承诺的
+    # "fk_tt_topic(RESTRICT) 撞上就由 IntegrityError 处理器回 409"; 交给库抛 1451 才对,
+    # 无子行时也少一条无用 SELECT。这里不加 delete-orphan: 归属行的生命周期跟着 Tool。
+    tool_topics: Mapped[list["ToolTopic"]] = relationship(back_populates="topic", passive_deletes=True)
 
 
 class Tool(Base):

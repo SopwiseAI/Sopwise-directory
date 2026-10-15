@@ -54,9 +54,15 @@ def test_api_key_default_rejected_outside_dev():
         _settings(app_env="prod", app_debug=False, api_key="dev-secret-key")
 
 
-def test_debug_true_rejected_in_prod():
+@pytest.mark.parametrize("env", ["sit", "prod"])
+def test_debug_true_rejected_outside_dev(env: str):
+    """debug 只能在 dev 打开。
+
+    debug=True 时 Starlette 的 ServerErrorMiddleware 不会调用 app/main.py 注册的全局 500
+    处理器: 未鉴权请求就能拿到含源码片段的 HTML traceback, 而且丢掉 X-Request-ID。
+    """
     with pytest.raises(ValidationError):
-        _settings(app_env="prod", app_debug=True, api_key="strong-key")
+        _settings(app_env=env, app_debug=True, api_key="strong-key")
 
 
 def test_pool_size_must_be_positive():

@@ -77,8 +77,11 @@ class Settings(BaseSettings):
     @classmethod
     def validate_app_debug(cls, v: bool, info: ValidationInfo) -> bool:
         env = info.data.get("app_env", "dev")
-        if env == "prod" and v:
-            raise ValueError("app_debug must be False in prod (configure APP_DEBUG=false in .env.prod)")
+        if env != "dev" and v:
+            raise ValueError(
+                f"app_debug 只能在 dev 打开(当前 APP_ENV={env}): debug 会让 Starlette 短路全局"
+                " 500 处理器 —— 未鉴权请求即可拿到含源码片段的 traceback, 且丢掉 X-Request-ID"
+            )
         return v
 
     @field_validator("api_key")
