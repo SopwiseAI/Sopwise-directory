@@ -55,6 +55,29 @@ data/         # 产品数据 (data.json)
 
 `data.json` → `lib/data.ts`（server 端 import）→ 页面 Server Component → props 传入 client 组件。client 组件不直接 import data.json，避免全量内联 bundle。
 
+## 数据源迁移（待办）
+
+studio 侧导出的是 `topics.json` / `tools.json`（只有 `prod` 导出会同步无后缀名），而本站**目前仍从 `data.json` 取数**
+（`web/data/` 下三个文件都被 `.husky/pre-commit` 挡着，只有 `main` / `data/<name>` 分支能提交）。切换要同时解决两件事：
+
+**1) 字段映射**（`Product` → 导出的 `tools[]`）：
+
+| 前端字段                                                                | 导出字段                                                                                 | 说明                                                                         |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `id` / `name` / `url` / `tags` / `pricing` / `featured` / `description` | 同名                                                                                     | 直接对应                                                                     |
+| `categories`                                                            | `topics`                                                                                 | **改名**；值都是 kebab-case slug，但要不要沿用现有 20 个是内容决策           |
+| `publishedAt`（日期展示）                                               | `publishedAt`                                                                            | **已经兼容**：`lib/product.ts` 是 `publishedAt ?? createdAt`，无需改动       |
+| `createdAt`                                                             | ——                                                                                       | 导出没有这个键；它只是上面的兜底，缺失不报错（`types.ts` 里是可选）          |
+| ——                                                                      | `tagline` / `openSource` / `origin` / `access` / `languages` / `lastUpdatedAt` / `links` | 导出新增。**卡片文案应该改用 `tagline`**（旧数据里只有较长的 `description`） |
+
+`lib/data.ts` 的取数入口（`getAllCategories` / `getAllProducts` / `getSiteStats` 等）是切换的唯一改动点，
+页面与组件都通过它取数。
+
+**2) 内容搬家（真正的工作量）**：`data.json` 里的 85 条工具**一条都没进过 studio 库**（dev 库实测 1 主题 / 0 工具），
+而导出的成员规则要求 `tagline`（≤80 字、句末带标点）、`origin`、`access`、`languages`、`openSource`，以及
+至少一条 `status='active'` 的链接 —— 这些字段旧数据里**一个都没有**，必须逐条补。也就是说：切换的前提是
+**先把内容迁进库并补齐必填字段**，而不是改一行 import。
+
 ## 关键约定
 
 - 页面为 Server Component，交互组件标记 `"use client"`
