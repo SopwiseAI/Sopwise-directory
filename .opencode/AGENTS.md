@@ -13,7 +13,11 @@ AI 驱动的目录站 (XiGee), 包含三个模块:
 ```
 数据库 ← studio (FastAPI CRUD)
          ↓
-    studio 导出 JSON → web/data/topics.json + tools.json → Vercel 部署
+    studio 导出 JSON → web/data/topics-{env}.json + tools-{env}.json
+                       prod 额外同步 topics.json + tools.json
+         │
+         └─ ⚠️ 前端【目前仍读 web/data/data.json】, 还没切到 topics/tools
+            (缺口与字段映射见 web/AGENTS.md 的「数据源迁移」一节)
          ↑
     skills/tools/api.py 调用 studio API
     .opencode/commands/ 触发 AI 工作流
@@ -25,7 +29,7 @@ AI 驱动的目录站 (XiGee), 包含三个模块:
 draft=草稿 → pending=待审核 → published=已发布 → archived=已下架
 ```
 
-- 仅 status=published 且存在 status=active 链接的工具导出到前端
+- 仅 status=published 且存在 status=active 链接的工具进导出产物
 - published_at 仅在首次 status→published 时写入
 - 合法状态转换: draft→pending, pending→draft, pending→published, published→archived, archived→published
 - 非法状态迁移后端返回 409 (不是 400)
@@ -36,8 +40,8 @@ draft=草稿 → pending=待审核 → published=已发布 → archived=已下�
 ```bash
 # 启动服务
 ./scripts/dev.sh                # 前端 + 后端
-./scripts/dev-web.sh            # 仅前端 (port 3000)
-./scripts/dev-studio.sh         # 仅后端 (port 8000)
+./scripts/dev-web.sh            # 仅前端 (port 3000, 前端没有配置文件)
+./scripts/dev-studio.sh         # 仅后端 (端口取 .env.<APP_ENV> 的 APP_PORT, 缺省 8000)
 ./scripts/stop.sh               # 停止服务
 ./scripts/status.sh             # 查看状态
 
@@ -46,9 +50,9 @@ python skills/tools/api.py stats                        # 目录统计
 python skills/tools/api.py tools --status pending       # 待审核工具
 python skills/tools/api.py export                       # 导出 JSON
 
-# 后端测试
-cd studio && APP_ENV=dev uv run pytest -v
-cd studio && uv run ruff check . && uv run ruff format .
+# 后端检查与测试
+cd studio && make check                                 # ruff + mypy + 格式校验
+cd studio && make test ALLOW_SHARED_DB=1                # 默认 dev 是共享库: 直接 uv run pytest 会被门禁以退出码 3 拦住
 ```
 
 ## Studio API 端点
@@ -88,11 +92,11 @@ cd studio && uv run ruff check . && uv run ruff format .
 
 三个 MCP server 对应三套环境, 按用户意图选用:
 
-| MCP server   | 环境 | 权限 |
-| ------------ | ---- | ---- |
-| `mysql-dev`  | dev  | 读写 |
-| `mysql-sit`  | sit  | 读写 |
-| `mysql-prod` | prod | 只读 |
+| MCP server   | 环境 | 权限                                                |
+| ------------ | ---- | --------------------------------------------------- |
+| `mysql-dev`  | dev  | 读写 (`MYSQL_ALLOW_WRITE=true`, 见 `opencode.json`) |
+| `mysql-sit`  | sit  | 只读                                                |
+| `mysql-prod` | prod | 只读                                                |
 
 - 用户说"开发库/测试库/生产库"时, 对应使用 `mysql-dev` / `mysql-sit` / `mysql-prod`
 - prod 默认只读; 如需写操作, 需用户显式确认后修改 `opencode.json` 加 `MYSQL_ALLOW_WRITE`
