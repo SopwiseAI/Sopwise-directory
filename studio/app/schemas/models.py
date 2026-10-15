@@ -24,6 +24,9 @@ MAX_TAG_LENGTH = 32
 # 与 xg_tool_link.url 的 VARCHAR(2048) 是同一个上限: 归一化后还会再校验一次
 # (长 URL 百分号编码会膨胀), 两处必须同值
 MAX_URL_LENGTH = 2048
+# 卡片文案上限。中文习惯 21~47 字; 同样信息量的英文约为中文的 2 倍字符, 现有最长文案
+# (47 字) 的英文版约 95 字符, 所以 100 刚好覆盖且仍在一张卡片两行(line-clamp-2)的显示容量内。
+MAX_TAGLINE_LENGTH = 100
 _LANG_CODE_LENGTH = 2
 
 
@@ -187,7 +190,7 @@ class ToolLinkResponse(ToolLinkBase):
 class ToolBase(BaseModel):
     slug: str = Field(..., max_length=64, pattern=_SLUG_PATTERN)
     name: str = Field(..., min_length=1, max_length=128)
-    tagline: str = Field(..., max_length=80)
+    tagline: str = Field(..., max_length=MAX_TAGLINE_LENGTH)
     description: str | None = Field(None, max_length=500)
     pricing: Pricing
     is_open_source: bool = False
@@ -234,7 +237,7 @@ class ToolCreate(ToolBase):
 class ToolUpdate(BaseModel):
     slug: str | None = Field(None, max_length=64, pattern=_SLUG_PATTERN)
     name: str | None = Field(None, min_length=1, max_length=128)
-    tagline: str | None = Field(None, max_length=80)
+    tagline: str | None = Field(None, max_length=MAX_TAGLINE_LENGTH)
     description: str | None = Field(None, max_length=500)
     pricing: Pricing | None = None
     is_open_source: bool | None = None

@@ -189,7 +189,7 @@ class Tool(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     slug: Mapped[str] = mapped_column(String(64), nullable=False)
     name: Mapped[str] = mapped_column(String(128), nullable=False)
-    tagline: Mapped[str] = mapped_column(String(80), nullable=False)
+    tagline: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str | None] = mapped_column(String(500), nullable=True)
     pricing: Mapped[Pricing] = mapped_column(_enum_column(Pricing, "tool_pricing", 20), nullable=False)
     is_open_source: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="0")

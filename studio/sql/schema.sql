@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS xg_tool (
   id                   BIGINT       NOT NULL AUTO_INCREMENT,
   slug                 VARCHAR(64)  NOT NULL              COMMENT '工具标识（如 deepseek）；对外主键，发布后不改',
   name                 VARCHAR(128) NOT NULL              COMMENT '工具名称（如 DeepSeek）',
-  tagline              VARCHAR(80)  NOT NULL              COMMENT '一句话简介（卡片唯一展示文案，句末带标点）',
+  tagline              VARCHAR(100) NOT NULL              COMMENT '一句话简介（卡片唯一展示文案，句末带标点）',
   description          VARCHAR(500) DEFAULT NULL          COMMENT '较长补充说明（可空；NULL 时导出省略该键）',
   pricing              VARCHAR(20)  NOT NULL              COMMENT 'free | freemium | paid；不给默认值，必须显式写入',
   is_open_source       TINYINT(1)   NOT NULL DEFAULT 0    COMMENT '源码是否开放（与 pricing 正交）',
