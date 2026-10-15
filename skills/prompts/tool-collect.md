@@ -63,7 +63,7 @@
 10. **折叠多斜杠**: `//foo` → `/foo`
 11. **query 参数排序**: `?b=2&a=1` → `?a=1&b=2`
 
-**注意**: 后端**不删追踪参数**。`utm_*` / `fbclid` / `gclid` 等会原样保留在归一化结果里并进入导出物；如需去掉，必须在调用 CLI 前由调用方自行清洗。另外，`www.` 规则只在能解析出 host（即输入带 scheme）时生效：裸域名 `www.example.com` 会被补成 `https://www.example.com/`，`www.` 不会被去掉。
+**注意**: 后端**不删追踪参数**。`utm_*` / `fbclid` / `gclid` 等会原样保留在归一化结果里并进入导出物；如需去掉，必须在调用 CLI 前由调用方自行清洗。另外，`www.` 规则只在能解析出 host（即输入带 scheme）时生效：孤立调用 `normalize_url(www.example.com)` 会得到 `https://www.example.com/`（补 scheme、保留 `www.`）。但**走 API 时看不到这个行为** —— `_check_url` 要求显式带 `http(s)://`，裸域名直接 **422**，根本到不了归一化，所以采集阶段必须自己补上 scheme。
 
 示例:
 
