@@ -87,7 +87,7 @@ htmlcov/
 opencode.local.json
 
 # scripts runtime
-scripts/.state/
+scripts/.run/
 
 # export artifacts
 # 环境副本（dev/sit 只有这两份，prod 会多写一份）不入库：

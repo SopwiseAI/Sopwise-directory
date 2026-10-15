@@ -54,7 +54,8 @@ description: 工具管理（查看/改名/改 slug/改主题/改定价/改标签
    - `--open-source` / `--no-open-source` — 设置/取消开源
    - `--featured` / `--no-featured` — 设置/取消精选
    - `--sort-order <数字>` — 排序权重
-   - `--last-updated-at YYYY-MM-DD` — 工具自身的最后更新日期
+
+   （导出里的 `lastUpdatedAt` 取审计列 `updated_at`，不再是可填字段；`publishedAt` 也由端点首次转 published 时写入）
 
    **改状态**（非法迁移后端返回 409）:
 
