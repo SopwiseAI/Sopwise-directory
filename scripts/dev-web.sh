@@ -15,11 +15,14 @@ WEB_PID=$!
 echo "$WEB_PID" > "$WEB_PID_FILE"
 
 info "等待 web 就绪..."
-# 就绪探测的结论必须参与成败判断：只看"包装进程还活着"会说谎 ——
-# 实测 pnpm 秒退（版本自管失败）时，脚本仍然报了"web 已启动 → localhost:3000"。
+# 就绪探测必须同时满足两条, 缺一不可:
+#   1. 端口被【本项目】的进程占着 —— 否则端口上若是别的服务, curl 一样返回 200,
+#      会把"我们的服务没绑上"误判成"起来了"(实测被 python -m http.server 3000 骗过)
+#   2. curl 真的拿到响应
+# 只看第 2 条、或只看"包装进程还活着", 都会说谎。
 ready=false
 for _ in $(seq 1 15); do
-    if curl -sf "http://127.0.0.1:$WEB_PORT" >/dev/null 2>&1; then
+    if port_owned_by "$WEB_PORT" "$WEB_PATTERN" && curl -sf "http://127.0.0.1:$WEB_PORT" >/dev/null 2>&1; then
         ready=true
         break
     fi

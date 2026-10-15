@@ -26,11 +26,12 @@ echo "$STUDIO_PID" > "$STUDIO_PID_FILE"
 printf '%s' "$PORT" > "$STUDIO_PORT_FILE"
 
 info "等待 studio 就绪..."
-# 就绪探测的结论必须参与成败判断：只看"包装进程还活着"会说谎 ——
-# 实测 dev-web.sh 时 pnpm 秒退，但脚本仍报"已启动"（进程恰好还活着一瞬）。
+# 就绪探测必须同时满足两条: 端口被【本项目】的进程占着 + curl 真的拿到响应。
+# 只看 curl 或只看"包装进程还活着"都会说谎 —— 前者的坑是别的服务占着同一端口
+# 也会返回 200(实测被 python -m http.server 骗过), 后者在包装进程秒退时也成立。
 ready=false
 for _ in $(seq 1 20); do
-    if curl -sf "http://127.0.0.1:$PORT/openapi.json" >/dev/null 2>&1; then
+    if port_owned_by "$PORT" "$STUDIO_PATTERN" && curl -sf "http://127.0.0.1:$PORT/openapi.json" >/dev/null 2>&1; then
         ready=true
         break
     fi

@@ -98,6 +98,21 @@ is_running() {
     pgrep -f -- "$pattern" 2>/dev/null | grep -qx "$pid"
 }
 
+# 端口是否被【本项目】的进程占着。
+# 只看端口不看身份会认错人: 别的服务占着同一个端口时, 就绪探测里的 curl 一样返回 200
+# —— 实测被 `python -m http.server 3000` 骗过一次(脚本报了"已启动", 而我们的服务根本没绑上)。
+port_owned_by() {
+    local port=$1 pattern=$2 pids matched pid
+    pids=$(lsof -ti :"$port" 2>/dev/null || true)
+    [[ -n "$pids" ]] || return 1
+    matched=$(pgrep -f -- "$pattern" 2>/dev/null || true)
+    while IFS= read -r pid; do
+        [[ -n "$pid" ]] || continue
+        grep -qx "$pid" <<< "$matched" && return 0
+    done <<< "$pids"
+    return 1
+}
+
 # 停掉占用 $1 端口的【本项目】进程；命令行匹配不上 $3 的只告警、不动手。
 kill_port() {
     local port=$1 name=$2 pattern=$3
