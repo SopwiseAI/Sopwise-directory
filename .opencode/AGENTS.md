@@ -63,20 +63,20 @@ cd studio && make test ALLOW_SHARED_DB=1                # 默认 dev 是共享�
 
 ## Studio API 端点
 
-| 方法           | 路径                                    | 说明                        | 需 X-API-Key  |
-| -------------- | --------------------------------------- | --------------------------- | ------------- |
-| GET/POST       | /api/v1/topics                          | 主题 CRUD                   | 仅 POST       |
-| GET/PUT/DELETE | /api/v1/topics/{topic_id}               | 主题详情                    | 仅 PUT/DELETE |
-| GET            | /api/v1/topics/{topic_id}/tools         | 主题下工具                  | 否            |
-| GET            | /api/v1/topics/{topic_id}/tool-count    | 主题下已发布工具数          | 否            |
-| GET/POST       | /api/v1/tools                           | 工具 CRUD                   | 仅 POST       |
-| GET/PUT/DELETE | /api/v1/tools/{tool_id}                 | 工具详情                    | 仅 PUT/DELETE |
-| GET/POST       | /api/v1/tools/{tool_id}/links           | 工具链接                    | 仅 POST       |
-| PUT/DELETE     | /api/v1/tools/{tool_id}/links/{link_id} | 链接详情                    | 是            |
-| PUT            | /api/v1/tools/{tool_id}/topics          | 工具主题归属 (替代旧 /tags) | 是            |
-| GET            | /api/v1/env                             | 环境信息                    | 否            |
-| POST           | /api/v1/export                          | 导出 JSON (会写盘)          | 是            |
-| GET            | /api/v1/health                          | 健康检查                    | 否            |
+| 方法           | 路径                                    | 说明               | 需 X-API-Key  |
+| -------------- | --------------------------------------- | ------------------ | ------------- |
+| GET/POST       | /api/v1/topics                          | 主题 CRUD          | 仅 POST       |
+| GET/PUT/DELETE | /api/v1/topics/{topic_id}               | 主题详情           | 仅 PUT/DELETE |
+| GET            | /api/v1/topics/{topic_id}/tools         | 主题下工具         | 否            |
+| GET            | /api/v1/topics/{topic_id}/tool-count    | 主题下已发布工具数 | 否            |
+| GET/POST       | /api/v1/tools                           | 工具 CRUD          | 仅 POST       |
+| GET/PUT/DELETE | /api/v1/tools/{tool_id}                 | 工具详情           | 仅 PUT/DELETE |
+| GET/POST       | /api/v1/tools/{tool_id}/links           | 工具链接           | 仅 POST       |
+| PUT/DELETE     | /api/v1/tools/{tool_id}/links/{link_id} | 链接详情           | 是            |
+| PUT            | /api/v1/tools/{tool_id}/topics          | 工具主题归属       | 是            |
+| GET            | /api/v1/env                             | 环境信息           | 否            |
+| POST           | /api/v1/export                          | 导出 JSON (会写盘) | 是            |
+| GET            | /api/v1/health                          | 健康检查           | 否            |
 
 写操作与 `POST /api/v1/export` 需要 `X-API-Key` 头; 9 个只读接口
 (`GET /health` `/env` `/tools` `/tools/{id}` `/tools/{id}/links` `/topics`
@@ -115,7 +115,7 @@ cd studio && make test ALLOW_SHARED_DB=1                # 默认 dev 是共享�
 - prod 默认只读; 如需写操作, 需用户显式确认后修改 `opencode.json` 加 `MYSQL_ALLOW_WRITE`
 - 表名前缀 `xg_`, 主要表: `xg_topic` `xg_tool` `xg_tool_topic` `xg_tool_link`
 - 工具 status: draft=草稿 pending=待审核 published=已发布 archived=已下架; 合法转换: draft→pending, pending→draft, pending→published, published→archived, archived→published
-- 标签在 `xg_tool.tags` JSON 列里, 没有 `xg_tag` / `xg_product_tag` 这类表
+- 标签在 `xg_tool.tags` JSON 列里, 没有独立的标签表/关联表
 
 ## 生产环境保护
 
