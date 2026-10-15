@@ -21,7 +21,8 @@ info "等待 web 就绪..."
 #   2. curl 真的拿到响应
 # 只看第 2 条、或只看"包装进程还活着", 都会说谎。
 ready=false
-for _ in $(seq 1 15); do
+# 30s 而不是 15s: Next dev 冷启动实测 12s(干净 .next 上更久), 15s 会误报"启动失败"
+for _ in $(seq 1 30); do
     if port_owned_by "$WEB_PORT" "$WEB_PATTERN" && curl -sf "http://127.0.0.1:$WEB_PORT" >/dev/null 2>&1; then
         ready=true
         break
