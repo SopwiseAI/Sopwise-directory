@@ -98,17 +98,30 @@ is_running() {
     pgrep -f -- "$pattern" 2>/dev/null | grep -qx "$pid"
 }
 
+# 单个 PID 是否属于本项目。
+# 两条判据满足其一即可, 因为【听端口的进程往往不是命令行里带项目特征的那个】:
+#   · uvicorn --reload 的监听者是 multiprocessing 派生出来的, argv 里既没有
+#     `python -m app` 也没有 `uvicorn app.main:app` —— 实测监听者 35782/35785,
+#     而 pgrep -f 只匹配到包装进程 35777。只看 argv 会把它们全当"外人"。
+#   · 所以再看工作目录: dev-studio.sh 在 studio/ 下起服务、dev-web.sh 在 web/ 下起,
+#     lsof -d cwd 能读到, 且不依赖 `ps`(沙箱里 ps 常被禁)。
+pid_is_ours() {
+    local pid=$1 pattern=$2 cwd
+    pgrep -f -- "$pattern" 2>/dev/null | grep -qx "$pid" && return 0
+    cwd=$(lsof -a -p "$pid" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p')
+    [[ -n "$cwd" && "$cwd" == "$PROJECT_ROOT"* ]]
+}
+
 # 端口是否被【本项目】的进程占着。
 # 只看端口不看身份会认错人: 别的服务占着同一个端口时, 就绪探测里的 curl 一样返回 200
 # —— 实测被 `python -m http.server 3000` 骗过一次(脚本报了"已启动", 而我们的服务根本没绑上)。
 port_owned_by() {
-    local port=$1 pattern=$2 pids matched pid
+    local port=$1 pattern=$2 pids pid
     pids=$(lsof -ti :"$port" 2>/dev/null || true)
     [[ -n "$pids" ]] || return 1
-    matched=$(pgrep -f -- "$pattern" 2>/dev/null || true)
     while IFS= read -r pid; do
         [[ -n "$pid" ]] || continue
-        grep -qx "$pid" <<< "$matched" && return 0
+        pid_is_ours "$pid" "$pattern" && return 0
     done <<< "$pids"
     return 1
 }
@@ -116,14 +129,13 @@ port_owned_by() {
 # 停掉占用 $1 端口的【本项目】进程；命令行匹配不上 $3 的只告警、不动手。
 kill_port() {
     local port=$1 name=$2 pattern=$3
-    local matched pids pid ours="" strangers=""
+    local pids pid ours="" strangers=""
     pids=$(lsof -ti :"$port" 2>/dev/null || true)
     [[ -n "$pids" ]] || return 0
 
-    matched=$(pgrep -f -- "$pattern" 2>/dev/null || true)
     while IFS= read -r pid; do
         [[ -n "$pid" ]] || continue
-        if grep -qx "$pid" <<< "$matched"; then
+        if pid_is_ours "$pid" "$pattern"; then
             ours="$ours${ours:+ }$pid"
         else
             strangers="$strangers${strangers:+ }$pid"
@@ -149,7 +161,7 @@ kill_port() {
         ours=""
         while IFS= read -r pid; do
             [[ -n "$pid" ]] || continue
-            grep -qx "$pid" <<< "$matched" && ours="$ours${ours:+ }$pid"
+            pid_is_ours "$pid" "$pattern" && ours="$ours${ours:+ }$pid"
         done <<< "$pids"
         if [[ -n "$ours" ]]; then
             warn "$name 仍在监听，强制停止 (PID: $ours)..."
