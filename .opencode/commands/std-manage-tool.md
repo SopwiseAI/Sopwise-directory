@@ -140,7 +140,8 @@ description: 工具管理（查看/改名/改 slug/改主题/改定价/改标签
    !`python skills/tools/api.py --yes delete-tool <工具ID>
    ```
 
-   prod 环境需额外 `--prod-confirm`（CLI 自动拦截）。
+   prod 环境需额外 `--prod-confirm`（CLI 自动拦截；但 `STUDIO_URL` 是 loopback 时 CLI 跳过
+   探测，本地以 `APP_ENV=prod` 起的 studio 不拦）。
 
 4. 告知用户操作结果
 

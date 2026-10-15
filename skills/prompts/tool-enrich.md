@@ -46,7 +46,7 @@
 ### links
 
 - 用户提供的 URL 添加为主链接（is_primary=true）
-- **URL 入库前必须归一化**（去 utm_* 等追踪参数、补 scheme、域名小写、去尾斜杠，详见 tool-collect.md 的 URL 归一化段）；归一化由后端写入端完成
+- **URL 入库前必须归一化**（scheme 归一、域名小写、去 `www.`、去尾斜杠、去片段、query 排序等，详见 tool-collect.md 的 URL 归一化段）；归一化由后端写入端完成，**但后端不删 `utm_*` 等追踪参数**，需要时由调用方先清洗
 - 如工具有 API 文档、GitHub 仓库等，可添加附加链接（is_primary=false），label 取 `docs` / `github` / `api` 等
 - 添加前检查 links 数组是否已有相同归一化 URL，避免重复
 

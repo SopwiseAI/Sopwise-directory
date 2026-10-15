@@ -32,7 +32,8 @@ description: 采集批量工具入库为草稿（支持文本/网页/列表/JSON
 
 1. 识别输入类型，选用对应解析器提取候选列表
 2. 逐条清洗（规则见 tool-collect.md）:
-   - URL 归一化（去 utm_* 参数、补 https、去尾斜杠）
+   - URL 归一化（scheme 归一到 https、去掉 `www.` 前缀、去尾斜杠与片段、query 排序；
+     **追踪参数（utm\_*/gclid/fbclid…）后端不会自动去掉**，要自行清洗）
    - name 清洗（去空格/HTML 残留/多余符号）
    - slug 生成（英文小写连字符；中文→拼音/英文翻译；中文 name 必须生成有效 slug）
 3. 去重:

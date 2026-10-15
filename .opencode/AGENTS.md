@@ -106,7 +106,9 @@ cd studio && make test ALLOW_SHARED_DB=1                # 默认 dev 是共享�
 
 ## 生产环境保护
 
-执行 skills/tools/api.py 写操作时, CLI 自动探测后端 `/api/v1/env`, 若返回 `prod` 则强制门槛:
+执行 skills/tools/api.py 写操作时, CLI 会探测后端 `/api/v1/env`, 若返回 `prod` 则强制门槛
+(注意: `STUDIO_URL` 指向 localhost/127.0.0.1/0.0.0.0 时**跳过探测** —— 本地以 `APP_ENV=prod`
+起的 studio 不受下面这三条保护):
 
 - 所有写操作必须 `--yes`, 否则拒绝 (exit 3)
 - DELETE 操作额外必须 `--prod-confirm`, 否则拒绝 (exit 3)

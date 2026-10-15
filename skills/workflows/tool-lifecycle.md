@@ -26,7 +26,8 @@
 
 6. 导出 (/std-export)
    → 仅 status=published 且存在 active 链接的工具导出
-   → 产物为 web/data/topics-{env}.json + tools-{env}.json；仅 prod 同步 topics.json + tools.json
+   → 产物为 web/data/topics-{env}.json + tools-{env}.json；仅 prod 额外同步 web/data/topics.json + tools.json
+   → 响应含 skipped_count / skipped_reasons（被跳过的行数与原因）
    → 提交代码 → Vercel 自动部署
 
 7. 下架/重新发布 (/std-archive)
@@ -64,6 +65,9 @@
 
 - `published_at` 仅在首次 status→published 时写入，之后不变
 - 导出仅包含 status=published **且存在 status=active 链接**的工具
+- 导出投影细节: `topics[0]` 即主主题（`is_primary` → `sort_order` → `topic_id` 排序）；工具的 `url` 取 `is_primary=1 且 active` 的链接，取不到则回退首个 active 链接，其余 active 链接进 `links[]`（按 `sort_order DESC, id ASC`）；工具无有效主题归属时 `topics` 为 `["misc"]`，`misc` 主题不存在时导出端会合成一条
+- `description` 为 NULL 时导出物**省略该键**（不是输出 null）；`lastUpdatedAt` 取审计列 `updated_at`，恒存在
+- 导出响应含 `skipped_count` / `skipped_reasons`，跳过的是缺 slug/name/tagline/url/languages 或 pricing 非法的行
 - 主题工具计数（topic-count）仅统计会进导出的工具（published + active 链接），但**删除主题时后端拦截统计所有状态的归属关系**，即 count=0 不保证可删（可能有未发布工具关联）
 - 删除工具会级联删除其链接与主题归属；标签是工具字段，随工具消失
 - 标签最多 8 个，没有独立实体与端点
@@ -77,5 +81,7 @@
 - 日志醒目记录 `PROD 写操作`
 
 **模型如何知晓后端环境**: 多数命令的前置检查会调 `api.py health`（`/std-list` 除外），该命令输出含 `env` 字段并在 prod 时显示醒目警示行。模型读到警示后主动带 `--yes`/`--prod-confirm`；若仍遗漏，`_write` 层强制拒绝兜底。
+
+> 已知限制: `_write` 的兜底探测只在 `STUDIO_URL` 指向非 loopback 地址时进行。目标为 `localhost` / `127.0.0.1` / `0.0.0.0` 时跳过探测，本地以 `APP_ENV=prod` 启动的 studio 不会触发 exit 3，只能依赖 `health` 的警示行自觉遵守。访问 prod 请使用非 loopback 地址。
 
 模型在 prod 执行命令前应: 优先 dry-run 预览、写操作带 `--yes`、删除带 `--prod-confirm`、状态变更需用户明确指令。

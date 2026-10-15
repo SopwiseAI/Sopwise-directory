@@ -59,31 +59,35 @@ description: "XiGee Directory 数据管理 Skills。当用户需要添加/审核
 
 这保证模型在 prod 环境执行命令时不会"随意乱来"，任何破坏性操作都需要双重显式确认。
 
+> 已知限制: 探测只在 `STUDIO_URL` 指向非 loopback 地址时进行；目标为 `localhost` / `127.0.0.1` / `0.0.0.0` 时 CLI 跳过探测，本地以 `APP_ENV=prod` 启动的 studio 不会触发上述门槛。访问 prod 请使用非 loopback 地址。
+
 ```bash
 # 工具管理
-python skills/tools/api.py tools [--status draft|pending|published|archived] [--topic-id N] [--featured] [--search K]   # 列出工具
+python skills/tools/api.py tools [--status draft|pending|published|archived] [--topic-id N] [--featured] [--search K] \
+    [--page N] [--page-size N] [--json]                          # 列出工具
 python skills/tools/api.py tool <id>                            # 工具详情
 python skills/tools/api.py add-tool --name <name> --tagline <一句话> --pricing <free|freemium|paid> \
     --origin <cn|overseas> --access <direct|proxy> --languages zh,en \
-    [--url <url>] [--topic-ids 1,2] [--primary-topic-id N] [--tags a,b] [--open-source] [--featured] [--sort-order N]
+    [--slug <slug>] [--url <url>] [--topic-ids 1,2] [--primary-topic-id N] [--tags a,b] \
+    [--open-source] [--featured] [--description <desc>] [--sort-order N] [--status draft|pending]
 python skills/tools/api.py update-tool <id> [--status <值>] [--name] [--slug] [--tagline] [--description] \
     [--pricing] [--origin] [--access] [--languages zh,en] [--tags a,b] [--topic-ids 1,2] [--primary-topic-id N] \
     [--open-source | --no-open-source] [--featured | --no-featured] [--sort-order N]
 python skills/tools/api.py delete-tool <id>
 
 # 主题管理
-python skills/tools/api.py topics [--status active|disabled]
+python skills/tools/api.py topics [--status active|disabled] [--page N] [--page-size N] [--json]
 python skills/tools/api.py topic <id>
 python skills/tools/api.py add-topic --name <name> --slug <slug> [--icon <icon>] [--description] [--sort-order N] [--status active|disabled]
 python skills/tools/api.py update-topic <id> [--name] [--slug] [--icon] [--description] [--sort-order] [--status]
 python skills/tools/api.py delete-topic <id>
 python skills/tools/api.py topic-count <id>                     # 主题下已发布工具数
-python skills/tools/api.py topic-tools <id>                     # 主题下全部工具
+python skills/tools/api.py topic-tools <id> [--page N] [--page-size N] [--json]   # 主题下全部工具
 
 # 链接管理
-python skills/tools/api.py tool-links <id> [--status active|broken|disabled]
-python skills/tools/api.py add-link <tool_id> --url <url> [--label website|api|docs|github|playground|pricing|plugin|other] [--primary] [--status active|broken|disabled]
-python skills/tools/api.py update-link <tool_id> <link_id> [--url] [--label] [--primary | --no-primary] [--status]
+python skills/tools/api.py tool-links <id> [--status active|broken|disabled]   # 无分页/无总数头；工具不存在返回 []（非 404，有意）
+python skills/tools/api.py add-link <tool_id> --url <url> [--label website|api|docs|github|playground|pricing|plugin|other] [--primary] [--status active|broken|disabled] [--sort-order N]
+python skills/tools/api.py update-link <tool_id> <link_id> [--url] [--label] [--primary | --no-primary] [--status] [--sort-order N]
 python skills/tools/api.py delete-link <tool_id> <link_id>
 
 # 主题归属（全量替换）
@@ -91,14 +95,15 @@ python skills/tools/api.py tool-topics <id>
 python skills/tools/api.py set-topics <tool_id> --topic-ids 1,2 [--primary-topic-id N]
 
 # 标签（工具字段，无独立端点）
-python skills/tools/api.py tags                                 # 列出全部标签（客户端聚合）
+python skills/tools/api.py tags [--json]                        # 列出全部标签（客户端聚合）
 python skills/tools/api.py tool-tags <id>                       # 查看某工具标签
 python skills/tools/api.py set-tags <tool_id> --tags a,b,c      # 全量替换某工具标签
 
 # 数据操作
-python skills/tools/api.py export                        # 导出 → topics-{env}.json + tools-{env}.json; 仅 prod 同步 topics.json + tools.json
+python skills/tools/api.py export                        # 导出 → web/data/topics-{env}.json + tools-{env}.json; 仅 prod 额外同步 topics.json + tools.json
 python skills/tools/api.py stats                         # 目录统计
 python skills/tools/api.py health                        # 健康检查（含后端环境）
+python skills/tools/api.py env                           # 环境信息
 python skills/tools/api.py --version                     # 版本
 ```
 
@@ -121,7 +126,7 @@ python skills/tools/api.py --version                     # 版本
 | 命令                | 说明                                  |
 | ------------------- | ------------------------------------- |
 | `/std-collect`      | 采集批量工具入库为草稿                |
-| `/std-add-tool`     | 添加工具（单条，草稿状态）            |
+| `/std-add-tool`     | 添加工具（单条，默认草稿）            |
 | `/std-manage-tool`  | 工具管理（查看/改/删/链接/主题/标签） |
 | `/std-add-topic`    | 添加主题                              |
 | `/std-manage-topic` | 主题管理（查看/改/删）                |
@@ -145,6 +150,9 @@ python skills/tools/api.py --version                     # 版本
 
 ### 完整 API 覆盖（12 paths / 20 operations）
 
+下表路径均相对 `/api/v1`（如 `GET /health` 实为 `GET /api/v1/health`）；权威定义见后端根路径 `GET /openapi.json`。
+其中写操作与 `POST /export` 需要 `X-API-Key`，9 个只读接口（`GET /health` `/env` `/tools` `/tools/{id}` `/tools/{id}/links` `/topics` `/topics/{id}` `/topics/{id}/tools` `/topics/{id}/tool-count`）不需要。
+
 | 分类     | api.py 命令                               | 对应后端接口                                  |
 | -------- | ----------------------------------------- | --------------------------------------------- |
 | 系统     | `health`                                  | `GET /health`                                 |
@@ -162,4 +170,4 @@ python skills/tools/api.py --version                     # 版本
 |          | `set-tags`                                | `PUT /tools/{id}`                             |
 | 数据     | `export` `stats`                          | `POST /export` (export) / 聚合查询 (stats)    |
 
-所有列表命令均支持 `--page` 和 `--page-size` 分页参数。
+列表接口返回**裸数组**，总数在响应头 `X-Total-Count`。分页参数是 `--page`（≥1）与 `--page-size`（不是 `limit`/`offset`），仅 `tools` / `topics` / `topic-tools` 支持：`tools` 默认 20、每页 ≤100，`topics` 默认 50、每页 ≤200，`topic-tools` 默认 20、每页 ≤100。`tool-links` 无分页、无 `X-Total-Count`；`tags` / `tool-tags` / `tool-topics` 是客户端聚合或工具详情派生，也不分页。
