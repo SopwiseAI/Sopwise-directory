@@ -41,7 +41,7 @@ draft=草稿 → pending=待审核 → published=已发布 → archived=已下�
 # 启动服务
 ./scripts/dev.sh                # 前端 + 后端
 ./scripts/dev-web.sh            # 仅前端 (port 3000, 前端没有配置文件)
-./scripts/dev-studio.sh         # 仅后端 (端口取 .env.<APP_ENV> 的 APP_PORT, 缺省 8000)
+./scripts/dev-studio.sh         # 仅后端 (端口取 studio/.env.<APP_ENV> 的 APP_PORT, 缺省 8000)
 ./scripts/stop.sh               # 停止服务
 ./scripts/status.sh             # 查看状态
 
@@ -55,24 +55,32 @@ cd studio && make check                                 # ruff + mypy + 格式�
 cd studio && make test ALLOW_SHARED_DB=1                # 默认 dev 是共享库: 直接 uv run pytest 会被门禁以退出码 3 拦住
 ```
 
+非 prod 环境没有 `--yes` 强制要求, 但 `update-tool` / `set-tags` / `set-topics` /
+`delete-tool` / `delete-topic` / `delete-link` 会交互式二次确认 (y/N) —— 在 agent
+的非交互场景下必须带 `--yes`, 否则 `input()` 抛 EOFError 退出 1。`add-tool` /
+`add-topic` / `add-link` 无确认提示, 会直接写库。`export` 不走 `_write`, 因此既无
+`--dry-run` 也无 `--op-id` (加了也会被忽略, 仍然写盘)。
+
 ## Studio API 端点
 
-| 方法           | 路径                                    | 说明                        |
-| -------------- | --------------------------------------- | --------------------------- |
-| GET/POST       | /api/v1/topics                          | 主题 CRUD                   |
-| GET/PUT/DELETE | /api/v1/topics/{topic_id}               | 主题详情                    |
-| GET            | /api/v1/topics/{topic_id}/tools         | 主题下工具                  |
-| GET            | /api/v1/topics/{topic_id}/tool-count    | 主题下已发布工具数          |
-| GET/POST       | /api/v1/tools                           | 工具 CRUD                   |
-| GET/PUT/DELETE | /api/v1/tools/{tool_id}                 | 工具详情                    |
-| GET/POST       | /api/v1/tools/{tool_id}/links           | 工具链接                    |
-| PUT/DELETE     | /api/v1/tools/{tool_id}/links/{link_id} | 链接详情                    |
-| PUT            | /api/v1/tools/{tool_id}/topics          | 工具主题归属 (替代旧 /tags) |
-| GET            | /api/v1/env                             | 环境信息                    |
-| POST           | /api/v1/export                          | 导出 JSON (需 API Key)      |
-| GET            | /api/v1/health                          | 健康检查                    |
+| 方法           | 路径                                    | 说明                        | 需 X-API-Key  |
+| -------------- | --------------------------------------- | --------------------------- | ------------- |
+| GET/POST       | /api/v1/topics                          | 主题 CRUD                   | 仅 POST       |
+| GET/PUT/DELETE | /api/v1/topics/{topic_id}               | 主题详情                    | 仅 PUT/DELETE |
+| GET            | /api/v1/topics/{topic_id}/tools         | 主题下工具                  | 否            |
+| GET            | /api/v1/topics/{topic_id}/tool-count    | 主题下已发布工具数          | 否            |
+| GET/POST       | /api/v1/tools                           | 工具 CRUD                   | 仅 POST       |
+| GET/PUT/DELETE | /api/v1/tools/{tool_id}                 | 工具详情                    | 仅 PUT/DELETE |
+| GET/POST       | /api/v1/tools/{tool_id}/links           | 工具链接                    | 仅 POST       |
+| PUT/DELETE     | /api/v1/tools/{tool_id}/links/{link_id} | 链接详情                    | 是            |
+| PUT            | /api/v1/tools/{tool_id}/topics          | 工具主题归属 (替代旧 /tags) | 是            |
+| GET            | /api/v1/env                             | 环境信息                    | 否            |
+| POST           | /api/v1/export                          | 导出 JSON (会写盘)          | 是            |
+| GET            | /api/v1/health                          | 健康检查                    | 否            |
 
-写操作需要 `X-API-Key` 头。
+写操作与 `POST /api/v1/export` 需要 `X-API-Key` 头; 9 个只读接口
+(`GET /health` `/env` `/tools` `/tools/{id}` `/tools/{id}/links` `/topics`
+`/topics/{id}` `/topics/{id}/tools` `/topics/{id}/tool-count`) 不需要。缺/错 Key → 401。
 
 ## 关键约定
 
@@ -83,10 +91,15 @@ cd studio && make test ALLOW_SHARED_DB=1                # 默认 dev 是共享�
 - 主题 status: disabled / active; 链接 status: active / broken / disabled
 - pricing: free / freemium / paid; 是否开源是独立字段 `is_open_source`
 - 新增必填字段: `tagline` / `origin`(cn|overseas) / `access`(direct|proxy) / `languages`(ISO 639-1 数组, 1~8 项)
-- 工具的主题归属用 `topic_ids: [int]` + 可选 `primary_topic_id`
-- URL 去重通过归一化 + SHA-256 hash
-- is_primary 唯一性由应用层保证
-- 环境配置: `.env.dev` / `.env.sit` / `.env.prod`, 通过 `APP_ENV` 切换
+- 字段上限 (写入端 422 拦截): `slug` ≤64 且为 kebab (`^[a-z0-9]+(?:-[a-z0-9]+)*$`); 工具 `name` ≤128 / 主题 `name` ≤64, 均非空白; `tagline` 必填 ≤100 且**句末必须是标点**; `description` ≤500 可空; `url` ≤2048
+- `tags` ≤8 个, 单个 ≤32 字符, 不可重复/为空/首尾带空白; `languages` 1~8 项, 两字母小写 ISO 639-1, 不可重复
+- `description` 为 NULL 时导出物**省略该键** (不是输出 null)
+- 工具的主题归属用 `topic_ids: [int]` + 可选 `primary_topic_id` (后者必须在 `topic_ids` 里)
+- URL 去重通过归一化 + SHA-256 hash; `url` 必须显式带 `http(s)://` (裸域名 `www.example.com` 直接 422, 不会自动补 scheme); 归一化**不做**追踪参数清洗 (`utm_*` / `gclid` / `fbclid` 原样保留), 只排序 query、丢 fragment、去 `www.`、非本地强制 https (localhost/127.0.0.1/::1/0.0.0.0 用 http)
+- is_primary 唯一性由应用层保证 (新设主链接会把旧主链接降级, 不报 409)
+- 列表接口返回**裸数组**, 总数在响应头 `X-Total-Count`; 分页参数是 `page`(≥1) / `page_size` (`tools` ≤100, `topics` ≤200), **不是 `limit`/`offset`**; `/tools/{id}/links` 无分页也无 `X-Total-Count`, 且工具不存在时返回 `[]` 而非 404
+- 环境配置: `studio/.env.dev` / `.env.sit` / `.env.prod`, 通过 `APP_ENV` 切换
+- `.opencode/commands/*.md` 里的 `` !`...` `` 块在命令被调用时**立即执行** (openCode 用 ``/!`([^`]+)`/g`` 在整份模板上匹配, 不区分代码块), 所以只有无副作用的只读检查才用 `` !` ``; 写操作/带占位符的模板一律用普通代码块
 
 ## MySQL MCP 使用规则
 

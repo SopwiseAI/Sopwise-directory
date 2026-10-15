@@ -28,7 +28,7 @@ description: 工具管理（查看/改名/改 slug/改主题/改定价/改标签
 2. 查看工具详情（含 topics、links、tags）:
 
    ```
-   !`python skills/tools/api.py tool <工具ID>`
+   python skills/tools/api.py tool <工具ID>
    ```
 
 3. 根据用户意图执行对应操作:
@@ -36,7 +36,7 @@ description: 工具管理（查看/改名/改 slug/改主题/改定价/改标签
    **改名 / 改 slug / 改 tagline / 改描述 / 改定价 / 改地域 / 改访问方式 / 改语言 / 改精选 / 改开源 / 改排序**:
 
    ```
-   !`python skills/tools/api.py --yes update-tool <工具ID> --name "新名"
+   python skills/tools/api.py --yes update-tool <工具ID> --name "新名"
    ```
 
    仅传需改的字段，可选:
@@ -62,7 +62,7 @@ description: 工具管理（查看/改名/改 slug/改主题/改定价/改标签
    合法迁移: draft→pending, pending→draft, pending→published, published→archived, archived→published
 
    ```
-   !`python skills/tools/api.py --yes update-tool <工具ID> --status pending`
+   python skills/tools/api.py --yes update-tool <工具ID> --status pending
    ```
 
    状态取值: `draft` / `pending` / `published` / `archived`（不再是 0/1/2/3）
@@ -74,25 +74,25 @@ description: 工具管理（查看/改名/改 slug/改主题/改定价/改标签
    先列出当前链接:
 
    ```
-   !`python skills/tools/api.py tool-links <工具ID>
+   python skills/tools/api.py tool-links <工具ID>
    ```
 
    添加链接:
 
    ```
-   !`python skills/tools/api.py add-link <工具ID> --url "https://..." [--label docs] [--primary] [--status active]
+   python skills/tools/api.py add-link <工具ID> --url "https://..." [--label docs] [--primary] [--status active]
    ```
 
    更新链接:
 
    ```
-   !`python skills/tools/api.py update-link <工具ID> <链接ID> [--url] [--label] [--primary | --no-primary] [--status]
+   python skills/tools/api.py update-link <工具ID> <链接ID> [--url] [--label] [--primary | --no-primary] [--status]
    ```
 
-   删除链接:
+   删除链接（带交互式二次确认，非交互场景必须加 `--yes`）:
 
    ```
-   !`python skills/tools/api.py delete-link <工具ID> <链接ID>
+   python skills/tools/api.py --yes delete-link <工具ID> <链接ID>
    ```
 
    - 每个工具只能有一个 primary link，后端强制唯一性
@@ -104,13 +104,13 @@ description: 工具管理（查看/改名/改 slug/改主题/改定价/改标签
    先读现有归属:
 
    ```
-   !`python skills/tools/api.py tool-topics <工具ID>`
+   python skills/tools/api.py tool-topics <工具ID>
    ```
 
    设置归属（传入完整主题 ID 列表）:
 
    ```
-   !`python skills/tools/api.py --yes set-topics <工具ID> --topic-ids 1,2 --primary-topic-id 1
+   python skills/tools/api.py --yes set-topics <工具ID> --topic-ids 1,2 --primary-topic-id 1
    ```
 
    **管理标签**（标签是工具字段，全量替换）:
@@ -118,13 +118,13 @@ description: 工具管理（查看/改名/改 slug/改主题/改定价/改标签
    先读现有标签:
 
    ```
-   !`python skills/tools/api.py tool-tags <工具ID>`
+   python skills/tools/api.py tool-tags <工具ID>
    ```
 
    设置标签:
 
    ```
-   !`python skills/tools/api.py --yes set-tags <工具ID> --tags a,b,c
+   python skills/tools/api.py --yes set-tags <工具ID> --tags a,b,c
    ```
 
    如需新标签，直接把它加进 `--tags` 列表即可（标签没有独立生命周期）。
@@ -137,7 +137,7 @@ description: 工具管理（查看/改名/改 slug/改主题/改定价/改标签
    - 有关联链接/主题归属 → 后端 CASCADE 自动清理
 
    ```
-   !`python skills/tools/api.py --yes delete-tool <工具ID>
+   python skills/tools/api.py --yes delete-tool <工具ID>
    ```
 
    prod 环境需额外 `--prod-confirm`（CLI 自动拦截；但 `STUDIO_URL` 是 loopback 时 CLI 跳过

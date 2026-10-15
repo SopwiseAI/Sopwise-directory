@@ -34,7 +34,7 @@ description: 主题管理（查看/改名/改 slug/改图标/禁用/删除）
 3. 主题下工具数已随列表返回（`tool_count` 字段），无需逐个再查；如需单独确认:
 
    ```
-   !`python skills/tools/api.py topic-count <主题ID>`
+   python skills/tools/api.py topic-count <主题ID>
    ```
 
    注意: topic-count 仅统计 status=published 且存在 active 链接的工具（导出口径），未发布工具不计入；`topic-tools` 则列出全部状态的工具。
@@ -46,7 +46,7 @@ description: 主题管理（查看/改名/改 slug/改图标/禁用/删除）
 5. 查看主题详情:
 
    ```
-   !`python skills/tools/api.py topic <主题ID>`
+   python skills/tools/api.py topic <主题ID>
    ```
 
 6. 根据用户意图执行对应操作:
@@ -54,7 +54,7 @@ description: 主题管理（查看/改名/改 slug/改图标/禁用/删除）
    **改名 / 改 slug / 改图标 / 改排序**:
 
    ```
-   !`python skills/tools/api.py --yes update-topic <主题ID> --name "新名"`
+   python skills/tools/api.py --yes update-topic <主题ID> --name "新名"
    ```
 
    仅传需改的字段，可选: `--name` `--slug` `--icon` `--description` `--sort-order` `--status`
@@ -66,13 +66,20 @@ description: 主题管理（查看/改名/改 slug/改图标/禁用/删除）
 
    **删除主题**:
 
-   注意: topic-count 只统计已发布工具，但后端删除拦截统计**所有状态**的归属关系。即 count=0 不代表可删，仍可能有草稿/待审核工具挂在该主题下。先查 count，再参考 stats 确认无关联后删除:
+   注意: topic-count 只统计会进导出的工具（published 且存在 active 链接），但后端删除拦截统计**所有状态**的归属关系。即 count=0 不代表可删，仍可能有草稿/待审核工具挂在该主题下。因此还要用 `topic-tools` 看全部状态的归属（它**不过滤 status**），确认无关联后再删:
 
    ```
-   !`python skills/tools/api.py topic-count <主题ID>`
+   python skills/tools/api.py topic-count <主题ID>
+   python skills/tools/api.py topic-tools <主题ID>
    ```
 
-   - 后端拒绝（HTTP 409: Topic has N tools）→ 告知用户"该主题下有 N 个工具（含未发布），请先迁移或删除这些工具，或改用 disabled 而非删除"
+   `delete-topic` 带交互式二次确认，非交互场景必须加 `--yes`（否则 `input()` 抛 EOFError 退出 1）:
+
+   ```
+   python skills/tools/api.py --yes delete-topic <主题ID>
+   ```
+
+   - 后端拒绝（HTTP 409: `Topic has N tools (incl. unpublished). Remove or reassign them first.`）→ 告知用户"该主题下有 N 个工具（含未发布），请先迁移或删除这些工具，或改用 disabled 而非删除"
    - 后端放行 → 删除成功，告知用户
 
 7. 告知用户操作结果

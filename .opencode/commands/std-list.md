@@ -24,13 +24,13 @@ description: 列出工具，支持按状态过滤和搜索
    多维过滤可组合:
 
    ```
-   !`python skills/tools/api.py tools --status published --topic-id 3 --featured`
+   python skills/tools/api.py tools --status published --topic-id 3 --featured
    ```
 
 2. 如果用户提供了搜索关键词（非过滤关键词），使用 --search:
 
    ```
-   !`python skills/tools/api.py tools --search "关键词"`
+   python skills/tools/api.py tools --search "关键词"
    ```
 
    注意: 后端 `/tools` 不支持 search 参数，CLI 拉取全量后按 name/slug/tagline/tags 做客户端过滤；此模式下不显示"共 N 条"（该行仅在后端分页计数时出现）。
@@ -38,7 +38,7 @@ description: 列出工具，支持按状态过滤和搜索
 3. status + search + 其他过滤可组合:
 
    ```
-   !`python skills/tools/api.py tools --status published --search "chat" --featured`
+   python skills/tools/api.py tools --status published --search "chat" --featured
    ```
 
 4. 如果输出底部显示"共 N 条"且 N 大于当前显示数量，告知用户可翻页:

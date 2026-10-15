@@ -29,7 +29,13 @@ description: 数据正确性校对（全量扫描，输出问题清单+修复建
    !`python skills/tools/api.py stats`
    ```
 
-2. fetch 全量工具（分页拉取）
+2. fetch 全量工具（分页拉取；列表接口返回裸数组，总数在响应头 `X-Total-Count`，
+   `page_size` 上限 100）
+
+   ```
+   python skills/tools/api.py tools --page 1 --page-size 100
+   python skills/tools/api.py tools --page 2 --page-size 100
+   ```
 
 3. 逐工具逐项检查（清单见 `skills/prompts/tool-verify.md`）:
 
@@ -62,7 +68,7 @@ description: 数据正确性校对（全量扫描，输出问题清单+修复建
 5. 对可自动修复项（如 slug 不对应、name 含残留符号）询问用户是否执行修复:
 
    ```
-   !`python skills/tools/api.py --yes update-tool <ID> --name "清洗后名称"`
+   python skills/tools/api.py --yes update-tool <ID> --name "清洗后名称"
    ```
 
    修复先 dry-run 预览

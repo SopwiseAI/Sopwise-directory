@@ -41,7 +41,7 @@ description: 标签管理（列出全部标签 / 查看 / 设置某工具的标�
 3. 先定位工具 ID，再读标签:
 
    ```
-   !`python skills/tools/api.py tool-tags <工具ID>`
+   python skills/tools/api.py tool-tags <工具ID>
    ```
 
 ### 设置某工具的标签
@@ -49,19 +49,19 @@ description: 标签管理（列出全部标签 / 查看 / 设置某工具的标�
 4. **set-tags 是全量替换**，会覆盖该工具现有标签。执行前必须先读现有标签:
 
    ```
-   !`python skills/tools/api.py tool-tags <工具ID>`
+   python skills/tools/api.py tool-tags <工具ID>
    ```
 
 5. 传入包含**保留标签 + 新增标签**的完整列表:
 
    ```
-   !`python skills/tools/api.py --yes set-tags <工具ID> --tags "保留的,新增的"
+   python skills/tools/api.py --yes set-tags <工具ID> --tags "保留的,新增的"
    ```
 
    传空串清空该工具的全部标签:
 
    ```
-   !`python skills/tools/api.py --yes set-tags <工具ID> --tags ""
+   python skills/tools/api.py --yes set-tags <工具ID> --tags ""
    ```
 
    - 最多 8 个标签

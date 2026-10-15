@@ -25,7 +25,7 @@ description: 提交工具审核（草稿 → 待审核）
 2. 查看工具详情，确认必要项齐全:
 
    ```
-   !`python skills/tools/api.py tool <工具ID>`
+   python skills/tools/api.py tool <工具ID>
    ```
 
 3. 必填校验（缺一项即拦截，不调 update-tool）:
@@ -37,7 +37,7 @@ description: 提交工具审核（草稿 → 待审核）
 4. 提交审核 (draft→pending):
 
    ```
-   !`python skills/tools/api.py --yes update-tool <工具ID> --status pending`
+   python skills/tools/api.py --yes update-tool <工具ID> --status pending
    ```
 
 5. 告知用户工具已提交审核，可用 `/std-review` 审核或 `/std-publish` 直接发布

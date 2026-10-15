@@ -23,7 +23,7 @@ description: AI 补全工具信息（描述、主题归属、标签、链接）
 2. 查看工具详情:
 
    ```
-   !`python skills/tools/api.py tool <工具ID>`
+   python skills/tools/api.py tool <工具ID>
    ```
 
    注意: 主链接在 `links` 数组里，取 `is_primary=true` 的那条（`url` 字段）。标签在 `tags` 数组中，主题归属看 `topic_ids` / `primary_topic_id` 与 `topics` 数组。
@@ -44,19 +44,19 @@ description: AI 补全工具信息（描述、主题归属、标签、链接）
    a. 更新描述与主题归属（只传需要更新的字段）:
 
    ```
-   !`python skills/tools/api.py --yes update-tool <工具ID> --description "描述内容" --topic-ids <主题ID> --primary-topic-id <主题ID>`
+   python skills/tools/api.py --yes update-tool <工具ID> --description "描述内容" --topic-ids <主题ID> --primary-topic-id <主题ID>
    ```
 
    b. 设置标签（`set-tags` 是全量替换）。执行前必须先读现有标签:
 
    ```
-   !`python skills/tools/api.py tool-tags <工具ID>`
+   python skills/tools/api.py tool-tags <工具ID>
    ```
 
    传入包含**现有标签 + 新标签**的完整列表:
 
    ```
-   !`python skills/tools/api.py --yes set-tags <工具ID> --tags "现有,新增"
+   python skills/tools/api.py --yes set-tags <工具ID> --tags "现有,新增"
    ```
 
    标签没有独立实体，不需要先"创建标签"，直接写进列表即可。
@@ -64,7 +64,7 @@ description: AI 补全工具信息（描述、主题归属、标签、链接）
    c. 添加链接。先检查 links 数组是否已有相同 URL，避免重复添加:
 
    ```
-   !`python skills/tools/api.py add-link <工具ID> --url "https://..." --primary --label website
+   python skills/tools/api.py add-link <工具ID> --url "https://..." --primary --label website
    ```
 
    附加链接（文档/仓库等）用 `--label docs|github|api` 且不加 `--primary`。
