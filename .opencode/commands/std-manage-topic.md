@@ -28,7 +28,7 @@ description: 主题管理（查看/改名/改 slug/改图标/禁用/删除）
 2. 拉取全部主题:
 
    ```
-   !`python skills/tools/api.py topics --json`
+   !`python skills/tools/api.py topics --page-size 200 --json`
    ```
 
 3. 主题下工具数已随列表返回（`tool_count` 字段），无需逐个再查；如需单独确认:
@@ -60,7 +60,8 @@ description: 主题管理（查看/改名/改 slug/改图标/禁用/删除）
    仅传需改的字段，可选: `--name` `--slug` `--icon` `--description` `--sort-order` `--status`
 
    - `--status active`: 启用（参与导航与导出）
-   - `--status disabled`: 禁用（保留工具归属但不导出）
+   - `--status disabled`: 禁用（保留工具归属但不导出）；其下**只挂该主题**的已发布工具在导出产物里
+     会变成 `topics:["misc"]`（看起来像丢了分类）
 
    slug 修改须遵守统一 slug 规范（见末尾）。
 

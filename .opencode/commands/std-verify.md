@@ -29,40 +29,28 @@ description: 数据正确性校对（全量扫描，输出问题清单+修复建
    !`python skills/tools/api.py stats`
    ```
 
-2. fetch 全量工具（分页拉取；列表接口返回裸数组，总数在响应头 `X-Total-Count`，
-   `page_size` 上限 100）
+2. 取全量工具（分页拉取；`tools` 默认只回 20 条、`--page-size` 上限 100；CLI 不打印响应头，
+   总条数只在表格尾部以 `(共 N 条)` 显示，按它判断要翻到第几页）:
 
    ```
    python skills/tools/api.py tools --page 1 --page-size 100
    python skills/tools/api.py tools --page 2 --page-size 100
    ```
 
-3. 逐工具逐项检查（清单见 `skills/prompts/tool-verify.md`）:
+3. 逐工具检查。级别（ERROR / WARN / INFO）与判定条目**一律**以 `skills/prompts/tool-verify.md`
+   为准（**必须先读**），本文件不重复其清单; 这里只固定检查顺序:
 
-   | 检查项             | 级别  | 判定                         |
-   | ------------------ | ----- | ---------------------------- |
-   | name 空/异常       | ERROR | 非空、无拼写错、用官方名     |
-   | slug 与 name 对应  | WARN  | 中文 name 应有拼音/英文 slug |
-   | links 空           | ERROR | 至少 1 条                    |
-   | URL 格式           | ERROR | 合法 http(s)://              |
-   | URL 可达           | INFO  | HEAD 请求，超时不作错        |
-   | 重复工具           | ERROR | 跨库查 name/url 重复         |
-   | topic_ids 空       | WARN  | 建议归属主题                 |
-   | tagline 空/无标点  | ERROR | 非空且以标点结尾             |
-   | pricing 合法       | WARN  | free/freemium/paid           |
-   | origin/access 合法 | WARN  | cn/overseas、direct/proxy    |
-   | languages 合法     | WARN  | 1~8 项 ISO 639-1 两字母小写  |
-   | description 空     | INFO  | 建议补                       |
-   | tags 空            | INFO  | 建议补                       |
+   name → slug → tagline → links/URL → 重复工具 → URL 追踪参数 → 主题归属 → pricing →
+   origin/access/languages → description → tags
 
-4. 输出问题清单（按级别排序: ERROR > WARN > INFO）:
+4. 输出问题清单（级别分组与排序以 `skills/prompts/tool-verify.md` 的输出格式为准）。工具用
+   「名称 + 当前 ID」标识，不要写死示例 ID; 定位工具用 `python skills/tools/api.py tools --search <关键字>`:
 
    ```
-   工具                问题                          级别   建议
-   T1(id=1)           links 为空                    ERROR  添加工具链接
-   T1(id=1)           slug=p1 与名称对应            -      通过
-   某工具(id=88)      name 含 HTML 标签残留         ERROR  清洗为纯文本
-   ChatGPT(id=40)     description 为空               INFO   建议补全
+   工具                     问题                     级别   建议
+   <工具名>(id=<ID>)        links 为空               ERROR  添加工具链接
+   <工具名>(id=<ID>)        name 含 HTML 标签残留    ERROR  清洗为纯文本
+   <工具名>(id=<ID>)        description 为空         INFO   建议补全
    ```
 
 5. 对可自动修复项（如 slug 不对应、name 含残留符号）询问用户是否执行修复:

@@ -33,7 +33,7 @@ description: 列出工具，支持按状态过滤和搜索
    python skills/tools/api.py tools --search "关键词"
    ```
 
-   注意: 后端 `/tools` 不支持 search 参数，CLI 拉取全量后按 name/slug/tagline/tags 做客户端过滤；此模式下不显示"共 N 条"（该行仅在后端分页计数时出现）。
+   注意: 后端 `/tools` 不支持 search 参数。CLI 先用 `--status` / `--topic-id` / `--featured` 取候选集，再在**全部候选**上做关键字过滤，最后对结果分页；`(共 N 条)` 是搜索后的总数，`--page` / `--page-size`（上限 100）作用于搜索结果。
 
 3. status + search + 其他过滤可组合:
 
@@ -42,7 +42,7 @@ description: 列出工具，支持按状态过滤和搜索
    ```
 
 4. 如果输出底部显示"共 N 条"且 N 大于当前显示数量，告知用户可翻页:
-   - 下一页: `python skills/tools/api.py tools --page 2`
+   - 下一页: 在原命令后追加 `--page 2`（不要丢掉原有的过滤/搜索参数）
    - 每页条数: `--page-size 50`
 
 5. 如果结果为空，告知用户:

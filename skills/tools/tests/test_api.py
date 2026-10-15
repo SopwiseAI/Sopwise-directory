@@ -273,7 +273,7 @@ class TestFetchAll(unittest.TestCase):
 
 
 class TestToolsSearch(unittest.TestCase):
-    """后端 /tools 没有 search 参数，CLI 拉全量后客户端过滤。"""
+    """后端 /tools 没有 search 参数: 服务端过滤 → 关键字过滤(全部候选) → 客户端分页。"""
 
     def _ns(self, **kwargs):
         ns = MagicMock()
@@ -288,41 +288,75 @@ class TestToolsSearch(unittest.TestCase):
             setattr(ns, key, value)
         return ns
 
-    def test_search_not_sent_as_param(self):
+    def _run(self, tools, keyword="chat", **kwargs):
+        """跑一次 --search, 返回 (展示行, 尾部 "共 N 条" 文本, _fetch_all mock)。"""
         with (
-            patch.object(api, "_request_with_headers", return_value=([], {})) as m,
-            patch.object(api, "_fetch_all", return_value=[]),
+            patch.object(api, "_fetch_all", return_value=tools) as fetch_all_mock,
+            patch.object(api, "_print_table") as table_mock,
+            patch("builtins.print") as print_mock,
         ):
-            api.cmd_tools(self._ns(search="chat"))
-            self.assertNotIn("search=", m.call_args[0][1])
+            api.cmd_tools(self._ns(search=keyword, **kwargs))
+        printed = [c.args[0] for c in print_mock.call_args_list if c.args]
+        total = next((line for line in printed if "共" in line), None)
+        return table_mock.call_args[0][0], total, fetch_all_mock
 
-    def test_search_filters_client_side(self):
+    def test_search_not_sent_as_param(self):
+        tools = [{"id": 1, "name": "ChatGPT", "slug": "chatgpt", "tags": []}]
+        _, _, fetch_all_mock = self._run(tools)
+        self.assertNotIn("search=", fetch_all_mock.call_args[0][0])
+
+    def test_search_filters_all_candidates(self):
         tools = [
             {"id": 1, "name": "ChatGPT", "slug": "chatgpt", "tags": []},
             {"id": 2, "name": "Claude", "slug": "claude", "tags": []},
         ]
-        with (
-            patch.object(api, "_request_with_headers", return_value=(tools, {})),
-            patch.object(api, "_fetch_all", return_value=tools),
-            patch.object(api, "_print_table") as table_mock,
-        ):
-            api.cmd_tools(self._ns(search="chat"))
-            displayed = table_mock.call_args[0][0]
-            self.assertEqual([t["name"] for t in displayed], ["ChatGPT"])
+        displayed, total, _ = self._run(tools)
+        self.assertEqual([t["name"] for t in displayed], ["ChatGPT"])
+        self.assertEqual(total, "  (共 1 条)")
 
     def test_search_hits_tags(self):
         tools = [
             {"id": 1, "name": "X", "slug": "x", "tags": ["大模型"]},
             {"id": 2, "name": "Y", "slug": "y", "tags": ["绘画"]},
         ]
+        displayed, _, _ = self._run(tools, keyword="大模型")
+        self.assertEqual([t["name"] for t in displayed], ["X"])
+
+    def test_search_keeps_server_side_filters(self):
+        """status/topic-id/featured 仍走服务端过滤, 候选集取自 _fetch_all。"""
+        published = [
+            {"id": 1, "name": "ChatGPT", "slug": "chatgpt", "tags": []},
+            {"id": 2, "name": "Claude", "slug": "claude", "tags": []},
+        ]
         with (
-            patch.object(api, "_request_with_headers", return_value=(tools, {})),
-            patch.object(api, "_fetch_all", return_value=tools),
+            patch.object(api, "_fetch_all", return_value=published) as fetch_all_mock,
             patch.object(api, "_print_table") as table_mock,
         ):
-            api.cmd_tools(self._ns(search="大模型"))
+            api.cmd_tools(self._ns(status="published", search="chat"))
+            self.assertIn("status=published", fetch_all_mock.call_args[0][0])
             displayed = table_mock.call_args[0][0]
-            self.assertEqual([t["name"] for t in displayed], ["X"])
+            self.assertEqual([t["id"] for t in displayed], [1])
+
+    def test_search_total_is_filtered_count(self):
+        """(共 N 条) 是关键字过滤后的总数, 不是当前页条数。"""
+        tools = [
+            {"id": 1, "name": "ChatGPT", "slug": "chatgpt", "tags": []},
+            {"id": 2, "name": "Chatbase", "slug": "chatbase", "tags": []},
+            {"id": 3, "name": "Claude", "slug": "claude", "tags": []},
+        ]
+        displayed, total, _ = self._run(tools, page_size=1)
+        self.assertEqual([t["id"] for t in displayed], [1])
+        self.assertEqual(total, "  (共 2 条)")
+
+    def test_search_paginates_filtered_result(self):
+        """--page/--page-size 作用于搜索结果, 不是整个库。"""
+        tools = [
+            {"id": i, "name": f"Chat {i}", "slug": f"chat-{i}", "tags": []}
+            for i in range(1, 6)
+        ]
+        displayed, total, _ = self._run(tools, page=2, page_size=2)
+        self.assertEqual([t["id"] for t in displayed], [3, 4])
+        self.assertEqual(total, "  (共 5 条)")
 
     def test_status_filter_sent_as_param(self):
         with patch.object(api, "_request_with_headers", return_value=([], {})) as m:

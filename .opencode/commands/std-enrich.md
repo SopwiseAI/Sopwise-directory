@@ -17,7 +17,7 @@ description: AI 补全工具信息（描述、主题归属、标签、链接）
 1. 如果未提供 ID，列出草稿工具供用户选择:
 
    ```
-   !`python skills/tools/api.py tools --status draft`
+   !`python skills/tools/api.py tools --status draft --page-size 100`
    ```
 
 2. 查看工具详情:
@@ -37,7 +37,7 @@ description: AI 补全工具信息（描述、主题归属、标签、链接）
 4. 查询现有主题:
 
    ```
-   !`python skills/tools/api.py topics`
+   !`python skills/tools/api.py topics --page-size 200`
    ```
 
 5. 逐项补全:

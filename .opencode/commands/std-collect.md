@@ -32,15 +32,17 @@ description: 采集批量工具入库为草稿（支持文本/网页/列表/JSON
 
 1. 识别输入类型，选用对应解析器提取候选列表
 2. 逐条清洗（规则见 tool-collect.md）:
-   - URL 归一化（**必须显式带 `http(s)://` scheme** —— 裸域名 `www.example.com` 会被后端
-     422 拒绝，不会自动补 scheme；非本地地址 scheme 归一到 https、去掉 `www.` 前缀、
-     去尾斜杠与片段、query 排序；localhost/127.0.0.1/::1/0.0.0.0 保留 http；
-     **追踪参数（utm\_*/gclid/fbclid…）后端不会自动去掉**，要自行清洗）
+   - URL 清洗: **必须显式带 scheme** —— 裸域名 `www.example.com` 会被后端 422 拒绝，
+     不会自动补 scheme；**非本地地址必须 https**，`http://example.com` 直接 422
+     （只有 localhost/127.0.0.1 等本地地址可用 http）。后端会归一化 URL（query 排序、
+     丢 fragment、去 `www.` 前缀），但**不会去掉追踪参数**（utm\_*/gclid/fbclid 原样入库），
+     要自行清洗
    - name 清洗（去空格/HTML 残留/多余符号）
    - slug 生成（英文小写连字符；中文→拼音/英文翻译；中文 name 必须生成有效 slug）
 3. 去重:
    - 跨条去重: name 完全相同、或 url 完全相同，保留首条
-   - 查库内已有: `tools` 全量比对，已存在的标记"重复"跳过
+   - 查库内已有: `tools --page-size 100` 逐页比对（默认只回 20 条，`--page-size` 上限 100），
+     已存在的标记"重复"跳过
 4. 输出**预览表**:
 
    ```
@@ -51,14 +53,14 @@ description: 采集批量工具入库为草稿（支持文本/网页/列表/JSON
    ```
 
 5. 分批控制:
-   - 默认每批 20 条，单批上限 500（批次由本工作流控制，CLI 没有 `--limit` 参数）
+   - 默认每批 20 条，单批上限 500（批次由本工作流控制，CLI 没有 `--limit` 参数；取库内全量靠上面的 `tools --page-size 100` 逐页翻）
    - 候选数超过本批容量时，**提示用户分批操作**: 告知总数、建议批次划分、询问是否处理当前批次或调整每批条数
    - **文件输入数据量较大时**: 读取后汇报总行数，按批次切分，逐批预览确认
 
 6. 逐条入库。以下 5 个参数必填（CLI 缺失即 argparse 报错 exit 2，请求不会发出；后端只校验取值），采集阶段必须给出；无法从输入判断的（尤其是 `origin` 与 `access`）**不要替用户猜**，而是列入待确认清单询问用户:
 
    ```
-   python skills/tools/api.py add-tool --name "工具名" --slug "生成slug" --url "https://..." --tagline "一句话简介。" --pricing free --origin cn --access direct --languages zh,en
+   python skills/tools/api.py --op-id collect-<时间戳>-<行号> add-tool --name "工具名" --slug "生成slug" --url "https://..." --tagline "一句话简介。" --pricing free --origin cn --access direct --languages zh,en
    ```
 
    - `--pricing` 仅 `free` / `freemium` / `paid`
@@ -95,5 +97,7 @@ description: 采集批量工具入库为草稿（支持文本/网页/列表/JSON
 
 - 入库前先出预览表并等用户确认；`add-tool` 本身**不会**自动 dry-run，只有显式加
   `--dry-run` 才只预览不写库（不加就是直接写库）
-- 批量入库用 `--op-id collect-{时间戳}` 串联幂等，避免误重跑
+- 批量入库**每条一个** `--op-id`（如 `--op-id collect-<时间戳>-<行号>`）。`--op-id` 是**单次操作**的
+  幂等键: 同一条命令重复同值会被跳过（打印"操作已执行过…跳过"）且 **exit 0**，批量共用一个值
+  会让第一条之后的写入全部被静默跳过
 - 文件输入只读取，不修改源文件
