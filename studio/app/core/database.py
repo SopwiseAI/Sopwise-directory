@@ -15,8 +15,14 @@ _is_test = bool(os.getenv("PYTEST_CURRENT_TEST")) or "pytest" in sys.modules
 
 settings = get_settings()
 
+# 建连超时(秒)。aiomysql 的 connect_timeout 默认是 None, 等于不设限: DB 主机被防火墙丢包 /
+# TCP 黑洞时, 建连会一直挂着 —— 而 pool_timeout 只在"池满"时生效, 救不了它, 请求会永久占住
+# uvicorn worker。/health 自带 asyncio.timeout(理由见 endpoints/health.py), 其余端点靠这里。
+_CONNECT_TIMEOUT_SECONDS = 10
+
 _engine_kwargs: dict[str, Any] = {
     "echo": settings.db_echo,
+    "connect_args": {"connect_timeout": _CONNECT_TIMEOUT_SECONDS},
     # 双保险: 服务端 wait_timeout 掐掉的连接靠 pre_ping 剔除, pool_recycle 提前换掉
     # 闲置连接, 免得把一个已经死掉的连接借给请求
     "pool_pre_ping": True,
