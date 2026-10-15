@@ -441,26 +441,35 @@ def cmd_tools(args):
         params.append(f"topic_id={args.topic_id}")
     if args.featured:
         params.append("featured=true")
-    if args.page:
-        params.append(f"page={args.page}")
-    if args.page_size:
-        params.append(f"page_size={args.page_size}")
+    if not args.search:
+        # 无关键字时才把分页交给服务端。
+        if args.page:
+            params.append(f"page={args.page}")
+        if args.page_size:
+            params.append(f"page_size={args.page_size}")
     qs = "&".join(params)
-    data, resp_headers = _request_with_headers(
-        "GET", f"/tools?{qs}" if qs else "/tools"
-    )
     if args.search:
-        # 后端 /tools 没有 search 参数，拉全量后客户端过滤。
+        # 后端 /tools 没有 search 参数: 服务端过滤(status/topic-id/featured) → 关键字过滤
+        # (覆盖全部候选) → 客户端分页。分页不能交给服务端, 否则搜索只看得到第一页。
         keyword = args.search.lower()
         data = [
             t
-            for t in _fetch_all("/tools")
+            for t in _fetch_all(f"/tools?{qs}" if qs else "/tools")
             if keyword in (t.get("name") or "").lower()
             or keyword in (t.get("slug") or "").lower()
             or keyword in (t.get("tagline") or "").lower()
             or any(keyword in tag.lower() for tag in (t.get("tags") or []))
         ]
-        resp_headers = {}
+        total = len(data)
+        page = args.page or 1
+        page_size = args.page_size or 20
+        data = data[(max(page, 1) - 1) * page_size :][:page_size] if page_size > 0 else []
+        # CLI 不打印响应头, 表格尾部的 "(共 N 条)" 按关键字过滤后的总数显示。
+        resp_headers = {"x-total-count": str(total)}
+    else:
+        data, resp_headers = _request_with_headers(
+            "GET", f"/tools?{qs}" if qs else "/tools"
+        )
     if args.json:
         _print_json(data)
     else:
@@ -909,8 +918,9 @@ def _fetch_all(path: str, page_size: int = 100) -> list:
     results = []
     page = 1
     while page <= _MAX_FETCH_PAGES:
+        sep = "&" if "?" in path else "?"
         data, _ = _request_with_headers(
-            "GET", f"{path}?page={page}&page_size={page_size}"
+            "GET", f"{path}{sep}page={page}&page_size={page_size}"
         )
         results.extend(data)
         if len(data) < page_size:
@@ -982,7 +992,7 @@ def main():
     p.add_argument("--status", choices=tool_status, help="按状态过滤")
     p.add_argument("--topic-id", type=int, help="按主题过滤")
     p.add_argument("--featured", action="store_true", help="仅精选")
-    p.add_argument("--search", help="按名称/slug/tagline/标签搜索（客户端过滤）")
+    p.add_argument("--search", help="按名称/slug/tagline/标签搜索（覆盖全部候选，结果客户端分页）")
     p.add_argument("--page", type=int, default=1)
     p.add_argument("--page-size", type=int, default=20)
     p.add_argument("--json", action="store_true", help="输出 JSON")
