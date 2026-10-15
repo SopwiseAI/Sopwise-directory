@@ -1,8 +1,11 @@
 """健康检查端点测试。"""
 
+import logging
 from unittest.mock import patch
 
 from sqlalchemy.exc import OperationalError
+
+from app.api.v1.endpoints.health import _HEALTH_TIMEOUT_SECONDS
 
 
 async def test_health_returns_ok(async_client):
@@ -52,3 +55,34 @@ async def test_health_db_disconnected(async_client):
     data = resp.json()
     assert data["status"] == "degraded"
     assert data["database"] == "disconnected"
+
+
+def test_health_timeout_budget_covers_cold_start():
+    """探活预算必须容得下冷启动的首次建连。
+
+    进程起来后的第一次 engine.connect() 要把 SQLAlchemy 的方言探测跑完(一串串行往返),
+    实测 RTT ≈0.4s 的链路上是 6.1s, 池子热了之后才 1.4s。5s 的预算会把完全健康的库报成
+    degraded, 而且超时取消掉那次建连、方言探测等于白跑, 于是每次重试都要重走冷路径
+    —— 只要这段时间只有探活请求打进来就永远自愈不了(实测连续 11 次 503)。
+    这个预算还是"库连不上"时的【唯一】上界(aiomysql 的 connect_timeout 默认 None,
+    asyncio.wait_for(timeout=None) 等于不设限), 所以也不能没有下界 —— 钉住它别再被调回 5s。
+    """
+    assert _HEALTH_TIMEOUT_SECONDS >= 10
+
+
+async def test_health_timeout_logs_reason(async_client, caplog):
+    """超时分支的日志必须能读出"是超时"。
+
+    asyncio.timeout 抛的是【无参】TimeoutError, str(exc) == "" —— 让它落进
+    `logger.warning("Health check failed: %s", exc)` 只会打出一行没有原因的
+    "Health check failed: ", 恰好把最该知道的信息丢掉。所以这里钉住日志内容。
+    """
+    with (
+        caplog.at_level(logging.WARNING, logger="app.api.v1.endpoints.health"),
+        patch("app.api.v1.endpoints.health.engine") as mock_engine,
+    ):
+        mock_engine.connect.side_effect = TimeoutError()
+        resp = await async_client.get("/api/v1/health")
+    assert resp.status_code == 503
+    assert resp.json()["status"] == "degraded"
+    assert "timed out" in caplog.text
