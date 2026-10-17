@@ -27,7 +27,7 @@ export function TopicBrowse({ topics, topicCounts }: TopicBrowseProps) {
             className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2.5 text-sm transition-colors outline-none hover:border-brand/30 hover:bg-brand/[0.03] focus-visible:ring-2 focus-visible:ring-ring"
           >
             <span className="flex size-7 shrink-0 items-center justify-center rounded-md border bg-background text-muted-foreground">
-              {topicIconNode(topic.icon, "text-base")}
+              {topicIconNode(topic.icon, "text-base leading-none shrink-0")}
             </span>
             <span className="min-w-0 flex-1 truncate font-medium">{topic.name}</span>
             <span className="shrink-0 font-data text-xs text-muted-foreground">

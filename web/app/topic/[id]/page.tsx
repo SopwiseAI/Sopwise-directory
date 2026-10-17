@@ -88,7 +88,7 @@ export default async function TopicPage({ params }: Props) {
               key="icon"
               className="flex size-8 shrink-0 items-center justify-center rounded-md border bg-card text-foreground"
             >
-              {topicIconNode(topic.icon, "text-base")}
+              {topicIconNode(topic.icon, "text-base leading-none shrink-0")}
             </span>
             {/* 主题名即本页 h1（放进二级栏视觉标题位，不再另设 sr-only h1）；数量/日期为附属信息 */}
             <h1 key="name" className="min-w-0 truncate text-base font-semibold tracking-tight">

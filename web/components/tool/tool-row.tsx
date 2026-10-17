@@ -44,7 +44,7 @@ export function ToolRow({
               className="hidden shrink-0 items-center gap-1 font-data text-muted-foreground sm:inline-flex"
               title={topicLabel}
             >
-              {topicIcon ? topicIconNode(topicIcon, "text-sm leading-none") : null}
+              {topicIcon ? topicIconNode(topicIcon, "text-xs leading-none shrink-0") : null}
               {topicLabel}
             </span>
           )}

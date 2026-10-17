@@ -46,7 +46,7 @@ pnpm analyze      # 分析构建产物体积
 
 ```
 app/          # App Router 页面 + 路由级元数据 (sitemap/robots/manifest/og)
-components/   # UI 组件 (ui/layout/tool/topic/search/history)
+components/   # UI 组件 (ui/layout/tool/search/history；主题浏览网格在 search/topic-browse.tsx)
 lib/          # 工具函数与类型 (data 读取只在 server 端)
 data/         # 数据源 (topics.json + tools.json)
 ```
@@ -56,7 +56,7 @@ data/         # 数据源 (topics.json + tools.json)
 `topics.json` + `tools.json` → `lib/data.ts`（server 端 import）→ 页面 Server Component → props 传入 client 组件。
 client 组件不直接 import 数据文件，避免全量内联 bundle。
 
-## 数据源（已与 studio 导出对齐）
+## 数据源（骨架对齐 studio 导出）
 
 数据是两份，键名与 studio 导出产物一致：
 
@@ -67,10 +67,28 @@ client 组件不直接 import 数据文件，避免全量内联 bundle。
 页面与组件都通过它取数。**领域词汇与后端一致**：分类→主题（`Topic`）、产品→工具（`Tool`），
 路由是 `/topic/[id]`。
 
-**主题图标是 emoji 字符**，直接存在 `topics.json` 的 `icon` 里（源头是库里的 `xg_topic.icon`）：
-新增主题只改数据、不动代码。渲染见 `lib/topic-icon-node.tsx` —— emoji 靠 `font-size`（`text-*`）缩放、
-自带颜色且不继承 `currentColor`，所以调用方传的是字号类而不是 Lucide 那种 `size-*`。
-该模块会把疑似旧 Lucide 组件名（纯 ASCII 单词）兜底成 `📦` 并告警，避免把英文名当图标渲染出来。
+`toolCount` 是**导出端派生字段**（`json_exporter.py` 的 `_fill_tool_counts`）：按 `tools[].topics`
+实时聚合，多主题工具会在每个所属主题各计一次，因此 `ΣtoolCount ≠ tools.length` 是正常的。前端另有
+自算口径（`getTopicCounts`），两者不一致时只 `console.warn`，渲染一律以自算值为准 —— 这样才不会出现
+「导航徽标 12 / 主题页 11」。
+
+### 主题图标是 emoji（studio 侧已对齐）
+
+主题图标就是 emoji 字符，源头是库里 `xg_topic.icon`，经导出进 `topics.json` 的 `icon`：
+新增主题只改数据、不动代码。渲染见 `lib/topic-icon-node.tsx` —— emoji 靠 `font-size`（`text-*`）
+缩放、自带颜色且不继承 `currentColor`，所以调用方传字号类而不是 Lucide 那种 `size-*`。
+
+studio 侧的取值与默认值都已是 emoji（`sql/schema.sql` 列默认 `'📦'`、`schemas/models.py` 的
+`TopicCreate` 默认 `"📦"`、`json_exporter.py` 的 `DEFAULT_TOPIC_ICON = "📦"`）；写主题时 `--icon`
+直接给 emoji 字符（如 `💬`），不要再用 Lucide 组件名。
+
+两道防线（都已就位，改动时别删）：
+
+1. `lib/topic-icon-node.tsx` 把疑似旧 Lucide 名（纯 ASCII 单词）兜底成 `📦`，并在**非 production**
+   环境告警 —— 兜底是为了不把英文名渲染成一串字母，告警用于开发期发现，且已做模块级去重避免刷日志。
+2. `lib/data.test.ts` 断言每个 `topic.icon` 都必须匹配 `\p{Extended_Pictographic}`（真正的 emoji 判据，
+   而不是「非 ASCII」—— 后者挡得住 `Box`，却挡不住 `★`、`→` 这类非 ASCII 文字）。所以「导出把 emoji
+   覆盖成 `Box`」会让 **CI 变红**、同步 PR 合不进去 —— 这层保证比运行期告警重要得多。
 
 `data/topics.json` 与 `tools.json` 是**生产数据源**：`.husky/pre-commit` 只允许在 `main` / `data/<name>`
 分支提交，本地测试用带环境后缀的副本（`topics-dev.json` / `tools-dev.json`，已 gitignore）。
@@ -78,8 +96,18 @@ client 组件不直接 import 数据文件，避免全量内联 bundle。
 **仍未完成（内容侧）**：现在这两份文件是由旧的单文件 `data.json` 机械拆出来的**过渡数据** ——
 85 条工具还没迁进 studio 库，导出成员规则要求的 `tagline`（≤100 字、句末带标点）、`origin`、`access`、
 `languages`、`openSource`、至少一条 `status='active'` 链接都还没有。真实 `prod` 导出落地前需要
-**先把内容迁进库并补齐这些必填字段**；届时前端只需把 `lib/data.ts` 的解析字段扩到导出全集
-（`description` → `tagline`，并接收新增字段）。
+**先把内容迁进库并补齐这些必填字段**；届时前端要同步处理两处：
+
+- **描述字段**：导出用 `tagline`，现在用 `description`。切换后若不改 `lib/data.ts` 的解析字段，描述会
+  **静默**变成空串（卡片出现空白描述行、搜索里描述权重失效）。`lib/data.ts` 已在「有 `tagline` 而无
+  `description`」时告警，`lib/data.test.ts` 也断言描述非空，两道一起兜住这个切换点。
+- **`pricing: "opensource"`**：studio 的 `Pricing` 枚举只有 `free/freemium/paid`（开源是独立的
+  `openSource` 布尔轴），而当前数据里有 3 条 `opensource`（n8n / stable-diffusion / flux）。迁移时必须
+  为这 3 条决定映射（例如 `pricing=free` + `openSource=true`），否则导出端会拒。
+
+> 注意：`createdAt` 与 `description` 在 studio 导出契约里**并不存在**（导出只有 `publishedAt` /
+> `tagline`）。`lib/tool.ts` 用 `publishedAt ?? createdAt` 兜底，所以现状能跑，但别把这两个键当成
+> 「已对齐」的导出字段。
 
 ## 关键约定
 

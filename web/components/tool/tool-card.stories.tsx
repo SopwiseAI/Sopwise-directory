@@ -15,7 +15,7 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {}
 
 export const WithTopic: Story = {
-  args: { topicLabel: "对话助手", topicIcon: "message-square" },
+  args: { topicLabel: "对话助手", topicIcon: "💬" },
 }
 
 export const MinimalTool: Story = {
@@ -34,7 +34,7 @@ export const Grid: Story = {
   render: () => (
     <div className="grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-2">
       {mockTools.slice(0, 2).map((p) => (
-        <ToolCard key={p.id} tool={p} topicLabel="对话助手" topicIcon="message-square" />
+        <ToolCard key={p.id} tool={p} topicLabel="对话助手" topicIcon="💬" />
       ))}
     </div>
   ),

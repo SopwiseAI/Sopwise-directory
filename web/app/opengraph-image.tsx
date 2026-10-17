@@ -14,7 +14,7 @@ const SITE_HOST = getBaseUrl()
   .replace(/\/$/, "")
 const stats = getStats()
 
-/** OG 分享图（构建时渲染 PNG；品牌色/字体引用真源，规模数据取自 data.json）。 */
+/** OG 分享图（构建时渲染 PNG；品牌色/字体引用真源，规模数据取自 topics.json / tools.json）。 */
 export default function OpengraphImage() {
   return new ImageResponse(
     <div

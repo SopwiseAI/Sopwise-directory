@@ -215,10 +215,11 @@ describe("配额降级", () => {
 describe("导出与导入", () => {
   beforeEach(() => localStorage.clear())
 
-  it("导出为 v2 信封且可被解析", () => {
+  it("导出为 v3 信封且可被解析", () => {
     addToHistory(mockTool)
     const raw = getHistoryExport()
-    expect(JSON.parse(raw)).toMatchObject({ v: 2 })
+    // v3：条目键由 categoryId 改为 topicId（领域词汇对齐后端）
+    expect(JSON.parse(raw)).toMatchObject({ v: 3 })
     expect(parseHistorySnapshot(raw).map((i) => i.id)).toEqual(["test-1"])
   })
 
@@ -365,7 +366,7 @@ describe("parseHistorySnapshot", () => {
   it("解析版本化信封", () => {
     addToHistory(mockTool)
     const raw = getHistorySnapshot()
-    expect(raw).toContain('"v":2')
+    expect(raw).toContain('"v":3')
     expect(parseHistorySnapshot(raw).map((i) => i.id)).toEqual(["test-1"])
   })
 

@@ -22,12 +22,15 @@ describe("resolveTopicIcon", () => {
     expect(resolveTopicIcon("  🎮  ")).toBe("🎮")
   })
 
-  it.each(["MessageSquare", "message-square", "Box"])("旧 Lucide 组件名 %s 回退为默认图标并告警", (legacy) => {
-    const spy = vi.spyOn(console, "warn").mockImplementation(() => {})
-    expect(resolveTopicIcon(legacy)).toBe(DEFAULT_TOPIC_ICON)
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining("不是 emoji"))
-    spy.mockRestore()
-  })
+  it.each(["MessageSquare", "message-square", "Box", "Gamepad2"])(
+    "旧 Lucide 组件名 %s 回退为默认图标并告警",
+    (legacy) => {
+      const spy = vi.spyOn(console, "warn").mockImplementation(() => {})
+      expect(resolveTopicIcon(legacy)).toBe(DEFAULT_TOPIC_ICON)
+      expect(spy).toHaveBeenCalledWith(expect.stringContaining("不是 emoji"))
+      spy.mockRestore()
+    },
+  )
 
   it("空白值回退为默认图标并告警", () => {
     const spy = vi.spyOn(console, "warn").mockImplementation(() => {})
@@ -52,9 +55,9 @@ describe("topicIconNode", () => {
 })
 
 describe("数据里的主题图标", () => {
-  it("topics.json 每个主题图标都是 emoji（含非 ASCII 字符）", () => {
+  it("topics.json 每个主题图标都匹配 Extended_Pictographic", () => {
     for (const topic of siteTopics) {
-      expect(topic.icon, `主题 ${topic.id} 的图标不是 emoji`).toMatch(/[^\x00-\x7F]/)
+      expect(topic.icon, `主题 ${topic.id} 的图标不是 emoji`).toMatch(/\p{Extended_Pictographic}/u)
     }
   })
 

@@ -59,7 +59,8 @@ export function SettingsView({ version, stats }: SettingsViewProps) {
         <FieldGroup>
           <Field orientation="responsive">
             <FieldContent>
-              <FieldTitle>主题</FieldTitle>
+              {/* 这里指「亮/暗/跟随系统」，与下方「主题（topic）数量」区分开，故用「配色」 */}
+              <FieldTitle>配色</FieldTitle>
               <FieldDescription>亮色、暗色或跟随系统；跟随系统会随设备外观自动切换。</FieldDescription>
             </FieldContent>
             {mounted ? <ThemeSwitch /> : <Skeleton className="h-8 w-56 rounded-lg" />}

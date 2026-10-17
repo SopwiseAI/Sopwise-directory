@@ -52,7 +52,7 @@ export function ToolCard({ tool, topicLabel, topicIcon }: ToolCardProps) {
             className="gap-1 px-1.5 py-0 text-xs font-normal text-muted-foreground"
             title={topicLabel}
           >
-            {topicIcon ? topicIconNode(topicIcon, "text-sm leading-none") : null}
+            {topicIcon ? topicIconNode(topicIcon, "text-xs leading-none shrink-0") : null}
             <span className="max-w-[7rem] truncate">{topicLabel}</span>
           </Badge>
         )}

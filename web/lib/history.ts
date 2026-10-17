@@ -27,7 +27,12 @@ export interface HistorySource {
 }
 
 const STORAGE_KEY = storageKey("history")
-const SCHEMA_VERSION = 2
+/**
+ * v3：条目键 `categoryId` → `topicId`（领域词汇对齐后端）。
+ * 旧 v2 快照仍能被解析（解析器不看版本号），但主题归属会读成空串 —— 按需求不做历史兼容，
+ * 提升版本号只是让这个断点在排查时显式可见。
+ */
+const SCHEMA_VERSION = 3
 const NAV_EVENT = `${STORAGE_PREFIX}:history-change`
 const VALID_PRICING: ReadonlySet<string> = new Set(PRICINGS)
 const DEFAULT_MAX_ITEMS = 500

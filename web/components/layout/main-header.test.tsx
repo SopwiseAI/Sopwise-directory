@@ -34,6 +34,40 @@ function typeInto(value: string) {
   return input
 }
 
+describe("MainHeader 面包屑", () => {
+  beforeEach(() => {
+    nav.pathname = "/"
+    nav.search = ""
+    window.history.replaceState(null, "", "/")
+  })
+
+  it("主题页面包屑第二段（当前页）是主题名", () => {
+    nav.pathname = "/topic/chat-assistant"
+    renderHeader()
+
+    const crumb = screen.getByRole("navigation", { name: "面包屑" })
+    expect(crumb.querySelector('[aria-current="page"]')?.textContent).toBe("对话助手")
+  })
+
+  it("未知主题 id 时只剩「全部工具」一段，不崩", () => {
+    nav.pathname = "/topic/does-not-exist"
+    renderHeader()
+
+    const crumb = screen.getByRole("navigation", { name: "面包屑" })
+    // 单段时它既是首项也是当前项，所以带 aria-current="page"
+    expect(crumb.querySelector('[aria-current="page"]')?.textContent).toBe("全部工具")
+    expect(crumb.textContent).not.toContain("does-not-exist")
+  })
+
+  it("面包屑不出现旧 /category/ 前缀", () => {
+    nav.pathname = "/topic/chat-assistant"
+    renderHeader()
+
+    const crumb = screen.getByRole("navigation", { name: "面包屑" })
+    expect(crumb.querySelector('a[href^="/category/"]')).toBeNull()
+  })
+})
+
 describe("MainHeader 搜索", () => {
   beforeEach(() => {
     vi.clearAllMocks()

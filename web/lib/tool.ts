@@ -49,8 +49,8 @@ export function compareRecommended(a: Tool, b: Tool): number {
 /** 一组工具中最新的日期（原始串）；无日期返回 null。按日期部分比较，容忍格式差异。 */
 export function latestToolDate(tools: readonly Tool[]): string | null {
   let latest: string | null = null
-  for (const p of tools) {
-    const date = getToolDate(p)
+  for (const tool of tools) {
+    const date = getToolDate(tool)
     if (!date) continue
     if (latest === null || dateOnly(date) > dateOnly(latest)) latest = date
   }

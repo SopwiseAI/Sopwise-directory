@@ -37,9 +37,17 @@ describe("数据完整性不变式", () => {
     }
   })
 
+  it("所有 tool.description 非空", () => {
+    // 守住 tagline → description 的字段切换点：真实导出用 `tagline`，一旦导出产物落地而
+    // lib/data.ts 还没跟着改，描述会静默变空串（卡片留空白行、搜索描述权重失效）。
+    for (const tool of tools) {
+      expect(tool.description, `工具 ${tool.id} 的描述为空`).not.toBe("")
+    }
+  })
+
   it("所有 topic.icon 都是 emoji", () => {
     for (const topic of topics) {
-      expect(topic.icon, `主题 ${topic.id} 的图标不是 emoji`).toMatch(/[^\x00-\x7F]/)
+      expect(topic.icon, `主题 ${topic.id} 的图标不是 emoji`).toMatch(/\p{Extended_Pictographic}/u)
     }
   })
 

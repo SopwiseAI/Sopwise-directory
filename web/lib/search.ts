@@ -29,9 +29,9 @@ export function buildSearchDocs(
   tools: readonly Tool[],
   topicNames: Readonly<Record<string, string>> = {},
 ): SearchDoc[] {
-  return tools.map((p) => ({
-    ...p,
-    topicNames: p.topics.map((id) => topicNames[id]).filter((name): name is string => Boolean(name)),
+  return tools.map((t) => ({
+    ...t,
+    topicNames: t.topics.map((id) => topicNames[id]).filter((name): name is string => Boolean(name)),
   }))
 }
 
@@ -58,14 +58,14 @@ export function buildSuggestionDocs(
   tools: readonly Tool[],
   topicNames: Readonly<Record<string, string>> = {},
 ): SuggestionDoc[] {
-  return tools.map((p) => ({
-    id: p.id,
-    name: p.name,
-    url: p.url,
-    topics: p.topics,
-    topicNames: p.topics.map((id) => topicNames[id]).filter((name): name is string => Boolean(name)),
-    tags: p.tags,
-    pricing: p.pricing,
+  return tools.map((t) => ({
+    id: t.id,
+    name: t.name,
+    url: t.url,
+    topics: t.topics,
+    topicNames: t.topics.map((id) => topicNames[id]).filter((name): name is string => Boolean(name)),
+    tags: t.tags,
+    pricing: t.pricing,
   }))
 }
 
@@ -168,7 +168,7 @@ export function createSearchIndex(
   topicNames: Readonly<Record<string, string>> = {},
   threshold: number = resolveThreshold(),
 ): Fuse<SearchDoc> {
-  const docs = (tools as readonly Tool[]).every((p) => "topicNames" in p)
+  const docs = (tools as readonly Tool[]).every((t) => "topicNames" in t)
     ? (tools as readonly SearchDoc[])
     : buildSearchDocs(tools, topicNames)
 

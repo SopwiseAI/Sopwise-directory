@@ -241,7 +241,12 @@ export function Sidebar({ topics, topicCounts, totalTools }: SidebarProps) {
               active={pathname === `/topic/${topic.id}`}
               collapsed={collapsed}
               label={topic.name}
-              icon={topicIconNode(topic.icon)}
+              icon={topicIconNode(
+                topic.icon,
+                // 折叠态让位给 [&_svg]:size-5（20px）：emoji 是 span，那个后代选择器对它不生效，
+                // 所以这里显式按折叠态给字号，否则折叠轨里 Lucide 20px / emoji 16px 会不齐。
+                collapsed ? "text-xl leading-none shrink-0" : "text-base leading-none shrink-0",
+              )}
               count={formatCount(topicCounts[topic.id] ?? 0)}
             />
           ))}

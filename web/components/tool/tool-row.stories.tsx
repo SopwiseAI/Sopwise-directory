@@ -18,14 +18,14 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {}
 
 export const WithTopic: Story = {
-  args: { topicLabel: "对话助手", topicIcon: "message-square" },
+  args: { topicLabel: "对话助手", topicIcon: "💬" },
 }
 
 export const List: Story = {
   render: () => (
     <div className="max-w-3xl overflow-hidden rounded-lg border border-border">
       {mockTools.slice(0, 3).map((p, i) => (
-        <ToolRow key={p.id} tool={p} topicLabel="对话助手" topicIcon="message-square" last={i === 2} />
+        <ToolRow key={p.id} tool={p} topicLabel="对话助手" topicIcon="💬" last={i === 2} />
       ))}
     </div>
   ),

@@ -11,7 +11,7 @@ const options: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
 ]
 
 /**
- * 设置页主题选择：三选一分段控件。
+ * 设置页配色选择：三选一分段控件。
  * `spacing={0}` 让三格共用边框连成一体，视觉上是「一个控件」而不是三个方框。
  */
 export function ThemeSwitch() {
@@ -23,7 +23,7 @@ export function ThemeSwitch() {
       onValueChange={(value) => {
         if (value[0]) setTheme(value[0] as ThemeMode)
       }}
-      aria-label="主题模式"
+      aria-label="配色模式"
       variant="outline"
       size="lg"
       spacing={0}

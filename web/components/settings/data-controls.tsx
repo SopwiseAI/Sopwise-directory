@@ -171,7 +171,7 @@ export function DataControls({ mounted }: { mounted: boolean }) {
           <AlertDialogHeader>
             <AlertDialogTitle>恢复默认外观与浏览偏好？</AlertDialogTitle>
             <AlertDialogDescription>
-              主题将回到「跟随系统」，视图/排序/Tab 回到默认。历史记录不受影响。
+              配色将回到「跟随系统」，视图/排序/Tab 回到默认。历史记录不受影响。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

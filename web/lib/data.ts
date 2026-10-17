@@ -21,8 +21,25 @@ function assertTopic(raw: unknown): Topic {
     // 主题图标是 emoji 字符（见 lib/topic-icon-node.tsx）
     icon: assertString(r.icon, "topic.icon"),
     description: typeof r.description === "string" ? r.description : undefined,
-    toolCount: typeof r.toolCount === "number" ? r.toolCount : undefined,
+    // 派生字段：脏导出里的负数 / 小数 / NaN 一律当作「没给」，避免把非法值带进一致性校验
+    toolCount: Number.isInteger(r.toolCount) && (r.toolCount as number) >= 0 ? (r.toolCount as number) : undefined,
   }
+}
+
+/**
+ * 工具描述文案。
+ *
+ * 导出契约里的字段名是 `tagline`，而当前的过渡数据用的是 `description`。两份都没有时回落空串。
+ * 因此「有 `tagline` 却没有 `description`」恰好是**真实 prod 导出已落地、但解析字段还没跟着切**
+ * 的信号 —— 那种情况下描述会静默变成空串（卡片留空白行、搜索描述权重失效），所以这里显式告警。
+ * 注意这里只告警不做别名回落：字段切换是内容搬迁时的一次性决策，不该由解析层长期兼容。
+ */
+function resolveDescription(r: Record<string, unknown>, id: string): string {
+  if (typeof r.description === "string") return r.description
+  if (typeof r.tagline === "string" && r.tagline.trim() && process.env.NODE_ENV !== "production") {
+    console.warn(`[data] 工具 "${id}" 只有 tagline 没有 description：导出格式已切换，请把解析字段改成 tagline`)
+  }
+  return ""
 }
 
 function assertTool(raw: unknown): Tool {
@@ -43,7 +60,7 @@ function assertTool(raw: unknown): Tool {
   return {
     id,
     name: assertString(r.name, `tool[${id}].name`),
-    description: typeof r.description === "string" ? r.description : "",
+    description: resolveDescription(r, id),
     url: assertString(r.url, `tool[${id}].url`),
     topics,
     tags: tags && tags.length > 0 ? tags : undefined,
