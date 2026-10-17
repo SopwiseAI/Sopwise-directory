@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
 import { SearchResults } from "./search-results"
-import { mockCategories, mockCategoryCounts, mockProducts } from "@/.storybook/fixtures"
+import { mockTopics, mockTopicCounts, mockTools } from "@/.storybook/fixtures"
 import { addRecentSearch } from "@/lib/recent-searches"
 
 /** next/navigation 的可变替身：用例间切换 pathname / search。 */
@@ -12,16 +12,11 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(nav.search),
 }))
 
-const featured = mockProducts.filter((p) => p.featured)
+const featured = mockTools.filter((p) => p.featured)
 
 function renderResults() {
   return render(
-    <SearchResults
-      products={mockProducts}
-      featured={featured}
-      categories={mockCategories}
-      categoryCounts={mockCategoryCounts}
-    />,
+    <SearchResults tools={mockTools} featured={featured} topics={mockTopics} topicCounts={mockTopicCounts} />,
   )
 }
 
@@ -33,10 +28,10 @@ describe("SearchResults", () => {
     window.history.replaceState(null, "", "/search")
   })
 
-  it("空查询走着陆态：给最近搜索/试试这些/分类出口，而不是一片空白", () => {
+  it("空查询走着陆态：给最近搜索/试试这些/主题出口，而不是一片空白", () => {
     renderResults()
     expect(screen.getByText("试试这些")).toBeInTheDocument()
-    expect(screen.getByText("按分类浏览")).toBeInTheDocument()
+    expect(screen.getByText("按主题浏览")).toBeInTheDocument()
     expect(screen.queryByText("最近搜索")).toBeNull()
     expect(document.querySelector("[data-search-result]")).toBeNull()
   })

@@ -19,7 +19,7 @@ function getHistoryCount(): number {
 
 /**
  * 订阅本地历史条数。
- * 始终返回数字（含 0），与侧栏其它计数（产品/分类数）保持同一口径。
+ * 始终返回数字（含 0），与侧栏其它计数（工具/主题数）保持同一口径。
  */
 export function useHistoryCount(): number {
   return useSyncExternalStore(subscribeHistory, getHistoryCount, () => 0)

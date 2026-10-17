@@ -5,7 +5,7 @@ export default function Loading() {
     <div role="status" className="flex flex-col gap-4" aria-busy="true">
       <span className="sr-only">正在加载…</span>
       <Skeleton className="h-8 w-48 rounded-md" />
-      <div className="product-card-grid">
+      <div className="tool-card-grid">
         {Array.from({ length: 12 }).map((_, i) => (
           <div key={i} className="flex flex-col gap-2.5 rounded-lg border bg-card p-4">
             <div className="flex flex-col gap-1.5">

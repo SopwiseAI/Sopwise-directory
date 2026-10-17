@@ -66,9 +66,9 @@ export default function OpengraphImage() {
       <div
         style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 28, fontSize: 26, color: BRAND_MUTED.dark }}
       >
-        <span>{stats.categories} 个分类</span>
+        <span>{stats.topics} 个主题</span>
         <span>·</span>
-        <span>{stats.products} 款精选</span>
+        <span>{stats.tools} 款精选</span>
         <span>·</span>
         <span>持续更新</span>
       </div>

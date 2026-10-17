@@ -20,7 +20,7 @@ export const Default: Story = {
       </EmptyMedia>
       <EmptyHeader>
         <EmptyTitle>暂无访问记录</EmptyTitle>
-        <EmptyDescription>浏览产品时自动记录，方便下次快速回到这里</EmptyDescription>
+        <EmptyDescription>浏览工具时自动记录，方便下次快速回到这里</EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
         <Button variant="outline">去逛逛</Button>

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest"
 import { render, screen, fireEvent, act } from "@testing-library/react"
 import { MainHeader } from "./main-header"
 import { suggestionOptionId } from "@/components/search/search-suggestions"
-import { mockCategories, mockSuggestionDocs } from "@/.storybook/fixtures"
+import { mockTopics, mockSuggestionDocs } from "@/.storybook/fixtures"
 
 /** next/navigation 的可变替身：用例间切换 pathname / search。 */
 const nav = vi.hoisted(() => ({
@@ -21,7 +21,7 @@ vi.mock("next/navigation", () => ({
 const DEBOUNCE_MS = 150
 
 function renderHeader() {
-  return render(<MainHeader categories={mockCategories} suggestions={mockSuggestionDocs} />)
+  return render(<MainHeader topics={mockTopics} suggestions={mockSuggestionDocs} />)
 }
 
 function typeInto(value: string) {
@@ -121,7 +121,7 @@ describe("MainHeader 搜索", () => {
     expect(input).toHaveAttribute("aria-activedescendant", suggestionOptionId("search-suggestions", count - 1))
   })
 
-  it("选中建议后回车会真正打开该产品（回归：id 曾挂在 <li> 上导致点击落空）", () => {
+  it("选中建议后回车会真正打开该工具（回归：id 曾挂在 <li> 上导致点击落空）", () => {
     vi.useFakeTimers()
     renderHeader()
 

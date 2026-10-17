@@ -178,7 +178,7 @@
   html {
     @apply font-sans;
     scroll-behavior: smooth;
-    /* 锚点定位预留 sticky 顶栏高度（移动端顶栏 + 分类子导航） */
+    /* 锚点定位预留 sticky 顶栏高度（移动端顶栏 + 主题子导航） */
     scroll-padding-top: 7rem;
   }
   /* 标题自动平衡换行，避免孤行 */
@@ -257,7 +257,7 @@
 /* ============================================================
     卡片网格
     ============================================================ */
-@utility product-card-grid {
+@utility tool-card-grid {
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
   gap: 0.625rem;
@@ -364,10 +364,10 @@ html[data-sidebar="collapsed"]:not([data-sidebar-hydrated])
 }
 
 /* ============================================================
-   产品区首帧门控（PB-01：排序/视图/tab 与默认不一致时先隐藏，hydration 后由
+   工具区首帧门控（PB-01：排序/视图/tab 与默认不一致时先隐藏，hydration 后由
    React 揭示，避免「默认顺序/布局 → 目标顺序/布局」跳变；默认偏好下不隐藏、零成本）
    ============================================================ */
-html[data-prefs="pending"] #product-browser {
+html[data-prefs="pending"] #tool-browser {
   visibility: hidden;
 }
 

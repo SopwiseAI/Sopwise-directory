@@ -1,5 +1,5 @@
 export interface HeroStats {
-  products: number
-  categories: number
+  tools: number
+  topics: number
   featured: number
 }

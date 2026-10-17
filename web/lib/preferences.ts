@@ -1,7 +1,7 @@
 "use client"
 
 import { STORAGE_PREFIX, storageKey } from "@/lib/storage"
-import { isValidSort, isValidTab, isValidView, type SortMode, type TabMode, type ViewMode } from "@/lib/product-query"
+import { isValidSort, isValidTab, isValidView, type SortMode, type TabMode, type ViewMode } from "@/lib/tool-query"
 
 export const DEFAULT_VIEW: ViewMode = "grid"
 export const DEFAULT_SORT: SortMode = "recommended"

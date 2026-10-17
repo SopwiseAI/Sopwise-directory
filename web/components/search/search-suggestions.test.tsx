@@ -8,8 +8,8 @@ const docs: SuggestionDoc[] = [
     id: "chatgpt",
     name: "ChatGPT",
     url: "https://chat.openai.com",
-    categories: ["chat-assistant"],
-    categoryNames: ["对话助手"],
+    topics: ["chat-assistant"],
+    topicNames: ["对话助手"],
     tags: ["对话"],
     pricing: "freemium",
   },
@@ -17,15 +17,15 @@ const docs: SuggestionDoc[] = [
     id: "midjourney",
     name: "Midjourney",
     url: "https://www.midjourney.com",
-    categories: ["image-generation"],
-    categoryNames: ["图像生成"],
+    topics: ["image-generation"],
+    topicNames: ["图像生成"],
     tags: ["图像"],
     pricing: "paid",
   },
 ]
 
 describe("SearchSuggestions", () => {
-  it("渲染每条建议：名称 + 分类 + 域名，并带上历史埋点属性", () => {
+  it("渲染每条建议：名称 + 主题 + 域名，并带上历史埋点属性", () => {
     render(<SearchSuggestions items={docs} query="chat" activeIndex={-1} listboxId="lb" />)
 
     const options = within(screen.getByRole("listbox", { name: "搜索建议" })).getAllByRole("option")

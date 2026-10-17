@@ -6,14 +6,14 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { pageShell } from "@/lib/layout"
 import { isInfoRoute } from "@/components/info/info-nav"
-import type { Category } from "@/lib/types"
+import type { Topic } from "@/lib/types"
 
 interface SubNavProps {
   className?: string
-  categories: readonly Category[]
+  topics: readonly Topic[]
 }
 
-export function SubNav({ className, categories }: SubNavProps) {
+export function SubNav({ className, topics }: SubNavProps) {
   const pathname = usePathname()
   const firstRun = useRef(true)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -28,12 +28,12 @@ export function SubNav({ className, categories }: SubNavProps) {
     firstRun.current = false
   }, [pathname])
 
-  // 信息页在移动端有自己的二级栏：不再叠一条分类条，避免两条横栏堆在顶栏下
+  // 信息页在移动端有自己的二级栏：不再叠一条主题条，避免两条横栏堆在顶栏下
   if (isInfoRoute(pathname)) return null
 
   return (
     <nav
-      aria-label="分类导航"
+      aria-label="主题导航"
       className={cn(
         "sticky top-[calc(3.5rem_+_env(safe-area-inset-top))] z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
         className,
@@ -53,12 +53,12 @@ export function SubNav({ className, categories }: SubNavProps) {
           >
             全部
           </Link>
-          {categories.map((category) => {
-            const isActive = pathname === `/category/${category.id}`
+          {topics.map((topic) => {
+            const isActive = pathname === `/topic/${topic.id}`
             return (
               <Link
-                key={category.id}
-                href={`/category/${category.id}`}
+                key={topic.id}
+                href={`/topic/${topic.id}`}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
                   "shrink-0 rounded-md px-3 py-1.5 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -67,7 +67,7 @@ export function SubNav({ className, categories }: SubNavProps) {
                     : "text-muted-foreground hover:bg-brand/5 hover:text-brand",
                 )}
               >
-                {category.name}
+                {topic.name}
               </Link>
             )
           })}

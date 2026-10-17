@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import { Kbd, KbdGroup } from "@/components/ui/kbd"
 import { Highlighted } from "@/components/search/highlight"
-import { productHistoryAttrs } from "@/lib/product"
+import { toolHistoryAttrs } from "@/lib/tool"
 import type { SuggestionDoc } from "@/lib/search"
 import { getDomain } from "@/lib/url"
 import { cn } from "@/lib/utils"
@@ -52,7 +52,7 @@ export function SearchSuggestions({ items, query, activeIndex, listboxId, classN
       <div id={listboxId} role="listbox" aria-label="搜索建议" className="max-h-72 overflow-y-auto p-1">
         {items.map((item, i) => {
           const active = i === activeIndex
-          const category = item.categoryNames[0]
+          const topic = item.topicNames[0]
           return (
             <a
               key={item.id}
@@ -64,7 +64,7 @@ export function SearchSuggestions({ items, query, activeIndex, listboxId, classN
               rel="noopener noreferrer"
               // 建议是「预览」，回车的默认动作仍是进结果页；选中后回车由 SearchField 触发 click
               tabIndex={-1}
-              {...productHistoryAttrs(item)}
+              {...toolHistoryAttrs(item)}
               className={cn(
                 "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none",
                 active ? "bg-accent text-accent-foreground" : "hover:bg-accent/60",
@@ -73,7 +73,7 @@ export function SearchSuggestions({ items, query, activeIndex, listboxId, classN
               <span className="min-w-0 flex-1 truncate font-medium">
                 <Highlighted text={item.name} query={query} variant="tint" />
               </span>
-              {category && <span className="shrink-0 text-xs text-muted-foreground">{category}</span>}
+              {topic && <span className="shrink-0 text-xs text-muted-foreground">{topic}</span>}
               <span className="shrink-0 font-data text-xs text-muted-foreground">{getDomain(item.url)}</span>
             </a>
           )

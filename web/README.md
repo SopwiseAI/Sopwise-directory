@@ -1,6 +1,6 @@
 # XiGee
 
-精选 AI 工具目录 — 精选值得用的 AI 产品，每一款都经过人工筛选，点击直达官方网站。
+精选 AI 工具目录 — 精选值得用的 AI 工具，每一款都经过人工筛选，点击直达官方网站。
 
 ## 技术栈
 
@@ -35,11 +35,11 @@ pnpm test      # 单元测试
 
 ```
 app/          # App Router 页面 + 路由级元数据
-components/   # UI 组件 (ui/layout/product/category/search/history)
+components/   # UI 组件 (ui/layout/tool/topic/search/history)
 lib/          # 工具函数与类型定义
-data/         # 产品数据 (data.json)
+data/         # 数据源 (topics.json + tools.json)
 ```
 
 ## 数据更新
 
-修改 `data/data.json` → 提交 PR → 合并 → Vercel 自动部署。
+修改 `data/topics.json` / `data/tools.json` → 提交 PR → 合并 → Vercel 自动部署。

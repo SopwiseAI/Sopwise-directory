@@ -19,7 +19,7 @@ const LOCAL_DATA: { icon: LucideIcon; title: string; description: string }[] = [
   {
     icon: History,
     title: "历史记录",
-    description: "你点开过的工具名称、官网链接、所属分类、价格标记、访问次数与最近访问时间",
+    description: "你点开过的工具名称、官网链接、所属主题、价格标记、访问次数与最近访问时间",
   },
 ]
 

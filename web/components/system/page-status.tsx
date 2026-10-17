@@ -11,7 +11,7 @@ interface PageStatusProps {
   description: ReactNode
   /** 动作区（按钮 / 链接）。 */
   actions?: ReactNode
-  /** 额外内容（搜索、分类等）。 */
+  /** 额外内容（搜索、主题等）。 */
   children?: ReactNode
   /** 语义角色，错误页传 "alert" 以便即时播报。 */
   role?: "alert" | "status"

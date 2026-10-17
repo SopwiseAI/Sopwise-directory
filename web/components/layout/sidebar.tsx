@@ -12,10 +12,10 @@ import { PanelIcon } from "@/components/brand/panel-icon"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { storageKey } from "@/lib/storage"
-import { categoryIconNode } from "@/lib/category-icon-node"
+import { topicIconNode } from "@/lib/topic-icon-node"
 import { useHistoryCount } from "@/components/history/history-count"
 import { formatCount } from "@/lib/format"
-import type { Category } from "@/lib/types"
+import type { Topic } from "@/lib/types"
 
 const STORAGE_KEY = storageKey("sidebar-collapsed")
 const COLLAPSE_EVENT = "xigee:sidebar-collapse"
@@ -114,12 +114,12 @@ function CollapseToggle() {
 }
 
 interface SidebarProps {
-  categories: readonly Category[]
-  categoryCounts: Record<string, number>
-  totalProducts: number
+  topics: readonly Topic[]
+  topicCounts: Record<string, number>
+  totalTools: number
 }
 
-export function Sidebar({ categories, categoryCounts, totalProducts }: SidebarProps) {
+export function Sidebar({ topics, topicCounts, totalTools }: SidebarProps) {
   const pathname = usePathname()
   const collapsed = useSyncExternalStore(subscribeSidebar, getSidebarSnapshot, getSidebarServerSnapshot)
   const historyCount = useHistoryCount()
@@ -211,7 +211,7 @@ export function Sidebar({ categories, categoryCounts, totalProducts }: SidebarPr
             collapsed={collapsed}
             label="全部工具"
             icon={<LayoutGrid className="size-4 shrink-0" />}
-            count={formatCount(totalProducts)}
+            count={formatCount(totalTools)}
           />
 
           {/* 历史记录（辅助入口） */}
@@ -224,25 +224,25 @@ export function Sidebar({ categories, categoryCounts, totalProducts }: SidebarPr
             count={formatCount(historyCount)}
           />
 
-          {/* 分组：主导航（全部/历史）与「分类」之间留出呼吸间隔。
-              展开态：间距 +「分类」小标题分组；折叠态：极淡居中断线区分两段。 */}
+          {/* 分组：主导航（全部/历史）与「主题」之间留出呼吸间隔。
+              展开态：间距 +「主题」小标题分组；折叠态：极淡居中断线区分两段。 */}
           {collapsed ? (
             <div className="mx-auto my-1.5 h-px w-4 shrink-0 bg-sidebar-border/70" aria-hidden />
           ) : (
             <div className="h-2 shrink-0" aria-hidden />
           )}
           <p data-collapse-hide className={cn("px-3 pb-1.5 font-data text-muted-foreground", collapsed && "sr-only")}>
-            分类
+            主题
           </p>
-          {categories.map((category) => (
+          {topics.map((topic) => (
             <SidebarLink
-              key={category.id}
-              href={`/category/${category.id}`}
-              active={pathname === `/category/${category.id}`}
+              key={topic.id}
+              href={`/topic/${topic.id}`}
+              active={pathname === `/topic/${topic.id}`}
               collapsed={collapsed}
-              label={category.name}
-              icon={categoryIconNode(category.icon)}
-              count={formatCount(categoryCounts[category.id] ?? 0)}
+              label={topic.name}
+              icon={topicIconNode(topic.icon)}
+              count={formatCount(topicCounts[topic.id] ?? 0)}
             />
           ))}
           <div ref={sentinelRef} className="h-px" />

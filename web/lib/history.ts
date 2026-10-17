@@ -7,7 +7,7 @@ export interface HistoryItem {
   name: string
   url: string
   domain: string
-  categoryId: string
+  topicId: string
   pricing?: Pricing
   /** 最近一次访问时间 (ISO)。 */
   lastVisitedAt: string
@@ -17,12 +17,12 @@ export interface HistoryItem {
   visitCount: number
 }
 
-/** 记录历史所需的最小产品信息：避免调用方为满足完整 Product 而填充无关字段（如 description）。 */
+/** 记录历史所需的最小工具信息：避免调用方为满足完整 Tool 而填充无关字段（如 description）。 */
 export interface HistorySource {
   id: string
   name: string
   url: string
-  categories: readonly string[]
+  topics: readonly string[]
   pricing?: Pricing
 }
 
@@ -94,14 +94,14 @@ function normalizeItem(raw: unknown): HistoryItem | null {
   if (!id || !url) return null
   const name = typeof r.name === "string" && r.name.trim() ? r.name.trim() : id
   const domain = typeof r.domain === "string" && r.domain.trim() ? r.domain.trim() : getDomain(url)
-  const categoryId = typeof r.categoryId === "string" ? r.categoryId : ""
+  const topicId = typeof r.topicId === "string" ? r.topicId : ""
   const pricing = typeof r.pricing === "string" && VALID_PRICING.has(r.pricing) ? (r.pricing as Pricing) : undefined
   // 兼容旧字段 visitedAt；日期非法兜底为当前时间。
   const lastVisitedAt = toIso(r.lastVisitedAt) ?? toIso(r.visitedAt) ?? new Date().toISOString()
   const firstVisitedAt = toIso(r.firstVisitedAt) ?? lastVisitedAt
   const count = Number(r.visitCount)
   const visitCount = Number.isFinite(count) && count >= 1 ? Math.floor(count) : 1
-  return { id, name, url, domain, categoryId, pricing, lastVisitedAt, firstVisitedAt, visitCount }
+  return { id, name, url, domain, topicId, pricing, lastVisitedAt, firstVisitedAt, visitCount }
 }
 
 /** 解析与迁移：裸数组（v1）自动升级为 v2 语义，非法 JSON 返回空数组。 */
@@ -177,25 +177,25 @@ export function getHistory(): HistoryItem[] {
 }
 
 /**
- * 访问产品时记录：同产品置顶去重并递增访问次数，保留首次访问时间；
+ * 访问工具时记录：同工具置顶去重并递增访问次数，保留首次访问时间；
  * 超出上限裁剪最旧条目（切片）。
  */
-export function addToHistory(product: HistorySource): HistoryItem[] {
+export function addToHistory(tool: HistorySource): HistoryItem[] {
   if (!isBrowser()) return getHistory()
   const now = new Date().toISOString()
   const list = getHistory()
-  const existing = list.find((i) => i.id === product.id)
-  const rest = list.filter((i) => i.id !== product.id)
-  const url = product.url || existing?.url || ""
+  const existing = list.find((i) => i.id === tool.id)
+  const rest = list.filter((i) => i.id !== tool.id)
+  const url = tool.url || existing?.url || ""
   // 无有效 URL 的记录无法渲染为链接，且会在下次读取时被归一化丢弃，直接拒绝保持行为一致。
   if (!url) return list
   const item: HistoryItem = {
-    id: product.id,
-    name: product.name || existing?.name || product.id,
+    id: tool.id,
+    name: tool.name || existing?.name || tool.id,
     url,
     domain: getDomain(url),
-    categoryId: product.categories[0] ?? existing?.categoryId ?? "",
-    pricing: product.pricing ?? existing?.pricing,
+    topicId: tool.topics[0] ?? existing?.topicId ?? "",
+    pricing: tool.pricing ?? existing?.pricing,
     lastVisitedAt: now,
     firstVisitedAt: existing?.firstVisitedAt ?? now,
     visitCount: (existing?.visitCount ?? 0) + 1,
@@ -353,18 +353,18 @@ export const HISTORY_PERIODS: readonly { value: HistoryPeriod; label: string }[]
 ]
 
 export interface HistoryFilter {
-  /** 分类 id；空串/undefined 表示全部分类。 */
-  categoryId?: string
+  /** 主题 id；空串/undefined 表示全部主题。 */
+  topicId?: string
   period?: HistoryPeriod
 }
 
 /**
- * 按分类与时间窗过滤历史（不做分组，由 UI 平铺展示）。
+ * 按主题与时间窗过滤历史（不做分组，由 UI 平铺展示）。
  * 时间窗基于本地自然日边界：今天从 00:00 起，近 7 天含今天共 7 天，近 30 天含今天共 30 天。
  */
 export function filterHistory(
   items: readonly HistoryItem[],
-  { categoryId, period = "all" }: HistoryFilter = {},
+  { topicId, period = "all" }: HistoryFilter = {},
   now: Date = new Date(),
 ): HistoryItem[] {
   const todayStart = startOfDay(now)
@@ -378,7 +378,7 @@ export function filterHistory(
           : null
 
   return items.filter((item) => {
-    if (categoryId && item.categoryId !== categoryId) return false
+    if (topicId && item.topicId !== topicId) return false
     if (lowerBound === null) return true
     const t = Date.parse(item.lastVisitedAt)
     if (Number.isNaN(t)) return false
@@ -386,14 +386,14 @@ export function filterHistory(
   })
 }
 
-/** 从历史中提取出现过的分类 id（去重，保持首次出现顺序），供筛选下拉使用。 */
-export function getHistoryCategoryIds(items: readonly HistoryItem[]): string[] {
+/** 从历史中提取出现过的主题 id（去重，保持首次出现顺序），供筛选下拉使用。 */
+export function getHistoryTopicIds(items: readonly HistoryItem[]): string[] {
   const seen = new Set<string>()
   const out: string[] = []
   for (const item of items) {
-    if (item.categoryId && !seen.has(item.categoryId)) {
-      seen.add(item.categoryId)
-      out.push(item.categoryId)
+    if (item.topicId && !seen.has(item.topicId)) {
+      seen.add(item.topicId)
+      out.push(item.topicId)
     }
   }
   return out

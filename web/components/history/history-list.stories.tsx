@@ -1,7 +1,7 @@
 import { useEffect } from "react"
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
 import { HistoryList } from "@/components/history/history-list"
-import { mockCategories } from "@/.storybook/fixtures"
+import { mockTopics } from "@/.storybook/fixtures"
 import type { HistoryItem } from "@/lib/history"
 
 const STORAGE_KEY = "xigee:history"
@@ -40,7 +40,7 @@ const sampleItems: HistoryItem[] = [
     name: "ChatGPT",
     url: "https://chat.openai.com",
     domain: "chat.openai.com",
-    categoryId: "chat-assistant",
+    topicId: "chat-assistant",
     pricing: "freemium",
     lastVisitedAt: iso(3),
     firstVisitedAt: iso(600),
@@ -51,7 +51,7 @@ const sampleItems: HistoryItem[] = [
     name: "Claude",
     url: "https://claude.ai",
     domain: "claude.ai",
-    categoryId: "chat-assistant",
+    topicId: "chat-assistant",
     pricing: "freemium",
     lastVisitedAt: iso(90),
     firstVisitedAt: iso(2000),
@@ -62,7 +62,7 @@ const sampleItems: HistoryItem[] = [
     name: "Midjourney",
     url: "https://www.midjourney.com",
     domain: "midjourney.com",
-    categoryId: "image-generation",
+    topicId: "image-generation",
     pricing: "paid",
     lastVisitedAt: iso(1500),
     firstVisitedAt: iso(9000),
@@ -73,7 +73,7 @@ const sampleItems: HistoryItem[] = [
     name: "GitHub Copilot",
     url: "https://github.com/features/copilot",
     domain: "github.com",
-    categoryId: "code-tools",
+    topicId: "code-tools",
     pricing: "paid",
     lastVisitedAt: iso(6000),
     firstVisitedAt: iso(20000),
@@ -85,7 +85,7 @@ const meta = {
   title: "History/HistoryList",
   component: HistoryList,
   tags: ["autodocs"],
-  args: { categories: mockCategories },
+  args: { topics: mockTopics },
 } satisfies Meta<typeof HistoryList>
 
 export default meta

@@ -19,7 +19,7 @@ import {
   type SuggestionDoc,
 } from "@/lib/search"
 import { searchPageHref, writeSearchQuery } from "@/lib/url"
-import type { Category } from "@/lib/types"
+import type { Topic } from "@/lib/types"
 
 /** 「边打边搜」的防抖时长：吃掉连打，又短到感觉是即打即搜。 */
 const SEARCH_DEBOUNCE_MS = 150
@@ -67,7 +67,7 @@ interface SearchFieldProps {
  *
  * - **搜索页内边打边搜**：写 URL 走 `history.replaceState`，Next 打过补丁，只同步 Router
  *   不发请求 —— 结果同帧更新，换词不再有网络往返（旧版每次回车都要跑一趟服务器）。
- * - **其它页出建议下拉**：↑↓ 选择、回车进结果页，选中后回车直接打开产品。
+ * - **其它页出建议下拉**：↑↓ 选择、回车进结果页，选中后回车直接打开工具。
  * - **`<form action="/search">` 兜底**：hydration 完成前（首屏 3 秒级）按回车走原生 GET
  *   提交跳到 `/search?q=…`，而不是像旧版那样毫无反应。
  */
@@ -220,7 +220,7 @@ function SearchField({ suggestions }: SearchFieldProps) {
         moveActive(e.key === "ArrowDown" ? 1 : -1)
         return
       }
-      // 选中建议时回车 = 直接打开该产品；未选中则继续走表单提交（进结果页）
+      // 选中建议时回车 = 直接打开该工具；未选中则继续走表单提交（进结果页）
       if (e.key === "Enter" && activeIndex >= 0) {
         e.preventDefault()
         document.getElementById(suggestionOptionId(listboxId, activeIndex))?.click()
@@ -321,10 +321,10 @@ interface Crumb {
   href?: string
 }
 
-function resolveCrumbs(pathname: string, categories: readonly Category[]): Crumb[] {
-  if (pathname.startsWith("/category/")) {
-    const id = pathname.slice("/category/".length)
-    const name = categories.find((c) => c.id === id)?.name
+function resolveCrumbs(pathname: string, topics: readonly Topic[]): Crumb[] {
+  if (pathname.startsWith("/topic/")) {
+    const id = pathname.slice("/topic/".length)
+    const name = topics.find((c) => c.id === id)?.name
     return name ? [{ label: "全部工具", href: "/" }, { label: name }] : [{ label: "全部工具", href: "/" }]
   }
   if (pathname === "/search") return [{ label: "搜索" }]
@@ -338,14 +338,14 @@ function resolveCrumbs(pathname: string, categories: readonly Category[]): Crumb
 
 interface MainHeaderProps {
   className?: string
-  categories: readonly Category[]
+  topics: readonly Topic[]
   suggestions: readonly SuggestionDoc[]
 }
 
 /** 主区顶栏：左侧路由面包屑，右侧搜索 + 设置/主题入口。 */
-export function MainHeader({ className, categories, suggestions }: MainHeaderProps) {
+export function MainHeader({ className, topics, suggestions }: MainHeaderProps) {
   const pathname = usePathname()
-  const crumbs = resolveCrumbs(pathname, categories)
+  const crumbs = resolveCrumbs(pathname, topics)
 
   return (
     // 顶栏刻意通栏：面包屑贴主区左缘、搜索与右侧入口贴右缘，不跟居中的正文同宽。

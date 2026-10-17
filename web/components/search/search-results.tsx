@@ -10,7 +10,7 @@ import { SearchNoResults } from "@/components/search/search-no-results"
 import { SearchResultRow } from "@/components/search/search-result-row"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { formatCount } from "@/lib/format"
-import { compareDateDesc, compareName, getProductDate } from "@/lib/product"
+import { compareDateDesc, compareName, getToolDate } from "@/lib/tool"
 import {
   addRecentSearch,
   clearRecentSearches,
@@ -28,13 +28,13 @@ import {
 } from "@/lib/search"
 import { readSearchState, SEARCH_SORT_OPTIONS, type SearchSort } from "@/lib/search-params"
 import { writeSearchParams } from "@/lib/url"
-import type { Category, Product } from "@/lib/types"
+import type { Topic, Tool } from "@/lib/types"
 
 interface SearchResultsProps {
-  products: readonly Product[]
-  featured: readonly Product[]
-  categories: readonly Category[]
-  categoryCounts: Record<string, number>
+  tools: readonly Tool[]
+  featured: readonly Tool[]
+  topics: readonly Topic[]
+  topicCounts: Record<string, number>
 }
 
 /** 「也许相关」最多列出的条数：是提示而不是第二份结果列表。 */
@@ -71,25 +71,25 @@ function shuffleWithSeed<T>(items: readonly T[], seed: number): T[] {
 /**
  * 搜索结果：三种状态各有一个主角 ——
  *
- * - **空查询** → `SearchLanding`：最近搜索 / 试试这些 / 按分类浏览；
+ * - **空查询** → `SearchLanding`：最近搜索 / 试试这些 / 按主题浏览；
  * - **有结果** → 计数 + 排序 + 结果行，行内给出命中上下文；
- * - **未找到** → `SearchNoResults`：「也许你想找」（放宽阈值）+ 换词建议 + 分类。
+ * - **未找到** → `SearchNoResults`：「也许你想找」（放宽阈值）+ 换词建议 + 主题。
  *
  * 所有状态切换都只写 URL（`replaceState`，零网络往返），结果同帧更新。
  */
-export function SearchResults({ products, featured, categories, categoryCounts }: SearchResultsProps) {
+export function SearchResults({ tools, featured, topics, topicCounts }: SearchResultsProps) {
   const searchParams = useSearchParams()
   const pathname = usePathname()
   const { query, sort } = readSearchState(searchParams)
   const trimmedQuery = query.trim()
 
-  const categoryNames = useMemo(
-    () => Object.fromEntries(categories.map((c) => [c.id, c.name])) as Record<string, string>,
-    [categories],
+  const topicNames = useMemo(
+    () => Object.fromEntries(topics.map((c) => [c.id, c.name])) as Record<string, string>,
+    [topics],
   )
 
-  const searchIndex = useMemo(() => createSearchIndex(products, categoryNames), [products, categoryNames])
-  const fallbackIndex = useMemo(() => createFallbackIndex(products, categoryNames), [products, categoryNames])
+  const searchIndex = useMemo(() => createSearchIndex(tools, topicNames), [tools, topicNames])
+  const fallbackIndex = useMemo(() => createFallbackIndex(tools, topicNames), [tools, topicNames])
 
   const scored = useMemo(() => (trimmedQuery ? searchIndex.search(trimmedQuery) : []), [trimmedQuery, searchIndex])
 
@@ -97,9 +97,7 @@ export function SearchResults({ products, featured, categories, categoryCounts }
     const items = scored.map((r) => r.item)
     if (sort === "relevance") return items
     return [...items].sort(
-      sort === "latest"
-        ? (a, b) => compareDateDesc(getProductDate(a), getProductDate(b)) || compareName(a, b)
-        : compareName,
+      sort === "latest" ? (a, b) => compareDateDesc(getToolDate(a), getToolDate(b)) || compareName(a, b) : compareName,
     )
   }, [scored, sort])
 
@@ -163,8 +161,8 @@ export function SearchResults({ products, featured, categories, categoryCounts }
         recent={recent}
         onClearRecent={handleClearRecent}
         suggestions={suggestions}
-        categories={categories}
-        categoryCounts={categoryCounts}
+        topics={topics}
+        topicCounts={topicCounts}
         onPick={handlePick}
       />
     )
@@ -177,9 +175,9 @@ export function SearchResults({ products, featured, categories, categoryCounts }
         fallback={fallback}
         featured={displayedFeatured}
         suggestions={suggestions}
-        categories={categories}
-        categoryCounts={categoryCounts}
-        categoryNames={categoryNames}
+        topics={topics}
+        topicCounts={topicCounts}
+        topicNames={topicNames}
         onPick={handlePick}
       />
     )
@@ -206,12 +204,12 @@ export function SearchResults({ products, featured, categories, categoryCounts }
       </div>
 
       <div onKeyDown={handleListKeyDown} className="overflow-hidden rounded-lg border bg-card">
-        {results.map((product, i) => (
+        {results.map((tool, i) => (
           <SearchResultRow
-            key={product.id}
-            product={product}
+            key={tool.id}
+            tool={tool}
             query={trimmedQuery}
-            categoryNames={categoryNames}
+            topicNames={topicNames}
             last={i === results.length - 1}
           />
         ))}

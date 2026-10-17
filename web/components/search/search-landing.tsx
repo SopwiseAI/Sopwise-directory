@@ -3,17 +3,17 @@
 import { History } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Kbd } from "@/components/ui/kbd"
-import { CategoryBrowse } from "@/components/search/category-browse"
+import { TopicBrowse } from "@/components/search/topic-browse"
 import { SuggestionChips } from "@/components/search/suggestion-chips"
-import type { Category } from "@/lib/types"
+import type { Topic } from "@/lib/types"
 
 interface SearchLandingProps {
   /** 最近搜索词（localStorage，最新在前）。 */
   recent: readonly string[]
   onClearRecent: () => void
   suggestions: readonly string[]
-  categories: readonly Category[]
-  categoryCounts: Record<string, number>
+  topics: readonly Topic[]
+  topicCounts: Record<string, number>
   onPick: (query: string) => void
 }
 
@@ -21,14 +21,7 @@ interface SearchLandingProps {
  * 空查询时的着陆态：这里不是「空状态」，而是搜索的入口页 ——
  * 所以不用 `Empty`，而是把「最近搜索」摆在最前，让回头客一键回到刚才那条。
  */
-export function SearchLanding({
-  recent,
-  onClearRecent,
-  suggestions,
-  categories,
-  categoryCounts,
-  onPick,
-}: SearchLandingProps) {
+export function SearchLanding({ recent, onClearRecent, suggestions, topics, topicCounts, onPick }: SearchLandingProps) {
   return (
     <div className="flex flex-col gap-8">
       <p className="text-sm text-muted-foreground">
@@ -59,7 +52,7 @@ export function SearchLanding({
         <SuggestionChips label="" suggestions={suggestions} onPick={onPick} />
       </section>
 
-      <CategoryBrowse categories={categories} categoryCounts={categoryCounts} />
+      <TopicBrowse topics={topics} topicCounts={topicCounts} />
     </div>
   )
 }

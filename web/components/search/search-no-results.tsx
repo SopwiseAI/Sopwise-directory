@@ -2,41 +2,41 @@
 
 import { SearchX } from "lucide-react"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia } from "@/components/ui/empty"
-import { ProductRow } from "@/components/product/product-row"
-import { CategoryBrowse } from "@/components/search/category-browse"
+import { ToolRow } from "@/components/tool/tool-row"
+import { TopicBrowse } from "@/components/search/topic-browse"
 import { SearchResultRow } from "@/components/search/search-result-row"
 import { SuggestionChips } from "@/components/search/suggestion-chips"
 import type { SearchDoc } from "@/lib/search"
-import type { Category, Product } from "@/lib/types"
+import type { Topic, Tool } from "@/lib/types"
 
 interface SearchNoResultsProps {
   query: string
   /** 放宽阈值再搜一次的「也许相关」结果：让「差一点就中」的用户有路可走，而不是撞进死路。 */
   fallback: readonly SearchDoc[]
   /** 也许相关为空时的最后兜底：精选推荐。 */
-  featured: readonly Product[]
+  featured: readonly Tool[]
   /** 换词建议（按查询串洗牌，不同查询给不同推荐）。 */
   suggestions: readonly string[]
-  categories: readonly Category[]
-  categoryCounts: Record<string, number>
-  categoryNames: Readonly<Record<string, string>>
+  topics: readonly Topic[]
+  topicCounts: Record<string, number>
+  topicNames: Readonly<Record<string, string>>
   onPick: (query: string) => void
 }
 
 /**
  * 未找到结果：先承认没找到，再给出路 ——
- * 「也许你想找」（宽松阈值命中）、换词建议、按分类浏览，都没有时才退回精选推荐。
+ * 「也许你想找」（宽松阈值命中）、换词建议、按主题浏览，都没有时才退回精选推荐。
  *
- * 旧版只有一句「未找到」加分类网格：用户敲错一个字就直接撞墙。
+ * 旧版只有一句「未找到」加主题网格：用户敲错一个字就直接撞墙。
  */
 export function SearchNoResults({
   query,
   fallback,
   featured,
   suggestions,
-  categories,
-  categoryCounts,
-  categoryNames,
+  topics,
+  topicCounts,
+  topicNames,
   onPick,
 }: SearchNoResultsProps) {
   return (
@@ -54,7 +54,7 @@ export function SearchNoResults({
           </EmptyDescription>
           {/* 说清「能搜什么」比再说一遍「没找到」有用：多数无结果来自搜了目录里没有的维度 */}
           <EmptyDescription className="text-xs">
-            可以搜工具名称、描述、标签或分类，例如「图像生成」「代码」「翻译」
+            可以搜工具名称、描述、标签或主题，例如「图像生成」「代码」「翻译」
           </EmptyDescription>
         </EmptyHeader>
         {suggestions.length > 0 && (
@@ -71,12 +71,12 @@ export function SearchNoResults({
             <span className="font-data text-xs font-normal text-muted-foreground">MAYBE</span>
           </h2>
           <div className="overflow-hidden rounded-lg border bg-card">
-            {fallback.map((product, i) => (
+            {fallback.map((tool, i) => (
               <SearchResultRow
-                key={product.id}
-                product={product}
+                key={tool.id}
+                tool={tool}
                 query={query}
-                categoryNames={categoryNames}
+                topicNames={topicNames}
                 last={i === fallback.length - 1}
               />
             ))}
@@ -90,15 +90,15 @@ export function SearchNoResults({
               <span className="font-data text-xs font-normal text-muted-foreground">FEATURED</span>
             </h2>
             <div className="rounded-lg border bg-card">
-              {featured.slice(0, 6).map((product, i, arr) => (
-                <ProductRow key={product.id} product={product} last={i === arr.length - 1} />
+              {featured.slice(0, 6).map((tool, i, arr) => (
+                <ToolRow key={tool.id} tool={tool} last={i === arr.length - 1} />
               ))}
             </div>
           </section>
         )
       )}
 
-      <CategoryBrowse categories={categories} categoryCounts={categoryCounts} />
+      <TopicBrowse topics={topics} topicCounts={topicCounts} />
     </div>
   )
 }

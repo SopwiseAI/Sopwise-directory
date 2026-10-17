@@ -28,7 +28,7 @@ export function Hero() {
         <HeroEyebrow>Curated AI Directory</HeroEyebrow>
 
         {/* 视觉大标题即页面 h1（原来 h1 藏在 sr-only、视觉标题用 h2，屏幕阅读器与视觉各说一套）；
-            产品卡片相应为 h2，层级 h1 → h2 连续不跨级 */}
+            工具卡片相应为 h2，层级 h1 → h2 连续不跨级 */}
         <h1
           id="hero-title"
           className="mt-3.5 font-brand text-[1.875rem] font-semibold leading-[1.05] tracking-[-0.03em] text-balance sm:text-[2.625rem]"
@@ -39,19 +39,19 @@ export function Hero() {
         </h1>
 
         <p className="mt-3 max-w-xl text-sm leading-[1.65] text-muted-foreground sm:text-[0.9375rem]">
-          精选值得用的 AI 工具，每一款都经过人工筛选——按分类浏览，或直接搜索。
+          精选值得用的 AI 工具，每一款都经过人工筛选——按主题浏览，或直接搜索。
         </p>
 
         <div className="mt-5 flex flex-wrap items-center gap-2.5">
           <Button
             size="lg"
             className="shadow-sm transition-shadow hover:shadow-md"
-            render={<Link href="/?tab=all#product-browser" />}
+            render={<Link href="/?tab=all#tool-browser" />}
           >
             浏览全部工具
             <ArrowRight data-icon="inline-end" />
           </Button>
-          <Button variant="outline" size="lg" render={<Link href="/?tab=featured#product-browser" />}>
+          <Button variant="outline" size="lg" render={<Link href="/?tab=featured#tool-browser" />}>
             <Sparkles data-icon="inline-start" className="text-muted-foreground" />
             探索精选
           </Button>

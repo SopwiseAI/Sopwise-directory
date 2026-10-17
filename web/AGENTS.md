@@ -7,17 +7,17 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
-# XiGee Directory — AI 产品发现引擎
+# XiGee Directory — AI 工具发现引擎
 
 ## 项目概述
 
-纯前端 SSG 站点，基于 `data/data.json` 驱动数据，部署于 Vercel。
+纯前端 SSG 站点，基于 `data/topics.json` + `data/tools.json` 驱动数据，部署于 Vercel。
 
 ## 技术栈
 
 - Next.js 16 (App Router) + React 19 + TypeScript 5
 - Tailwind CSS 4 + shadcn/ui (base-nova, neutral)
-- fuse.js（客户端模糊搜索）、lucide-react（图标）
+- fuse.js（客户端模糊搜索）、lucide-react（界面图标；**主题图标是 emoji**，见下）
 - Vitest + Testing Library（单元测试）
 - pnpm 12 + Node 24
 
@@ -46,37 +46,40 @@ pnpm analyze      # 分析构建产物体积
 
 ```
 app/          # App Router 页面 + 路由级元数据 (sitemap/robots/manifest/og)
-components/   # UI 组件 (ui/layout/product/category/search/history)
+components/   # UI 组件 (ui/layout/tool/topic/search/history)
 lib/          # 工具函数与类型 (data 读取只在 server 端)
-data/         # 产品数据 (data.json)
+data/         # 数据源 (topics.json + tools.json)
 ```
 
 ## 数据流
 
-`data.json` → `lib/data.ts`（server 端 import）→ 页面 Server Component → props 传入 client 组件。client 组件不直接 import data.json，避免全量内联 bundle。
+`topics.json` + `tools.json` → `lib/data.ts`（server 端 import）→ 页面 Server Component → props 传入 client 组件。
+client 组件不直接 import 数据文件，避免全量内联 bundle。
 
-## 数据源迁移（待办）
+## 数据源（已与 studio 导出对齐）
 
-studio 侧导出的是 `topics.json` / `tools.json`（只有 `prod` 导出会同步无后缀名），而本站**目前仍从 `data.json` 取数**
-（`web/data/` 下三个文件都被 `.husky/pre-commit` 挡着，只有 `main` / `data/<name>` 分支能提交）。切换要同时解决两件事：
+数据是两份，键名与 studio 导出产物一致：
 
-**1) 字段映射**（`Product` → 导出的 `tools[]`）：
+- `data/topics.json` —— 主题数组：`{ id, name, icon, description?, toolCount }`
+- `data/tools.json` —— 工具数组：`{ id, name, description, url, topics, tags?, pricing?, featured?, publishedAt?, createdAt? }`
 
-| 前端字段                                                                | 导出字段                                                                                 | 说明                                                                         |
-| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `id` / `name` / `url` / `tags` / `pricing` / `featured` / `description` | 同名                                                                                     | 直接对应                                                                     |
-| `categories`                                                            | `topics`                                                                                 | **改名**；值都是 kebab-case slug，但要不要沿用现有 20 个是内容决策           |
-| `publishedAt`（日期展示）                                               | `publishedAt`                                                                            | **已经兼容**：`lib/product.ts` 是 `publishedAt ?? createdAt`，无需改动       |
-| `createdAt`                                                             | ——                                                                                       | 导出没有这个键；它只是上面的兜底，缺失不报错（`types.ts` 里是可选）          |
-| ——                                                                      | `tagline` / `openSource` / `origin` / `access` / `languages` / `lastUpdatedAt` / `links` | 导出新增。**卡片文案应该改用 `tagline`**（旧数据里只有较长的 `description`） |
+`lib/data.ts` 是唯一取数入口（`getAllTopics` / `getAllTools` / `getTopicCounts` / `getStats` 等），
+页面与组件都通过它取数。**领域词汇与后端一致**：分类→主题（`Topic`）、产品→工具（`Tool`），
+路由是 `/topic/[id]`。
 
-`lib/data.ts` 的取数入口（`getAllCategories` / `getAllProducts` / `getSiteStats` 等）是切换的唯一改动点，
-页面与组件都通过它取数。
+**主题图标是 emoji 字符**，直接存在 `topics.json` 的 `icon` 里（源头是库里的 `xg_topic.icon`）：
+新增主题只改数据、不动代码。渲染见 `lib/topic-icon-node.tsx` —— emoji 靠 `font-size`（`text-*`）缩放、
+自带颜色且不继承 `currentColor`，所以调用方传的是字号类而不是 Lucide 那种 `size-*`。
+该模块会把疑似旧 Lucide 组件名（纯 ASCII 单词）兜底成 `📦` 并告警，避免把英文名当图标渲染出来。
 
-**2) 内容搬家（真正的工作量）**：`data.json` 里的 85 条工具**一条都没进过 studio 库**（dev 库实测 1 主题 / 0 工具），
-而导出的成员规则要求 `tagline`（≤100 字、句末带标点）、`origin`、`access`、`languages`、`openSource`，以及
-至少一条 `status='active'` 的链接 —— 这些字段旧数据里**一个都没有**，必须逐条补。也就是说：切换的前提是
-**先把内容迁进库并补齐必填字段**，而不是改一行 import。
+`data/topics.json` 与 `tools.json` 是**生产数据源**：`.husky/pre-commit` 只允许在 `main` / `data/<name>`
+分支提交，本地测试用带环境后缀的副本（`topics-dev.json` / `tools-dev.json`，已 gitignore）。
+
+**仍未完成（内容侧）**：现在这两份文件是由旧的单文件 `data.json` 机械拆出来的**过渡数据** ——
+85 条工具还没迁进 studio 库，导出成员规则要求的 `tagline`（≤100 字、句末带标点）、`origin`、`access`、
+`languages`、`openSource`、至少一条 `status='active'` 链接都还没有。真实 `prod` 导出落地前需要
+**先把内容迁进库并补齐这些必填字段**；届时前端只需把 `lib/data.ts` 的解析字段扩到导出全集
+（`description` → `tagline`，并接收新增字段）。
 
 ## 关键约定
 
@@ -89,7 +92,7 @@ studio 侧导出的是 `topics.json` / `tools.json`（只有 `prod` 导出会同
   贴右缘，**不**跟居中的正文同宽。试过收进 `pageShell()` 与正文对齐：宽屏下顶栏内容被压成
   窄窄一条（1920px 下缩进 180px、2560px 下 500px），观感反而更差，已回退。顶栏自身的底色与
   分隔线本来就铺满主区，所以只有内容横跨整条栏。其余外壳照常走 `pageShell()`：`Footer` 与正文
-  同宽；移动端顶栏 `Header`、分类条 `SubNav` 只在 <768px 出现（该区间 `max-w-*` 不生效），
+  同宽；移动端顶栏 `Header`、主题条 `SubNav` 只在 <768px 出现（该区间 `max-w-*` 不生效），
   沿用 `pageShell("browse")` 与外壳写法统一即可
 - 控件一律用 `components/ui/` 的组件 + 变体（`Button variant="outline"`、`ToggleGroup variant="outline"`…），
   不要手写 `inline-flex h-8 rounded-md border px-2.5 …` 这类与变体等价的类名：全站曾出现
@@ -127,9 +130,9 @@ studio 侧导出的是 `topics.json` / `tools.json`（只有 `prod` 导出会同
   - 栏与顶栏/正文之间**要留白**（用外壳 main 的上内边距与调用方下边距），不要抵消上内边距
     去"紧贴顶栏" —— 试过，观感逼仄
 - 二级栏里的切换器沿用全站既有语言（选中态 `bg-brand/10 text-brand` 胶囊）：短切换器与
-  产品筛选、信息导航、移动端分类条共用同一套样式；长列表导航（>8 项横向滚动）不要改下边线
-- 移动端信息页不显示分类条（`SubNav` 内按 `isInfoRoute()` 提前返回），避免两条横栏叠在顶栏下
-- 产品卡片点击直接跳转外部网站，无详情页
+  工具筛选、信息导航、移动端主题条共用同一套样式；长列表导航（>8 项横向滚动）不要改下边线
+- 移动端信息页不显示主题条（`SubNav` 内按 `isInfoRoute()` 提前返回），避免两条横栏叠在顶栏下
+- 工具卡片点击直接跳转外部网站，无详情页
 - **搜索全程在客户端完成，换词 / 排序都不许走 `router.push`**：`lib/search.ts` 建 Fuse 索引
   （`createSearchIndex` 常规 + `createFallbackIndex` 兜底），查询词 / `sort` 一律通过
   `lib/url.ts` 的 `writeSearchParams` 写回地址栏 —— Next 16 给 `history.replaceState` 打过补丁，
@@ -138,17 +141,17 @@ studio 侧导出的是 `topics.json` / `tools.json`（只有 `prod` 导出会同
   走 `router.push` 等于每次换词白跑一趟服务器，而服务端对任意 `?q=` 返回的都是同一份空骨架
   （RSC 载荷里既没有「找到 N 个」也没有「未找到与」），搜索结果 100% 在浏览器里算
 - 顶栏搜索建议数据由根布局下发（`buildSuggestionDocs` → `SuggestionDoc`，刻意不含 description，
-  约 3.2KB gzip），客户端零请求即可出建议；**不要**让 client 组件直接 `import data.json`
-- 搜索页三种状态各有一个主角：空查询 = `SearchLanding`（最近搜索 / 试试这些 / 分类）、
+  约 3.2KB gzip），客户端零请求即可出建议；**不要**让 client 组件直接 import 数据文件
+- 搜索页三种状态各有一个主角：空查询 = `SearchLanding`（最近搜索 / 试试这些 / 主题）、
   有结果 = 计数 + 排序 + 结果行（描述走 `snippet()` 给出命中上下文）、
-  未找到 = `SearchNoResults`（`findRelated` 的「也许你想找」+ 换词建议 + 分类）。
+  未找到 = `SearchNoResults`（`findRelated` 的「也许你想找」+ 换词建议 + 主题）。
   「也许你想找」必须同时卡阈值与 `FALLBACK_MAX_SCORE`，否则无关查询会硬凑出噪音
 - **搜索建议的 `id` / `role="option"` 必须挂在 `<a>` 上**，不能挂在包一层的 `<li>` 上：
   回车打开靠 `getElementById(activeId).click()`，点 `<li>` 不会激活内部链接（曾因此静默失效）
 - 命中高亮只有 `tint`（名称，垫一层淡底、**不加 padding/圆角**）与 `em`（正文，muted→foreground）
   两档。别用品牌色当强调色 —— `--brand` 就等于 `--foreground`，上色等于没上色；
   也别在徽章里再叠一层 `<mark>`，那是纯噪音
-- 数据更新：修改 `data/data.json` → PR → 合并 → Vercel 自动部署
+- 数据更新：修改 `data/topics.json` / `data/tools.json` → `data/<name>` 分支 PR → 合并 → Vercel 自动部署
 
 ## CI
 

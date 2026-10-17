@@ -5,8 +5,8 @@ import type { HeroStats } from "@/components/hero/types"
 /** Hero 实时统计条：发丝分隔，等宽数字，克制的精致感。 */
 export function HeroStatsBar({ stats, className }: { stats: HeroStats; className?: string }) {
   const items: [string, number][] = [
-    ["工具", stats.products],
-    ["分类", stats.categories],
+    ["工具", stats.tools],
+    ["主题", stats.topics],
     ["精选", stats.featured],
   ]
 

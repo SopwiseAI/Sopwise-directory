@@ -5,7 +5,7 @@ const meta = {
   title: "UI/StatItem",
   component: StatItem,
   tags: ["autodocs"],
-  args: { label: "产品", value: 1234, size: "sm" },
+  args: { label: "工具", value: 1234, size: "sm" },
   argTypes: {
     label: { control: "text" },
     value: { control: "number" },
@@ -21,8 +21,8 @@ export const Playground: Story = {}
 export const Sizes: Story = {
   render: () => (
     <div className="flex flex-col gap-4">
-      <StatItem label="产品" value={1234} size="sm" />
-      <StatItem label="产品" value={1234} size="lg" />
+      <StatItem label="工具" value={1234} size="sm" />
+      <StatItem label="工具" value={1234} size="lg" />
     </div>
   ),
 }

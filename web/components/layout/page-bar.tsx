@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils"
 import { pageShell, type PageWidth } from "@/lib/layout"
 
 interface PageBarProps {
-  /** 左槽：该页的主切换器（筛选 tabs / 分类名 / 信息页导航） */
+  /** 左槽：该页的主切换器（筛选 tabs / 主题名 / 信息页导航） */
   children: ReactNode
   /** 右槽：该页的辅助控件（排序、视图、计数、清空） */
   actions?: ReactNode
@@ -20,7 +20,7 @@ interface PageBarProps {
  * - **底色通栏、下边框随内容宽度**：底色铺满主区（吸顶时内容从它下面滚过，两侧不漏内容），
  *   分隔线则与正文/页框同一宽度收在内容容器上 —— 否则信息页（内容 6xl）的下划线会比
  *   正文两边各多出 40px，看着"超长"
- * - 桌面吸附在顶栏之下；移动端不吸顶（那里已有顶栏与分类条两层）
+ * - 桌面吸附在顶栏之下；移动端不吸顶（那里已有顶栏与主题条两层）
  * - 上下留白交给外壳 main 的上内边距与调用方下边距，本组件不自带外边距
  */
 export function PageBar({ children, actions, width = "content", className }: PageBarProps) {
@@ -40,7 +40,7 @@ export function PageBar({ children, actions, width = "content", className }: Pag
             -mx-1/px-1 抵掉左右各 4px，保证第一个控件仍与内容左边缘对齐。
           */}
           <div className="no-scrollbar -mx-1 flex items-center gap-1 overflow-x-auto px-1 py-1">{children}</div>
-          {/* 切换器放不下时右缘渐隐，提示还能横向滚动（与全站分类子导航同一手法） */}
+          {/* 切换器放不下时右缘渐隐，提示还能横向滚动（与全站主题子导航同一手法） */}
           <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent" />
         </div>
         {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}

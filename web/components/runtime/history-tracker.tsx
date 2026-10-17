@@ -7,10 +7,10 @@ import { addToHistory } from "@/lib/history"
 const VALID_PRICING = new Set<string>(PRICINGS)
 
 /**
- * 全局历史捕捉器：事件委托监听所有带 data-history-* 的产品链接点击，
+ * 全局历史捕捉器：事件委托监听所有带 data-history-* 的工具链接点击，
  * 记录访问历史（localStorage）。挂在布局根部，零组件改动记录历史。
  * 覆盖左键/键盘回车（含 ctrl/cmd/shift 新标签、新窗口）与中键 auxclick；
- * 历史页自身的条目也带 data-history-*，故访问历史里的产品会回写时间与次数。
+ * 历史页自身的条目也带 data-history-*，故访问历史里的工具会回写时间与次数。
  */
 export function HistoryTracker() {
   useEffect(() => {
@@ -27,7 +27,7 @@ export function HistoryTracker() {
         id,
         name: link.dataset.historyName ?? id,
         url: link.dataset.historyUrl ?? "",
-        categories: link.dataset.historyCategory ? [link.dataset.historyCategory] : [],
+        topics: link.dataset.historyTopic ? [link.dataset.historyTopic] : [],
         pricing: pricing && VALID_PRICING.has(pricing) ? (pricing as Pricing) : undefined,
       })
     }
