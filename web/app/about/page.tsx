@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 /** 站点的四条工作原则 */
 const PRINCIPLES: { icon: LucideIcon; title: string; description: string }[] = [
-  { icon: Database, title: "数据驱动", description: "工具与分类来自结构化数据源，数据更新后站点重新构建。" },
+  { icon: Database, title: "数据驱动", description: "工具与主题来自结构化数据源，数据更新后站点重新构建。" },
   {
     icon: Zap,
     title: "纯静态",
@@ -36,7 +36,7 @@ const sections: InfoSectionDef[] = [
     body: (
       <p>
         XiGee 把散落各处的 AI
-        工具甄选收拢到一处：按分类浏览、直接搜索，点开即达官方网站。我们不做中间页，只做一条从「发现」到「使用」的最短路径。
+        工具甄选收拢到一处：按主题浏览、直接搜索，点开即达官方网站。我们不做中间页，只做一条从「发现」到「使用」的最短路径。
       </p>
     ),
   },
@@ -46,8 +46,8 @@ const sections: InfoSectionDef[] = [
     // 窄屏一行内换行排布；宽屏切成三等分铺满卡片，不把三个数字挤在左半边
     body: (
       <div className="flex flex-wrap gap-x-10 gap-y-3 rounded-lg border bg-card px-4 py-3.5 @2xl:grid @2xl:grid-cols-3 @2xl:gap-x-4">
-        <StatItem label="收录工具" value={stats.products} size="lg" />
-        <StatItem label="分类" value={stats.categories} size="lg" />
+        <StatItem label="收录工具" value={stats.tools} size="lg" />
+        <StatItem label="主题" value={stats.topics} size="lg" />
         <StatItem label="精选" value={stats.featured} size="lg" />
       </div>
     ),

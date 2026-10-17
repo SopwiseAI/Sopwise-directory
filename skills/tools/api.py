@@ -1070,7 +1070,7 @@ def main():
     p = sub.add_parser("add-topic", help="添加主题")
     p.add_argument("--name", required=True)
     p.add_argument("--slug", required=True)
-    p.add_argument("--icon", help="Lucide 组件名，默认 Box")
+    p.add_argument("--icon", help="emoji 图标字符，默认 📦")
     p.add_argument("--description")
     p.add_argument("--sort-order", type=int, default=None)
     p.add_argument("--status", choices=topic_status, default=None)

@@ -21,11 +21,11 @@ import {
   getView,
   subscribePreferences,
 } from "@/lib/preferences"
-import type { SortMode, TabMode, ViewMode } from "@/lib/product-query"
+import type { SortMode, TabMode, ViewMode } from "@/lib/tool-query"
 
 interface SettingsViewProps {
   version: string
-  stats: { products: number; categories: number; featured: number }
+  stats: { tools: number; topics: number; featured: number }
 }
 
 const DOC_LINKS = [
@@ -59,7 +59,8 @@ export function SettingsView({ version, stats }: SettingsViewProps) {
         <FieldGroup>
           <Field orientation="responsive">
             <FieldContent>
-              <FieldTitle>主题</FieldTitle>
+              {/* 这里指「亮/暗/跟随系统」，与下方「主题（topic）数量」区分开，故用「配色」 */}
+              <FieldTitle>配色</FieldTitle>
               <FieldDescription>亮色、暗色或跟随系统；跟随系统会随设备外观自动切换。</FieldDescription>
             </FieldContent>
             {mounted ? <ThemeSwitch /> : <Skeleton className="h-8 w-56 rounded-lg" />}
@@ -93,11 +94,11 @@ export function SettingsView({ version, stats }: SettingsViewProps) {
           <Field orientation="responsive">
             <FieldContent>
               <FieldTitle>数据规模</FieldTitle>
-              <FieldDescription>收录工具、分类与精选的当前数量</FieldDescription>
+              <FieldDescription>收录工具、主题与精选的当前数量</FieldDescription>
             </FieldContent>
             <div className="flex flex-wrap gap-x-8 gap-y-3 @2xl:grid @2xl:grid-cols-3 @2xl:gap-x-6">
-              <StatItem label="工具" value={stats.products} size="lg" />
-              <StatItem label="分类" value={stats.categories} size="lg" />
+              <StatItem label="工具" value={stats.tools} size="lg" />
+              <StatItem label="主题" value={stats.topics} size="lg" />
               <StatItem label="精选" value={stats.featured} size="lg" />
             </div>
           </Field>

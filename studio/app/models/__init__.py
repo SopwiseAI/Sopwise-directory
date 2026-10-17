@@ -152,7 +152,7 @@ class Topic(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     slug: Mapped[str] = mapped_column(String(64), nullable=False)
     name: Mapped[str] = mapped_column(String(64), nullable=False)
-    icon: Mapped[str] = mapped_column(String(64), nullable=False, server_default="Box")
+    icon: Mapped[str] = mapped_column(String(64), nullable=False, server_default="📦")
     description: Mapped[str | None] = mapped_column(String(500), nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     status: Mapped[TopicStatus] = mapped_column(

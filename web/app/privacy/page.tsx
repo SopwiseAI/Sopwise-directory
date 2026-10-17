@@ -6,20 +6,20 @@ import { Item, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } f
 
 export const metadata: Metadata = {
   title: "隐私政策",
-  description: "XiGee 隐私政策：无账号、无埋点、无 Cookie；主题、浏览偏好与历史记录只保存在你的浏览器本地。",
+  description: "XiGee 隐私政策：无账号、无埋点、无 Cookie；配色、浏览偏好与历史记录只保存在你的浏览器本地。",
   alternates: { canonical: "/privacy" },
   openGraph: { title: "隐私政策", description: "XiGee 如何处理（以及不处理）你的数据" },
 }
 
 /** 仅存于本机浏览器、永不上传的数据清单 */
 const LOCAL_DATA: { icon: LucideIcon; title: string; description: string }[] = [
-  { icon: Palette, title: "主题", description: "亮色、暗色或跟随系统" },
+  { icon: Palette, title: "配色", description: "亮色、暗色或跟随系统" },
   { icon: PanelLeft, title: "侧边栏折叠状态", description: "左栏是展开还是收起" },
   { icon: SlidersHorizontal, title: "浏览偏好", description: "默认视图、排序与首页筛选" },
   {
     icon: History,
     title: "历史记录",
-    description: "你点开过的工具名称、官网链接、所属分类、价格标记、访问次数与最近访问时间",
+    description: "你点开过的工具名称、官网链接、所属主题、价格标记、访问次数与最近访问时间",
   },
 ]
 

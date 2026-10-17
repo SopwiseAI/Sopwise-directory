@@ -1,5 +1,5 @@
 import Fuse from "fuse.js"
-import type { Product } from "./types"
+import type { Tool } from "./types"
 
 const DEFAULT_THRESHOLD = 0.3
 
@@ -17,28 +17,28 @@ export function resolveThreshold(): number {
 }
 
 /**
- * 可搜索的产品文档：在 Product 之外预计算 `categoryNames`，
- * 让「对话」这类分类词也能命中所属产品（Fuse 不能直接索引数组映射）。
+ * 可搜索的工具文档：在 Tool 之外预计算 `topicNames`，
+ * 让「对话」这类主题词也能命中所属工具（Fuse 不能直接索引数组映射）。
  */
-export interface SearchDoc extends Product {
-  categoryNames: string[]
+export interface SearchDoc extends Tool {
+  topicNames: string[]
 }
 
-/** 把产品 + 分类名映射展开为可索引文档。 */
+/** 把工具 + 主题名映射展开为可索引文档。 */
 export function buildSearchDocs(
-  products: readonly Product[],
-  categoryNames: Readonly<Record<string, string>> = {},
+  tools: readonly Tool[],
+  topicNames: Readonly<Record<string, string>> = {},
 ): SearchDoc[] {
-  return products.map((p) => ({
-    ...p,
-    categoryNames: p.categories.map((id) => categoryNames[id]).filter((name): name is string => Boolean(name)),
+  return tools.map((t) => ({
+    ...t,
+    topicNames: t.topics.map((id) => topicNames[id]).filter((name): name is string => Boolean(name)),
   }))
 }
 
 /**
  * 顶栏建议（搜索建议下拉）用的精简文档。
  *
- *刻意不带 `description`：它占了产品数据的四成体积，而下拉只展示「名称 + 分类 + 域名」。
+ *刻意不带 `description`：它占了工具数据的四成体积，而下拉只展示「名称 + 主题 + 域名」。
  * 实测 85 条 `SuggestionDoc` ≈ 12KB raw / **3.2KB gzip**（带 description 的全量 SearchDoc 是 6.6KB gzip），
  * 由根布局一次性下发，因此顶栏建议**零网络往返**——这正是旧版「每次换词都要跑一趟服务器」的反面。
  */
@@ -46,26 +46,26 @@ export interface SuggestionDoc {
   id: string
   name: string
   url: string
-  categories: string[]
-  categoryNames: string[]
+  topics: string[]
+  topicNames: string[]
   tags?: string[]
-  /** 与 Product 同源，供 data-history-* 记录访问历史（见 productHistoryAttrs）。 */
-  pricing?: Product["pricing"]
+  /** 与 Tool 同源，供 data-history-* 记录访问历史（见 toolHistoryAttrs）。 */
+  pricing?: Tool["pricing"]
 }
 
-/** 产品 + 分类名 → 顶栏建议文档。与 buildSearchDocs 同源，保证两处分类名一致。 */
+/** 工具 + 主题名 → 顶栏建议文档。与 buildSearchDocs 同源，保证两处主题名一致。 */
 export function buildSuggestionDocs(
-  products: readonly Product[],
-  categoryNames: Readonly<Record<string, string>> = {},
+  tools: readonly Tool[],
+  topicNames: Readonly<Record<string, string>> = {},
 ): SuggestionDoc[] {
-  return products.map((p) => ({
-    id: p.id,
-    name: p.name,
-    url: p.url,
-    categories: p.categories,
-    categoryNames: p.categories.map((id) => categoryNames[id]).filter((name): name is string => Boolean(name)),
-    tags: p.tags,
-    pricing: p.pricing,
+  return tools.map((t) => ({
+    id: t.id,
+    name: t.name,
+    url: t.url,
+    topics: t.topics,
+    topicNames: t.topics.map((id) => topicNames[id]).filter((name): name is string => Boolean(name)),
+    tags: t.tags,
+    pricing: t.pricing,
   }))
 }
 
@@ -85,15 +85,15 @@ export function getSuggestionIndex(docs: readonly SuggestionDoc[]): Fuse<Suggest
 }
 
 /**
- * 建议索引：只索引 名称 / 标签 / 分类名（不含描述，理由见 SuggestionDoc）。
- * 权重向名称倾斜——下拉是「快速点选」，用户敲的多半是产品名。
+ * 建议索引：只索引 名称 / 标签 / 主题名（不含描述，理由见 SuggestionDoc）。
+ * 权重向名称倾斜——下拉是「快速点选」，用户敲的多半是工具名。
  */
 export function createSuggestionIndex(docs: readonly SuggestionDoc[]): Fuse<SuggestionDoc> {
   return new Fuse([...docs], {
     keys: [
       { name: "name", weight: 0.5 },
       { name: "tags", weight: 0.3 },
-      { name: "categoryNames", weight: 0.2 },
+      { name: "topicNames", weight: 0.2 },
     ],
     threshold: resolveThreshold(),
     ignoreLocation: true,
@@ -160,24 +160,24 @@ export function highlightSegments(text: string, query: string): HighlightSegment
 }
 
 /**
- * 创建模糊搜索索引。维度与权重：名称 0.4 / 描述 0.3 / 标签 0.3 / 分类名 0.2。
- * threshold 越小越精确（见 resolveThreshold）。可传已展开的 SearchDoc 或原始 Product（内部展开）。
+ * 创建模糊搜索索引。维度与权重：名称 0.4 / 描述 0.3 / 标签 0.3 / 主题名 0.2。
+ * threshold 越小越精确（见 resolveThreshold）。可传已展开的 SearchDoc 或原始 Tool（内部展开）。
  */
 export function createSearchIndex(
-  products: readonly Product[] | readonly SearchDoc[],
-  categoryNames: Readonly<Record<string, string>> = {},
+  tools: readonly Tool[] | readonly SearchDoc[],
+  topicNames: Readonly<Record<string, string>> = {},
   threshold: number = resolveThreshold(),
 ): Fuse<SearchDoc> {
-  const docs = (products as readonly Product[]).every((p) => "categoryNames" in p)
-    ? (products as readonly SearchDoc[])
-    : buildSearchDocs(products, categoryNames)
+  const docs = (tools as readonly Tool[]).every((t) => "topicNames" in t)
+    ? (tools as readonly SearchDoc[])
+    : buildSearchDocs(tools, topicNames)
 
   return new Fuse(docs, {
     keys: [
       { name: "name", weight: 0.4 },
       { name: "description", weight: 0.3 },
       { name: "tags", weight: 0.3 },
-      { name: "categoryNames", weight: 0.2 },
+      { name: "topicNames", weight: 0.2 },
     ],
     threshold,
     ignoreLocation: true,
@@ -206,10 +206,10 @@ export const FALLBACK_MAX_SCORE = 0.55
  * `max(常规阈值, 0.6)` —— 环境变量把常规阈值调得更松时跟随它，不会比常规还严。
  */
 export function createFallbackIndex(
-  products: readonly Product[] | readonly SearchDoc[],
-  categoryNames: Readonly<Record<string, string>> = {},
+  tools: readonly Tool[] | readonly SearchDoc[],
+  topicNames: Readonly<Record<string, string>> = {},
 ): Fuse<SearchDoc> {
-  return createSearchIndex(products, categoryNames, Math.max(resolveThreshold(), FALLBACK_THRESHOLD))
+  return createSearchIndex(tools, topicNames, Math.max(resolveThreshold(), FALLBACK_THRESHOLD))
 }
 
 /** 在兜底索引上取「确实沾边」的前 N 条（按 `FALLBACK_MAX_SCORE` 卡分数）。 */
@@ -267,7 +267,7 @@ export const SEARCH_RESULT_SELECTOR = "[data-search-result]"
  * 命中查询词的标签（最多 `limit` 个）。
  *
  * 结果行右侧此前固定显示前两个标签，命中与否全看运气；改成优先显示真正命中的标签，
- * 用户一眼就能确认「这条为什么被搜出来」。没有命中标签时调用方回落到分类名。
+ * 用户一眼就能确认「这条为什么被搜出来」。没有命中标签时调用方回落到主题名。
  */
 export function matchedTags(tags: readonly string[] | undefined, query: string, limit = 2): string[] {
   if (!tags || tags.length === 0) return []

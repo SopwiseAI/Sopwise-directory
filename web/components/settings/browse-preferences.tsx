@@ -4,13 +4,13 @@ import { Field, FieldContent, FieldDescription, FieldGroup, FieldTitle } from "@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Skeleton } from "@/components/ui/skeleton"
 import { setSort, setTab, setView } from "@/lib/preferences"
-import { SORT_OPTIONS, TAB_OPTIONS, VIEW_OPTIONS, type ProductOption } from "@/lib/product-options"
-import type { SortMode, TabMode, ViewMode } from "@/lib/product-query"
+import { SORT_OPTIONS, TAB_OPTIONS, VIEW_OPTIONS, type ToolOption } from "@/lib/tool-options"
+import type { SortMode, TabMode, ViewMode } from "@/lib/tool-query"
 
 interface PrefFieldProps<T extends string> {
   label: string
   hint: string
-  options: readonly ProductOption<T>[]
+  options: readonly ToolOption<T>[]
   /** 控件骨架宽度：偏好只存在客户端，挂载前用骨架占位，避免首帧选中态跳变 */
   skeletonWidth: string
   disabled?: boolean
@@ -70,13 +70,13 @@ interface BrowsePreferencesProps {
   mounted: boolean
 }
 
-/** 浏览偏好：默认视图 / 排序 / Tab，与产品页共用同一份本地偏好。 */
+/** 浏览偏好：默认视图 / 排序 / Tab，与工具页共用同一份本地偏好。 */
 export function BrowsePreferences({ view, sort, tab, mounted }: BrowsePreferencesProps) {
   return (
     <FieldGroup>
       <PrefField
         label="默认视图"
-        hint="首页与分类页的列表展示方式"
+        hint="首页与主题页的列表展示方式"
         options={VIEW_OPTIONS}
         skeletonWidth="w-32"
         disabled={!mounted}

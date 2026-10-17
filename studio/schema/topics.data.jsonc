@@ -12,13 +12,13 @@
 // 字段清单（5 个）:
 //   id            string   必填  ≤64    kebab-case
 //   name          string   必填  ≤64    主题显示名（如 对话）
-//   icon          string   必填  ≤64    Lucide 组件名；库里 NOT NULL DEFAULT 'Box'，永不为空
+//   icon          string   必填  ≤64    emoji 图标字符（如 💬）；库里 NOT NULL DEFAULT '📦'，永不为空
 //   description   string   可选  ≤500   NULL 时【省略该键】，不输出 null
 //   toolCount     integer  必填  ≥0     派生字段，不落库
 //
 // 保留项：id = "misc"（未分类）是导出端的兜底主题——工具没有有效主题时回退到它。
 //   它由种子写入（schema.sql 第 5 节）、不可禁用（否则所有回退工具都指向一个不存在的 id）、
-//   sort_order = -1 让它永远排在最后。所以 topics[] 里出现 "misc" 是正常现象。
+//   sort_order = 0（其余主题都 ≥1）让它永远排在最后。所以 topics[] 里出现 "misc" 是正常现象。
 //   种子被误删时导出端会合成一项并打 WARNING（_ensure_uncategorized）——那是兜底，别依赖它。
 //
 // 主题是【受控】的导航骨架：保持 20~30 个、扁平、不做层级。【自觉】
@@ -43,10 +43,10 @@
     // 本身就是语义复合词的保留，如「图像生成」「数据分析」「客服机器人」。
     "name": "对话",
 
-    // Lucide 图标组件名，PascalCase（如 MessageSquare）。
-    // 库里是 NOT NULL DEFAULT 'Box'；但 NOT NULL 不挡空串，所以导出端仍有
-    // `row.icon or 'Box'` 的回退分支（可达，不是死代码）。
-    "icon": "MessageSquare",
+    // emoji 图标字符（如 💬）。
+    // 库里是 NOT NULL DEFAULT '📦'；但 NOT NULL 不挡空串，所以导出端仍有
+    // `row.icon or '📦'` 的回退分支（可达，不是死代码）。
+    "icon": "💬",
 
     // 主题简介，可选。供主题页摘要与 SEO 使用。NULL 时【省略该键】。
     "description": "通用对话与问答类工具，覆盖聊天、写作辅助与知识问答。",

@@ -5,7 +5,7 @@ import {
   clearHistory,
   filterHistory,
   getHistory,
-  getHistoryCategoryIds,
+  getHistoryTopicIds,
   getHistoryExport,
   getHistorySnapshot,
   importHistory,
@@ -14,14 +14,14 @@ import {
   subscribeHistory,
   type HistoryItem,
 } from "./history"
-import type { Product } from "./types"
+import type { Tool } from "./types"
 
-const mockProduct: Product = {
+const mockTool: Tool = {
   id: "test-1",
-  name: "Test Product",
-  description: "A test product",
+  name: "Test Tool",
+  description: "A test tool",
   url: "https://test.com",
-  categories: ["test-cat"],
+  topics: ["test-cat"],
   pricing: "free",
   featured: false,
   createdAt: "2024-01-01",
@@ -32,19 +32,19 @@ describe("addToHistory", () => {
     localStorage.clear()
   })
 
-  it("adds a new product to the front", () => {
-    addToHistory(mockProduct)
+  it("adds a new tool to the front", () => {
+    addToHistory(mockTool)
     const list = getHistory()
     expect(list).toHaveLength(1)
     expect(list[0].id).toBe("test-1")
-    expect(list[0].name).toBe("Test Product")
+    expect(list[0].name).toBe("Test Tool")
     expect(list[0].domain).toBe("test.com")
   })
 
-  it("deduplicates by moving existing product to front", () => {
-    addToHistory(mockProduct)
-    addToHistory({ ...mockProduct, id: "test-2", name: "Second" })
-    addToHistory(mockProduct)
+  it("deduplicates by moving existing tool to front", () => {
+    addToHistory(mockTool)
+    addToHistory({ ...mockTool, id: "test-2", name: "Second" })
+    addToHistory(mockTool)
     const list = getHistory()
     expect(list).toHaveLength(2)
     expect(list[0].id).toBe("test-1")
@@ -53,7 +53,7 @@ describe("addToHistory", () => {
 
   it("trims to 500 items max", () => {
     for (let i = 0; i < 505; i++) {
-      addToHistory({ ...mockProduct, id: `p-${i}`, name: `Product ${i}` })
+      addToHistory({ ...mockTool, id: `p-${i}`, name: `Tool ${i}` })
     }
     const list = getHistory()
     expect(list).toHaveLength(500)
@@ -68,18 +68,18 @@ describe("再次访问", () => {
   })
 
   it("首次访问 visitCount=1，first=last", () => {
-    addToHistory(mockProduct)
+    addToHistory(mockTool)
     const item = getHistory()[0]
     expect(item.visitCount).toBe(1)
     expect(item.firstVisitedAt).toBe(item.lastVisitedAt)
   })
 
   it("再次访问：计数+1、置顶、保留 firstVisitedAt", async () => {
-    addToHistory(mockProduct)
+    addToHistory(mockTool)
     const first = getHistory()[0].firstVisitedAt
     await new Promise((r) => setTimeout(r, 5))
-    addToHistory({ ...mockProduct, id: "test-2" })
-    addToHistory(mockProduct)
+    addToHistory({ ...mockTool, id: "test-2" })
+    addToHistory(mockTool)
     const list = getHistory()
     expect(list[0].id).toBe("test-1")
     expect(list[0].visitCount).toBe(2)
@@ -88,10 +88,10 @@ describe("再次访问", () => {
   })
 
   it("超出 500 裁剪最旧，持续回访的条目始终保留", () => {
-    addToHistory(mockProduct)
+    addToHistory(mockTool)
     for (let i = 0; i < 600; i++) {
-      addToHistory({ ...mockProduct, id: `p-${i}`, name: `P${i}` })
-      addToHistory(mockProduct) // 每次新访问后回访 test-1
+      addToHistory({ ...mockTool, id: `p-${i}`, name: `P${i}` })
+      addToHistory(mockTool) // 每次新访问后回访 test-1
     }
     const list = getHistory()
     expect(list).toHaveLength(500)
@@ -112,7 +112,7 @@ describe("数据模型与迁移", () => {
           name: "A",
           url: "https://a.com",
           domain: "a.com",
-          categoryId: "c",
+          topicId: "c",
           visitedAt: "2024-01-01T00:00:00.000Z",
         },
       ]),
@@ -148,8 +148,8 @@ describe("remove/clear", () => {
   beforeEach(() => localStorage.clear())
 
   it("removeFromHistory 删除指定项", () => {
-    addToHistory({ ...mockProduct, id: "a" })
-    addToHistory({ ...mockProduct, id: "b" })
+    addToHistory({ ...mockTool, id: "a" })
+    addToHistory({ ...mockTool, id: "b" })
     removeFromHistory("a")
     expect(getHistory().map((i) => i.id)).toEqual(["b"])
   })
@@ -163,7 +163,7 @@ describe("remove/clear", () => {
   })
 
   it("clearHistory 清空", () => {
-    addToHistory(mockProduct)
+    addToHistory(mockTool)
     clearHistory()
     expect(getHistory()).toEqual([])
   })
@@ -177,7 +177,7 @@ describe("subscribeHistory", () => {
   it("calls callback on history change", () => {
     const cb = vi.fn()
     const unsub = subscribeHistory(cb)
-    addToHistory(mockProduct)
+    addToHistory(mockTool)
     expect(cb).toHaveBeenCalledTimes(1)
     unsub()
   })
@@ -186,7 +186,7 @@ describe("subscribeHistory", () => {
     const cb = vi.fn()
     const unsub = subscribeHistory(cb)
     unsub()
-    addToHistory(mockProduct)
+    addToHistory(mockTool)
     expect(cb).not.toHaveBeenCalled()
   })
 })
@@ -195,7 +195,7 @@ describe("配额降级", () => {
   beforeEach(() => localStorage.clear())
 
   it("setItem 抛 QuotaExceededError 时递减重试且不破坏数据", () => {
-    addToHistory(mockProduct)
+    addToHistory(mockTool)
     const original = Storage.prototype.setItem
     let calls = 0
     const spy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
@@ -206,7 +206,7 @@ describe("配额降级", () => {
       if (k === "xigee:history" && calls++ === 0) throw new DOMException("quota", "QuotaExceededError")
       return original.call(this, k, v)
     })
-    addToHistory({ ...mockProduct, id: "test-2" })
+    addToHistory({ ...mockTool, id: "test-2" })
     spy.mockRestore()
     expect(getHistory().map((i) => i.id)).toContain("test-2")
   })
@@ -215,10 +215,11 @@ describe("配额降级", () => {
 describe("导出与导入", () => {
   beforeEach(() => localStorage.clear())
 
-  it("导出为 v2 信封且可被解析", () => {
-    addToHistory(mockProduct)
+  it("导出为 v3 信封且可被解析", () => {
+    addToHistory(mockTool)
     const raw = getHistoryExport()
-    expect(JSON.parse(raw)).toMatchObject({ v: 2 })
+    // v3：条目键由 categoryId 改为 topicId（领域词汇对齐后端）
+    expect(JSON.parse(raw)).toMatchObject({ v: 3 })
     expect(parseHistorySnapshot(raw).map((i) => i.id)).toEqual(["test-1"])
   })
 
@@ -242,7 +243,7 @@ describe("导出与导入", () => {
   })
 
   it("合并去重：取较大 visitCount、较新 lastVisitedAt、较早 firstVisitedAt", () => {
-    addToHistory({ ...mockProduct, id: "a" })
+    addToHistory({ ...mockTool, id: "a" })
     const first = getHistory()[0].firstVisitedAt
     const file = JSON.stringify({
       v: 2,
@@ -292,12 +293,12 @@ describe("导出与导入", () => {
 })
 
 describe("filterHistory", () => {
-  const mk = (id: string, categoryId: string, iso: string): HistoryItem => ({
+  const mk = (id: string, topicId: string, iso: string): HistoryItem => ({
     id,
     name: id,
     url: `https://${id}.com`,
     domain: `${id}.com`,
-    categoryId,
+    topicId,
     lastVisitedAt: iso,
     firstVisitedAt: iso,
     visitCount: 1,
@@ -326,12 +327,12 @@ describe("filterHistory", () => {
     expect(filterHistory(items, { period: "month" }, now).map((i) => i.id)).toEqual(["today", "yesterday", "week"])
   })
 
-  it("categoryId 过滤", () => {
-    expect(filterHistory(items, { categoryId: "chat" }, now).map((i) => i.id)).toEqual(["today", "week"])
+  it("topicId 过滤", () => {
+    expect(filterHistory(items, { topicId: "chat" }, now).map((i) => i.id)).toEqual(["today", "week"])
   })
 
-  it("分类 + 时间联合过滤", () => {
-    expect(filterHistory(items, { categoryId: "chat", period: "today" }, now).map((i) => i.id)).toEqual(["today"])
+  it("主题 + 时间联合过滤", () => {
+    expect(filterHistory(items, { topicId: "chat", period: "today" }, now).map((i) => i.id)).toEqual(["today"])
   })
 
   it("非法日期在时间窗下被排除", () => {
@@ -340,19 +341,19 @@ describe("filterHistory", () => {
   })
 })
 
-describe("getHistoryCategoryIds", () => {
-  it("按首次出现顺序去重、忽略空分类", () => {
-    const mk = (id: string, categoryId: string): HistoryItem => ({
+describe("getHistoryTopicIds", () => {
+  it("按首次出现顺序去重、忽略空主题", () => {
+    const mk = (id: string, topicId: string): HistoryItem => ({
       id,
       name: id,
       url: `https://${id}.com`,
       domain: `${id}.com`,
-      categoryId,
+      topicId,
       lastVisitedAt: "2026-03-10T09:00:00",
       firstVisitedAt: "2026-03-10T09:00:00",
       visitCount: 1,
     })
-    expect(getHistoryCategoryIds([mk("a", "chat"), mk("b", ""), mk("c", "code"), mk("d", "chat")])).toEqual([
+    expect(getHistoryTopicIds([mk("a", "chat"), mk("b", ""), mk("c", "code"), mk("d", "chat")])).toEqual([
       "chat",
       "code",
     ])
@@ -363,15 +364,15 @@ describe("parseHistorySnapshot", () => {
   beforeEach(() => localStorage.clear())
 
   it("解析版本化信封", () => {
-    addToHistory(mockProduct)
+    addToHistory(mockTool)
     const raw = getHistorySnapshot()
-    expect(raw).toContain('"v":2')
+    expect(raw).toContain('"v":3')
     expect(parseHistorySnapshot(raw).map((i) => i.id)).toEqual(["test-1"])
   })
 
   it("解析旧版裸数组并迁移", () => {
     const raw = JSON.stringify([
-      { id: "a", name: "A", url: "https://a.com", categoryId: "c", visitedAt: "2024-01-01T00:00:00.000Z" },
+      { id: "a", name: "A", url: "https://a.com", topicId: "c", visitedAt: "2024-01-01T00:00:00.000Z" },
     ])
     const list = parseHistorySnapshot(raw)
     expect(list).toHaveLength(1)
@@ -409,7 +410,7 @@ describe("v2 信封上限裁剪", () => {
       name: `H${i}`,
       url: `https://h${i}.com`,
       domain: `h${i}.com`,
-      categoryId: "",
+      topicId: "",
       lastVisitedAt: "2024-01-01T00:00:00.000Z",
       firstVisitedAt: "2024-01-01T00:00:00.000Z",
       visitCount: 1,

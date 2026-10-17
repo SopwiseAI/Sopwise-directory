@@ -14,15 +14,15 @@ import {
   findRelated,
   SUGGEST_LIMIT,
 } from "./search"
-import type { Product } from "./types"
+import type { Tool } from "./types"
 
-const mockProducts: Product[] = [
+const mockTools: Tool[] = [
   {
     id: "1",
     name: "ChatGPT",
     description: "AI 对话助手",
     url: "https://chat.openai.com",
-    categories: ["chat-assistant"],
+    topics: ["chat-assistant"],
     tags: ["AI", "对话"],
     pricing: "freemium",
     featured: true,
@@ -33,7 +33,7 @@ const mockProducts: Product[] = [
     name: "Midjourney",
     description: "AI 图像生成",
     url: "https://midjourney.com",
-    categories: ["image-generation"],
+    topics: ["image-generation"],
     tags: ["AI", "图像"],
     pricing: "paid",
     featured: false,
@@ -44,7 +44,7 @@ const mockProducts: Product[] = [
     name: "GitHub Copilot",
     description: "AI 代码助手",
     url: "https://github.com/copilot",
-    categories: ["code-tools"],
+    topics: ["code-tools"],
     tags: ["AI", "代码"],
     pricing: "paid",
     featured: true,
@@ -53,21 +53,21 @@ const mockProducts: Product[] = [
 ]
 
 describe("createSearchIndex", () => {
-  const index = createSearchIndex(mockProducts)
+  const index = createSearchIndex(mockTools)
 
-  it("finds products by name", () => {
+  it("finds tools by name", () => {
     const results = index.search("ChatGPT")
     expect(results.length).toBeGreaterThan(0)
     expect(results[0].item.name).toBe("ChatGPT")
   })
 
-  it("finds products by description", () => {
+  it("finds tools by description", () => {
     const results = index.search("图像生成")
     expect(results.length).toBeGreaterThan(0)
     expect(results[0].item.id).toBe("2")
   })
 
-  it("finds products by tag", () => {
+  it("finds tools by tag", () => {
     const results = index.search("代码")
     expect(results.length).toBeGreaterThan(0)
     expect(results[0].item.id).toBe("3")
@@ -78,8 +78,8 @@ describe("createSearchIndex", () => {
     expect(results.length).toBe(0)
   })
 
-  it("finds products by category name", () => {
-    const idx = createSearchIndex(mockProducts, {
+  it("finds tools by topic name", () => {
+    const idx = createSearchIndex(mockTools, {
       "chat-assistant": "对话助手",
       "image-generation": "图像生成",
       "code-tools": "代码工具",
@@ -87,13 +87,13 @@ describe("createSearchIndex", () => {
     const results = idx.search("对话助手")
     expect(results.length).toBeGreaterThan(0)
     expect(results[0].item.id).toBe("1")
-    expect(results[0].item.categoryNames).toContain("对话助手")
+    expect(results[0].item.topicNames).toContain("对话助手")
   })
 
-  it("buildSearchDocs 展开分类名并过滤未知分类", () => {
-    const docs = buildSearchDocs(mockProducts, { "chat-assistant": "对话助手" })
-    expect(docs[0].categoryNames).toEqual(["对话助手"])
-    expect(docs[1].categoryNames).toEqual([])
+  it("buildSearchDocs 展开主题名并过滤未知主题", () => {
+    const docs = buildSearchDocs(mockTools, { "chat-assistant": "对话助手" })
+    expect(docs[0].topicNames).toEqual(["对话助手"])
+    expect(docs[1].topicNames).toEqual([])
     expect(docs[0].name).toBe("ChatGPT")
   })
 })
@@ -176,36 +176,36 @@ describe("resolveThreshold", () => {
 })
 
 describe("buildSuggestionDocs", () => {
-  const docs = buildSuggestionDocs(mockProducts, {
+  const docs = buildSuggestionDocs(mockTools, {
     "chat-assistant": "对话助手",
     "image-generation": "图像生成",
     "code-tools": "代码工具",
   })
 
-  it("保留 id / name / url / categories / pricing 供建议与历史埋点共用", () => {
+  it("保留 id / name / url / topics / pricing 供建议与历史埋点共用", () => {
     expect(docs[0]).toMatchObject({
       id: "1",
       name: "ChatGPT",
       url: "https://chat.openai.com",
-      categories: ["chat-assistant"],
+      topics: ["chat-assistant"],
       pricing: "freemium",
     })
-    expect(docs[0].categoryNames).toEqual(["对话助手"])
+    expect(docs[0].topicNames).toEqual(["对话助手"])
   })
 
-  it("不含 description：建议只展示名称/分类/域名，描述占了产品数据四成体积", () => {
+  it("不含 description：建议只展示名称/主题/域名，描述占了工具数据四成体积", () => {
     expect(Object.keys(docs[0])).not.toContain("description")
   })
 
-  it("展开分类名并过滤未知分类 id", () => {
-    const mixed = buildSuggestionDocs(mockProducts, { "chat-assistant": "对话助手" })
-    expect(mixed[0].categoryNames).toEqual(["对话助手"])
-    expect(mixed[1].categoryNames).toEqual([])
+  it("展开主题名并过滤未知主题 id", () => {
+    const mixed = buildSuggestionDocs(mockTools, { "chat-assistant": "对话助手" })
+    expect(mixed[0].topicNames).toEqual(["对话助手"])
+    expect(mixed[1].topicNames).toEqual([])
   })
 })
 
 describe("suggest", () => {
-  const docs = buildSuggestionDocs(mockProducts, {
+  const docs = buildSuggestionDocs(mockTools, {
     "chat-assistant": "对话助手",
     "image-generation": "图像生成",
     "code-tools": "代码工具",
@@ -217,7 +217,7 @@ describe("suggest", () => {
     expect(suggest(index, "midjourney")[0]?.name).toBe("Midjourney")
   })
 
-  it("按分类名命中（用户敲的是分类词不是产品名）", () => {
+  it("按主题名命中（用户敲的是主题词不是工具名）", () => {
     expect(suggest(index, "图像生成").map((d) => d.name)).toContain("Midjourney")
   })
 
@@ -235,8 +235,8 @@ describe("suggest", () => {
       id: `p${i}`,
       name: `Tool ${i}`,
       url: `https://tool${i}.example.com`,
-      categories: ["c"],
-      categoryNames: ["工具"],
+      topics: ["c"],
+      topicNames: ["工具"],
       tags: ["tool"],
     }))
     expect(suggest(createSuggestionIndex(many), "tool")).toHaveLength(SUGGEST_LIMIT)
@@ -244,14 +244,14 @@ describe("suggest", () => {
 })
 
 describe("getSuggestionIndex", () => {
-  const docs = buildSuggestionDocs(mockProducts, { "chat-assistant": "对话助手" })
+  const docs = buildSuggestionDocs(mockTools, { "chat-assistant": "对话助手" })
 
   it("同一数据数组命中缓存，索引只建一次", () => {
     expect(getSuggestionIndex(docs)).toBe(getSuggestionIndex(docs))
   })
 
   it("不同数据数组各自建索引（不串数据）", () => {
-    const other = buildSuggestionDocs([...mockProducts].slice(0, 1), { "chat-assistant": "对话助手" })
+    const other = buildSuggestionDocs([...mockTools].slice(0, 1), { "chat-assistant": "对话助手" })
     expect(getSuggestionIndex(docs)).not.toBe(getSuggestionIndex(other))
   })
 })
@@ -307,8 +307,8 @@ describe("matchedTags", () => {
 
 describe("createFallbackIndex / findRelated", () => {
   const names = { "chat-assistant": "对话助手", "image-generation": "图像生成", "code-tools": "代码工具" }
-  const strict = createSearchIndex(mockProducts, names)
-  const loose = createFallbackIndex(mockProducts, names)
+  const strict = createSearchIndex(mockTools, names)
+  const loose = createFallbackIndex(mockTools, names)
 
   it("宽松索引比常规索引捞得更多", () => {
     expect(strict.search("对话助手x").length).toBeLessThan(loose.search("对话助手x").length)

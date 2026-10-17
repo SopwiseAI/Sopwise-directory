@@ -1,12 +1,12 @@
 import { describe, it, expect, vi } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
 import { SearchNoResults } from "./search-no-results"
-import { mockCategories, mockCategoryCounts, mockProducts } from "@/.storybook/fixtures"
+import { mockTopics, mockTopicCounts, mockTools } from "@/.storybook/fixtures"
 import { buildSearchDocs } from "@/lib/search"
 
-const categoryNames = Object.fromEntries(mockCategories.map((c) => [c.id, c.name]))
-const docs = buildSearchDocs(mockProducts, categoryNames)
-const featured = mockProducts.filter((p) => p.featured)
+const topicNames = Object.fromEntries(mockTopics.map((c) => [c.id, c.name]))
+const docs = buildSearchDocs(mockTools, topicNames)
+const featured = mockTools.filter((p) => p.featured)
 
 function renderNoResults(props: Partial<React.ComponentProps<typeof SearchNoResults>> = {}) {
   const onPick = vi.fn()
@@ -16,9 +16,9 @@ function renderNoResults(props: Partial<React.ComponentProps<typeof SearchNoResu
       fallback={[]}
       featured={featured}
       suggestions={["ChatGPT", "Claude"]}
-      categories={mockCategories}
-      categoryCounts={mockCategoryCounts}
-      categoryNames={categoryNames}
+      topics={mockTopics}
+      topicCounts={mockTopicCounts}
+      topicNames={topicNames}
       onPick={onPick}
       {...props}
     />,
@@ -31,7 +31,7 @@ describe("SearchNoResults", () => {
     renderNoResults()
     expect(screen.getByText(/未找到与/)).toBeInTheDocument()
     expect(screen.getByText("「zzz」")).toBeInTheDocument()
-    expect(screen.getByText(/可以搜工具名称、描述、标签或分类/)).toBeInTheDocument()
+    expect(screen.getByText(/可以搜工具名称、描述、标签或主题/)).toBeInTheDocument()
   })
 
   it("有点击即搜的换词建议", () => {
@@ -55,9 +55,9 @@ describe("SearchNoResults", () => {
     expect(screen.getByText("精选推荐")).toBeInTheDocument()
   })
 
-  it("始终给出按分类浏览的出口", () => {
+  it("始终给出按主题浏览的出口", () => {
     renderNoResults()
-    expect(screen.getByText("按分类浏览")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: /对话助手/ })).toHaveAttribute("href", "/category/chat-assistant")
+    expect(screen.getByText("按主题浏览")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /对话助手/ })).toHaveAttribute("href", "/topic/chat-assistant")
   })
 })

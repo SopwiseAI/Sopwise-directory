@@ -14,7 +14,7 @@ const SITE_HOST = getBaseUrl()
   .replace(/\/$/, "")
 const stats = getStats()
 
-/** OG 分享图（构建时渲染 PNG；品牌色/字体引用真源，规模数据取自 data.json）。 */
+/** OG 分享图（构建时渲染 PNG；品牌色/字体引用真源，规模数据取自 topics.json / tools.json）。 */
 export default function OpengraphImage() {
   return new ImageResponse(
     <div
@@ -66,9 +66,9 @@ export default function OpengraphImage() {
       <div
         style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 28, fontSize: 26, color: BRAND_MUTED.dark }}
       >
-        <span>{stats.categories} 个分类</span>
+        <span>{stats.topics} 个主题</span>
         <span>·</span>
-        <span>{stats.products} 款精选</span>
+        <span>{stats.tools} 款精选</span>
         <span>·</span>
         <span>持续更新</span>
       </div>

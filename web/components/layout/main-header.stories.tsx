@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
 import { MainHeader } from "@/components/layout/main-header"
-import { mockCategories, mockSuggestionDocs } from "@/.storybook/fixtures"
+import { mockTopics, mockSuggestionDocs } from "@/.storybook/fixtures"
 
 const meta = {
   title: "Layout/MainHeader",
   component: MainHeader,
   tags: ["autodocs"],
-  args: { categories: mockCategories, suggestions: mockSuggestionDocs },
+  args: { topics: mockTopics, suggestions: mockSuggestionDocs },
   parameters: { layout: "fullscreen" },
 } satisfies Meta<typeof MainHeader>
 
@@ -15,6 +15,6 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {}
 
-export const NoCategories: Story = {
-  args: { categories: [], suggestions: [] },
+export const NoTopics: Story = {
+  args: { topics: [], suggestions: [] },
 }

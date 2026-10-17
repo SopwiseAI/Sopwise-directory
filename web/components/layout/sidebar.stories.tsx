@@ -2,13 +2,13 @@ import { useEffect } from "react"
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
 import { Sidebar } from "@/components/layout/sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { mockCategories, mockCategoryCounts } from "@/.storybook/fixtures"
+import { mockTopics, mockTopicCounts } from "@/.storybook/fixtures"
 
 const meta = {
   title: "Layout/Sidebar",
   component: Sidebar,
   tags: ["autodocs"],
-  args: { categories: mockCategories, categoryCounts: mockCategoryCounts, totalProducts: 85 },
+  args: { topics: mockTopics, topicCounts: mockTopicCounts, totalTools: 85 },
   parameters: { layout: "fullscreen" },
   decorators: [
     (Story) => (

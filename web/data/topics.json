@@ -1,0 +1,122 @@
+[
+  {
+    "id": "chat-assistant",
+    "name": "对话助手",
+    "icon": "💬",
+    "toolCount": 7
+  },
+  {
+    "id": "image-generation",
+    "name": "图像生成",
+    "icon": "🖼️",
+    "toolCount": 7
+  },
+  {
+    "id": "code-tools",
+    "name": "代码工具",
+    "icon": "💻",
+    "toolCount": 7
+  },
+  {
+    "id": "writing-tools",
+    "name": "写作工具",
+    "icon": "✍️",
+    "toolCount": 5
+  },
+  {
+    "id": "video-tools",
+    "name": "视频工具",
+    "icon": "🎬",
+    "toolCount": 5
+  },
+  {
+    "id": "audio-tools",
+    "name": "音频工具",
+    "icon": "🎵",
+    "toolCount": 5
+  },
+  {
+    "id": "productivity",
+    "name": "效率工具",
+    "icon": "⚡",
+    "toolCount": 5
+  },
+  {
+    "id": "data-analysis",
+    "name": "数据分析",
+    "icon": "📊",
+    "toolCount": 5
+  },
+  {
+    "id": "design-tools",
+    "name": "设计工具",
+    "icon": "🎨",
+    "toolCount": 5
+  },
+  {
+    "id": "education",
+    "name": "教育学习",
+    "icon": "🎓",
+    "toolCount": 5
+  },
+  {
+    "id": "marketing",
+    "name": "营销工具",
+    "icon": "📣",
+    "toolCount": 3
+  },
+  {
+    "id": "translation",
+    "name": "翻译工具",
+    "icon": "🌐",
+    "toolCount": 3
+  },
+  {
+    "id": "research",
+    "name": "研究工具",
+    "icon": "🔬",
+    "toolCount": 3
+  },
+  {
+    "id": "automation",
+    "name": "自动化",
+    "icon": "⚙️",
+    "toolCount": 3
+  },
+  {
+    "id": "chatbot",
+    "name": "客服机器人",
+    "icon": "🤖",
+    "toolCount": 3
+  },
+  {
+    "id": "3d-tools",
+    "name": "3D 工具",
+    "icon": "🧊",
+    "toolCount": 3
+  },
+  {
+    "id": "legal",
+    "name": "法律工具",
+    "icon": "⚖️",
+    "toolCount": 2
+  },
+  {
+    "id": "finance",
+    "name": "金融工具",
+    "icon": "📈",
+    "toolCount": 3
+  },
+  {
+    "id": "health",
+    "name": "医疗健康",
+    "icon": "🩺",
+    "toolCount": 3
+  },
+  {
+    "id": "gaming",
+    "name": "游戏娱乐",
+    "icon": "🎮",
+    "toolCount": 3
+  }
+]

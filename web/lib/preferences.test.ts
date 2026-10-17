@@ -16,7 +16,7 @@ import {
 beforeEach(() => localStorage.clear())
 
 describe("默认值常量", () => {
-  it("与产品页默认一致", () => {
+  it("与工具页默认一致", () => {
     expect(DEFAULT_VIEW).toBe("grid")
     expect(DEFAULT_SORT).toBe("recommended")
     expect(DEFAULT_TAB).toBe("all")

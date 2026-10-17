@@ -168,7 +168,7 @@ async def create_topic(
     client: AsyncClient,
     slug: str = "test-topic",
     name: str = "测试主题",
-    icon: str = "Box",
+    icon: str = "📦",
     description: str | None = None,
     sort_order: int = 0,
     status: str = "active",

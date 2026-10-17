@@ -16,8 +16,8 @@ AI 驱动的目录站 (XiGee), 包含三个模块:
     studio 导出 JSON → web/data/topics-{env}.json + tools-{env}.json
                        prod 额外同步 topics.json + tools.json
          │
-         └─ ⚠️ 前端【目前仍读 web/data/data.json】, 还没切到 topics/tools
-            (缺口与字段映射见 web/AGENTS.md 的「数据源迁移」一节)
+         └─ ✅ 前端读 web/data/topics.json + tools.json（data.json 已删除）
+            (契约分叉与待办见 web/AGENTS.md 的「数据源」一节)
          ↑
     skills/tools/api.py 调用 studio API
     .opencode/commands/ 触发 AI 工作流

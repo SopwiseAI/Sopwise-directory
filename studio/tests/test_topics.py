@@ -26,7 +26,7 @@ async def test_create_topic_defaults(async_client):
     resp = await async_client.post("/api/v1/topics", json={"slug": "minimal", "name": "最小主题"})
     assert resp.status_code == 201, resp.text
     data = resp.json()
-    assert data["icon"] == "Box"
+    assert data["icon"] == "📦"
     assert data["sort_order"] == 0
     assert data["status"] == "active"
     assert data["description"] is None

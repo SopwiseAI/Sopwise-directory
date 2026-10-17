@@ -33,18 +33,18 @@ description: 添加主题
 4. 创建主题（name 和 slug 必填，其余可选）:
 
    ```
-   python skills/tools/api.py add-topic --name "主题名" --slug "english-slug" [--icon "IconName"]
+   python skills/tools/api.py add-topic --name "主题名" --slug "english-slug" [--icon "💬"]
    ```
 
-   图标名使用 lucide-react 图标库，常用参考:
-   - 对话类: `MessageSquare`
-   - 绘画类: `Image`
-   - 编程类: `Code`
-   - 写作类: `PenLine`
-   - 视频类: `Video`
-   - 音频类: `Music`
-   - 搜索类: `Search`
-   - 通用: `Box` / `Sparkles` / `Wrench`
+   图标用 emoji 字符（前端直接渲染，新增主题不必改代码），默认 `📦`。常用参考:
+   - 对话类: `💬`
+   - 绘画类: `🖼️`
+   - 编程类: `💻`
+   - 写作类: `✍️`
+   - 视频类: `🎬`
+   - 音频类: `🎵`
+   - 搜索类: `🔍`
+   - 通用: `📦` / `🧩` / `⚙️`
 
    其他可选参数: `--description "主题简介"` `--sort-order <N>` `--status active|disabled`
 

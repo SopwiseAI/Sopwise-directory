@@ -26,7 +26,7 @@ export const WithInputGroup: Story = {
       <InputGroupAddon>
         <Search className="text-muted-foreground/60" />
       </InputGroupAddon>
-      <InputGroupInput placeholder="搜索 AI 产品…" aria-label="搜索 AI 产品" />
+      <InputGroupInput placeholder="搜索 AI 工具…" aria-label="搜索 AI 工具" />
       <InputGroupAddon align="inline-end">
         <InputGroupText>
           <Kbd>/</Kbd>

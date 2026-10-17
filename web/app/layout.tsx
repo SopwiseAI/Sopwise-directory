@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next"
 import { GeistMono } from "geist/font/mono"
 import "@fontsource-variable/outfit"
-import { getAllCategories, getAllProducts, getCategoryCounts, getStats } from "@/lib/data"
+import { getAllTopics, getAllTools, getTopicCounts, getStats } from "@/lib/data"
 import { buildSuggestionDocs } from "@/lib/search"
 import { getBaseUrl } from "@/lib/utils"
 import { pageShell } from "@/lib/layout"
@@ -18,15 +18,15 @@ import { Toaster } from "@/components/ui/sonner"
 import Footer from "@/components/layout/footer"
 import "./globals.css"
 
-const allCategories = getAllCategories()
-const categoryCounts = getCategoryCounts()
-const totalProducts = getStats().products
+const allTopics = getAllTopics()
+const topicCounts = getTopicCounts()
+const totalTools = getStats().tools
 
 /**
  * 顶栏搜索建议数据（不含 description，见 `SuggestionDoc`）：随根布局一次性下发，
  * 顶栏出建议就不用再跑一趟服务器 —— 这是「边打边搜 + 建议下拉」零往返的前提。
  */
-const suggestions = buildSuggestionDocs(getAllProducts(), Object.fromEntries(allCategories.map((c) => [c.id, c.name])))
+const suggestions = buildSuggestionDocs(getAllTools(), Object.fromEntries(allTopics.map((c) => [c.id, c.name])))
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -53,8 +53,8 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(getBaseUrl()),
   title: { default: "XiGee — 精选 AI 工具目录", template: "%s — XiGee" },
-  description: "XiGee 精选值得用的 AI 工具，人工筛选、分类清晰，点击直达官方网站。",
-  keywords: ["AI", "AI产品", "AI工具", "人工智能", "AI导航", "AI目录", "AI工具目录", "XiGee"],
+  description: "XiGee 精选值得用的 AI 工具，人工筛选、主题清晰，点击直达官方网站。",
+  keywords: ["AI", "AI工具", "人工智能", "AI导航", "AI目录", "AI工具目录", "XiGee"],
   openGraph: {
     title: "XiGee — 精选 AI 工具目录",
     description: "精选值得用的 AI 工具，每一款都经过人工筛选，点击直达官方网站。",
@@ -106,7 +106,7 @@ export default function RootLayout({
     <html lang="zh-CN" className={`${GeistMono.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         <meta name="theme-color" content={BRAND_PAGE.light} />
-        {/* 必须最先执行：同步内联脚本，早于首绘应用主题 / 侧栏 / 产品偏好的首帧状态 */}
+        {/* 必须最先执行：同步内联脚本，早于首绘应用主题 / 侧栏 / 工具偏好的首帧状态 */}
         <script dangerouslySetInnerHTML={{ __html: prefsScript }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString }} />
       </head>
@@ -122,12 +122,12 @@ export default function RootLayout({
           </a>
           {/* 首帧偏好由 <head> 内联 prefsScript 在首绘前写入 <html>，此处不再使用 next/script */}
           <Header className="md:hidden" />
-          <SubNav className="md:hidden" categories={allCategories} />
+          <SubNav className="md:hidden" topics={allTopics} />
           {/* DSH 双表面骨架：左栏灰（sidebar）/ 右区白（main） */}
           <div className="flex flex-1 md:overflow-hidden">
-            <Sidebar categories={allCategories} categoryCounts={categoryCounts} totalProducts={totalProducts} />
+            <Sidebar topics={allTopics} topicCounts={topicCounts} totalTools={totalTools} />
             <div className="flex min-w-0 flex-1 flex-col bg-background md:overflow-hidden">
-              <MainHeader className="hidden md:block" categories={allCategories} suggestions={suggestions} />
+              <MainHeader className="hidden md:block" topics={allTopics} suggestions={suggestions} />
               <div
                 id="scroll-container"
                 className="flex flex-1 scroll-smooth flex-col scroll-pt-28 md:min-h-0 md:overflow-y-auto"

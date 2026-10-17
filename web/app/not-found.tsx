@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { Compass, Home, Search } from "lucide-react"
-import { getAllCategories } from "@/lib/data"
+import { getAllTopics } from "@/lib/data"
 import { PageStatus } from "@/components/system/page-status"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -12,17 +12,17 @@ export const metadata: Metadata = {
   robots: { index: false },
 }
 
-const categories = getAllCategories()
+const topics = getAllTopics()
 
 export default function NotFound() {
-  const topCategories = categories.slice(0, 4)
+  const topTopics = topics.slice(0, 4)
 
   return (
     <PageStatus
       code="404"
       media={<Compass className="size-6" />}
       title="页面不存在"
-      description="你访问的页面可能已被移动或删除。试着搜索，或从下面的分类继续探索。"
+      description="你访问的页面可能已被移动或删除。试着搜索，或从下面的主题继续探索。"
       actions={
         <Button variant="outline" render={<Link href="/" />}>
           <Home />
@@ -43,8 +43,8 @@ export default function NotFound() {
       </form>
 
       <div className="flex flex-wrap justify-center gap-2">
-        {topCategories.map((cat) => (
-          <Badge key={cat.id} variant="outline" render={<Link href={`/category/${cat.id}`} />}>
+        {topTopics.map((cat) => (
+          <Badge key={cat.id} variant="outline" render={<Link href={`/topic/${cat.id}`} />}>
             {cat.name}
           </Badge>
         ))}

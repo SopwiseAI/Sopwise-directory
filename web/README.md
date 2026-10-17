@@ -1,12 +1,12 @@
 # XiGee
 
-精选 AI 工具目录 — 精选值得用的 AI 产品，每一款都经过人工筛选，点击直达官方网站。
+精选 AI 工具目录 — 精选值得用的 AI 工具，每一款都经过人工筛选，点击直达官方网站。
 
 ## 技术栈
 
 - Next.js 16 (App Router) + React 19 + TypeScript 5
 - Tailwind CSS 4 + shadcn/ui (base-nova, neutral)
-- fuse.js（客户端模糊搜索）、lucide-react（图标）
+- fuse.js（客户端模糊搜索）、lucide-react（界面图标）、**主题图标用 emoji**
 - Vitest + Testing Library（单元测试）
 - pnpm 12 + Node 24
 
@@ -35,11 +35,12 @@ pnpm test      # 单元测试
 
 ```
 app/          # App Router 页面 + 路由级元数据
-components/   # UI 组件 (ui/layout/product/category/search/history)
+components/   # UI 组件 (ui/layout/tool/search/history)
 lib/          # 工具函数与类型定义
-data/         # 产品数据 (data.json)
+data/         # 数据源 (topics.json + tools.json)
 ```
 
 ## 数据更新
 
-修改 `data/data.json` → 提交 PR → 合并 → Vercel 自动部署。
+修改 `data/topics.json` / `data/tools.json` → **`data/<name>` 分支**提交 PR（这两个是生产数据源，
+其余分支会被 `.husky/pre-commit` 拒绝）→ 合并 → Vercel 自动部署。

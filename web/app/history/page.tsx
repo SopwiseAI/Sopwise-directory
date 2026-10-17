@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { getAllCategories } from "@/lib/data"
+import { getAllTopics } from "@/lib/data"
 import { pageShell } from "@/lib/layout"
 import { HistoryList } from "@/components/history/history-list"
 
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 }
 
-const categories = getAllCategories()
+const topics = getAllTopics()
 
 export default function HistoryPage() {
   return (
@@ -27,7 +27,7 @@ export default function HistoryPage() {
           里导出或清空。
         </p>
       </div>
-      <HistoryList categories={categories} />
+      <HistoryList topics={topics} />
     </div>
   )
 }

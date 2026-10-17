@@ -157,9 +157,9 @@ husky commit-msg 自动执行 commitlint 校验提交信息格式（type 与 sco
 3. 创建 Pull Request，标题遵循 Conventional Commits 格式
 4. 通过 CI 检查（根检查 markdownlint + prettier、web 的 lint / typecheck / test / build、studio 的 ruff + mypy + pytest、`scripts/*.sh` 的 shellcheck）后合并
 
-`web/data/topics.json` 与 `web/data/tools.json` 是前端数据源的**目标形态**（只有 `prod` 导出会同步）；`web/data/data.json`
-才是当前真正在用的生产数据源 —— `web/` 尚未切到 topics/tools（缺口见 `web/AGENTS.md`）。这三个文件只允许在
-`main` 与 `data/<name>` 分支提交，其余分支会被 `.husky/pre-commit` 拒绝。
+`web/data/topics.json` 与 `web/data/tools.json` 是前端**当前正在用的生产数据源**（由 studio 的 `prod`
+导出同步，见 `web/AGENTS.md`）。这两个文件只允许在 `main` 与 `data/<name>` 分支提交，其余分支会被
+`.husky/pre-commit` 拒绝；本地调试请用带环境后缀的副本（`topics-dev.json` / `tools-dev.json`，已 gitignore）。
 
 ## 测试
 

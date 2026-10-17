@@ -10,7 +10,7 @@ const withBundleAnalyzer = bundleAnalyzer({
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
-    // MVP 阶段无产品图片/logo，统一用首字母或 SVG 图标；引入图片后改回 remotePatterns + 开启优化
+    // MVP 阶段无工具图片/logo，统一用首字母或 SVG 图标；引入图片后改回 remotePatterns + 开启优化
     unoptimized: true,
   },
   turbopack: {

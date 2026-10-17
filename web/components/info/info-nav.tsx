@@ -13,7 +13,7 @@ const ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/terms", label: "服务条款", icon: FileText },
 ]
 
-/** 信息区路由：供全站判断「这是信息页」（如移动端不显示分类条）。 */
+/** 信息区路由：供全站判断「这是信息页」（如移动端不显示主题条）。 */
 export const INFO_ROUTES: readonly string[] = ITEMS.map((item) => item.href)
 
 export function isInfoRoute(pathname: string): boolean {
@@ -22,7 +22,7 @@ export function isInfoRoute(pathname: string): boolean {
 
 /**
  * 信息区导航：放在二级栏（PageBar）左槽里，窄屏横向滚动。
- * 选中态沿用全站既有的切换器语言（bg-brand/10 + 品牌色文字），与产品筛选、分类条一致。
+ * 选中态沿用全站既有的切换器语言（bg-brand/10 + 品牌色文字），与工具筛选、主题条一致。
  */
 export function InfoNav({ className }: { className?: string }) {
   const pathname = usePathname()

@@ -6,7 +6,7 @@ import { Clock, ListFilter, Search, Trash2, X } from "lucide-react"
 import {
   clearHistory,
   filterHistory,
-  getHistoryCategoryIds,
+  getHistoryTopicIds,
   getHistorySnapshot,
   HISTORY_PERIODS,
   parseHistorySnapshot,
@@ -17,7 +17,7 @@ import {
 } from "@/lib/history"
 import { formatCount } from "@/lib/format"
 import { PageBar } from "@/components/layout/page-bar"
-import { PricingBadge } from "@/components/product/pricing-badge"
+import { PricingBadge } from "@/components/tool/pricing-badge"
 import { FilterSelect, type FilterOption } from "@/components/ui/filter-select"
 import { useMounted } from "@/hooks/use-mounted"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
@@ -34,7 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import type { Category } from "@/lib/types"
+import type { Topic } from "@/lib/types"
 
 /** 分页步长：初始渲染 + 每次触底加载的条数（避免一次性渲染过多） */
 const PAGE_SIZE = 40
@@ -87,9 +87,9 @@ function formatRelativeTime(iso: string): string {
   return date.toLocaleDateString("zh-CN", { month: "short", day: "numeric" })
 }
 
-/** 一条历史行：名称 + 时间（右）；副行 域名 · 分类 · 次数；右侧删除。 */
-function HistoryRow({ item, categoryLabel, last }: { item: HistoryItem; categoryLabel: string; last: boolean }) {
-  const meta = [item.domain, categoryLabel, item.visitCount > 1 ? `访问 ${formatCount(item.visitCount)} 次` : ""]
+/** 一条历史行：名称 + 时间（右）；副行 域名 · 主题 · 次数；右侧删除。 */
+function HistoryRow({ item, topicLabel, last }: { item: HistoryItem; topicLabel: string; last: boolean }) {
+  const meta = [item.domain, topicLabel, item.visitCount > 1 ? `访问 ${formatCount(item.visitCount)} 次` : ""]
     .filter(Boolean)
     .join(" · ")
   const time = formatRelativeTime(item.lastVisitedAt)
@@ -108,7 +108,7 @@ function HistoryRow({ item, categoryLabel, last }: { item: HistoryItem; category
         data-history-id={item.id}
         data-history-name={item.name}
         data-history-url={item.url}
-        data-history-category={item.categoryId}
+        data-history-topic={item.topicId}
         data-history-pricing={item.pricing ?? ""}
         className="flex min-w-0 flex-1 items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
       >
@@ -144,11 +144,11 @@ function HistoryRow({ item, categoryLabel, last }: { item: HistoryItem; category
 }
 
 interface HistoryListProps {
-  categories: readonly Category[]
+  topics: readonly Topic[]
 }
 
-/** 历史记录列表：平铺（不分组）、搜索 + 分类/时间筛选、无限滚动分页、单条删除与清空。 */
-export function HistoryList({ categories }: HistoryListProps) {
+/** 历史记录列表：平铺（不分组）、搜索 + 主题/时间筛选、无限滚动分页、单条删除与清空。 */
+export function HistoryList({ topics }: HistoryListProps) {
   // 相对时间每分钟刷新（PG-13）
   const [, forceTick] = useReducer((n: number) => n + 1, 0)
   useEffect(() => {
@@ -159,50 +159,50 @@ export function HistoryList({ categories }: HistoryListProps) {
   const mounted = useMounted()
   const raw = useSyncExternalStore(subscribeHistory, getHistorySnapshot, () => "[]")
   const [query, setQuery] = useState("")
-  const [categoryId, setCategoryId] = useState("")
+  const [topicId, setTopicId] = useState("")
   const [period, setPeriod] = useState<HistoryPeriod>("all")
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
 
-  const categoryName = useCallback((id: string) => categories.find((c) => c.id === id)?.name ?? "", [categories])
+  const topicName = useCallback((id: string) => topics.find((c) => c.id === id)?.name ?? "", [topics])
 
   const items = useMemo(() => parseHistorySnapshot(raw), [raw])
 
-  // 筛选器可选项：分类按「全站分类顺序」排列（而非历史出现顺序），下拉更稳定
-  const categoryOptions = useMemo<FilterOption[]>(() => {
-    const used = new Set(getHistoryCategoryIds(items))
-    const ordered = categories.filter((c) => used.has(c.id)).map((c) => ({ value: c.id, label: c.name }))
-    // 兜底：历史中引用了已不存在于 categories 的 id，仍列出以免无法筛选
+  // 筛选器可选项：主题按「全站主题顺序」排列（而非历史出现顺序），下拉更稳定
+  const topicOptions = useMemo<FilterOption[]>(() => {
+    const used = new Set(getHistoryTopicIds(items))
+    const ordered = topics.filter((c) => used.has(c.id)).map((c) => ({ value: c.id, label: c.name }))
+    // 兜底：历史中引用了已不存在于 topics 的 id，仍列出以免无法筛选
     for (const id of used) {
-      if (!categories.some((c) => c.id === id)) ordered.push({ value: id, label: categoryName(id) || id })
+      if (!topics.some((c) => c.id === id)) ordered.push({ value: id, label: topicName(id) || id })
     }
-    return [{ value: "", label: "全部分类" }, ...ordered]
-  }, [items, categories, categoryName])
+    return [{ value: "", label: "全部主题" }, ...ordered]
+  }, [items, topics, topicName])
 
   const periodOptions = useMemo<FilterOption[]>(
     () => HISTORY_PERIODS.map((p) => ({ value: p.value, label: p.label })),
     [],
   )
 
-  // 搜索（名称/域名/分类）→ 分类 + 时间筛选
+  // 搜索（名称/域名/主题）→ 主题 + 时间筛选
   const filtered = useMemo(() => {
-    const base = filterHistory(items, { categoryId, period })
+    const base = filterHistory(items, { topicId, period })
     const q = query.trim().toLowerCase()
     if (!q) return base
     return base.filter((it) => {
       const name = (it.name ?? "").toLowerCase()
       const domain = (it.domain ?? "").toLowerCase()
-      const cat = categoryName(it.categoryId).toLowerCase()
+      const cat = topicName(it.topicId).toLowerCase()
       return name.includes(q) || domain.includes(q) || cat.includes(q)
     })
-  }, [items, query, categoryId, period, categoryName])
+  }, [items, query, topicId, period, topicName])
 
   // 触底加载更多（无限滚动）
   const sentinelRef = useRef<HTMLDivElement>(null)
 
   const visible = filtered.slice(0, visibleCount)
   const hasMore = visibleCount < filtered.length
-  const isFiltered = query.trim() !== "" || categoryId !== "" || period !== "all"
+  const isFiltered = query.trim() !== "" || topicId !== "" || period !== "all"
 
   useEffect(() => {
     const el = sentinelRef.current
@@ -217,12 +217,12 @@ export function HistoryList({ categories }: HistoryListProps) {
     )
     observer.observe(el)
     return () => observer.disconnect()
-  }, [filtered.length, query, categoryId, period, hasMore])
+  }, [filtered.length, query, topicId, period, hasMore])
 
   const resetVisible = () => setVisibleCount(PAGE_SIZE)
   const resetFilters = () => {
     setQuery("")
-    setCategoryId("")
+    setTopicId("")
     setPeriod("all")
     resetVisible()
   }
@@ -250,7 +250,7 @@ export function HistoryList({ categories }: HistoryListProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      {/* 二级栏：左 搜索 + 分类/时间筛选；右 计数 + 清除筛选 + 清空 */}
+      {/* 二级栏：左 搜索 + 主题/时间筛选；右 计数 + 清除筛选 + 清空 */}
       <PageBar
         width="content"
         actions={
@@ -292,15 +292,15 @@ export function HistoryList({ categories }: HistoryListProps) {
         </InputGroup>
 
         <FilterSelect
-          label="按分类筛选"
+          label="按主题筛选"
           icon={ListFilter}
-          value={categoryId}
-          options={categoryOptions}
+          value={topicId}
+          options={topicOptions}
           onChange={(v) => {
-            setCategoryId(v)
+            setTopicId(v)
             resetVisible()
           }}
-          active={categoryId !== ""}
+          active={topicId !== ""}
         />
         <FilterSelect
           label="按时间筛选"
@@ -358,7 +358,7 @@ export function HistoryList({ categories }: HistoryListProps) {
               <HistoryRow
                 key={item.id}
                 item={item}
-                categoryLabel={item.categoryId ? categoryName(item.categoryId) : ""}
+                topicLabel={item.topicId ? topicName(item.topicId) : ""}
                 last={i === visible.length - 1 && !hasMore}
               />
             ))}

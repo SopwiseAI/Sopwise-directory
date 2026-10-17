@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS xg_topic (
   id          BIGINT       NOT NULL AUTO_INCREMENT,
   slug        VARCHAR(64)  NOT NULL              COMMENT '主题标识（kebab-case）；对外主键',
   name        VARCHAR(64)  NOT NULL              COMMENT '主题显示名（如 对话）',
-  icon        VARCHAR(64)  NOT NULL DEFAULT 'Box' COMMENT 'Lucide 图标组件名（PascalCase）',
+  icon        VARCHAR(64)  NOT NULL DEFAULT '📦' COMMENT 'emoji 图标字符（如 💬）',
   description VARCHAR(500) DEFAULT NULL          COMMENT '主题简介（可空；NULL 时导出省略该键）',
   sort_order  INT          NOT NULL DEFAULT 0    COMMENT '排序权重（越大越靠前）；决定 topics 数组顺序',
   status      VARCHAR(16)  NOT NULL DEFAULT 'active' COMMENT 'disabled | active；仅 active 导出',
@@ -165,7 +165,7 @@ CREATE TABLE IF NOT EXISTS xg_tool_link (
 --    这条 INSERT 会撞 uk_topic_name 报 1062 —— 那是需要人工介入的情况，别静默吞掉。
 -- ----------------------------------------------------------------------------
 INSERT INTO xg_topic (slug, name, icon, description, sort_order, status)
-SELECT 'misc', '未分类', 'Box', '尚未归类的工具，等待整理到合适的主题下。', -1, 'active'
+SELECT 'misc', '未分类', '📦', '尚未归类的工具，等待整理到合适的主题下。', 0, 'active'
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM (SELECT 1 FROM xg_topic WHERE slug = 'misc') AS t);
 
