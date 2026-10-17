@@ -12,7 +12,7 @@ module.exports = {
     "scope-empty": [0],
     // 白名单必须与仓库自身流程自洽，否则就是在拦自己的自动化产物：
     // - deps / deps-dev：Dependabot（dependabot.yml 的 prefix=chore + include=scope）生成
-    // - data：web/data/data.json 数据同步分支（见 .husky/pre-commit、CONTRIBUTING）
+    // - data：web/data/topics.json / tools.json 数据同步分支（见 .husky/pre-commit、CONTRIBUTING）
     // - ci：CI / 工作流相关改动
     "scope-enum": [
       2,
