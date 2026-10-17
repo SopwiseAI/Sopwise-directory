@@ -105,7 +105,7 @@ def _check_tagline(value: str) -> str:
 class TopicBase(BaseModel):
     slug: str = Field(..., max_length=64, pattern=_SLUG_PATTERN)
     name: str = Field(..., min_length=1, max_length=64)
-    icon: str = Field("Box", max_length=64)
+    icon: str = Field("📦", max_length=64)
     description: str | None = Field(None, max_length=500)
     sort_order: int = Field(0, ge=0)
     status: TopicStatus = TopicStatus.ACTIVE

@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 # schema/topics.data.jsonc 与 schema/tools.data.jsonc。
 type ExportItem = dict[str, Any]
 
-DEFAULT_TOPIC_ICON = "Box"
+DEFAULT_TOPIC_ICON = "📦"
 UNCATEGORIZED_SLUG = "misc"
 UNCATEGORIZED_NAME = "未分类"
 _VALID_PRICINGS = frozenset(p.value for p in Pricing)

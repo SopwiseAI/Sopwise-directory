@@ -384,7 +384,7 @@ async def test_export_orphan_tool_falls_back_to_uncategorized(async_client, tmp_
         await async_client.post("/api/v1/export")
 
     assert _read(tmp_path / "tools-dev.json")[0]["topics"] == ["misc"]
-    assert _read(tmp_path / "topics-dev.json")[-1] == {"id": "misc", "name": "未分类", "icon": "Box", "toolCount": 1}
+    assert _read(tmp_path / "topics-dev.json")[-1] == {"id": "misc", "name": "未分类", "icon": "📦", "toolCount": 1}
 
 
 async def test_export_omits_uncategorized_when_not_needed(async_client, tmp_path):
@@ -409,7 +409,7 @@ async def test_export_omits_uncategorized_when_not_needed(async_client, tmp_path
 
 async def test_export_reuses_real_misc_topic(async_client, tmp_path):
     """已存在启用的 misc 主题时应复用, 不得产生重复 id。"""
-    real = await create_topic(async_client, slug="misc", name="其他", icon="Box")
+    real = await create_topic(async_client, slug="misc", name="其他", icon="📦")
     disabled = await create_topic(async_client, slug="disabled-x", name="禁用", status="disabled")
     await create_tool(
         async_client,

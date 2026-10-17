@@ -138,7 +138,7 @@ def test_name_rejects_blank(name):
 def test_name_absent_on_update_is_still_allowed():
     """没传 name 是"不改", 不是"改成空"—— None 不能被当成空值拦掉。"""
     assert ToolUpdate(tagline="简介。").name is None
-    assert TopicUpdate(icon="Box").name is None
+    assert TopicUpdate(icon="📦").name is None
 
 
 # ── tagline ───────────────────────────────────────────────────────────────────
