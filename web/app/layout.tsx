@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next"
-import { GeistMono } from "geist/font/mono"
 import "@fontsource-variable/outfit"
 import { getAllTopics, getAllTools, getTopicCounts, getStats } from "@/lib/data"
 import { buildSuggestionDocs } from "@/lib/search"
@@ -12,9 +11,7 @@ import { SubNav } from "@/components/layout/sub-nav"
 import { Sidebar } from "@/components/layout/sidebar"
 import { MainHeader } from "@/components/layout/main-header"
 import { HistoryTracker } from "@/components/runtime/history-tracker"
-import { WebVitals } from "@/components/runtime/web-vitals"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { Toaster } from "@/components/ui/sonner"
 import Footer from "@/components/layout/footer"
 import "./globals.css"
 
@@ -103,7 +100,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="zh-CN" className={`${GeistMono.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="zh-CN" className="h-full antialiased" suppressHydrationWarning>
       <head>
         <meta name="theme-color" content={BRAND_PAGE.light} />
         {/* 必须最先执行：同步内联脚本，早于首绘应用主题 / 侧栏 / 工具偏好的首帧状态 */}
@@ -112,7 +109,6 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col pb-[env(safe-area-inset-bottom)] md:h-[100dvh] md:overflow-hidden">
         <HistoryTracker />
-        <WebVitals />
         <TooltipProvider>
           <a
             href="#main"
@@ -140,8 +136,6 @@ export default function RootLayout({
             </div>
           </div>
         </TooltipProvider>
-        {/* 全局 Toast 出口（sonner）：设置页导出/导入等一次性操作结果走这里 */}
-        <Toaster />
       </body>
     </html>
   )

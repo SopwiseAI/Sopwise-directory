@@ -18,7 +18,10 @@
   --font-sans:
     -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
     "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-mono: var(--font-geist-mono);
+  /* 等宽只服务于数字/日期/版本号（font-data），系统等宽栈足够 —— 省掉 71KB 的 GeistMono 下载 */
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, "Liberation Mono", "DejaVu Sans Mono", "Courier New",
+    monospace;
   /* 品牌字标专用：Outfit（几何无衬线，自托管 woff2），与正文系统字体形成品牌区分 */
   --font-brand: "Outfit Variable", var(--font-sans);
   --font-heading: var(--font-sans);
